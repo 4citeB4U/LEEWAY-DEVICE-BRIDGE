@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b0f14">
+  <title>LeeWay Device Bridge</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<main class="shell">
+  <header>
+    <p class="eyebrow">LEEWAY DEVICE BRIDGE</p>
+    <h1>Know the device before we hand it a key.</h1>
+    <p class="lede">Lightweight discovery prepares the correct native installation path. Exact hardware identity is verified by the installed app—not guessed by the browser.</p>
+  </header>
+
+  <section class="status-grid" aria-label="Bootstrap status">
+    <article><span>DISCOVERY</span><strong id="discoveryState">READY</strong></article>
+    <article><span>PROFILE</span><strong id="profileState">PENDING</strong></article>
+    <article><span>PACKAGE</span><strong id="packageState">PENDING</strong></article>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="kicker">STEP 01</p><h2>Browser discovery</h2></div><button id="discoverBtn">Inspect this device</button></div>
+    <p class="muted">Only information the browser legitimately exposes is inspected. Unknown facts remain unknown until native verification.</p>
+    <div id="facts" class="facts"><p class="empty">No discovery run yet.</p></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="kicker">STEP 02</p><h2>Device bootstrap profile</h2></div><span id="confidenceBadge" class="badge">NOT BUILT</span></div>
+    <pre id="profileOutput" class="profile">Run discovery to create a profile.</pre>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="kicker">STEP 03</p><h2>Native handoff</h2></div></div>
+    <div id="packageCard" class="package-card">
+      <p class="empty">A compatible package route will appear after discovery.</p>
+    </div>
+  </section>
+
+  <section class="panel compact">
+    <h2>Truth boundary</h2>
+    <p><b>Observed</b> means the browser exposed it. <b>Inferred</b> means a standards-based interpretation was made. <b>Native verification required</b> means the web surface refuses to guess.</p>
+  </section>
+
+  <footer>LeeWay Standards · available ≠ authorized · observed ≠ verified · generated ≠ executed</footer>
+</main>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
