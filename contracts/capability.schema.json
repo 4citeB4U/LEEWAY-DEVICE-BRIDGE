@@ -1,0 +1,17 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://leeway.local/contracts/capability.schema.json",
+  "title":"LeeWay Device Capability",
+  "type":"object",
+  "required":["name","supported","authorized","active","verified"],
+  "properties":{
+    "name":{"type":"string","minLength":1},
+    "supported":{"type":"boolean"},
+    "available":{"type":"boolean"},
+    "authorized":{"type":"boolean"},
+    "active":{"type":"boolean"},
+    "healthy":{"type":"boolean"},
+    "verified":{"type":"boolean"},
+    "state":{"enum":["SUPPORTED","AVAILABLE","AUTHORIZED","ACTIVE","HEALTHY","VERIFIED","DEGRADED","BLOCKED","FAILED","UNKNOWN"]}
+  }
+}
