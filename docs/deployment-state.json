@@ -1,0 +1,8 @@
+{
+  "deploymentAuthority":"LeeWay Device Bridge Pages",
+  "siteRoot":"docs/",
+  "pagesEnabled":true,
+  "nativeAppAuthority":"apps/android/",
+  "browserAuthority":"BROWSER_DISCOVERY_ONLY",
+  "note":"Generated source state marker; live deployment must be verified independently."
+}
