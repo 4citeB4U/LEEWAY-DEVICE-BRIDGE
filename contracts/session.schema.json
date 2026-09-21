@@ -1,0 +1,14 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://leeway.local/contracts/session.schema.json",
+  "title":"LeeWay Assist Session",
+  "type":"object",
+  "required":["sessionId","mode","screenAuthority","controlAuthority","status"],
+  "properties":{
+    "sessionId":{"type":"string"},
+    "mode":{"enum":["FILES_ONLY","DIAGNOSTIC","SCREEN_ON_DEMAND","SCREEN_SESSION","ASSIST_SESSION"]},
+    "screenAuthority":{"enum":["NONE","ON_DEMAND","SESSION","CONTINUOUS"]},
+    "controlAuthority":{"enum":["NONE","GUIDANCE","DETERMINISTIC","INTERACTIVE"]},
+    "status":{"enum":["IDLE","ACTIVE","STOPPING","STOPPED","BLOCKED","FAILED"]}
+  }
+}
