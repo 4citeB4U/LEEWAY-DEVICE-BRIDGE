@@ -1,0 +1,18 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://leeway.local/contracts/receipt.schema.json",
+  "title":"LeeWay Device Receipt",
+  "type":"object",
+  "required":["receiptId","timestamp","deviceId","capability","result"],
+  "properties":{
+    "receiptId":{"type":"string"},
+    "timestamp":{"type":"string","format":"date-time"},
+    "deviceId":{"type":"string"},
+    "capability":{"type":"string"},
+    "authorizationBasis":{"type":"string"},
+    "preGate":{"type":"string"},
+    "result":{"enum":["PASS","FAIL","BLOCKED"]},
+    "postGate":{"type":"string"},
+    "evidenceHashes":{"type":"array","items":{"type":"string"}}
+  }
+}
