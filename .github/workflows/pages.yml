@@ -1,4 +1,4 @@
-name: Pages
+name: LeeWay Device Bridge Pages
 on:
   push:
     branches: [main]
