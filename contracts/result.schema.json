@@ -1,0 +1,13 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://leeway.local/contracts/result.schema.json",
+  "title":"LeeWay Device Command Result",
+  "type":"object",
+  "required":["commandId","state","evidence"],
+  "properties":{
+    "commandId":{"type":"string"},
+    "state":{"enum":["EXECUTED","BLOCKED","FAILED"]},
+    "evidence":{"type":"object"},
+    "receiptId":{"type":["string","null"]}
+  }
+}
