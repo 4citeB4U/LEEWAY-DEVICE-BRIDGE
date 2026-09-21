@@ -1,7 +1,7 @@
 name: Android Build
 on:
   push:
-    paths: ["apps/android/**", ".github/workflows/android-build.yml"]
+    paths: ["apps/android/**", "contracts/**", ".github/workflows/android-build.yml"]
   pull_request:
     paths: ["apps/android/**", ".github/workflows/android-build.yml"]
 jobs:
