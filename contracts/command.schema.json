@@ -1,0 +1,15 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://leeway.local/contracts/command.schema.json",
+  "title":"LeeWay Device Command",
+  "type":"object",
+  "required":["commandId","capability","authorityTier","sessionId"],
+  "properties":{
+    "commandId":{"type":"string"},
+    "capability":{"type":"string"},
+    "authorityTier":{"enum":["READ","OPERATE","MUTATE","ADMIN"]},
+    "sessionId":{"type":"string"},
+    "arguments":{"type":"object"},
+    "requiresHumanConfirmation":{"type":"boolean"}
+  }
+}
