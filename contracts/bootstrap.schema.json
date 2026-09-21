@@ -1,0 +1,15 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://leeway.local/contracts/bootstrap.schema.json",
+  "title":"LeeWay Browser Bootstrap",
+  "type":"object",
+  "required":["bootstrapSessionId","createdAt","browserProfile","nativeVerificationRequired","authority"],
+  "properties":{
+    "bootstrapSessionId":{"type":"string","minLength":1},
+    "createdAt":{"type":"string","format":"date-time"},
+    "browserProfile":{"type":"object"},
+    "selectedPackageId":{"type":["string","null"]},
+    "nativeVerificationRequired":{"const":true},
+    "authority":{"const":"BROWSER_DISCOVERY_ONLY"}
+  }
+}
