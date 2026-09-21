@@ -18,6 +18,7 @@ object DevicePassport {
 
         return JSONObject().apply {
             put("schemaVersion", "0.1.0")
+            put("identity", DeviceIdentity.ensure(context))
             put("authority", "NATIVE_ANDROID_OBSERVED")
             put("manufacturer", Build.MANUFACTURER)
             put("brand", Build.BRAND)
