@@ -1,0 +1,16 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://leeway.local/contracts/device.schema.json",
+  "title":"LeeWay Device",
+  "type":"object",
+  "required":["deviceId","platform","capabilities","mode"],
+  "properties":{
+    "deviceId":{"type":"string","minLength":1},
+    "platform":{"enum":["android","ios","ipados","unknown"]},
+    "manufacturer":{"type":"string"},
+    "model":{"type":"string"},
+    "osVersion":{"type":"string"},
+    "mode":{"enum":["LOCAL_OFFLINE","LOCAL_NETWORK","REMOTE"]},
+    "capabilities":{"type":"array","items":{"$ref":"capability.schema.json"}}
+  }
+}
