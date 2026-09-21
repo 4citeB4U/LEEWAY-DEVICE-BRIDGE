@@ -1,0 +1,15 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://leeway.local/contracts/reconciliation.schema.json",
+  "title":"Browser Native Device Reconciliation",
+  "type":"object",
+  "required":["bootstrapSessionId","browserAuthority","nativeAuthority","status","differences"],
+  "properties":{
+    "bootstrapSessionId":{"type":"string"},
+    "browserAuthority":{"const":"BROWSER_DISCOVERY_ONLY"},
+    "nativeAuthority":{"enum":["NATIVE_ANDROID_OBSERVED","NATIVE_APPLE_OBSERVED"]},
+    "status":{"enum":["MATCH","PARTIAL_MATCH","MISMATCH","INSUFFICIENT_EVIDENCE"]},
+    "differences":{"type":"array","items":{"type":"object"}},
+    "promotedAuthority":{"enum":["VERIFIED_DEVICE_PASSPORT","NOT_PROMOTED"]}
+  }
+}
