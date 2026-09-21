@@ -1,0 +1,15 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://leeway.local/contracts/pairing.schema.json",
+  "title":"LeeWay Device Pairing",
+  "type":"object",
+  "required":["pairingId","deviceId","publicKeyFingerprintSha256","state","requestedCapabilities"],
+  "properties":{
+    "pairingId":{"type":"string"},
+    "deviceId":{"type":"string"},
+    "publicKeyFingerprintSha256":{"type":"string","minLength":64,"maxLength":64},
+    "state":{"enum":["UNPAIRED","CHALLENGE_CREATED","OWNER_APPROVAL_REQUIRED","PAIRED","REVOKED","FAILED"]},
+    "requestedCapabilities":{"type":"array","items":{"type":"string"}},
+    "expiresAt":{"type":["string","null"],"format":"date-time"}
+  }
+}
