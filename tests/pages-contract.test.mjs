@@ -1,0 +1,13 @@
+import fs from "node:fs";
+import assert from "node:assert/strict";
+const manifest=JSON.parse(fs.readFileSync("docs/package-manifest.json","utf8"));
+assert.equal(manifest.schemaVersion,"0.1.0");
+assert.ok(manifest.packages.some(p=>p.platform==="android"));
+assert.ok(manifest.packages.every(p=>p.nativeVerification===true));
+const discovery=fs.readFileSync("docs/device-discovery.js","utf8");
+assert.match(discovery,/NATIVE_VERIFICATION_REQUIRED/);
+assert.match(discovery,/getHighEntropyValues/);
+const app=fs.readFileSync("docs/app.js","utf8");
+assert.match(app,/authority:"BROWSER_DISCOVERY_ONLY"/);
+assert.match(app,/localStorage/);
+console.log("PASS pages bootstrap contract");
