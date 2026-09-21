@@ -1,0 +1,20 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://leeway.local/contracts/device-passport.schema.json",
+  "title":"LeeWay Verified Device Passport Candidate",
+  "type":"object",
+  "required":["schemaVersion","authority","manufacturer","model","device","product","androidRelease","sdkInt","supportedAbis"],
+  "properties":{
+    "schemaVersion":{"type":"string"},
+    "authority":{"enum":["NATIVE_ANDROID_OBSERVED","NATIVE_APPLE_OBSERVED","VERIFIED_DEVICE_PASSPORT"]},
+    "manufacturer":{"type":"string"},
+    "model":{"type":"string"},
+    "device":{"type":"string"},
+    "product":{"type":"string"},
+    "hardware":{"type":"string"},
+    "androidRelease":{"type":"string"},
+    "sdkInt":{"type":"integer"},
+    "securityPatch":{"type":"string"},
+    "supportedAbis":{"type":"array","items":{"type":"string"}}
+  }
+}
