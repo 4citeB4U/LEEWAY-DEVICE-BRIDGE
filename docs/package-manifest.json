@@ -1,0 +1,25 @@
+{
+  "schemaVersion":"0.1.0",
+  "packages":[
+    {
+      "id":"android-universal-debug",
+      "platform":"android",
+      "architecture":"any",
+      "channel":"development",
+      "label":"LeeWay Device Bridge for Android",
+      "source":"github-actions-artifact",
+      "status":"BUILD_REQUIRED",
+      "nativeVerification":true
+    },
+    {
+      "id":"apple-native",
+      "platform":"ios",
+      "architecture":"any",
+      "channel":"planned",
+      "label":"LeeWay Device Bridge for Apple",
+      "source":"apple-distribution",
+      "status":"NOT_BUILT",
+      "nativeVerification":true
+    }
+  ]
+}
