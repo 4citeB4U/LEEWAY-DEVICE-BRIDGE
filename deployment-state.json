@@ -1,8 +1,10 @@
 {
-  "deploymentAuthority":"LeeWay Device Bridge Pages",
-  "siteRoot":"docs/",
+  "deploymentAuthority":"GitHub Pages branch publisher",
+  "branch":"gh-pages",
+  "siteRoot":"/",
   "pagesEnabled":true,
-  "nativeAppAuthority":"apps/android/",
+  "nativeAppAuthority":"main:apps/android/",
   "browserAuthority":"BROWSER_DISCOVERY_ONLY",
-  "note":"Generated source state marker; live deployment must be verified independently."
+  "publicationGeneration":2,
+  "acceptance":"Public URL must return the Device Bridge UI before deployment is VERIFIED."
 }
