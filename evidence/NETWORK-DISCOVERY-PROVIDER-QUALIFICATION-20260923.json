@@ -1,0 +1,32 @@
+{
+    "schemaVersion":  "0.1.0",
+    "authority":  "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+    "evidenceType":  "NETWORK_DISCOVERY_PROVIDER_PHYSICAL_QUALIFICATION",
+    "observedAt":  "2026-09-23T22:22:00Z",
+    "phone":  {
+                  "model":  "SM-F956U",
+                  "platform":  "Android 16"
+              },
+    "provider":  {
+                     "providerId":  "network-discovery",
+                     "capability":  "device.network.discover",
+                     "supported":  true,
+                     "authorized":  true,
+                     "healthy":  true,
+                     "verified":  true,
+                     "discoveryOnly":  true,
+                     "actuationAvailable":  false,
+                     "ssdpDeviceCount":  0,
+                     "dnsSdServiceCount":  0,
+                     "totalObservationCount":  0,
+                     "elapsedMs":  5214
+                 },
+    "package":  {
+                    "versionName":  "0.4.0",
+                    "versionCode":  4,
+                    "sizeBytes":  12710148,
+                    "sha256":  "321578661734b782d139859ae1f8133c8fa138fc3497f96376e75050dfc7a775"
+                },
+    "classification":  "PHYSICAL_PROVIDER_EXECUTION_VERIFIED_EMPTY_CURRENT_NETWORK",
+    "claimBoundary":  "Provider execution is verified. Zero observations describe only the network visible during this test and do not prove no devices exist elsewhere."
+}

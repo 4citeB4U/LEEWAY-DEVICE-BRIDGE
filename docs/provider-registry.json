@@ -7,7 +7,7 @@
                           "id":  "phone-native",
                           "class":  "native",
                           "role":  "phone-local runtime",
-                          "status":  "SOURCE_PRESENT_NOT_PHYSICALLY_VERIFIED"
+                          "status":  "PHYSICAL_RUNTIME_VERIFIED"
                       },
                       {
                           "id":  "home-assistant",
@@ -78,13 +78,13 @@
                           "id":  "ssdp-upnp",
                           "class":  "network",
                           "role":  "LAN service/device discovery/control",
-                          "status":  "LEGACY_PROVIDER_SOURCE_RECOVERED"
+                          "status":  "PHONE_LOCAL_DISCOVERY_VERIFIED"
                       },
                       {
                           "id":  "mdns",
                           "class":  "network",
                           "role":  "LAN service discovery",
-                          "status":  "LEGACY_PROVIDER_SOURCE_RECOVERED"
+                          "status":  "PHONE_LOCAL_DISCOVERY_VERIFIED"
                       },
                       {
                           "id":  "snmp",
@@ -121,6 +121,17 @@
                           "class":  "sensor",
                           "role":  "NMEA device/telemetry access",
                           "status":  "LEGACY_PROVIDER_SOURCE_RECOVERED"
+                      },
+                      {
+                          "id":  "network-discovery",
+                          "class":  "network",
+                          "role":  "phone-local SSDP and DNS-SD discovery",
+                          "status":  "PHYSICAL_READ_DISCOVERY_VERIFIED",
+                          "lastVerifiedAt":  "2026-09-23T22:22:00Z",
+                          "qualifiedCapability":  "device.network.discover",
+                          "sourcePath":  "apps/android/app/src/main/java/industries/leeway/devicebridge/NetworkDiscoveryProvider.kt",
+                          "currentObservationCount":  0,
+                          "actuationAvailable":  false
                       }
                   ]
 }

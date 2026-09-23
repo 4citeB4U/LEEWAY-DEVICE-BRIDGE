@@ -12,23 +12,23 @@
                          "channel":  "development",
                          "label":  "LeeWay Device Bridge for Android",
                          "source":  "github-pages",
-                         "status":  "BLUETOOTH_PROVIDER_QUALIFIED_DEBUG",
+                         "status":  "NETWORK_DISCOVERY_PROVIDER_QUALIFIED_DEBUG",
                          "nativeVerification":  true,
                          "runtimeLocation":  "phone",
                          "dockerRequired":  false,
-                         "downloadUrl":  "./downloads/leeway-device-bridge-android-v0.3.0-debug.apk",
-                         "sha256":  "82605b21dbe4ae08c0f4870a97deca31714728b256a8398ce9a69314beaa5222",
-                         "sizeBytes":  12696400,
+                         "downloadUrl":  "./downloads/leeway-device-bridge-android-v0.4.0-debug.apk",
+                         "sha256":  "321578661734b782d139859ae1f8133c8fa138fc3497f96376e75050dfc7a775",
+                         "sizeBytes":  12710148,
                          "formulaQualification":  {
                                                       "required":  true,
                                                       "status":  "MEASURED_SIZE_GATE_PASS_NO_COMPRESSION_REQUIRED",
                                                       "targetMaxBytes":  104857600,
                                                       "rule":  "No compression ratio or reconstruction claim without measured evidence.",
-                                                      "measuredBytes":  12696400,
-                                                      "measuredSha256":  "82605b21dbe4ae08c0f4870a97deca31714728b256a8398ce9a69314beaa5222"
+                                                      "measuredBytes":  12710148,
+                                                      "measuredSha256":  "321578661734b782d139859ae1f8133c8fa138fc3497f96376e75050dfc7a775"
                                                   },
-                         "versionName":  "0.3.0",
-                         "versionCode":  3
+                         "versionName":  "0.4.0",
+                         "versionCode":  4
                      },
                      {
                          "id":  "apple-native",

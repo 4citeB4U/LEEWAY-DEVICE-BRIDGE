@@ -82,6 +82,22 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        val networkDiscovery = Button(this).apply {
+            text = "DISCOVER LAN PROVIDERS"
+            setOnClickListener {
+                output.text = "Network discovery running..."
+                Thread {
+                    val snapshot = NetworkDiscoveryProvider.discover(this@MainActivity)
+                    ReceiptStore.record(
+                        this@MainActivity,
+                        NetworkDiscoveryProvider.CAPABILITY,
+                        if (snapshot.optBoolean("verified")) "PASS" else "FAIL",
+                        "ssdp=" + snapshot.optInt("ssdpDeviceCount") + " dnsSd=" + snapshot.optInt("dnsSdServiceCount")
+                    )
+                    runOnUiThread { output.text = snapshot.toString(2) }
+                }.start()
+            }
+        }
         val enable = Button(this).apply {
             text = "ENABLE LOCAL AGENT SESSION"
             setOnClickListener {
@@ -148,7 +164,7 @@ class MainActivity : AppCompatActivity() {
                 setPadding(0, 10, 0, 18)
             })
             listOf(
-                discover, diagnostics, files, receipts, authorizeBluetooth, bluetooth,
+                discover, diagnostics, files, receipts, authorizeBluetooth, bluetooth, networkDiscovery,
                 enable, startBridge, selfTest, showToken, stopBridge, stop
             ).forEach { addView(it) }
             addView(output)
