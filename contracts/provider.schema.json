@@ -1,0 +1,18 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://leeway.local/contracts/provider.schema.json",
+  "title":"LeeWay Device Provider",
+  "type":"object",
+  "required":["providerId","class","status","capabilities"],
+  "properties":{
+    "providerId":{"type":"string","minLength":1},
+    "class":{"type":"string","minLength":1},
+    "status":{"enum":["DISCOVERED","AVAILABLE","AUTHORIZED","ACTIVE","HEALTHY","VERIFIED","DEGRADED","BLOCKED","FAILED","UNKNOWN"]},
+    "transports":{"type":"array","items":{"type":"string"}},
+    "capabilities":{"type":"array","items":{"type":"string"}},
+    "deviceIds":{"type":"array","items":{"type":"string"}},
+    "endpoint":{"type":["string","null"]},
+    "requiresPhysicalAdapter":{"type":"boolean"},
+    "lastVerifiedAt":{"type":["string","null"]}
+  }
+}
