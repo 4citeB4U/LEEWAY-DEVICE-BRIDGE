@@ -55,6 +55,33 @@ class MainActivity : AppCompatActivity() {
             setOnClickListener { output.text = ReceiptStore.list(this@MainActivity).toString(2) }
         }
 
+        val authorizeBluetooth = Button(this).apply {
+            text = "AUTHORIZE BLUETOOTH PROVIDER"
+            setOnClickListener {
+                val required = BluetoothProvider.requiredPermissions()
+                if (required.isEmpty() || BluetoothProvider.hasRequiredPermissions(this@MainActivity)) {
+                    output.text = BluetoothProvider.snapshot(this@MainActivity).toString(2)
+                } else {
+                    requestPermissions(required, 4202)
+                    output.text = "Bluetooth permission request opened. Approve it, then run Bluetooth provider discovery."
+                }
+            }
+        }
+
+        val bluetooth = Button(this).apply {
+            text = "DISCOVER BLUETOOTH PROVIDER"
+            setOnClickListener {
+                val snapshot = BluetoothProvider.snapshot(this@MainActivity)
+                ReceiptStore.record(
+                    this@MainActivity,
+                    BluetoothProvider.CAPABILITY,
+                    if (snapshot.optBoolean("verified")) "PASS" else "BLOCKED",
+                    "bondedDeviceCount=${snapshot.optInt("bondedDeviceCount")}"
+                )
+                output.text = snapshot.toString(2)
+            }
+        }
+
         val enable = Button(this).apply {
             text = "ENABLE LOCAL AGENT SESSION"
             setOnClickListener {
@@ -121,7 +148,7 @@ class MainActivity : AppCompatActivity() {
                 setPadding(0, 10, 0, 18)
             })
             listOf(
-                discover, diagnostics, files, receipts,
+                discover, diagnostics, files, receipts, authorizeBluetooth, bluetooth,
                 enable, startBridge, selfTest, showToken, stopBridge, stop
             ).forEach { addView(it) }
             addView(output)

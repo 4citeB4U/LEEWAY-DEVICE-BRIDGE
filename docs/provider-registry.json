@@ -1,118 +1,120 @@
 {
-  "schemaVersion": "0.2.0",
-  "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
-  "rule": "providers donate capabilities; Device Bridge retains authority",
-  "providers": [
-    {
-      "id": "phone-native",
-      "class": "native",
-      "role": "phone-local runtime",
-      "status": "SOURCE_PRESENT_NOT_PHYSICALLY_VERIFIED"
-    },
-    {
-      "id": "home-assistant",
-      "class": "aggregator",
-      "role": "device/entity state and actuation",
-      "status": "CONTRACT_PROVEN_LIVE_INSTANCE_NOT_VERIFIED",
-      "interfaces": [
-        "REST",
-        "WebSocket"
-      ]
-    },
-    {
-      "id": "n8n",
-      "class": "automation",
-      "role": "deterministic workflows schedules retries callbacks MCP",
-      "status": "LIVE_HEALTHY_DEVICE_WORKFLOW_LIBRARY_INCOMPLETE",
-      "interfaces": [
-        "Webhook",
-        "REST",
-        "MCP"
-      ]
-    },
-    {
-      "id": "matter",
-      "class": "iot",
-      "role": "Matter controller/provider via Home Assistant or authorized controller",
-      "status": "PROVIDER_REQUIRED"
-    },
-    {
-      "id": "mqtt",
-      "class": "iot",
-      "role": "publish/subscribe device transport",
-      "status": "PROVIDER_REQUIRED"
-    },
-    {
-      "id": "bluetooth",
-      "class": "local-radio",
-      "role": "BLE discovery/control",
-      "status": "LEGACY_PROVIDER_SOURCE_RECOVERED"
-    },
-    {
-      "id": "usb",
-      "class": "local-bus",
-      "role": "USB device discovery/control",
-      "status": "LEGACY_PROVIDER_SOURCE_RECOVERED"
-    },
-    {
-      "id": "serial",
-      "class": "local-bus",
-      "role": "serial device discovery/control",
-      "status": "LEGACY_PROVIDER_SOURCE_RECOVERED"
-    },
-    {
-      "id": "hid",
-      "class": "local-bus",
-      "role": "human-interface device access",
-      "status": "LEGACY_PROVIDER_SOURCE_RECOVERED"
-    },
-    {
-      "id": "ssdp-upnp",
-      "class": "network",
-      "role": "LAN service/device discovery/control",
-      "status": "LEGACY_PROVIDER_SOURCE_RECOVERED"
-    },
-    {
-      "id": "mdns",
-      "class": "network",
-      "role": "LAN service discovery",
-      "status": "LEGACY_PROVIDER_SOURCE_RECOVERED"
-    },
-    {
-      "id": "snmp",
-      "class": "network",
-      "role": "managed network device observation/control where supported",
-      "status": "LEGACY_PROVIDER_SOURCE_RECOVERED"
-    },
-    {
-      "id": "cec",
-      "class": "av",
-      "role": "HDMI-CEC control",
-      "status": "LEGACY_PROVIDER_SOURCE_RECOVERED"
-    },
-    {
-      "id": "ir-rf",
-      "class": "legacy-remote",
-      "role": "IR/RF control through physical proxy",
-      "status": "PHYSICAL_PROXY_REQUIRED"
-    },
-    {
-      "id": "modbus",
-      "class": "industrial",
-      "role": "Modbus device access",
-      "status": "LEGACY_PROVIDER_SOURCE_RECOVERED"
-    },
-    {
-      "id": "canbus",
-      "class": "industrial",
-      "role": "CAN bus device access",
-      "status": "LEGACY_PROVIDER_SOURCE_RECOVERED"
-    },
-    {
-      "id": "nmea",
-      "class": "sensor",
-      "role": "NMEA device/telemetry access",
-      "status": "LEGACY_PROVIDER_SOURCE_RECOVERED"
-    }
-  ]
+    "schemaVersion":  "0.2.0",
+    "authority":  "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+    "rule":  "providers donate capabilities; Device Bridge retains authority",
+    "providers":  [
+                      {
+                          "id":  "phone-native",
+                          "class":  "native",
+                          "role":  "phone-local runtime",
+                          "status":  "SOURCE_PRESENT_NOT_PHYSICALLY_VERIFIED"
+                      },
+                      {
+                          "id":  "home-assistant",
+                          "class":  "aggregator",
+                          "role":  "device/entity state and actuation",
+                          "status":  "CONTRACT_PROVEN_LIVE_INSTANCE_NOT_VERIFIED",
+                          "interfaces":  [
+                                             "REST",
+                                             "WebSocket"
+                                         ]
+                      },
+                      {
+                          "id":  "n8n",
+                          "class":  "automation",
+                          "role":  "deterministic workflows schedules retries callbacks MCP",
+                          "status":  "LIVE_HEALTHY_DEVICE_WORKFLOW_LIBRARY_INCOMPLETE",
+                          "interfaces":  [
+                                             "Webhook",
+                                             "REST",
+                                             "MCP"
+                                         ]
+                      },
+                      {
+                          "id":  "matter",
+                          "class":  "iot",
+                          "role":  "Matter controller/provider via Home Assistant or authorized controller",
+                          "status":  "PROVIDER_REQUIRED"
+                      },
+                      {
+                          "id":  "mqtt",
+                          "class":  "iot",
+                          "role":  "publish/subscribe device transport",
+                          "status":  "PROVIDER_REQUIRED"
+                      },
+                      {
+                          "id":  "bluetooth",
+                          "class":  "local-radio",
+                          "role":  "BLE discovery/control",
+                          "status":  "PHYSICAL_READ_DISCOVERY_VERIFIED",
+                          "lastVerifiedAt":  "2026-09-23T22:01:57.9010061Z",
+                          "qualifiedCapability":  "device.bluetooth.list-bonded"
+                      },
+                      {
+                          "id":  "usb",
+                          "class":  "local-bus",
+                          "role":  "USB device discovery/control",
+                          "status":  "LEGACY_PROVIDER_SOURCE_RECOVERED"
+                      },
+                      {
+                          "id":  "serial",
+                          "class":  "local-bus",
+                          "role":  "serial device discovery/control",
+                          "status":  "LEGACY_PROVIDER_SOURCE_RECOVERED"
+                      },
+                      {
+                          "id":  "hid",
+                          "class":  "local-bus",
+                          "role":  "human-interface device access",
+                          "status":  "LEGACY_PROVIDER_SOURCE_RECOVERED"
+                      },
+                      {
+                          "id":  "ssdp-upnp",
+                          "class":  "network",
+                          "role":  "LAN service/device discovery/control",
+                          "status":  "LEGACY_PROVIDER_SOURCE_RECOVERED"
+                      },
+                      {
+                          "id":  "mdns",
+                          "class":  "network",
+                          "role":  "LAN service discovery",
+                          "status":  "LEGACY_PROVIDER_SOURCE_RECOVERED"
+                      },
+                      {
+                          "id":  "snmp",
+                          "class":  "network",
+                          "role":  "managed network device observation/control where supported",
+                          "status":  "LEGACY_PROVIDER_SOURCE_RECOVERED"
+                      },
+                      {
+                          "id":  "cec",
+                          "class":  "av",
+                          "role":  "HDMI-CEC control",
+                          "status":  "LEGACY_PROVIDER_SOURCE_RECOVERED"
+                      },
+                      {
+                          "id":  "ir-rf",
+                          "class":  "legacy-remote",
+                          "role":  "IR/RF control through physical proxy",
+                          "status":  "PHYSICAL_PROXY_REQUIRED"
+                      },
+                      {
+                          "id":  "modbus",
+                          "class":  "industrial",
+                          "role":  "Modbus device access",
+                          "status":  "LEGACY_PROVIDER_SOURCE_RECOVERED"
+                      },
+                      {
+                          "id":  "canbus",
+                          "class":  "industrial",
+                          "role":  "CAN bus device access",
+                          "status":  "LEGACY_PROVIDER_SOURCE_RECOVERED"
+                      },
+                      {
+                          "id":  "nmea",
+                          "class":  "sensor",
+                          "role":  "NMEA device/telemetry access",
+                          "status":  "LEGACY_PROVIDER_SOURCE_RECOVERED"
+                      }
+                  ]
 }
