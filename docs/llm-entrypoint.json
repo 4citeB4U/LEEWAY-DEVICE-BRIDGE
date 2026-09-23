@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "0.2.0",
+  "name": "LeeWay Device Bridge",
+  "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "role": "PUBLIC_DISCOVERY_AND_DISTRIBUTION_AUTHORITY",
+  "runtimeLocation": "PHONE_LOCAL",
+  "dockerRuntimeRequired": false,
+  "principles": [
+    "available != authorized",
+    "generated != executed",
+    "GitHub Pages distributes; the phone executes",
+    "models and LLM clients are replaceable"
+  ],
+  "discovery": {
+    "packageManifest": "./package-manifest.json",
+    "capabilityContract": "../contracts/capability.schema.json",
+    "commandContract": "../contracts/command.schema.json",
+    "sessionContract": "../contracts/session.schema.json",
+    "pairingContract": "../contracts/pairing.schema.json"
+  },
+  "phoneRuntime": {
+    "required": true,
+    "transport": "NEGOTIATED_BY_INSTALLED_RUNTIME",
+    "endpoint": "DISCOVER_FROM_PAIRED_DEVICE",
+    "offlineCapable": true,
+    "ownerStopRequired": true
+  },
+  "llmContract": {
+    "rule": "LLMs consume the Device Bridge contract; no model becomes device authority.",
+    "requiredSequence": [
+      "read llm-entrypoint",
+      "read package/capability/session contracts",
+      "discover paired phone runtime",
+      "request capability",
+      "pass owner/LeeWay authorization",
+      "execute on phone",
+      "return receipt"
+    ]
+  },
+  "status": {
+    "pagesContract": "SOURCE_READY_RUNTIME_UNVERIFIED",
+    "androidPackage": "BUILD_REQUIRED",
+    "physicalPhonePairing": "NOT_YET_VERIFIED"
+  }
+}
