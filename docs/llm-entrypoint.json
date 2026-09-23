@@ -19,7 +19,8 @@
     "pairingContract": "../contracts/pairing.schema.json",
     "providerRegistry": "./provider-registry.json",
     "providerContract": "../contracts/provider.schema.json",
-    "universalHarness": "./UNIVERSAL-DEVICE-HARNESS.md"
+    "universalHarness": "./UNIVERSAL-DEVICE-HARNESS.md",
+    "deviceContract": "../contracts/device.schema.json"
   },
   "phoneRuntime": {
     "required": true,
@@ -38,7 +39,8 @@
       "pass owner/LeeWay authorization",
       "execute on phone",
       "return receipt"
-    ]
+    ],
+    "deviceModel": "Every discovered physical or logical device SHALL normalize to the LeeWay Universal Device contract before governed execution."
   },
   "status": {
     "pagesContract": "VERIFIED_LIVE",
