@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "0.1.0",
+  "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "evidenceType": "N8N_TO_PHONE_DEVICE_BRIDGE_LIVE_QUALIFICATION",
+  "observedAt": "2026-09-23T22:14:00Z",
+  "workflowId": "leeway-device-bridge-health-v1",
+  "workflowName": "LEEWAY-DEVICE-BRIDGE-HEALTH",
+  "n8nHealth": "PASS",
+  "workflowActivation": "PASS",
+  "webhookRegistration": {
+    "method": "POST",
+    "path": "leeway-device-bridge-health"
+  },
+  "executionPath": [
+    "n8n development runtime",
+    "host.docker.internal:5323",
+    "ADB forward",
+    "Galaxy Z Fold6 phone-local bridge",
+    "/health"
+  ],
+  "result": {
+    "httpStatus": 200,
+    "phoneRuntimeAuthority": "PHONE_LOCAL_RUNTIME",
+    "phoneTransport": "LOCAL_LOOPBACK"
+  },
+  "productionDockerRequired": false,
+  "classification": "DEVELOPMENT_EXECUTION_VERIFIED"
+}
