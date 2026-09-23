@@ -1,71 +1,78 @@
 {
-    "schemaVersion":  "0.2.0",
-    "name":  "LeeWay Device Bridge",
-    "authority":  "4citeB4U/LEEWAY-DEVICE-BRIDGE",
-    "role":  "PUBLIC_DISCOVERY_AND_DISTRIBUTION_AUTHORITY",
-    "runtimeLocation":  "PHONE_LOCAL",
-    "dockerRuntimeRequired":  false,
-    "principles":  [
-                       "available != authorized",
-                       "generated != executed",
-                       "GitHub Pages distributes; the phone executes",
-                       "models and LLM clients are replaceable"
-                   ],
-    "discovery":  {
-                      "packageManifest":  "./package-manifest.json",
-                      "capabilityContract":  "../contracts/capability.schema.json",
-                      "commandContract":  "../contracts/command.schema.json",
-                      "sessionContract":  "../contracts/session.schema.json",
-                      "pairingContract":  "../contracts/pairing.schema.json",
-                      "providerRegistry":  "./provider-registry.json",
-                      "providerContract":  "../contracts/provider.schema.json",
-                      "universalHarness":  "./UNIVERSAL-DEVICE-HARNESS.md"
-                  },
-    "phoneRuntime":  {
-                         "required":  true,
-                         "transport":  "NEGOTIATED_BY_INSTALLED_RUNTIME",
-                         "endpoint":  "DISCOVER_FROM_PAIRED_DEVICE",
-                         "offlineCapable":  true,
-                         "ownerStopRequired":  true
-                     },
-    "llmContract":  {
-                        "rule":  "LLMs consume the Device Bridge contract; no model becomes device authority.",
-                        "requiredSequence":  [
-                                                 "read llm-entrypoint",
-                                                 "read package/capability/session contracts",
-                                                 "discover paired phone runtime",
-                                                 "request capability",
-                                                 "pass owner/LeeWay authorization",
-                                                 "execute on phone",
-                                                 "return receipt"
-                                             ]
-                    },
-    "status":  {
-                   "pagesContract":  "LIVE_VERIFIED",
-                   "androidPackage":  "PHYSICAL_USB_QUALIFIED_DEBUG",
-                   "physicalPhonePairing":  "LOCAL_USB_RUNTIME_VERIFIED_REMOTE_PAIRING_NOT_YET",
-                   "universalDeviceHarness":  "SOURCE_PROMOTED",
-                   "homeAssistant":  "SOURCE_PROMOTED_CONTRACT_MOCK_VERIFIED_LIVE_INSTANCE_NOT_FOUND",
-                   "n8n":  "DEVICE_WORKFLOW_EXECUTION_VERIFIED_DEVELOPMENT"
-               },
-    "deviceFabric":  {
-                         "modelIndependent":  true,
-                         "homeAssistantRole":  "DEVICE_AGGREGATOR_PROVIDER",
-                         "n8nRole":  "DETERMINISTIC_AUTOMATION_PROVIDER",
-                         "directProviders":  [
-                                                 "bluetooth",
-                                                 "usb",
-                                                 "serial",
-                                                 "hid",
-                                                 "ssdp-upnp",
-                                                 "mdns",
-                                                 "snmp",
-                                                 "cec",
-                                                 "modbus",
-                                                 "canbus",
-                                                 "nmea",
-                                                 "ir-rf"
-                                             ],
-                         "rule":  "Providers donate capabilities; Device Bridge remains authority."
-                     }
+  "schemaVersion": "0.2.0",
+  "name": "LeeWay Device Bridge",
+  "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "role": "PUBLIC_DISCOVERY_AND_DISTRIBUTION_AUTHORITY",
+  "runtimeLocation": "PHONE_LOCAL",
+  "dockerRuntimeRequired": false,
+  "principles": [
+    "available != authorized",
+    "generated != executed",
+    "GitHub Pages distributes; the phone executes",
+    "models and LLM clients are replaceable"
+  ],
+  "discovery": {
+    "packageManifest": "./package-manifest.json",
+    "capabilityContract": "../contracts/capability.schema.json",
+    "commandContract": "../contracts/command.schema.json",
+    "sessionContract": "../contracts/session.schema.json",
+    "pairingContract": "../contracts/pairing.schema.json",
+    "providerRegistry": "./provider-registry.json",
+    "providerContract": "../contracts/provider.schema.json",
+    "universalHarness": "./UNIVERSAL-DEVICE-HARNESS.md"
+  },
+  "phoneRuntime": {
+    "required": true,
+    "transport": "NEGOTIATED_BY_INSTALLED_RUNTIME",
+    "endpoint": "DISCOVER_FROM_PAIRED_DEVICE",
+    "offlineCapable": true,
+    "ownerStopRequired": true
+  },
+  "llmContract": {
+    "rule": "LLMs consume the Device Bridge contract; no model becomes device authority.",
+    "requiredSequence": [
+      "read llm-entrypoint",
+      "read package/capability/session contracts",
+      "discover paired phone runtime",
+      "request capability",
+      "pass owner/LeeWay authorization",
+      "execute on phone",
+      "return receipt"
+    ]
+  },
+  "status": {
+    "pagesContract": "VERIFIED_LIVE",
+    "androidPackage": "V0_3_0_PAGES_DISTRIBUTED_PHYSICAL_INSTALL_PASS",
+    "physicalPhonePairing": "USB_ADB_PHYSICAL_PHONE_VERIFIED",
+    "universalDeviceHarness": "SOURCE_PROMOTED",
+    "homeAssistant": "NOT_OBSERVED_ON_CURRENT_NETWORK_PROVIDER_CONTRACT_VERIFIED",
+    "n8n": "DEVELOPMENT_EXECUTION_VERIFIED_PHONE_BRIDGE_200",
+    "phoneLocalRuntime": "PHYSICAL_EXECUTION_VERIFIED",
+    "bluetooth": "GALAXY_Z_FOLD6_PROVIDER_QUALIFIED"
+  },
+  "deviceFabric": {
+    "modelIndependent": true,
+    "homeAssistantRole": "DEVICE_AGGREGATOR_PROVIDER",
+    "n8nRole": "DETERMINISTIC_AUTOMATION_PROVIDER",
+    "directProviders": [
+      "bluetooth",
+      "usb",
+      "serial",
+      "hid",
+      "ssdp-upnp",
+      "mdns",
+      "snmp",
+      "cec",
+      "modbus",
+      "canbus",
+      "nmea",
+      "ir-rf"
+    ],
+    "rule": "Providers donate capabilities; Device Bridge remains authority."
+  },
+  "evidence": {
+    "pagesInstall": "../evidence/GITHUB-PAGES-PHONE-INSTALL-QUALIFICATION-20260923.json",
+    "n8nPhoneBridge": "../evidence/N8N-PHONE-BRIDGE-LIVE-QUALIFICATION-20260923.json",
+    "homeAssistantDiscovery": "../evidence/HOME-ASSISTANT-LIVE-DISCOVERY-20260923.json"
+  }
 }
