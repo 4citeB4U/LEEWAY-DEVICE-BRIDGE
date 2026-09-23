@@ -1,0 +1,13 @@
+{
+    "receiptType":  "LEEWAY_DEVICE_BRIDGE_NETWORK_DISCOVERY_PROVIDER_QUALIFICATION",
+    "timestamp":  "2026-09-23T22:22:00Z",
+    "authority":  "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+    "result":  "PASS",
+    "capability":  "device.network.discover",
+    "physicalPhoneExecution":  true,
+    "observations":  0,
+    "packageSha256":  "321578661734b782d139859ae1f8133c8fa138fc3497f96376e75050dfc7a775",
+    "packageSizeBytes":  12710148,
+    "dockerRuntimeRequired":  false,
+    "evidencePath":  "evidence/NETWORK-DISCOVERY-PROVIDER-QUALIFICATION-20260923.json"
+}
