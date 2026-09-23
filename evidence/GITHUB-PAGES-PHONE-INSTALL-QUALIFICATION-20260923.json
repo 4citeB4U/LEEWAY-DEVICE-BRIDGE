@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "0.1.0",
+  "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "evidenceType": "GITHUB_PAGES_TO_PHONE_INSTALL_QUALIFICATION",
+  "observedAt": "2026-09-23T22:16:00Z",
+  "pagesUrl": "https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/downloads/leeway-device-bridge-android-v0.3.0-debug.apk",
+  "package": {
+    "versionName": "0.3.0",
+    "versionCode": 3,
+    "sizeBytes": 12696400,
+    "sha256": "82605b21dbe4ae08c0f4870a97deca31714728b256a8398ce9a69314beaa5222",
+    "hashMatch": true
+  },
+  "phone": {
+    "model": "SM-F956U",
+    "marketingName": "Galaxy Z Fold6",
+    "installResult": "PASS"
+  },
+  "distribution": "GITHUB_PAGES",
+  "runtime": "PHONE_LOCAL",
+  "dockerRequired": false,
+  "formulaSizeGate": "PASS_NO_COMPRESSION_REQUIRED"
+}
