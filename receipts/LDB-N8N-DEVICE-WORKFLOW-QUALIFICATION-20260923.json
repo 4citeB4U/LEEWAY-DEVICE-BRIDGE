@@ -1,0 +1,13 @@
+{
+    "receiptId":  "LDB-N8N-DEVICE-WORKFLOW-QUALIFICATION-20260923",
+    "timestamp":  "2026-09-23T22:10:08.5577350Z",
+    "deviceId":  "LDB-b1219fbe-25e8-4a8a-9e6b-6bdaeb83775a",
+    "capability":  "automation.n8n.device-bridge-health",
+    "authorizationBasis":  "Creator authorization; n8n used as development validator only",
+    "preGate":  "n8n health PASS; GitHub workflow source contract PASS; phone-local bridge running",
+    "result":  "PASS",
+    "postGate":  "n8n workflow returned HTTP 200 from Galaxy Z Fold6 with authority PHONE_LOCAL_RUNTIME",
+    "evidenceHashes":  [
+                           "f8e7df368225d33968e8f5eebe871be85b5281a36d609286bc6da3eeeaf9ea2e"
+                       ]
+}

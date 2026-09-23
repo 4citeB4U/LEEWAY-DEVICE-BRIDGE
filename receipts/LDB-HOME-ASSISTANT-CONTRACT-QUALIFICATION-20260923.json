@@ -1,0 +1,13 @@
+{
+    "receiptId":  "LDB-HOME-ASSISTANT-CONTRACT-QUALIFICATION-20260923",
+    "timestamp":  "2026-09-23T22:10:08.5577350Z",
+    "deviceId":  "NO_LIVE_HA_DEVICE",
+    "capability":  "provider.home-assistant.contract",
+    "authorizationBasis":  "Creator authorization; official Home Assistant REST contract",
+    "preGate":  "Recovered LeeWay HA source inspected; stale localhost default removed",
+    "result":  "PASS",
+    "postGate":  "Provider source promoted and mock contract verified; live HA instance remains not observed",
+    "evidenceHashes":  [
+                           "c053719ce0c9bf844580390d8fea282621b0a4e12f8a8b5447689084c6eef40c"
+                       ]
+}

@@ -13,22 +13,28 @@
                           "id":  "home-assistant",
                           "class":  "aggregator",
                           "role":  "device/entity state and actuation",
-                          "status":  "CONTRACT_PROVEN_LIVE_INSTANCE_NOT_VERIFIED",
+                          "status":  "SOURCE_PROMOTED_CONTRACT_MOCK_VERIFIED_LIVE_INSTANCE_NOT_FOUND",
                           "interfaces":  [
                                              "REST",
                                              "WebSocket"
-                                         ]
+                                         ],
+                          "liveInstanceObserved":  false,
+                          "lastContractVerifiedAt":  "2026-09-23T22:10:08.5577350Z",
+                          "sourcePath":  "providers/home-assistant/index.mjs"
                       },
                       {
                           "id":  "n8n",
                           "class":  "automation",
                           "role":  "deterministic workflows schedules retries callbacks MCP",
-                          "status":  "LIVE_HEALTHY_DEVICE_WORKFLOW_LIBRARY_INCOMPLETE",
+                          "status":  "DEVICE_WORKFLOW_EXECUTION_VERIFIED_DEVELOPMENT",
                           "interfaces":  [
                                              "Webhook",
                                              "REST",
                                              "MCP"
-                                         ]
+                                         ],
+                          "lastVerifiedAt":  "2026-09-23T22:10:08.5577350Z",
+                          "qualifiedCapability":  "automation.n8n.device-bridge-health",
+                          "workflowSource":  "providers/n8n/workflows/leeway-device-bridge-health.json"
                       },
                       {
                           "id":  "matter",
