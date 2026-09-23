@@ -1,0 +1,24 @@
+{
+    "schemaVersion":  "0.1.0",
+    "proofType":  "N8N_DEVICE_BRIDGE_WORKFLOW_EXECUTION",
+    "timestamp":  "2026-09-23T22:10:08.5577350Z",
+    "n8nVersion":  "2.32.6",
+    "developmentRuntime":  "leeway-n8n-dev",
+    "productionDockerRequired":  false,
+    "workflow":  {
+                     "id":  "leeway-device-bridge-health-v1",
+                     "name":  "LEEWAY-DEVICE-BRIDGE-HEALTH",
+                     "sourcePath":  "providers/n8n/workflows/leeway-device-bridge-health.json",
+                     "import":  "PASS",
+                     "publish":  "PASS",
+                     "triggerHttpStatus":  200
+                 },
+    "deviceBridgeResponse":  {
+                                 "ok":  true,
+                                 "running":  true,
+                                 "agentAccessEnabled":  true,
+                                 "transport":  "LOCAL_LOOPBACK",
+                                 "authority":  "PHONE_LOCAL_RUNTIME"
+                             },
+    "transportPath":  "n8n -\u003e host development transport -\u003e ADB forward -\u003e Galaxy Z Fold6 phone-local bridge"
+}

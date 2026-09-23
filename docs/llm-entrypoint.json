@@ -45,8 +45,8 @@
                    "androidPackage":  "PHYSICAL_USB_QUALIFIED_DEBUG",
                    "physicalPhonePairing":  "LOCAL_USB_RUNTIME_VERIFIED_REMOTE_PAIRING_NOT_YET",
                    "universalDeviceHarness":  "SOURCE_PROMOTED",
-                   "homeAssistant":  "CONTRACT_PROVEN_LIVE_INSTANCE_NOT_VERIFIED",
-                   "n8n":  "LIVE_HEALTHY_DEVICE_WORKFLOW_LIBRARY_INCOMPLETE"
+                   "homeAssistant":  "SOURCE_PROMOTED_CONTRACT_MOCK_VERIFIED_LIVE_INSTANCE_NOT_FOUND",
+                   "n8n":  "DEVICE_WORKFLOW_EXECUTION_VERIFIED_DEVELOPMENT"
                },
     "deviceFabric":  {
                          "modelIndependent":  true,

@@ -1,0 +1,19 @@
+{
+    "schemaVersion":  "0.1.0",
+    "proofType":  "HOME_ASSISTANT_PROVIDER_CONTRACT_QUALIFICATION",
+    "timestamp":  "2026-09-23T22:10:08.5577350Z",
+    "sourcePath":  "providers/home-assistant/index.mjs",
+    "contractTest":  "PASS",
+    "verifiedEndpoints":  [
+                              "/api/",
+                              "/api/states",
+                              "/api/states/\u003centity_id\u003e",
+                              "/api/services/\u003cdomain\u003e/\u003cservice\u003e"
+                          ],
+    "liveInstanceObserved":  false,
+    "lan8123Discovery":  "NONE",
+    "hostnameDiscovery":  "NONE",
+    "physicalDeviceActuation":  "NOT_EXECUTED",
+    "physicalPostStateVerification":  "NOT_EXECUTED",
+    "classification":  "SOURCE_PROMOTED_CONTRACT_MOCK_VERIFIED_LIVE_INSTANCE_NOT_FOUND"
+}

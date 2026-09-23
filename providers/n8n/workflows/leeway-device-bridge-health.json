@@ -1,0 +1,58 @@
+[
+  {
+    "id": "leeway-device-bridge-health-v1",
+    "name": "LEEWAY-DEVICE-BRIDGE-HEALTH",
+    "active": false,
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "leeway-device-bridge-health",
+          "responseMode": "lastNode",
+          "options": {}
+        },
+        "webhookId": "leeway-device-bridge-health",
+        "name": "Webhook Trigger",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [100, 200],
+        "id": "a83bfeb6-46db-4d49-b45f-0ffb4bdd78f0"
+      },
+      {
+        "parameters": {
+          "url": "http://host.docker.internal:5323/health",
+          "options": {}
+        },
+        "name": "Phone Device Bridge Health",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [360, 200],
+        "id": "23f42db6-79e0-421c-8f08-e91bf19b9c10"
+      }
+    ],
+    "connections": {
+      "Webhook Trigger": {
+        "main": [
+          [
+            {
+              "node": "Phone Device Bridge Health",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "settings": {
+      "executionOrder": "v1"
+    },
+    "staticData": null,
+    "meta": {
+      "leewayAuthority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+      "productionDockerRequired": false,
+      "workflowRole": "DEVELOPMENT_QUALIFICATION_AND_OPTIONAL_N8N_PROVIDER"
+    },
+    "pinData": null,
+    "tags": []
+  }
+]
