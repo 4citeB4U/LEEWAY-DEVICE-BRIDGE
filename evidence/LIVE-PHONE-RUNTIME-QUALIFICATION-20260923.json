@@ -1,0 +1,58 @@
+{
+    "schemaVersion":  "0.2.0",
+    "proofType":  "LIVE_PHONE_RUNTIME_QUALIFICATION",
+    "timestamp":  "2026-09-23T21:52:40.1018560Z",
+    "repository":  "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+    "branch":  "feature/live-device-runtime-20260923",
+    "device":  {
+                   "leeWayDeviceId":  "LDB-b1219fbe-25e8-4a8a-9e6b-6bdaeb83775a",
+                   "manufacturer":  "samsung",
+                   "model":  "SM-F956U",
+                   "product":  "q6qsqw",
+                   "androidRelease":  "16",
+                   "sdkInt":  36,
+                   "abi":  "arm64-v8a",
+                   "connection":  "USB_ADB"
+               },
+    "package":  {
+                    "file":  "docs/downloads/leeway-device-bridge-android-v0.2.0-debug.apk",
+                    "sizeBytes":  12689164,
+                    "maxTargetBytes":  104857600,
+                    "underTarget":  true,
+                    "sha256":  "db4a3f893e2ba584f8d33afac22e507929a58914acee7f07d52e55a7cb097c8d",
+                    "versionName":  "0.2.0",
+                    "versionCode":  2
+                },
+    "sourceTests":  {
+                        "sourceIntegrity":  "PASS",
+                        "pagesContract":  "PASS",
+                        "androidLiveRuntimeSource":  "PASS",
+                        "formulaF8DeviceGateSource":  "PASS"
+                    },
+    "phoneSelfTest":  {
+                          "bridgeRunning":  true,
+                          "agentAccessEnabled":  true,
+                          "missingTokenRejected":  true,
+                          "wrongTokenRejected":  true,
+                          "ownerTokenAcceptedInternally":  true,
+                          "nativePassportAuthority":  "NATIVE_ANDROID_OBSERVED",
+                          "f8ExecuteQa":  69,
+                          "f8ExecuteDisposition":  "EXECUTE",
+                          "f8EmptyConditionQa":  0,
+                          "f8EmptyConditionDisposition":  "HOLD",
+                          "canonicalPolicyGapClosed":  false,
+                          "secretExported":  false
+                      },
+    "externalClientProof":  {
+                                "transport":  "ADB_FORWARD_TO_PHONE_LOOPBACK",
+                                "healthHttpStatus":  200,
+                                "healthAuthority":  "PHONE_LOCAL_RUNTIME",
+                                "protectedRouteBeforeStopHttpStatus":  401,
+                                "protectedRouteBeforeStopMeaning":  "UNAUTHORIZED_WITHOUT_PAIRING_TOKEN",
+                                "ownerStopInvoked":  true,
+                                "protectedRouteAfterStopHttpStatus":  403,
+                                "protectedRouteAfterStopMeaning":  "AGENT_ACCESS_DISABLED"
+                            },
+    "dockerRuntimeRequired":  false,
+    "productionDistribution":  "GITHUB_PAGES"
+}

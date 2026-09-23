@@ -1,50 +1,52 @@
 {
-  "schemaVersion": "0.2.0",
-  "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
-  "distributionRole": "GITHUB_PAGES_DISCOVERY_AND_DOWNLOAD",
-  "runtimeRole": "PHONE_LOCAL",
-  "targetBootstrapPackageMaxBytes": 104857600,
-  "packages": [
-    {
-      "id": "android-universal-debug",
-      "platform": "android",
-      "architecture": "any",
-      "channel": "development",
-      "label": "LeeWay Device Bridge for Android",
-      "source": "github-actions-artifact",
-      "status": "BUILD_REQUIRED",
-      "nativeVerification": true,
-      "runtimeLocation": "phone",
-      "dockerRequired": false,
-      "downloadUrl": null,
-      "sha256": null,
-      "sizeBytes": null,
-      "formulaQualification": {
-        "required": true,
-        "status": "UNVERIFIED",
-        "targetMaxBytes": 104857600,
-        "rule": "No compression ratio or reconstruction claim without measured evidence."
-      }
-    },
-    {
-      "id": "apple-native",
-      "platform": "ios",
-      "architecture": "any",
-      "channel": "planned",
-      "label": "LeeWay Device Bridge for Apple",
-      "source": "apple-distribution",
-      "status": "NOT_BUILT",
-      "nativeVerification": true,
-      "runtimeLocation": "phone",
-      "dockerRequired": false,
-      "downloadUrl": null,
-      "sha256": null,
-      "sizeBytes": null,
-      "formulaQualification": {
-        "required": true,
-        "status": "NOT_STARTED",
-        "targetMaxBytes": 104857600
-      }
-    }
-  ]
+    "schemaVersion":  "0.2.0",
+    "authority":  "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+    "distributionRole":  "GITHUB_PAGES_DISCOVERY_AND_DOWNLOAD",
+    "runtimeRole":  "PHONE_LOCAL",
+    "targetBootstrapPackageMaxBytes":  104857600,
+    "packages":  [
+                     {
+                         "id":  "android-universal-debug",
+                         "platform":  "android",
+                         "architecture":  "any",
+                         "channel":  "development",
+                         "label":  "LeeWay Device Bridge for Android",
+                         "source":  "github-pages",
+                         "status":  "PHYSICAL_USB_QUALIFIED_DEBUG",
+                         "nativeVerification":  true,
+                         "runtimeLocation":  "phone",
+                         "dockerRequired":  false,
+                         "downloadUrl":  "./downloads/leeway-device-bridge-android-v0.2.0-debug.apk",
+                         "sha256":  "db4a3f893e2ba584f8d33afac22e507929a58914acee7f07d52e55a7cb097c8d",
+                         "sizeBytes":  12689164,
+                         "formulaQualification":  {
+                                                      "required":  true,
+                                                      "status":  "MEASURED_SIZE_GATE_PASS_NO_COMPRESSION_REQUIRED",
+                                                      "targetMaxBytes":  104857600,
+                                                      "rule":  "No compression ratio or reconstruction claim without measured evidence.",
+                                                      "measuredBytes":  12689164,
+                                                      "measuredSha256":  "db4a3f893e2ba584f8d33afac22e507929a58914acee7f07d52e55a7cb097c8d"
+                                                  }
+                     },
+                     {
+                         "id":  "apple-native",
+                         "platform":  "ios",
+                         "architecture":  "any",
+                         "channel":  "planned",
+                         "label":  "LeeWay Device Bridge for Apple",
+                         "source":  "apple-distribution",
+                         "status":  "NOT_BUILT",
+                         "nativeVerification":  true,
+                         "runtimeLocation":  "phone",
+                         "dockerRequired":  false,
+                         "downloadUrl":  null,
+                         "sha256":  null,
+                         "sizeBytes":  null,
+                         "formulaQualification":  {
+                                                      "required":  true,
+                                                      "status":  "NOT_STARTED",
+                                                      "targetMaxBytes":  104857600
+                                                  }
+                     }
+                 ]
 }
