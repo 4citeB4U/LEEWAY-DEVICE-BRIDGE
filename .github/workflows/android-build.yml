@@ -1,12 +1,16 @@
 name: Android Build
 on:
   push:
-    paths: ["apps/android/**", "contracts/**", ".github/workflows/android-build.yml"]
+    paths: ["apps/android/**", "contracts/**", "tests/**", ".github/workflows/android-build.yml"]
   pull_request:
-    paths: ["apps/android/**", ".github/workflows/android-build.yml"]
+    paths: ["apps/android/**", "contracts/**", "tests/**", ".github/workflows/android-build.yml"]
+  workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: apps/android
@@ -16,11 +20,28 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+      - uses: android-actions/setup-android@v3
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.9"
-      - run: gradle assembleDebug
+      - name: Build compact Android package
+        run: gradle --no-daemon assembleDebug
+      - name: Measure and hash package
+        shell: bash
+        run: |
+          APK=app/build/outputs/apk/debug/app-debug.apk
+          test -f "$APK"
+          BYTES=$(stat -c%s "$APK")
+          SHA=$(sha256sum "$APK" | awk '{print $1}')
+          echo "package_bytes=$BYTES" | tee package-evidence.txt
+          echo "sha256=$SHA" | tee -a package-evidence.txt
+          if [ "$BYTES" -gt 104857600 ]; then
+            echo "Bootstrap package exceeds LeeWay 100 MiB target."
+            exit 1
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: leeway-device-bridge-debug-apk
-          path: apps/android/app/build/outputs/apk/debug/app-debug.apk
+          path: |
+            apps/android/app/build/outputs/apk/debug/app-debug.apk
+            apps/android/package-evidence.txt
