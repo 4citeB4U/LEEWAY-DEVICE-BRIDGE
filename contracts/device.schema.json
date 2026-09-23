@@ -1,16 +1,160 @@
 {
-  "$schema":"https://json-schema.org/draft/2020-12/schema",
-  "$id":"https://leeway.local/contracts/device.schema.json",
-  "title":"LeeWay Device",
-  "type":"object",
-  "required":["deviceId","platform","capabilities","mode"],
-  "properties":{
-    "deviceId":{"type":"string","minLength":1},
-    "platform":{"enum":["android","ios","ipados","unknown"]},
-    "manufacturer":{"type":"string"},
-    "model":{"type":"string"},
-    "osVersion":{"type":"string"},
-    "mode":{"enum":["LOCAL_OFFLINE","LOCAL_NETWORK","REMOTE"]},
-    "capabilities":{"type":"array","items":{"$ref":"capability.schema.json"}}
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leeway.local/contracts/device.schema.json",
+  "title": "LeeWay Universal Device",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "deviceId",
+    "canonicalName",
+    "aliases",
+    "deviceClass",
+    "provider",
+    "transport",
+    "capabilities",
+    "supported",
+    "available",
+    "authorized",
+    "active",
+    "healthy",
+    "verified",
+    "desiredState",
+    "reportedState",
+    "trustState",
+    "revocationState",
+    "evidence",
+    "receipts"
+  ],
+  "properties": {
+    "deviceId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "canonicalName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "aliases": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "manufacturer": {
+      "type": ["string", "null"]
+    },
+    "model": {
+      "type": ["string", "null"]
+    },
+    "deviceClass": {
+      "type": "string",
+      "minLength": 1
+    },
+    "platform": {
+      "type": "string",
+      "enum": [
+        "android",
+        "ios",
+        "ipados",
+        "windows",
+        "linux",
+        "macos",
+        "embedded",
+        "iot",
+        "appliance",
+        "av",
+        "network",
+        "industrial",
+        "unknown"
+      ]
+    },
+    "osVersion": {
+      "type": ["string", "null"]
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["LOCAL_OFFLINE", "LOCAL_NETWORK", "REMOTE", "UNKNOWN"]
+    },
+    "provider": {
+      "type": "string",
+      "minLength": 1
+    },
+    "transport": {
+      "type": "string",
+      "minLength": 1
+    },
+    "capabilities": {
+      "type": "array",
+      "items": { "$ref": "capability.schema.json" }
+    },
+    "supported": { "type": "boolean" },
+    "available": { "type": "boolean" },
+    "authorized": { "type": "boolean" },
+    "active": { "type": "boolean" },
+    "healthy": { "type": "boolean" },
+    "verified": { "type": "boolean" },
+    "desiredState": {
+      "type": "object"
+    },
+    "reportedState": {
+      "type": "object"
+    },
+    "trustState": {
+      "type": "string",
+      "enum": [
+        "UNREGISTERED",
+        "DISCOVERED",
+        "REGISTERED",
+        "TRUSTED",
+        "BLOCKED",
+        "REVOKED",
+        "UNKNOWN"
+      ]
+    },
+    "revocationState": {
+      "type": "string",
+      "enum": ["ACTIVE", "REVOKED", "UNKNOWN"]
+    },
+    "lastSeen": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "lastVerified": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["classification"],
+        "properties": {
+          "classification": {
+            "type": "string",
+            "enum": [
+              "VERIFIED",
+              "OBSERVED",
+              "INFERRED",
+              "PROPOSED",
+              "UNVERIFIED",
+              "FAILED",
+              "BLOCKED"
+            ]
+          },
+          "source": { "type": ["string", "null"] },
+          "detail": { "type": ["string", "null"] },
+          "timestamp": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "receipts": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "metadata": {
+      "type": "object"
+    }
   }
 }
