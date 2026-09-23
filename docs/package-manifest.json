@@ -1,25 +1,50 @@
 {
-  "schemaVersion":"0.1.0",
-  "packages":[
+  "schemaVersion": "0.2.0",
+  "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "distributionRole": "GITHUB_PAGES_DISCOVERY_AND_DOWNLOAD",
+  "runtimeRole": "PHONE_LOCAL",
+  "targetBootstrapPackageMaxBytes": 104857600,
+  "packages": [
     {
-      "id":"android-universal-debug",
-      "platform":"android",
-      "architecture":"any",
-      "channel":"development",
-      "label":"LeeWay Device Bridge for Android",
-      "source":"github-actions-artifact",
-      "status":"BUILD_REQUIRED",
-      "nativeVerification":true
+      "id": "android-universal-debug",
+      "platform": "android",
+      "architecture": "any",
+      "channel": "development",
+      "label": "LeeWay Device Bridge for Android",
+      "source": "github-actions-artifact",
+      "status": "BUILD_REQUIRED",
+      "nativeVerification": true,
+      "runtimeLocation": "phone",
+      "dockerRequired": false,
+      "downloadUrl": null,
+      "sha256": null,
+      "sizeBytes": null,
+      "formulaQualification": {
+        "required": true,
+        "status": "UNVERIFIED",
+        "targetMaxBytes": 104857600,
+        "rule": "No compression ratio or reconstruction claim without measured evidence."
+      }
     },
     {
-      "id":"apple-native",
-      "platform":"ios",
-      "architecture":"any",
-      "channel":"planned",
-      "label":"LeeWay Device Bridge for Apple",
-      "source":"apple-distribution",
-      "status":"NOT_BUILT",
-      "nativeVerification":true
+      "id": "apple-native",
+      "platform": "ios",
+      "architecture": "any",
+      "channel": "planned",
+      "label": "LeeWay Device Bridge for Apple",
+      "source": "apple-distribution",
+      "status": "NOT_BUILT",
+      "nativeVerification": true,
+      "runtimeLocation": "phone",
+      "dockerRequired": false,
+      "downloadUrl": null,
+      "sha256": null,
+      "sizeBytes": null,
+      "formulaQualification": {
+        "required": true,
+        "status": "NOT_STARTED",
+        "targetMaxBytes": 104857600
+      }
     }
   ]
 }
