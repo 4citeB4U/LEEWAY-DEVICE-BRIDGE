@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "0.2.0",
+  "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "publication": {
+    "source": "GITHUB_PAGES",
+    "dockerRequired": false
+  },
+  "execution": {
+    "privilegedRuntime": "PHONE_LOCAL_NATIVE_PACKAGE",
+    "pagesRole": ["discovery","contracts","provider-registry","package-handoff","offline-bootstrap-ui"],
+    "phoneRole": ["device-discovery","pairing","provider-execution","automation-gating","post-state-verification","receipts"]
+  },
+  "providers": {
+    "homeAssistant": "OPTIONAL_AGGREGATOR_PROVIDER",
+    "n8n": "OPTIONAL_AUTOMATION_PROVIDER",
+    "direct": ["bluetooth","usb","serial","hid","ssdp-upnp","mdns","snmp","cec","modbus","canbus","nmea","ir-rf"]
+  },
+  "hardRule": "No provider or development container is required for the Pages site itself to publish or for the phone runtime to start."
+}
