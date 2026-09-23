@@ -5,20 +5,27 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0b0f14">
   <title>LeeWay Device Bridge</title>
+  <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
 <main class="shell">
   <header>
     <p class="eyebrow">LEEWAY DEVICE BRIDGE</p>
-    <h1>Know the device before we hand it a key.</h1>
-    <p class="lede">Lightweight discovery prepares the correct native installation path. Exact hardware identity is verified by the installed app—not guessed by the browser.</p>
+    <h1>Universal device harness from GitHub Pages.</h1>
+    <p class="lede">GitHub Pages publishes discovery, contracts and the verified phone package. The installed phone runtime performs privileged device execution locally.</p>
   </header>
 
   <section class="status-grid" aria-label="Bootstrap status">
+    <article><span>PAGES</span><strong id="pagesState">LIVE</strong></article>
     <article><span>DISCOVERY</span><strong id="discoveryState">READY</strong></article>
-    <article><span>PROFILE</span><strong id="profileState">PENDING</strong></article>
     <article><span>PACKAGE</span><strong id="packageState">PENDING</strong></article>
+  </section>
+
+  <section class="panel compact">
+    <h2>LLM entrypoint</h2>
+    <p class="muted">Any authorized model can begin from the same public machine-readable contract.</p>
+    <p><a href="./llm-entrypoint.json">llm-entrypoint.json</a> · <a href="./provider-registry.json">provider-registry.json</a> · <a href="./runtime-contract.json">runtime-contract.json</a></p>
   </section>
 
   <section class="panel">
@@ -33,18 +40,18 @@
   </section>
 
   <section class="panel">
-    <div class="panel-head"><div><p class="kicker">STEP 03</p><h2>Native handoff</h2></div></div>
+    <div class="panel-head"><div><p class="kicker">STEP 03</p><h2>Native phone runtime</h2></div></div>
     <div id="packageCard" class="package-card">
-      <p class="empty">A compatible package route will appear after discovery.</p>
+      <p class="empty">A compatible verified package route will appear after discovery.</p>
     </div>
   </section>
 
   <section class="panel compact">
     <h2>Truth boundary</h2>
-    <p><b>Observed</b> means the browser exposed it. <b>Inferred</b> means a standards-based interpretation was made. <b>Native verification required</b> means the web surface refuses to guess.</p>
+    <p><b>Observed</b> means the browser exposed it. <b>Inferred</b> means a standards-based interpretation was made. <b>Native verification required</b> means the Pages surface refuses to guess. Docker is not a production dependency.</p>
   </section>
 
-  <footer>LeeWay Standards · available ≠ authorized · observed ≠ verified · generated ≠ executed</footer>
+  <footer>LeeWay Standards · Pages publishes · phone executes · available ≠ authorized · observed ≠ verified</footer>
 </main>
 <script type="module" src="./app.js"></script>
 </body>
