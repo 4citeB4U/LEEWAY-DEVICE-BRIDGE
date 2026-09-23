@@ -1,0 +1,10 @@
+{
+  "name": "LeeWay Device Bridge",
+  "short_name": "LeeWay Bridge",
+  "description": "LeeWay universal device discovery, bootstrap and package handoff surface.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b0f14",
+  "theme_color": "#0b0f14"
+}
