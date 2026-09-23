@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "0.2.0",
+  "name": "LeeWay Device Bridge",
+  "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "pagesRoot": "https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/",
+  "llmEntrypoint": "https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/llm-entrypoint.json",
+  "packageManifest": "https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/package-manifest.json",
+  "providerRegistry": "https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/provider-registry.json",
+  "runtimeLocation": "PHONE_LOCAL",
+  "dockerRequired": false,
+  "executionRule": "GitHub Pages publishes and bootstraps. The installed phone runtime performs privileged device execution.",
+  "status": "PUBLIC_DISCOVERY_READY"
+}
