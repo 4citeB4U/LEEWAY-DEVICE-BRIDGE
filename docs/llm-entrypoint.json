@@ -16,7 +16,10 @@
     "capabilityContract": "../contracts/capability.schema.json",
     "commandContract": "../contracts/command.schema.json",
     "sessionContract": "../contracts/session.schema.json",
-    "pairingContract": "../contracts/pairing.schema.json"
+    "pairingContract": "../contracts/pairing.schema.json",
+    "providerRegistry": "./provider-registry.json",
+    "providerContract": "../contracts/provider.schema.json",
+    "universalHarness": "./UNIVERSAL-DEVICE-HARNESS.md"
   },
   "phoneRuntime": {
     "required": true,
@@ -40,6 +43,29 @@
   "status": {
     "pagesContract": "SOURCE_READY_RUNTIME_UNVERIFIED",
     "androidPackage": "BUILD_REQUIRED",
-    "physicalPhonePairing": "NOT_YET_VERIFIED"
+    "physicalPhonePairing": "NOT_YET_VERIFIED",
+    "universalDeviceHarness": "SOURCE_PROMOTED",
+    "homeAssistant": "CONTRACT_PROVEN_LIVE_INSTANCE_NOT_VERIFIED",
+    "n8n": "LIVE_HEALTHY_DEVICE_WORKFLOW_LIBRARY_INCOMPLETE"
+  },
+  "deviceFabric": {
+    "modelIndependent": true,
+    "homeAssistantRole": "DEVICE_AGGREGATOR_PROVIDER",
+    "n8nRole": "DETERMINISTIC_AUTOMATION_PROVIDER",
+    "directProviders": [
+      "bluetooth",
+      "usb",
+      "serial",
+      "hid",
+      "ssdp-upnp",
+      "mdns",
+      "snmp",
+      "cec",
+      "modbus",
+      "canbus",
+      "nmea",
+      "ir-rf"
+    ],
+    "rule": "Providers donate capabilities; Device Bridge remains authority."
   }
 }
