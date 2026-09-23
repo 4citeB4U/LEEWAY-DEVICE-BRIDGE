@@ -1,0 +1,14 @@
+{
+    "receiptId":  "LDB-BLUETOOTH-PROVIDER-QUALIFICATION-20260923",
+    "timestamp":  "2026-09-23T22:01:57.9010061Z",
+    "deviceId":  "LDB-b1219fbe-25e8-4a8a-9e6b-6bdaeb83775a",
+    "capability":  "device.bluetooth.list-bonded",
+    "authorizationBasis":  "Creator authorization plus Android BLUETOOTH_SCAN and BLUETOOTH_CONNECT permission grants",
+    "preGate":  "Provider source tests PASS; clean APK build PASS; Bluetooth radio enabled; required permissions granted",
+    "result":  "PASS",
+    "postGate":  "Phone-local Bluetooth provider reported supported/authorized/available/active/healthy/verified true and bondedDeviceCount=7",
+    "evidenceHashes":  [
+                           "82605b21dbe4ae08c0f4870a97deca31714728b256a8398ce9a69314beaa5222",
+                           "9d24868607de76bd8061327f9e8b14ddfd2ba785fb94329ab8ecbf3eb68a58a0"
+                       ]
+}

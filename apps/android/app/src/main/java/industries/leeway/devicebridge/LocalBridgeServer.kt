@@ -104,6 +104,7 @@ object LocalBridgeServer {
                         .optJSONArray("capabilityClaims")
                 )
                 "/receipts" -> JSONObject().put("receipts", ReceiptStore.list(context))
+                "/providers/bluetooth" -> BluetoothProvider.snapshot(context)
                 "/bridge" -> status(context)
                 else -> null
             }

@@ -1,0 +1,34 @@
+{
+    "schemaVersion":  "0.3.0",
+    "proofType":  "BLUETOOTH_PROVIDER_PHYSICAL_READ_QUALIFICATION",
+    "timestamp":  "2026-09-23T22:01:57.9010061Z",
+    "repository":  "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+    "branch":  "feature/bluetooth-provider-live-20260923",
+    "device":  {
+                   "leeWayDeviceId":  "LDB-b1219fbe-25e8-4a8a-9e6b-6bdaeb83775a",
+                   "model":  "SM-F956U",
+                   "androidRelease":  "16",
+                   "connection":  "USB_ADB"
+               },
+    "package":  {
+                    "file":  "docs/downloads/leeway-device-bridge-android-v0.3.0-debug.apk",
+                    "versionName":  "0.3.0",
+                    "versionCode":  3,
+                    "sizeBytes":  12696400,
+                    "sha256":  "82605b21dbe4ae08c0f4870a97deca31714728b256a8398ce9a69314beaa5222"
+                },
+    "bluetoothProvider":  {
+                              "supported":  true,
+                              "authorized":  true,
+                              "available":  true,
+                              "active":  true,
+                              "healthy":  true,
+                              "verified":  true,
+                              "bondedDeviceCount":  7,
+                              "privateDeviceNamesStored":  false,
+                              "privateDeviceAddressesStored":  false,
+                              "receiptResult":  "PASS",
+                              "receiptDetail":  "bondedDeviceCount=7"
+                          },
+    "rollback":  "Bluetooth radio can be disabled; provider is read-only in this qualification."
+}
