@@ -19,16 +19,21 @@ function buildBootstrap(profile,pkg){
     selectedPackageId:pkg?.id||null,
     nativeVerificationRequired:true,
     authority:"BROWSER_DISCOVERY_ONLY",
+    publication:"GITHUB_PAGES",
     runtimeLocation:"PHONE_LOCAL",
-    llmEntrypoint:"./llm-entrypoint.json"
+    dockerRuntimeRequired:false,
+    llmEntrypoint:"./llm-entrypoint.json",
+    providerRegistry:"./provider-registry.json"
   };
+}
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("./sw.js").catch(()=>{});
 }
 $("#discoverBtn").addEventListener("click",async()=>{
   $("#discoveryState").textContent="RUNNING";
   const profile=await discoverDevice();
   renderFacts(profile);
   $("#discoveryState").textContent="OBSERVED";
-  $("#profileState").textContent="BUILT";
   $("#confidenceBadge").textContent=profile.exactModel.value?"MODEL OBSERVED":"NATIVE VERIFY REQUIRED";
   const {manifest,pkg}=await resolvePackage(profile);
   const bootstrap=buildBootstrap(profile,pkg);
@@ -45,7 +50,7 @@ $("#discoverBtn").addEventListener("click",async()=>{
   const action=pkg.downloadUrl
     ? `<a class="action" href="${esc(pkg.downloadUrl)}" download>Download verified phone package</a>`
     : `<button id="handoffBtn" class="action">Package build required</button>`;
-  $("#packageCard").innerHTML=`<h3>${esc(pkg.label)}</h3><p class="package-meta">Route: ${esc(pkg.id)}<br>Channel: ${esc(pkg.channel)}<br>Status: ${esc(pkg.status)}<br>Runtime: phone-local<br>Docker required: no<br>Measured size: ${esc(measured)}<br>Formula qualification: ${esc(formula)}<br>Package target ceiling: ${esc(manifest.targetBootstrapPackageMaxBytes)} bytes<br>Exact device verification: required in native app</p>${action}<p class="package-meta"><a href="./llm-entrypoint.json">LLM entrypoint</a> · <a href="./PHONE-RUNTIME-CONTRACT.md">phone runtime contract</a></p>`;
+  $("#packageCard").innerHTML=`<h3>${esc(pkg.label)}</h3><p class="package-meta">Source: GitHub Pages<br>Runtime: phone-local<br>Docker required: no<br>Route: ${esc(pkg.id)}<br>Status: ${esc(pkg.status)}<br>Measured size: ${esc(measured)}<br>Formula qualification: ${esc(formula)}<br>Package target ceiling: ${esc(manifest.targetBootstrapPackageMaxBytes)} bytes<br>Exact device verification: required in native app</p>${action}<p class="package-meta"><a href="./llm-entrypoint.json">LLM entrypoint</a> · <a href="./provider-registry.json">provider registry</a> · <a href="./runtime-contract.json">runtime contract</a></p>`;
   const btn=$("#handoffBtn");
-  if(btn) btn.addEventListener("click",()=>alert("The GitHub source is ready for package qualification, but no verified APK is published yet. Generated is not executed."));
+  if(btn) btn.addEventListener("click",()=>alert("No verified native package is published yet. GitHub Pages will expose the download only after package size, SHA-256 and runtime qualification pass."));
 });
