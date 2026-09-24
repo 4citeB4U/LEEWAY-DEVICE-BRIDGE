@@ -4,17 +4,22 @@
   "workflow": "Android Build",
   "runId": 35948447686,
   "jobId": 107471555955,
-  "state": "BLOCKED",
-  "blockerClass": "GITHUB_ACCOUNT_BILLING",
-  "githubAnnotation": "The job was not started because your account is locked due to a billing issue.",
-  "runnerStepsStarted": false,
+  "state": "VERIFIED",
+  "blockerClass": null,
+  "githubAnnotation": null,
+  "runnerStepsStarted": true,
   "sourceFailure": false,
   "currentQualifiedBuild": {
-    "sourceCommit": "bab9429d3cad1419b41156866badf68ae0699259",
+    "sourceCommit": "de3a3142bb64566092cf0e7ae252490ba209190d",
+    "workflowRunId": 36036397343,
+    "jobId": 107757448874,
     "tests": "12/12 PASS",
-    "localDisposableBuild": "PASS",
+    "githubHostedBuild": "PASS",
     "versionName": "0.7.0",
-    "sha256": "d5c001eb94aaebaf08347c3cde1df109d4dc0865adfee146134634a84321c4f9",
-    "sizeBytes": 65869689
-  }
+    "apkSha256": "0fba49ce08f28f1264de8d83bd944e8c2d7e691de2b14e586ce6efcbefaccd00",
+    "apkSizeBytes": 65869689,
+    "artifactId": 10825202249,
+    "artifactZipSha256": "fb6aee9a4ac4f8feef497f5f8a6b177545517a43d31137b75f14e779541c30bf"
+  },
+  "note": "GitHub account billing lock was cleared. The repaired Android workflow now passes on canonical main."
 }
