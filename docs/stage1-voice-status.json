@@ -44,11 +44,14 @@
       "remote camera activation"
     ]
   },
-  "buildState": "BLOCKED_BEFORE_RUNNER_STEPS",
-  "buildBlocker": "GITHUB_ACCOUNT_ACTIONS_LOCK",
+  "buildState": "RETRY_REQUESTED_AFTER_ACTIONS_UNLOCK",
+  "buildBlocker": null,
   "latestRunId": 35953965499,
   "latestJobId": 107488216482,
   "latestJobSteps": null,
   "physicalPhoneVoiceTurn": "NOT_EXECUTED",
-  "promotionRule": "Do not publish v0.8 or claim voice runtime PASS until APK build, install, transcript, local model response, audible TTS completion, and sensory.voice.turn PASS receipt are physically verified."
+  "promotionRule": "Do not publish v0.8 or claim voice runtime PASS until APK build, install, transcript, phone-local model response, audible Agent Lee CLONE completion, and sensory.voice.turn PASS receipt are physically verified. Android TextToSpeech does not satisfy clone identity.",
+  "requalificationRequestedAt": "2026-09-24T20:53:00Z",
+  "voiceIdentityGate": "BLOCKED_ANDROID_TTS_IS_NOT_AGENT_LEE_CLONE",
+  "cloneVoiceAuthority": "LEEWAY_VOICE::AGENT_LEE::DEFAULT_CLONE"
 }
