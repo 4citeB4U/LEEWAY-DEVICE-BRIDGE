@@ -1,0 +1,14 @@
+{
+  "receiptType": "LEEWAY_DEVICE_BRIDGE_GITHUB_ACTIONS_ANDROID_BUILD",
+  "timestamp": "2026-09-24T17:47:21Z",
+  "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "result": "PASS",
+  "runId": 36036397343,
+  "headSha": "de3a3142bb64566092cf0e7ae252490ba209190d",
+  "sourceTests": "12/12 PASS",
+  "apkSizeBytes": 65869689,
+  "apkSha256": "0fba49ce08f28f1264de8d83bd944e8c2d7e691de2b14e586ce6efcbefaccd00",
+  "artifactId": 10825202249,
+  "dockerRuntimeRequired": false,
+  "evidencePath": "evidence/GITHUB-ACTIONS-ANDROID-BUILD-QUALIFICATION-20260924.json"
+}
