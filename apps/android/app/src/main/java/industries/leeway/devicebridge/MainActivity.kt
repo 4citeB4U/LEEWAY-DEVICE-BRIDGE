@@ -55,7 +55,7 @@ class MainActivity : AppCompatActivity() {
             }
             runtimeState.text =
                 "LOCAL MODEL: " + modelLabel +
-                "\nSENSORY HARNESS: " + if (sensory.optBoolean("speechRecognizerAvailable")) "READY" else "PARTIAL" +
+                "\nSENSORY HARNESS: " + (if (sensory.optBoolean("speechRecognizerAvailable")) "READY" else "PARTIAL") +
                 "\nREMOTE RELAY: " + remoteLabel +
                 "\nDEVICE: " + remote.optString("deviceId")
         }
