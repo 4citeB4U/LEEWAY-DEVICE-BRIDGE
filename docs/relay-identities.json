@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "0.2.0",
+  "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "devices": [
+    {
+      "id": "f30a80a743592e7d9cbe4b3113ef896db30bd80434df0afcb8591c04dbb84861",
+      "publicKeyFingerprintSha256": "f30a80a743592e7d9cbe4b3113ef896db30bd80434df0afcb8591c04dbb84861",
+      "publicKeyDerBase64": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEqKhPJDKn64Wec1vcn+Za4Tbedl8lZL5wYKx3QsVsw2MoVHUa9jq0xeCGBTaKq5tKAOxsNOpCCvHk2MV8260zUg==",
+      "algorithm": "EC_P256_SHA256",
+      "status": "AUTHORIZED"
+    }
+  ],
+  "controllers": [
+    {
+      "id": "agent-lee-controller-20260923",
+      "publicKeyFingerprintSha256": "51fffc7ab3192e9809aacbd5e346a2662d20111996b627a61be2c510abfa2a5c",
+      "publicKeyDerBase64": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAECN2mi+yOXNrqmeQK6Yn6DkQQpnKdcPcJlTFuiFuRerGUVVz4//hyEqAv49jmmlm8Il1bxibncFw8kWVpXlg5Qg==",
+      "algorithm": "EC_P256_SHA256",
+      "status": "AUTHORIZED_TEST_CONTROLLER"
+    }
+  ],
+  "rule": "Public verification material only. Private keys and pairing secrets never belong in GitHub Pages."
+}
