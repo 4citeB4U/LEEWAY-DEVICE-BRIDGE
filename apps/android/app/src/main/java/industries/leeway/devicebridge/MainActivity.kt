@@ -48,11 +48,7 @@ class MainActivity : AppCompatActivity() {
                 "OFF"
             }
             runtimeState.text =
-                "LOCAL MODEL: " + modelLabel +
-                "
-REMOTE RELAY: " + remoteLabel +
-                "
-DEVICE: " + remote.optString("deviceId")
+                "LOCAL MODEL: " + modelLabel + "\\nREMOTE RELAY: " + remoteLabel + "\\nDEVICE: " + remote.optString("deviceId")
         }
         refreshRuntimeState()
 
@@ -144,8 +140,7 @@ DEVICE: " + remote.optString("deviceId")
                         val status = ModelRuntime.download(this@MainActivity) { done, total ->
                             val pct = if (total > 0) ((done * 100) / total).coerceIn(0, 100) else 0
                             runOnUiThread {
-                                output.text = "Downloading local model... " + pct + "%
-" + done + " / " + total + " bytes"
+                                output.text = "Downloading local model... " + pct + "%\\n" + done + " / " + total + " bytes"
                             }
                         }
                         runOnUiThread { output.text = status.toString(2) }
