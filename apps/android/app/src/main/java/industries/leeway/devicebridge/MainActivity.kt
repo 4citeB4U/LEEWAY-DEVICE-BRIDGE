@@ -210,6 +210,18 @@ class MainActivity : AppCompatActivity() {
                     requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), AUDIO_PERMISSION_REQUEST)
                     output.text = "Microphone permission requested. Approve it, then tap TALK TO AGENT LEE again."
                 } else {
+                    val modelStatus = ModelRuntime.status(this@MainActivity)
+                    if (!modelStatus.optBoolean("verified")) {
+                        output.text =
+                            "The phone-local model is not verified yet. Tap DOWNLOAD LOCAL MODEL, then run LOCAL MODEL STATUS before starting voice."
+                        ReceiptStore.record(
+                            this@MainActivity,
+                            "sensory.voice.turn",
+                            "BLOCKED",
+                            "MODEL_NOT_VERIFIED"
+                        )
+                        return@setOnClickListener
+                    }
                     output.text = "Listening..."
                     SensoryRuntime.listenOnce(
                         this@MainActivity,
@@ -227,9 +239,45 @@ class MainActivity : AppCompatActivity() {
                                 runOnUiThread {
                                     output.text = result.toString(2)
                                     if (result.optBoolean("ok")) {
+                                        val response = result.optString("response")
                                         SensoryRuntime.speak(
                                             this@MainActivity,
-                                            result.optString("response")
+                                            response,
+                                            onDone = {
+                                                ReceiptStore.record(
+                                                    this@MainActivity,
+                                                    "sensory.voice.turn",
+                                                    "PASS",
+                                                    "transcriptChars=" + transcript.length +
+                                                        " responseChars=" + response.length
+                                                )
+                                                runOnUiThread {
+                                                    output.text =
+                                                        "You: " + transcript +
+                                                        "\n\nAgent Lee: " + response +
+                                                        "\n\nVOICE TURN: VERIFIED COMPLETE"
+                                                }
+                                            },
+                                            onError = { error ->
+                                                ReceiptStore.record(
+                                                    this@MainActivity,
+                                                    "sensory.voice.turn",
+                                                    "FAIL",
+                                                    error
+                                                )
+                                                runOnUiThread {
+                                                    output.text =
+                                                        "Agent Lee response generated, but speech output failed: " + error +
+                                                        "\n\n" + response
+                                                }
+                                            }
+                                        )
+                                    } else {
+                                        ReceiptStore.record(
+                                            this@MainActivity,
+                                            "sensory.voice.turn",
+                                            "FAIL",
+                                            result.optString("error", "MODEL_INFERENCE_FAILED")
                                         )
                                     }
                                 }
