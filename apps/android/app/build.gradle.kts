@@ -2,6 +2,11 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
 }
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
 android {
     namespace = "industries.leeway.devicebridge"
     compileSdk = 35
@@ -13,8 +18,8 @@ android {
         applicationId = "industries.leeway.devicebridge"
         minSdk = 29
         targetSdk = 35
-        versionCode = 6
-        versionName = "0.6.0"
+        versionCode = 7
+        versionName = "0.7.0"
     }
 }
 dependencies {

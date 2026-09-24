@@ -22,6 +22,7 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import org.json.JSONObject
 import java.io.IOException
+import java.util.Collections
 import java.util.concurrent.TimeUnit
 import kotlin.math.min
 
@@ -35,6 +36,7 @@ class RemoteRelayService : Service() {
     @Volatile private var webSocket: WebSocket? = null
     @Volatile private var connecting = false
     private var reconnectDelayMs = 1_000L
+    private val seenCommandIds = Collections.synchronizedSet(mutableSetOf<String>())
 
     override fun onCreate() {
         super.onCreate()
@@ -178,7 +180,8 @@ class RemoteRelayService : Service() {
             val id = command.optString("id")
             val capability = command.optString("capability")
             val args = command.optJSONObject("arguments") ?: JSONObject()
-            val result = RemoteCommandRouter.execute(this, capability, args)
+            val firstSeen = id.isNotBlank() && seenCommandIds.add(id)
+            val result = RemoteCommandRouter.execute(this, id, capability, args, firstSeen)
             val ok = result.optBoolean("ok", false)
 
             ReceiptStore.record(

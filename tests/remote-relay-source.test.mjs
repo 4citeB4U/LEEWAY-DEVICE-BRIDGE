@@ -19,6 +19,7 @@ const boot=fs.readFileSync(
   "utf8"
 );
 const manifest=fs.readFileSync(base+"/AndroidManifest.xml","utf8");
+
 assert.match(service,/START_STICKY/);
 assert.match(service,/WebSocketListener/);
 assert.match(service,/BridgeSecret\.ensure/);
@@ -26,9 +27,11 @@ assert.match(service,/DeviceIdentity\.ensure/);
 assert.match(service,/scheduleReconnect/);
 assert.match(service,/hello-ack/);
 assert.match(service,/RemoteCommandRouter\.execute/);
+assert.match(service,/seenCommandIds/);
 assert.match(state,/agent-lee-x\.vercel\.app/);
 assert.match(state,/github\.io\/LEEWAY-DEVICE-BRIDGE\/docs\/remote-relay\.json/);
-assert.match(router,/AGENT_ACCESS_DISABLED/);
+assert.match(router,/FormulaF8Gate\.evaluate/);
+assert.match(router,/FORMULA_HOLD/);
 assert.match(router,/model\.inference/);
 assert.match(router,/device\.network\.discover/);
 assert.match(boot,/ACTION_BOOT_COMPLETED/);

@@ -187,6 +187,13 @@ class MainActivity : AppCompatActivity() {
         val remoteEnable = Button(this).apply {
             text = "ENABLE ALWAYS-ON REMOTE BRIDGE"
             setOnClickListener {
+                LocalAuthority.setAgentAccess(this@MainActivity, true)
+                ReceiptStore.record(
+                    this@MainActivity,
+                    "device.session.start",
+                    "PASS",
+                    "Owner enabled always-on remote bridge"
+                )
                 RemoteRelayService.start(this@MainActivity)
                 output.text = RemoteRelayState.status(this@MainActivity).toString(2)
                 refreshRuntimeState()
@@ -262,8 +269,10 @@ class MainActivity : AppCompatActivity() {
             text = "STOP AGENT ACCESS"
             setOnClickListener {
                 LocalAuthority.setAgentAccess(this@MainActivity, false)
+                RemoteRelayService.stop(this@MainActivity)
                 ReceiptStore.record(this@MainActivity, "device.session.stop", "PASS", "Owner emergency stop")
-                output.text = "Agent access stopped locally.\nProtected bridge routes: BLOCKED\nRemote commands: NOT AUTHORIZED"
+                refreshRuntimeState()
+                output.text = "Agent access stopped locally.\nRemote relay: OFF\nProtected bridge routes: BLOCKED\nRemote commands: NOT AUTHORIZED"
             }
         }
 

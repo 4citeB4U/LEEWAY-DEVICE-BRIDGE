@@ -48,7 +48,7 @@
                     },
     "status":  {
                    "pagesContract":  "VERIFIED_LIVE",
-                   "androidPackage":  "V0_6_REMOTE_SERVICE_BUILD_QUALIFIED_INSTALL_REQUIRED",
+                   "androidPackage":  "V0_7_F8_GOVERNED_ALWAYS_ON_REMOTE_BUILD_QUALIFIED_INSTALL_REQUIRED",
                    "physicalPhonePairing":  "USB_ADB_PHYSICAL_PHONE_VERIFIED",
                    "universalDeviceHarness":  "SOURCE_PROMOTED",
                    "homeAssistant":  "NOT_OBSERVED_ON_CURRENT_NETWORK_PROVIDER_CONTRACT_VERIFIED",
@@ -57,7 +57,9 @@
                    "bluetooth":  "GALAXY_Z_FOLD6_PROVIDER_QUALIFIED",
                    "localModel":  "PHYSICAL_INSTALL_AND_INFERENCE_VERIFIED",
                    "remoteRelay":  "PERMANENT_RELAY_E2E_VERIFIED",
-                   "remotePhoneConnection":  "PENDING_V0_6_PHYSICAL_INSTALL"
+                   "remotePhoneConnection":  "PENDING_V0_7_PHYSICAL_INSTALL",
+                   "remoteFormulaGate":  "LW_F8_SOURCE_TEST_AND_ANDROID_BUILD_VERIFIED",
+                   "androidActions":  "BLOCKED_ACCOUNT_BILLING_LOCAL_BUILD_PASS"
                },
     "deviceFabric":  {
                          "modelIndependent":  true,
@@ -83,6 +85,8 @@
                      "pagesInstall":  "../evidence/GITHUB-PAGES-PHONE-INSTALL-QUALIFICATION-20260923.json",
                      "n8nPhoneBridge":  "../evidence/N8N-PHONE-BRIDGE-LIVE-QUALIFICATION-20260923.json",
                      "homeAssistantDiscovery":  "../evidence/HOME-ASSISTANT-LIVE-DISCOVERY-20260923.json",
-                     "localModel":  "../evidence/PHONE-LOCAL-MODEL-QUALIFICATION-20260923.json"
+                     "localModel":  "../evidence/PHONE-LOCAL-MODEL-QUALIFICATION-20260923.json",
+                     "v07RemoteBuild":  "../evidence/V0-7-FORMULA-GATED-REMOTE-BUILD-QUALIFICATION-20260923.json",
+                     "remoteV07Build":  "../evidence/ANDROID-V070-REMOTE-BUILD-QUALIFICATION-20260924.json"
                  }
 }
