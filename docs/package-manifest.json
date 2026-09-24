@@ -12,12 +12,12 @@
                          "channel":  "development",
                          "label":  "LeeWay Device Bridge for Android",
                          "source":  "github-pages",
-                         "status":  "ALWAYS_ON_REMOTE_BRIDGE_BUILD_QUALIFIED_INSTALL_REQUIRED",
+                         "status":  "V0_7_FORMULA_GATED_ALWAYS_ON_REMOTE_BUILD_QUALIFIED_INSTALL_REQUIRED",
                          "nativeVerification":  true,
                          "runtimeLocation":  "phone",
                          "dockerRequired":  false,
-                         "downloadUrl":  "./downloads/leeway-device-bridge-android-v0.6.0-debug.apk",
-                         "sha256":  "c06739accd003d8c2e4d9b12ec61d0b205c6f83056815e9db3bb5f683a339481",
+                         "downloadUrl":  "./downloads/leeway-device-bridge-android-v0.7.0-debug.apk",
+                         "sha256":  "d57e7fee2eb26bacd3cfc51b50fad0d3a3e463ca67839e259b33293114095349",
                          "sizeBytes":  65869689,
                          "formulaQualification":  {
                                                       "required":  true,
@@ -25,10 +25,10 @@
                                                       "targetMaxBytes":  104857600,
                                                       "rule":  "No compression ratio or reconstruction claim without measured evidence.",
                                                       "measuredBytes":  65869689,
-                                                      "measuredSha256":  "c06739accd003d8c2e4d9b12ec61d0b205c6f83056815e9db3bb5f683a339481"
+                                                      "measuredSha256":  "d57e7fee2eb26bacd3cfc51b50fad0d3a3e463ca67839e259b33293114095349"
                                                   },
-                         "versionName":  "0.6.0",
-                         "versionCode":  6
+                         "versionName":  "0.7.0",
+                         "versionCode":  7
                      },
                      {
                          "id":  "apple-native",

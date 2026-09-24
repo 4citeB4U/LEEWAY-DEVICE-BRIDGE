@@ -1,0 +1,45 @@
+{
+    "schemaVersion":  "0.1.0",
+    "authority":  "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+    "evidenceType":  "V0_7_FORMULA_GATED_ALWAYS_ON_REMOTE_BUILD_QUALIFICATION",
+    "observedAt":  "2026-09-24T02:58:33Z",
+    "source":  {
+                   "branch":  "feature/final-remote-f8-v070-20260924",
+                   "qualifiedHead":  "bab9429d3cad1419b41156866badf68ae0699259",
+                   "sourceTestsPassed":  12,
+                   "kotlinCompile":  "PASS",
+                   "assembleDebug":  "PASS"
+               },
+    "package":  {
+                    "versionName":  "0.7.0",
+                    "versionCode":  7,
+                    "sizeBytes":  65869689,
+                    "sha256":  "d57e7fee2eb26bacd3cfc51b50fad0d3a3e463ca67839e259b33293114095349",
+                    "targetMaxBytes":  104857600,
+                    "formulaSizeGate":  "PASS_NO_COMPRESSION_REQUIRED"
+                },
+    "remote":  {
+                   "productionRelay":  "wss://agent-lee-x.vercel.app/api/device-relay",
+                   "relayRole":  "TRANSPORT_ONLY",
+                   "relayE2E":  "VERIFIED_WITH_DISPOSABLE_TEST_ROOM",
+                   "phoneService":  "BUILD_VERIFIED",
+                   "phoneAutoReconnect":  true,
+                   "phoneBootRestart":  true,
+                   "formulaGate":  "LW-F8",
+                   "executeValue":  69,
+                   "holdValue":  0,
+                   "replayProtection":  "COMMAND_ID_FIRST_SEEN_REQUIRED",
+                   "ownerStop":  "DISABLES_AGENT_AUTHORITY_AND_REMOTE_RELAY"
+               },
+    "model":  {
+                  "id":  "litert-community/SmolLM2-360M-Instruct",
+                  "physicalInstallAndInference":  "VERIFIED_PREVIOUSLY_ON_GALAXY_Z_FOLD6"
+              },
+    "physicalInstall":  {
+                            "state":  "PENDING",
+                            "reason":  "PHONE_NOT_PRESENT_OVER_USB_AND_WIRELESS_ADB_NOT_ENABLED"
+                        },
+    "productionDockerRequired":  false,
+    "classification":  "BUILD_AND_TRANSPORT_QUALIFIED_PHYSICAL_V0_7_INSTALL_PENDING",
+    "claimBoundary":  "No claim of live no-USB Fold connectivity is made until v0.7 is installed and the phone authenticates to the production relay."
+}

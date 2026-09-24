@@ -1,0 +1,17 @@
+{
+    "receiptType":  "LEEWAY_DEVICE_BRIDGE_V0_7_REMOTE_BUILD_QUALIFICATION",
+    "timestamp":  "2026-09-24T02:58:33Z",
+    "authority":  "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+    "result":  "PASS_WITH_PHYSICAL_INSTALL_PENDING",
+    "sourceTests":  12,
+    "kotlinCompile":  "PASS",
+    "assembleDebug":  "PASS",
+    "packageVersion":  "0.7.0",
+    "packageSha256":  "d57e7fee2eb26bacd3cfc51b50fad0d3a3e463ca67839e259b33293114095349",
+    "packageSizeBytes":  65869689,
+    "productionRelayE2E":  "PASS",
+    "formulaGate":  "LW-F8",
+    "physicalFoldV07Install":  "PENDING",
+    "dockerRuntimeRequired":  false,
+    "evidencePath":  "evidence/V0-7-FORMULA-GATED-REMOTE-BUILD-QUALIFICATION-20260923.json"
+}
