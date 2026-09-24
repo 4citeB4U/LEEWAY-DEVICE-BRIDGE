@@ -363,7 +363,7 @@ Local endpoint: http://127.0.0.1:" + LocalBridgeServer.PORT
             addView(runtimeState)
             listOf(
                 discover, diagnostics, files, receipts, authorizeBluetooth, bluetooth, networkDiscovery,
-                modelStatus, modelDownload, modelTest,
+                modelStatus, modelDownload, modelTest, speakTest, talkToLee,
                 remoteEnable, remoteStatus, remoteDisable,
                 enable, startBridge, selfTest, showToken, stopBridge, stop
             ).forEach { addView(it) }
