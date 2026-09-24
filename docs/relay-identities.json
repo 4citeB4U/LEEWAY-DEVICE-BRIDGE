@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "0.1.0",
+  "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "devices": [
+    {
+      "id": "LDB-b1219fbe-25e8-4a8a-9e6b-6bdaeb83775a",
+      "publicKeyDerBase64": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEqKhPJDKn64Wec1vcn+Za4Tbedl8lZL5wYKx3QsVsw2MoVHUa9jq0xeCGBTaKq5tKAOxsNOpCCvHk2MV8260zUg==",
+      "algorithm": "EC_P256_SHA256",
+      "status": "AUTHORIZED"
+    }
+  ],
+  "controllers": [
+    {
+      "id": "agent-lee-controller-20260923",
+      "publicKeyDerBase64": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE2cOmO6j2xArRoj5kY1cdHD4NSrKHDS41wYuNSGEt83fJD9z1zI+b4A3LnB4Xm61rrAQWH/IyrhnBwZLJqZib6Q==",
+      "publicKeyFingerprintSha256": "9eddc75665d8b0db99edcd813486c9238b4e689055c1fe79abbc1008301a77cd",
+      "algorithm": "EC_P256_SHA256",
+      "status": "AUTHORIZED_TEST_CONTROLLER"
+    }
+  ],
+  "rule": "Public identities only. Private keys never belong in GitHub Pages."
+}
