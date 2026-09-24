@@ -1,0 +1,16 @@
+{
+  "name": "leeway-device-bridge-relay",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "next build"
+  },
+  "dependencies": {
+    "@vercel/functions": "latest",
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "ws": "latest"
+  }
+}
