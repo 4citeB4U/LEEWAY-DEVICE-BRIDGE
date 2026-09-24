@@ -60,7 +60,7 @@
     "remoteRelay": "PERMANENT_RELAY_E2E_VERIFIED",
     "remotePhoneConnection": "PENDING_V0_7_PHYSICAL_INSTALL",
     "remoteFormulaGate": "LW_F8_SOURCE_TEST_AND_ANDROID_BUILD_VERIFIED",
-    "androidActions": "BLOCKED_ACCOUNT_BILLING_LOCAL_BUILD_PASS"
+    "androidActions": "GITHUB_NATIVE_BUILD_VERIFIED"
   },
   "deviceFabric": {
     "modelIndependent": true,
@@ -89,6 +89,7 @@
     "localModel": "../evidence/PHONE-LOCAL-MODEL-QUALIFICATION-20260923.json",
     "remoteV07Build": "../evidence/ANDROID-V070-REMOTE-BUILD-QUALIFICATION-20260924.json",
     "v07ReleaseCanonicalization": "../evidence/V0-7-RELEASE-CANONICALIZATION-20260924.json",
-    "productionRelayV07": "../evidence/V0-7-PRODUCTION-RELAY-E2E-20260924.json"
+    "productionRelayV07": "../evidence/V0-7-PRODUCTION-RELAY-E2E-20260924.json",
+    "githubActionsAndroidBuild": "../evidence/GITHUB-ACTIONS-ANDROID-BUILD-QUALIFICATION-20260924.json"
   }
 }
