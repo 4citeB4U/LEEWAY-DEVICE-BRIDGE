@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "0.1.0",
+  "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "evidenceType": "GITHUB_ACTIONS_ANDROID_BUILD_QUALIFICATION",
+  "observedAt": "2026-09-24T17:47:21Z",
+  "workflow": {
+    "name": "Android Build",
+    "runId": 36036397343,
+    "jobId": 107757448874,
+    "headBranch": "main",
+    "headSha": "de3a3142bb64566092cf0e7ae252490ba209190d",
+    "result": "PASS"
+  },
+  "gates": {
+    "sourceContracts": "12/12 PASS",
+    "java17": "PASS",
+    "androidSdk35": "PASS",
+    "gradle89": "PASS",
+    "assembleDebug": "PASS",
+    "sizeHashGate": "PASS",
+    "artifactUpload": "PASS"
+  },
+  "package": {
+    "versionName": "0.7.0",
+    "versionCode": 7,
+    "sizeBytes": 65869689,
+    "sha256": "0fba49ce08f28f1264de8d83bd944e8c2d7e691de2b14e586ce6efcbefaccd00",
+    "artifactId": 10825202249,
+    "artifactZipSha256": "fb6aee9a4ac4f8feef497f5f8a6b177545517a43d31137b75f14e779541c30bf",
+    "sizeTargetBytes": 104857600,
+    "formulaSizeGate": "PASS_NO_COMPRESSION_REQUIRED"
+  },
+  "workflowRepair": {
+    "removedFailure": "android-actions/setup-android@v3 attempted obsolete SDK package 'tools'",
+    "replacement": "Use runner Android SDK and explicitly install platform-tools, platforms;android-35, build-tools;35.0.0"
+  },
+  "classification": "GITHUB_NATIVE_BUILD_VERIFIED"
+}
