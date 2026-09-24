@@ -1,0 +1,40 @@
+{
+    "schemaVersion":  "0.1.0",
+    "authority":  "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+    "evidenceType":  "ANDROID_V070_REMOTE_BUILD_QUALIFICATION",
+    "observedAt":  "2026-09-24T03:00:41.6089066Z",
+    "sourceCommit":  "bab9429d3cad1419b41156866badf68ae0699259",
+    "tests":  {
+                  "total":  12,
+                  "result":  "PASS"
+              },
+    "build":  {
+                  "environment":  "DISPOSABLE_ANDROID_SDK_CONTAINER_DEVELOPMENT_ONLY",
+                  "dockerRuntimeRequired":  false,
+                  "result":  "PASS",
+                  "gradle":  "8.9",
+                  "jvmTarget":  "17"
+              },
+    "package":  {
+                    "versionName":  "0.7.0",
+                    "versionCode":  7,
+                    "sizeBytes":  65869689,
+                    "sha256":  "d5c001eb94aaebaf08347c3cde1df109d4dc0865adfee146134634a84321c4f9",
+                    "formulaSizeGate":  "PASS_NO_COMPRESSION_REQUIRED"
+                },
+    "remoteGovernance":  {
+                             "ownerAuthority":  "REQUIRED",
+                             "formulaFamily":  "LW-F8",
+                             "executeState":  69,
+                             "holdState":  0,
+                             "replayProtection":  "COMMAND_ID_FIRST_SEEN_REQUIRED",
+                             "emergencyStop":  "DISABLES_AGENT_ACCESS_AND_REMOTE_RELAY"
+                         },
+    "githubActions":  {
+                          "runId":  35948447686,
+                          "result":  "BLOCKED",
+                          "reason":  "ACCOUNT_LOCKED_DUE_TO_BILLING_ISSUE",
+                          "sourceBuildFailure":  false
+                      },
+    "classification":  "BUILD_VERIFIED_INSTALL_PENDING"
+}

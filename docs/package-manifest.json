@@ -12,12 +12,12 @@
                          "channel":  "development",
                          "label":  "LeeWay Device Bridge for Android",
                          "source":  "github-pages",
-                         "status":  "V0_7_FORMULA_GATED_ALWAYS_ON_REMOTE_BUILD_QUALIFIED_INSTALL_REQUIRED",
+                         "status":  "F8_GOVERNED_ALWAYS_ON_REMOTE_BUILD_QUALIFIED_INSTALL_REQUIRED",
                          "nativeVerification":  true,
                          "runtimeLocation":  "phone",
                          "dockerRequired":  false,
                          "downloadUrl":  "./downloads/leeway-device-bridge-android-v0.7.0-debug.apk",
-                         "sha256":  "d57e7fee2eb26bacd3cfc51b50fad0d3a3e463ca67839e259b33293114095349",
+                         "sha256":  "d5c001eb94aaebaf08347c3cde1df109d4dc0865adfee146134634a84321c4f9",
                          "sizeBytes":  65869689,
                          "formulaQualification":  {
                                                       "required":  true,
@@ -25,7 +25,7 @@
                                                       "targetMaxBytes":  104857600,
                                                       "rule":  "No compression ratio or reconstruction claim without measured evidence.",
                                                       "measuredBytes":  65869689,
-                                                      "measuredSha256":  "d57e7fee2eb26bacd3cfc51b50fad0d3a3e463ca67839e259b33293114095349"
+                                                      "measuredSha256":  "d5c001eb94aaebaf08347c3cde1df109d4dc0865adfee146134634a84321c4f9"
                                                   },
                          "versionName":  "0.7.0",
                          "versionCode":  7
