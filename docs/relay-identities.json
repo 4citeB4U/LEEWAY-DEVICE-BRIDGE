@@ -12,8 +12,8 @@
   "controllers": [
     {
       "id": "agent-lee-controller-20260923",
-      "publicKeyDerBase64": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE2cOmO6j2xArRoj5kY1cdHD4NSrKHDS41wYuNSGEt83fJD9z1zI+b4A3LnB4Xm61rrAQWH/IyrhnBwZLJqZib6Q==",
-      "publicKeyFingerprintSha256": "9eddc75665d8b0db99edcd813486c9238b4e689055c1fe79abbc1008301a77cd",
+      "publicKeyDerBase64": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAECN2mi+yOXNrqmeQK6Yn6DkQQpnKdcPcJlTFuiFuRerGUVVz4//hyEqAv49jmmlm8Il1bxibncFw8kWVpXlg5Qg==",
+      "publicKeyFingerprintSha256": "51fffc7ab3192e9809aacbd5e346a2662d20111996b627a61be2c510abfa2a5c",
       "algorithm": "EC_P256_SHA256",
       "status": "AUTHORIZED_TEST_CONTROLLER"
     }
