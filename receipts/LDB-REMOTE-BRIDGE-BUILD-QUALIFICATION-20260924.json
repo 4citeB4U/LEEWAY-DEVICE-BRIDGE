@@ -1,0 +1,13 @@
+{
+    "receiptType":  "LEEWAY_DEVICE_BRIDGE_REMOTE_TRANSPORT_BUILD_QUALIFICATION",
+    "timestamp":  "2026-09-24T01:14:00Z",
+    "authority":  "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+    "result":  "PASS",
+    "scope":  "BUILD_AND_RELAY_ONLY",
+    "packageVersion":  "0.6.0",
+    "packageSha256":  "c06739accd003d8c2e4d9b12ec61d0b205c6f83056815e9db3bb5f683a339481",
+    "packageSizeBytes":  65869689,
+    "permanentRelayE2E":  "PASS",
+    "physicalRemotePhoneConnection":  "NOT_EXECUTED_V0_6_INSTALL_REQUIRED",
+    "evidencePath":  "evidence/REMOTE-BRIDGE-CANDIDATE-QUALIFICATION-20260924.json"
+}

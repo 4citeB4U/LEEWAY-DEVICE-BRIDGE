@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "0.1.0",
+  "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "relayRole": "TRANSPORT_ONLY",
+  "relayUrl": "wss://agent-lee-x.vercel.app/api/device-relay",
+  "relaySource": "4citeB4U/AGENT_LEE_X/api/device-relay.ts",
+  "relayDeployment": "Vercel production",
+  "protocol": "LEEWAY_DEVICE_RELAY_TOKEN_ROOM_V1",
+  "phoneRole": "phone",
+  "clientRole": "client",
+  "requiresDeviceId": true,
+  "requiresOwnerPairingToken": true,
+  "phoneAutoReconnect": true,
+  "phoneBootRestart": true,
+  "relayAuthority": "NONE",
+  "remoteQualifiedCapabilities": [
+    "device.health",
+    "device.info",
+    "device.capabilities",
+    "device.bluetooth.list-bonded",
+    "device.network.discover",
+    "device.receipts",
+    "model.status",
+    "model.inference"
+  ],
+  "truthBoundary": {
+    "relayE2E": "VERIFIED",
+    "androidRemoteServiceBuild": "VERIFIED",
+    "physicalFoldRemoteConnection": "PENDING_V0_6_INSTALL"
+  }
+}
