@@ -2,7 +2,11 @@ package industries.leeway.devicebridge
 
 import android.app.Activity
 import android.content.Intent
-import android.os.Bundle\nimport android.speech.RecognizerIntent\nimport android.speech.SpeechRecognizer\nimport android.content.pm.PackageManager\nimport android.Manifest
+import android.os.Bundle
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
+import android.content.pm.PackageManager
+import android.Manifest
 import android.view.Gravity
 import android.widget.Button
 import android.widget.LinearLayout
@@ -11,7 +15,8 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var output: TextView\n    private var speechRecognizer: SpeechRecognizer? = null
+    private lateinit var output: TextView
+    private var speechRecognizer: SpeechRecognizer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,8 +49,10 @@ class MainActivity : AppCompatActivity() {
             }
             runtimeState.text =
                 "LOCAL MODEL: " + modelLabel +
-                "\nREMOTE RELAY: " + remoteLabel +
-                "\nDEVICE: " + remote.optString("deviceId")
+                "
+REMOTE RELAY: " + remoteLabel +
+                "
+DEVICE: " + remote.optString("deviceId")
         }
         refreshRuntimeState()
 
@@ -137,7 +144,8 @@ class MainActivity : AppCompatActivity() {
                         val status = ModelRuntime.download(this@MainActivity) { done, total ->
                             val pct = if (total > 0) ((done * 100) / total).coerceIn(0, 100) else 0
                             runOnUiThread {
-                                output.text = "Downloading local model... " + pct + "%\n" + done + " / " + total + " bytes"
+                                output.text = "Downloading local model... " + pct + "%
+" + done + " / " + total + " bytes"
                             }
                         }
                         runOnUiThread { output.text = status.toString(2) }
@@ -215,13 +223,17 @@ class MainActivity : AppCompatActivity() {
                         override fun onResults(results: Bundle?) {
                             val heard = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull().orEmpty()
                             if (heard.isBlank()) { output.text = "I did not hear a complete request."; return }
-                            output.text = "You: " + heard + "\n\nAgent Lee is thinking..."
+                            output.text = "You: " + heard + "
+
+Agent Lee is thinking..."
                             Thread {
                                 val result = ModelRuntime.generate(this@MainActivity, heard)
                                 val response = result.optString("response")
                                 if (result.optBoolean("ok") && response.isNotBlank()) VoiceRuntime.speak(this@MainActivity, response)
                                 ReceiptStore.record(this@MainActivity, "agent.voice.conversation", if (result.optBoolean("ok")) "PASS" else "FAIL", "speech input -> model -> TTS")
-                                runOnUiThread { output.text = "You: " + heard + "\n\nAgent Lee: " + (if (response.isBlank()) result.toString(2) else response) }
+                                runOnUiThread { output.text = "You: " + heard + "
+
+Agent Lee: " + (if (response.isBlank()) result.toString(2) else response) }
                             }.start()
                         }
                     })
@@ -301,10 +313,19 @@ class MainActivity : AppCompatActivity() {
                 val token = BridgeSecret.ensure(this@MainActivity)
                 val identity = DeviceIdentity.ensure(this@MainActivity)
                 output.text =
-                    "Device ID:\n" + identity.optString("deviceId") +
-                    "\n\nRemote relay:\n" + RemoteRelayState.relayUrl(this@MainActivity) +
-                    "\n\nOwner pairing token (keep private):\n" + token +
-                    "\n\nLocal endpoint: http://127.0.0.1:" + LocalBridgeServer.PORT
+                    "Device ID:
+" + identity.optString("deviceId") +
+                    "
+
+Remote relay:
+" + RemoteRelayState.relayUrl(this@MainActivity) +
+                    "
+
+Owner pairing token (keep private):
+" + token +
+                    "
+
+Local endpoint: http://127.0.0.1:" + LocalBridgeServer.PORT
             }
         }
 
@@ -322,7 +343,10 @@ class MainActivity : AppCompatActivity() {
                 RemoteRelayService.stop(this@MainActivity)
                 ReceiptStore.record(this@MainActivity, "device.session.stop", "PASS", "Owner emergency stop")
                 refreshRuntimeState()
-                output.text = "Agent access stopped locally.\nRemote relay: OFF\nProtected bridge routes: BLOCKED\nRemote commands: NOT AUTHORIZED"
+                output.text = "Agent access stopped locally.
+Remote relay: OFF
+Protected bridge routes: BLOCKED
+Remote commands: NOT AUTHORIZED"
             }
         }
 
@@ -331,7 +355,8 @@ class MainActivity : AppCompatActivity() {
             gravity = Gravity.CENTER_HORIZONTAL
             setPadding(42, 54, 42, 54)
             addView(TextView(this@MainActivity).apply {
-                text = "LeeWay Device Bridge\nDevice Control Center"
+                text = "LeeWay Device Bridge
+Device Control Center"
                 textSize = 24f
             })
             addView(TextView(this@MainActivity).apply {
@@ -352,12 +377,21 @@ class MainActivity : AppCompatActivity() {
         setContentView(ScrollView(this).apply { addView(root) })
     }
 
-    override fun onDestroy() {\n        speechRecognizer?.destroy()\n        VoiceRuntime.shutdown()\n        super.onDestroy()\n    }\n\n    @Deprecated("Legacy activity result retained for minimum-compatible SAF handoff")
+    override fun onDestroy() {
+        speechRecognizer?.destroy()
+        VoiceRuntime.shutdown()
+        super.onDestroy()
+    }
+
+    @Deprecated("Legacy activity result retained for minimum-compatible SAF handoff")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == FileAccess.REQUEST_OPEN_TREE && resultCode == Activity.RESULT_OK) {
             val uri = FileAccess.persistDirectory(this, data)
-            output.text = "Authorized file tree:\n${uri ?: "NONE"}\n\nLeeWay file access remains limited to platform-granted scope."
+            output.text = "Authorized file tree:
+${uri ?: "NONE"}
+
+LeeWay file access remains limited to platform-granted scope."
         }
     }
 }
