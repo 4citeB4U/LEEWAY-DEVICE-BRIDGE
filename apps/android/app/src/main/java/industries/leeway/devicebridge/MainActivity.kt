@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
     private lateinit var output: TextView
+    private lateinit var systemStatus: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -19,11 +20,25 @@ class MainActivity : AppCompatActivity() {
         BootstrapStore.savePassport(this, passport)
         ReceiptStore.record(this, "device.info", "PASS", "Native passport captured")
 
+        systemStatus=TextView(this).apply {
+            textSize=14f
+            setPadding(0,14,0,22)
+            text=renderSystemStatus()
+        }
+
         output = TextView(this).apply {
             text = passport.toString(2)
             textSize = 13f
             setPadding(0, 24, 0, 24)
             setTextIsSelectable(true)
+        }
+
+        val refreshRuntime = Button(this).apply {
+            text = "REFRESH MODEL / REMOTE STATUS"
+            setOnClickListener {
+                systemStatus.text=renderSystemStatus()
+                output.text=JSONObjectSummary.runtime(this@MainActivity)
+            }
         }
 
         val discover = Button(this).apply {
@@ -98,9 +113,11 @@ class MainActivity : AppCompatActivity() {
                 }.start()
             }
         }
+
         val modelStatus = Button(this).apply {
             text = "LOCAL MODEL STATUS"
             setOnClickListener {
+                systemStatus.text=renderSystemStatus()
                 output.text = ModelRuntime.status(this@MainActivity).toString(2)
             }
         }
@@ -117,18 +134,14 @@ class MainActivity : AppCompatActivity() {
                                 output.text = "Downloading local model... " + pct + "%\n" + done + " / " + total + " bytes"
                             }
                         }
-                        runOnUiThread { output.text = status.toString(2) }
+                        runOnUiThread {
+                            systemStatus.text=renderSystemStatus()
+                            output.text = status.toString(2)
+                        }
                     } catch (e: Exception) {
                         val detail = e.message ?: e.javaClass.simpleName
-                        ReceiptStore.record(
-                            this@MainActivity,
-                            "model.install",
-                            "FAIL",
-                            detail
-                        )
-                        runOnUiThread {
-                            output.text = "Model download failed: " + detail
-                        }
+                        ReceiptStore.record(this@MainActivity,"model.install","FAIL",detail)
+                        runOnUiThread { output.text = "Model download failed: " + detail }
                     }
                 }.start()
             }
@@ -142,25 +155,50 @@ class MainActivity : AppCompatActivity() {
                     val result = try {
                         ModelRuntime.generate(
                             this@MainActivity,
-                            "Respond with exactly: LEEWAY_MODEL_READY"
+                            "Report LeeWay Device Bridge model readiness in one short sentence."
                         )
                     } catch (e: Exception) {
                         val detail = e.message ?: e.javaClass.simpleName
-                        ReceiptStore.record(
-                            this@MainActivity,
-                            "model.inference",
-                            "FAIL",
-                            detail
-                        )
+                        ReceiptStore.record(this@MainActivity,"model.inference","FAIL",detail)
                         org.json.JSONObject().apply {
                             put("ok", false)
                             put("error", detail)
                         }
                     }
-                    runOnUiThread { output.text = result.toString(2) }
+                    runOnUiThread {
+                        systemStatus.text=renderSystemStatus()
+                        output.text = result.toString(2)
+                    }
                 }.start()
             }
         }
+
+        val startRemote = Button(this).apply {
+            text = "START REMOTE BRIDGE"
+            setOnClickListener {
+                RemoteBridgeService.start(this@MainActivity)
+                systemStatus.text=renderSystemStatus()
+                output.text=RemoteBridgeService.status(this@MainActivity).toString(2)
+            }
+        }
+
+        val remoteStatus = Button(this).apply {
+            text = "REMOTE BRIDGE STATUS"
+            setOnClickListener {
+                systemStatus.text=renderSystemStatus()
+                output.text=RemoteBridgeService.status(this@MainActivity).toString(2)
+            }
+        }
+
+        val stopRemote = Button(this).apply {
+            text = "STOP REMOTE BRIDGE"
+            setOnClickListener {
+                RemoteBridgeService.stop(this@MainActivity)
+                systemStatus.text=renderSystemStatus()
+                output.text=RemoteBridgeService.status(this@MainActivity).toString(2)
+            }
+        }
+
         val enable = Button(this).apply {
             text = "ENABLE LOCAL AGENT SESSION"
             setOnClickListener {
@@ -209,7 +247,8 @@ class MainActivity : AppCompatActivity() {
             setOnClickListener {
                 LocalAuthority.setAgentAccess(this@MainActivity, false)
                 ReceiptStore.record(this@MainActivity, "device.session.stop", "PASS", "Owner emergency stop")
-                output.text = "Agent access stopped locally.\nProtected bridge routes: BLOCKED\nRemote commands: NOT AUTHORIZED"
+                systemStatus.text=renderSystemStatus()
+                output.text = "Agent access stopped locally.\nProtected local and remote commands: BLOCKED"
             }
         }
 
@@ -222,19 +261,40 @@ class MainActivity : AppCompatActivity() {
                 textSize = 24f
             })
             addView(TextView(this@MainActivity).apply {
-                text = "PHONE_LOCAL | owner controlled | GitHub Pages distributed"
+                text = "PHONE_LOCAL | GitHub Pages configured | owner controlled"
                 textSize = 14f
-                setPadding(0, 10, 0, 18)
+                setPadding(0, 10, 0, 4)
             })
+            addView(systemStatus)
             listOf(
-                discover, diagnostics, files, receipts, authorizeBluetooth, bluetooth, networkDiscovery,
+                refreshRuntime,
+                discover, diagnostics, files, receipts,
+                authorizeBluetooth, bluetooth, networkDiscovery,
                 modelStatus, modelDownload, modelTest,
+                startRemote, remoteStatus, stopRemote,
                 enable, startBridge, selfTest, showToken, stopBridge, stop
             ).forEach { addView(it) }
             addView(output)
         }
 
         setContentView(ScrollView(this).apply { addView(root) })
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if(::systemStatus.isInitialized) systemStatus.text=renderSystemStatus()
+    }
+
+    private fun renderSystemStatus(): String {
+        val model=ModelRuntime.status(this)
+        val remote=RemoteBridgeService.status(this)
+        val modelState=if(model.optBoolean("verified")) "INSTALLED + VERIFIED" else "NOT VERIFIED"
+        val remoteState=remote.optString("state","STOPPED")
+        val remoteAuth=remote.optBoolean("authenticated")
+        return "LOCAL MODEL: " + ModelRuntime.MODEL_ID + "\n" +
+            "MODEL STATE: " + modelState + "\n" +
+            "REMOTE BRIDGE: " + remoteState + "\n" +
+            "REMOTE AUTHENTICATED: " + remoteAuth
     }
 
     @Deprecated("Legacy activity result retained for minimum-compatible SAF handoff")
@@ -245,4 +305,13 @@ class MainActivity : AppCompatActivity() {
             output.text = "Authorized file tree:\n${uri ?: "NONE"}\n\nLeeWay file access remains limited to platform-granted scope."
         }
     }
+}
+
+private object JSONObjectSummary {
+    fun runtime(context: android.content.Context): String =
+        org.json.JSONObject().apply {
+            put("model",ModelRuntime.status(context))
+            put("remote",RemoteBridgeService.status(context))
+            put("localAgentAccess",LocalAuthority.agentAccessEnabled(context))
+        }.toString(2)
 }
