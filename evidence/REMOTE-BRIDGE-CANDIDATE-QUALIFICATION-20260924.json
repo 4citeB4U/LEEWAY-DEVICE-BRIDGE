@@ -1,0 +1,34 @@
+{
+    "schemaVersion":  "0.1.0",
+    "authority":  "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+    "evidenceType":  "ALWAYS_ON_REMOTE_BRIDGE_BUILD_QUALIFICATION",
+    "observedAt":  "2026-09-24T01:14:00Z",
+    "permanentRelay":  {
+                           "url":  "wss://agent-lee-x.vercel.app/api/device-relay",
+                           "source":  "4citeB4U/AGENT_LEE_X/api/device-relay.ts",
+                           "productionDeployment":  "READY",
+                           "endToEndSyntheticRouting":  "PASS",
+                           "authority":  "NONE_TRANSPORT_ONLY"
+                       },
+    "androidCandidate":  {
+                             "versionName":  "0.6.0",
+                             "versionCode":  6,
+                             "sizeBytes":  65869689,
+                             "sha256":  "c06739accd003d8c2e4d9b12ec61d0b205c6f83056815e9db3bb5f683a339481",
+                             "sourceTests":  11,
+                             "sourceTestsResult":  "PASS",
+                             "assembleDebug":  "PASS",
+                             "foregroundServiceType":  "remoteMessaging",
+                             "autoReconnect":  true,
+                             "bootRestart":  true
+                         },
+    "phone":  {
+                  "priorVersion":  "0.5.0",
+                  "localModel":  "PHYSICAL_INSTALL_AND_INFERENCE_VERIFIED",
+                  "usbConnected":  false,
+                  "wirelessAdbObserved":  false,
+                  "remoteV06Installed":  false
+              },
+    "classification":  "SOURCE_BUILD_RELAY_VERIFIED_PHYSICAL_PHONE_UPDATE_REQUIRED",
+    "claimBoundary":  "No claim of live no-USB phone connectivity until v0.6.0 is installed and the phone authenticates to the permanent relay."
+}

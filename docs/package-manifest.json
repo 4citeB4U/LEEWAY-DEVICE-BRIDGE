@@ -12,23 +12,23 @@
                          "channel":  "development",
                          "label":  "LeeWay Device Bridge for Android",
                          "source":  "github-pages",
-                         "status":  "PHONE_LOCAL_MODEL_QUALIFIED_DEBUG",
+                         "status":  "ALWAYS_ON_REMOTE_BRIDGE_BUILD_QUALIFIED_INSTALL_REQUIRED",
                          "nativeVerification":  true,
                          "runtimeLocation":  "phone",
                          "dockerRequired":  false,
-                         "downloadUrl":  "./downloads/leeway-device-bridge-android-v0.5.0-debug.apk",
-                         "sha256":  "8045d45841c4696b68c4849ea08f7a0ec9eb23229b16eb504b53d47bb082f2ee",
-                         "sizeBytes":  64664235,
+                         "downloadUrl":  "./downloads/leeway-device-bridge-android-v0.6.0-debug.apk",
+                         "sha256":  "c06739accd003d8c2e4d9b12ec61d0b205c6f83056815e9db3bb5f683a339481",
+                         "sizeBytes":  65869689,
                          "formulaQualification":  {
                                                       "required":  true,
                                                       "status":  "MEASURED_SIZE_GATE_PASS_NO_COMPRESSION_REQUIRED",
                                                       "targetMaxBytes":  104857600,
                                                       "rule":  "No compression ratio or reconstruction claim without measured evidence.",
-                                                      "measuredBytes":  64664235,
-                                                      "measuredSha256":  "8045d45841c4696b68c4849ea08f7a0ec9eb23229b16eb504b53d47bb082f2ee"
+                                                      "measuredBytes":  65869689,
+                                                      "measuredSha256":  "c06739accd003d8c2e4d9b12ec61d0b205c6f83056815e9db3bb5f683a339481"
                                                   },
-                         "versionName":  "0.5.0",
-                         "versionCode":  5
+                         "versionName":  "0.6.0",
+                         "versionCode":  6
                      },
                      {
                          "id":  "apple-native",

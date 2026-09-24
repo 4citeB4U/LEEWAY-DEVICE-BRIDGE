@@ -21,14 +21,17 @@
                       "providerContract":  "../contracts/provider.schema.json",
                       "universalHarness":  "./UNIVERSAL-DEVICE-HARNESS.md",
                       "deviceContract":  "../contracts/device.schema.json",
-                      "modelManifest":  "./model-manifest.json"
+                      "modelManifest":  "./model-manifest.json",
+                      "remoteRelay":  "./remote-relay.json"
                   },
     "phoneRuntime":  {
                          "required":  true,
-                         "transport":  "NEGOTIATED_BY_INSTALLED_RUNTIME",
-                         "endpoint":  "DISCOVER_FROM_PAIRED_DEVICE",
+                         "transport":  "OUTBOUND_WEBSOCKET_RELAY_FROM_PAGES_CONFIG",
+                         "endpoint":  "wss://agent-lee-x.vercel.app/api/device-relay",
                          "offlineCapable":  true,
-                         "ownerStopRequired":  true
+                         "ownerStopRequired":  true,
+                         "autoReconnect":  true,
+                         "bootRestart":  true
                      },
     "llmContract":  {
                         "rule":  "LLMs consume the Device Bridge contract; no model becomes device authority.",
@@ -45,14 +48,16 @@
                     },
     "status":  {
                    "pagesContract":  "VERIFIED_LIVE",
-                   "androidPackage":  "V0_3_0_PAGES_DISTRIBUTED_PHYSICAL_INSTALL_PASS",
+                   "androidPackage":  "V0_6_REMOTE_SERVICE_BUILD_QUALIFIED_INSTALL_REQUIRED",
                    "physicalPhonePairing":  "USB_ADB_PHYSICAL_PHONE_VERIFIED",
                    "universalDeviceHarness":  "SOURCE_PROMOTED",
                    "homeAssistant":  "NOT_OBSERVED_ON_CURRENT_NETWORK_PROVIDER_CONTRACT_VERIFIED",
                    "n8n":  "DEVELOPMENT_EXECUTION_VERIFIED_PHONE_BRIDGE_200",
                    "phoneLocalRuntime":  "PHYSICAL_EXECUTION_VERIFIED",
                    "bluetooth":  "GALAXY_Z_FOLD6_PROVIDER_QUALIFIED",
-                   "localModel":  "PHYSICAL_INSTALL_AND_INFERENCE_VERIFIED"
+                   "localModel":  "PHYSICAL_INSTALL_AND_INFERENCE_VERIFIED",
+                   "remoteRelay":  "PERMANENT_RELAY_E2E_VERIFIED",
+                   "remotePhoneConnection":  "PENDING_V0_6_PHYSICAL_INSTALL"
                },
     "deviceFabric":  {
                          "modelIndependent":  true,

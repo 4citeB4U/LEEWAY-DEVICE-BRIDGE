@@ -26,6 +26,29 @@ class MainActivity : AppCompatActivity() {
             setTextIsSelectable(true)
         }
 
+        val runtimeState = TextView(this).apply {
+            textSize = 15f
+            setPadding(0, 12, 0, 18)
+        }
+
+        fun refreshRuntimeState() {
+            val model = ModelRuntime.status(this@MainActivity)
+            val remote = RemoteRelayState.status(this@MainActivity)
+            val modelLabel = if (model.optBoolean("verified")) "VERIFIED" else "NOT VERIFIED"
+            val remoteLabel = if (remote.optBoolean("connected")) {
+                "CONNECTED"
+            } else if (remote.optBoolean("enabled")) {
+                "CONNECTING"
+            } else {
+                "OFF"
+            }
+            runtimeState.text =
+                "LOCAL MODEL: " + modelLabel +
+                "\nREMOTE RELAY: " + remoteLabel +
+                "\nDEVICE: " + remote.optString("deviceId")
+        }
+        refreshRuntimeState()
+
         val discover = Button(this).apply {
             text = "REFRESH DEVICE PASSPORT"
             setOnClickListener {
@@ -161,6 +184,32 @@ class MainActivity : AppCompatActivity() {
                 }.start()
             }
         }
+        val remoteEnable = Button(this).apply {
+            text = "ENABLE ALWAYS-ON REMOTE BRIDGE"
+            setOnClickListener {
+                RemoteRelayService.start(this@MainActivity)
+                output.text = RemoteRelayState.status(this@MainActivity).toString(2)
+                refreshRuntimeState()
+            }
+        }
+
+        val remoteStatus = Button(this).apply {
+            text = "REMOTE BRIDGE STATUS"
+            setOnClickListener {
+                output.text = RemoteRelayState.status(this@MainActivity).toString(2)
+                refreshRuntimeState()
+            }
+        }
+
+        val remoteDisable = Button(this).apply {
+            text = "DISABLE ALWAYS-ON REMOTE BRIDGE"
+            setOnClickListener {
+                RemoteRelayService.stop(this@MainActivity)
+                output.text = RemoteRelayState.status(this@MainActivity).toString(2)
+                refreshRuntimeState()
+            }
+        }
+
         val enable = Button(this).apply {
             text = "ENABLE LOCAL AGENT SESSION"
             setOnClickListener {
@@ -193,7 +242,12 @@ class MainActivity : AppCompatActivity() {
             text = "SHOW PAIRING TOKEN"
             setOnClickListener {
                 val token = BridgeSecret.ensure(this@MainActivity)
-                output.text = "Owner pairing token (keep private):\n$token\n\nLoopback endpoint: http://127.0.0.1:${LocalBridgeServer.PORT}"
+                val identity = DeviceIdentity.ensure(this@MainActivity)
+                output.text =
+                    "Device ID:\n" + identity.optString("deviceId") +
+                    "\n\nRemote relay:\n" + RemoteRelayState.relayUrl(this@MainActivity) +
+                    "\n\nOwner pairing token (keep private):\n" + token +
+                    "\n\nLocal endpoint: http://127.0.0.1:" + LocalBridgeServer.PORT
             }
         }
 
@@ -226,9 +280,11 @@ class MainActivity : AppCompatActivity() {
                 textSize = 14f
                 setPadding(0, 10, 0, 18)
             })
+            addView(runtimeState)
             listOf(
                 discover, diagnostics, files, receipts, authorizeBluetooth, bluetooth, networkDiscovery,
                 modelStatus, modelDownload, modelTest,
+                remoteEnable, remoteStatus, remoteDisable,
                 enable, startBridge, selfTest, showToken, stopBridge, stop
             ).forEach { addView(it) }
             addView(output)
