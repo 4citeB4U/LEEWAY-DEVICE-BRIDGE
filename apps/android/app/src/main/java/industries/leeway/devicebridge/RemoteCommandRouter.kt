@@ -20,9 +20,14 @@ object RemoteCommandRouter {
             "voice.speak" -> text.isNotEmpty()
             else -> true
         }
-        val gate = FormulaF8Gate.evaluate(\n            trigger = true,\n            governance = governance,\n            conditions = listOf(
-            commandId.isNotBlank(), capability.isNotBlank(), supported, firstSeen, capabilityPrecondition
-        ))
+        val gate = FormulaF8Gate.evaluate(
+            trigger = true,
+            governance = governance,
+            conditions = listOf(
+                commandId.isNotBlank(), capability.isNotBlank(), supported,
+                firstSeen, capabilityPrecondition
+            )
+        )
         if (gate.optInt("qA") != 69) return JSONObject().apply {
             put("ok", false); put("error", "FORMULA_HOLD"); put("capability", capability); put("gate", gate)
         }
@@ -51,11 +56,14 @@ object RemoteCommandRouter {
         val generated = ModelRuntime.generate(context, prompt)
         if (!generated.optBoolean("ok")) return generated
         val response = generated.optString("response")
-        val voice = if (speak) VoiceRuntime.speak(context, response) else JSONObject().put("ok", true).put("spoken", false)
-        ReceiptStore.record(context, "agent.chat", if (voice.optBoolean("ok")) "PASS" else "FAIL", "model=" + generated.optString("modelId") + " speak=" + speak)
+        val voice = if (speak) VoiceRuntime.speak(context, response)
+            else JSONObject().put("ok", true).put("spoken", false)
+        ReceiptStore.record(context, "agent.chat", if (voice.optBoolean("ok")) "PASS" else "FAIL",
+            "model=" + generated.optString("modelId") + " speak=" + speak)
         return JSONObject().apply {
-            put("ok", true); put("prompt", prompt); put("response", response); put("modelId", generated.optString("modelId"))
-            put("elapsedMs", generated.optLong("elapsedMs")); put("voice", voice); put("authority", "PHONE_LOCAL_AGENT_CHAT")
+            put("ok", true); put("prompt", prompt); put("response", response)
+            put("modelId", generated.optString("modelId")); put("elapsedMs", generated.optLong("elapsedMs"))
+            put("voice", voice); put("authority", "PHONE_LOCAL_AGENT_CHAT")
         }
     }
 
@@ -64,8 +72,12 @@ object RemoteCommandRouter {
         put("voice", VoiceRuntime.status(context)); put("agentAccessEnabled", LocalAuthority.agentAccessEnabled(context))
         put("authority", "PHONE_LOCAL_RUNTIME")
     }
+
     private fun capabilities(context: Context): JSONObject {
         val passport = BootstrapStore.loadPassport(context) ?: DevicePassport.capture(context)
-        return JSONObject().apply { put("capabilities", passport.optJSONArray("capabilityClaims")); put("remoteQualified", remoteQualified.toList()) }
+        return JSONObject().apply {
+            put("capabilities", passport.optJSONArray("capabilityClaims"))
+            put("remoteQualified", remoteQualified.toList())
+        }
     }
 }
