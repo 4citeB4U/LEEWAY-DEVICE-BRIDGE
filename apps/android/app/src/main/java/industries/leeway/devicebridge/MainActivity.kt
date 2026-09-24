@@ -3,6 +3,10 @@ package industries.leeway.devicebridge
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
+import android.content.pm.PackageManager
+import android.Manifest
 import android.view.Gravity
 import android.widget.Button
 import android.widget.LinearLayout
@@ -12,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
     private lateinit var output: TextView
+    private var speechRecognizer: SpeechRecognizer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,9 +48,7 @@ class MainActivity : AppCompatActivity() {
                 "OFF"
             }
             runtimeState.text =
-                "LOCAL MODEL: " + modelLabel +
-                "\nREMOTE RELAY: " + remoteLabel +
-                "\nDEVICE: " + remote.optString("deviceId")
+                "LOCAL MODEL: " + modelLabel + "\\nREMOTE RELAY: " + remoteLabel + "\\nDEVICE: " + remote.optString("deviceId")
         }
         refreshRuntimeState()
 
@@ -137,7 +140,7 @@ class MainActivity : AppCompatActivity() {
                         val status = ModelRuntime.download(this@MainActivity) { done, total ->
                             val pct = if (total > 0) ((done * 100) / total).coerceIn(0, 100) else 0
                             runOnUiThread {
-                                output.text = "Downloading local model... " + pct + "%\n" + done + " / " + total + " bytes"
+                                output.text = "Downloading local model... " + pct + "%\\n" + done + " / " + total + " bytes"
                             }
                         }
                         runOnUiThread { output.text = status.toString(2) }
@@ -184,6 +187,56 @@ class MainActivity : AppCompatActivity() {
                 }.start()
             }
         }
+        val speakTest = Button(this).apply {
+            text = "TEST AGENT LEE VOICE"
+            setOnClickListener {
+                val result = VoiceRuntime.speak(this@MainActivity, "Agent Lee voice path is active on this phone.")
+                output.text = result.toString(2)
+            }
+        }
+
+        val talkToLee = Button(this).apply {
+            text = "TALK TO AGENT LEE"
+            setOnClickListener {
+                if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), 4203)
+                    output.text = "Microphone permission requested. Approve it, then tap TALK TO AGENT LEE again."
+                } else if (!SpeechRecognizer.isRecognitionAvailable(this@MainActivity)) {
+                    output.text = "Android speech recognition is not available on this device."
+                } else {
+                    speechRecognizer?.destroy()
+                    speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this@MainActivity)
+                    speechRecognizer?.setRecognitionListener(object : android.speech.RecognitionListener {
+                        override fun onReadyForSpeech(params: Bundle?) { output.text = "Listening..." }
+                        override fun onBeginningOfSpeech() {}
+                        override fun onRmsChanged(rmsdB: Float) {}
+                        override fun onBufferReceived(buffer: ByteArray?) {}
+                        override fun onEndOfSpeech() { output.text = "Thinking..." }
+                        override fun onError(error: Int) { output.text = "Speech recognition error: " + error }
+                        override fun onPartialResults(partialResults: Bundle?) {}
+                        override fun onEvent(eventType: Int, params: Bundle?) {}
+                        override fun onResults(results: Bundle?) {
+                            val heard = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull().orEmpty()
+                            if (heard.isBlank()) { output.text = "I did not hear a complete request."; return }
+                            output.text = "You: " + heard + "\\n\\nAgent Lee is thinking..."
+                            Thread {
+                                val result = ModelRuntime.generate(this@MainActivity, heard)
+                                val response = result.optString("response")
+                                if (result.optBoolean("ok") && response.isNotBlank()) VoiceRuntime.speak(this@MainActivity, response)
+                                ReceiptStore.record(this@MainActivity, "agent.voice.conversation", if (result.optBoolean("ok")) "PASS" else "FAIL", "speech input -> model -> TTS")
+                                runOnUiThread { output.text = "You: " + heard + "\\n\\nAgent Lee: " + (if (response.isBlank()) result.toString(2) else response) }
+                            }.start()
+                        }
+                    })
+                    val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                        putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                        putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
+                    }
+                    speechRecognizer?.startListening(intent)
+                }
+            }
+        }
+
         val remoteEnable = Button(this).apply {
             text = "ENABLE ALWAYS-ON REMOTE BRIDGE"
             setOnClickListener {
@@ -251,10 +304,10 @@ class MainActivity : AppCompatActivity() {
                 val token = BridgeSecret.ensure(this@MainActivity)
                 val identity = DeviceIdentity.ensure(this@MainActivity)
                 output.text =
-                    "Device ID:\n" + identity.optString("deviceId") +
-                    "\n\nRemote relay:\n" + RemoteRelayState.relayUrl(this@MainActivity) +
-                    "\n\nOwner pairing token (keep private):\n" + token +
-                    "\n\nLocal endpoint: http://127.0.0.1:" + LocalBridgeServer.PORT
+                    "Device ID:\\n" + identity.optString("deviceId") +
+                    "\\n\\nRemote relay:\\n" + RemoteRelayState.relayUrl(this@MainActivity) +
+                    "\\n\\nOwner pairing token (keep private):\\n" + token +
+                    "\\n\\nLocal endpoint: http://127.0.0.1:" + LocalBridgeServer.PORT
             }
         }
 
@@ -272,7 +325,7 @@ class MainActivity : AppCompatActivity() {
                 RemoteRelayService.stop(this@MainActivity)
                 ReceiptStore.record(this@MainActivity, "device.session.stop", "PASS", "Owner emergency stop")
                 refreshRuntimeState()
-                output.text = "Agent access stopped locally.\nRemote relay: OFF\nProtected bridge routes: BLOCKED\nRemote commands: NOT AUTHORIZED"
+                output.text = "Agent access stopped locally.\\nRemote relay: OFF\\nProtected bridge routes: BLOCKED\\nRemote commands: NOT AUTHORIZED"
             }
         }
 
@@ -281,7 +334,7 @@ class MainActivity : AppCompatActivity() {
             gravity = Gravity.CENTER_HORIZONTAL
             setPadding(42, 54, 42, 54)
             addView(TextView(this@MainActivity).apply {
-                text = "LeeWay Device Bridge\nDevice Control Center"
+                text = "LeeWay Device Bridge\\nDevice Control Center"
                 textSize = 24f
             })
             addView(TextView(this@MainActivity).apply {
@@ -292,7 +345,7 @@ class MainActivity : AppCompatActivity() {
             addView(runtimeState)
             listOf(
                 discover, diagnostics, files, receipts, authorizeBluetooth, bluetooth, networkDiscovery,
-                modelStatus, modelDownload, modelTest,
+                modelStatus, modelDownload, modelTest, speakTest, talkToLee,
                 remoteEnable, remoteStatus, remoteDisable,
                 enable, startBridge, selfTest, showToken, stopBridge, stop
             ).forEach { addView(it) }
@@ -302,12 +355,18 @@ class MainActivity : AppCompatActivity() {
         setContentView(ScrollView(this).apply { addView(root) })
     }
 
+    override fun onDestroy() {
+        speechRecognizer?.destroy()
+        VoiceRuntime.shutdown()
+        super.onDestroy()
+    }
+
     @Deprecated("Legacy activity result retained for minimum-compatible SAF handoff")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == FileAccess.REQUEST_OPEN_TREE && resultCode == Activity.RESULT_OK) {
             val uri = FileAccess.persistDirectory(this, data)
-            output.text = "Authorized file tree:\n${uri ?: "NONE"}\n\nLeeWay file access remains limited to platform-granted scope."
+            output.text = "Authorized file tree:\\n${uri ?: "NONE"}\\n\\nLeeWay file access remains limited to platform-granted scope."
         }
     }
 }
