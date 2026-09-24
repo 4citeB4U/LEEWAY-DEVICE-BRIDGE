@@ -1,0 +1,12 @@
+{
+  "receiptType": "LEEWAY_DEVICE_BRIDGE_V0_7_RELEASE_CANONICALIZATION",
+  "timestamp": "2026-09-24T03:16:00Z",
+  "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "result": "PASS",
+  "historicalArtifactState": "SUPERSEDED",
+  "canonicalArtifactSha256": "d5c001eb94aaebaf08347c3cde1df109d4dc0865adfee146134634a84321c4f9",
+  "canonicalArtifactSizeBytes": 65869689,
+  "physicalInstallState": "PENDING",
+  "githubActionsState": "BLOCKED_ACCOUNT_BILLING",
+  "evidencePath": "evidence/V0-7-RELEASE-CANONICALIZATION-20260924.json"
+}
