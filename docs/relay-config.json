@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "0.1.0",
+  "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "transport": "WSS",
+  "websocketUrl": null,
+  "identitiesUrl": "https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/relay-identities.json",
+  "status": "DEPLOYMENT_REQUIRED",
+  "productionDockerRequired": false,
+  "phoneInitiated": true,
+  "reconnectBackoffSeconds": [
+    1,
+    2,
+    4,
+    8,
+    16,
+    32,
+    60
+  ],
+  "note": "GitHub Pages remains canonical configuration authority; relay transports authenticated envelopes only."
+}
