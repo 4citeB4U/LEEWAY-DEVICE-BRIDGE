@@ -20,7 +20,7 @@ object RemoteCommandRouter {
             "voice.speak" -> text.isNotEmpty()
             else -> true
         }
-        val gate = FormulaF8Gate.evaluate(true, governance, listOf(
+        val gate = FormulaF8Gate.evaluate(\n            trigger = true,\n            governance = governance,\n            conditions = listOf(
             commandId.isNotBlank(), capability.isNotBlank(), supported, firstSeen, capabilityPrecondition
         ))
         if (gate.optInt("qA") != 69) return JSONObject().apply {
