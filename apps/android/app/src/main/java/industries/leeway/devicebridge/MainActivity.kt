@@ -223,17 +223,13 @@ DEVICE: " + remote.optString("deviceId")
                         override fun onResults(results: Bundle?) {
                             val heard = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull().orEmpty()
                             if (heard.isBlank()) { output.text = "I did not hear a complete request."; return }
-                            output.text = "You: " + heard + "
-
-Agent Lee is thinking..."
+                            output.text = "You: " + heard + "\\n\\nAgent Lee is thinking..."
                             Thread {
                                 val result = ModelRuntime.generate(this@MainActivity, heard)
                                 val response = result.optString("response")
                                 if (result.optBoolean("ok") && response.isNotBlank()) VoiceRuntime.speak(this@MainActivity, response)
                                 ReceiptStore.record(this@MainActivity, "agent.voice.conversation", if (result.optBoolean("ok")) "PASS" else "FAIL", "speech input -> model -> TTS")
-                                runOnUiThread { output.text = "You: " + heard + "
-
-Agent Lee: " + (if (response.isBlank()) result.toString(2) else response) }
+                                runOnUiThread { output.text = "You: " + heard + "\\n\\nAgent Lee: " + (if (response.isBlank()) result.toString(2) else response) }
                             }.start()
                         }
                     })
