@@ -11,6 +11,8 @@ object RemoteCommandRouter {
         "device.bluetooth.list-bonded",
         "device.network.discover",
         "device.receipts",
+        "sensory.status",
+        "sensory.speak",
         "model.status",
         "model.inference"
     )
@@ -24,8 +26,11 @@ object RemoteCommandRouter {
     ): JSONObject {
         val governance = LocalAuthority.agentAccessEnabled(context)
         val supported = capability in remoteQualified
-        val capabilityPrecondition =
-            capability != "model.inference" || arguments.optString("prompt").trim().isNotEmpty()
+        val capabilityPrecondition = when (capability) {
+            "model.inference" -> arguments.optString("prompt").trim().isNotEmpty()
+            "sensory.speak" -> arguments.optString("text").trim().isNotEmpty()
+            else -> true
+        }
 
         val gate = FormulaF8Gate.evaluate(
             trigger = true,
@@ -56,6 +61,14 @@ object RemoteCommandRouter {
                 "device.bluetooth.list-bonded" -> BluetoothProvider.snapshot(context)
                 "device.network.discover" -> NetworkDiscoveryProvider.discover(context)
                 "device.receipts" -> JSONObject().put("receipts", ReceiptStore.list(context))
+                "sensory.status" -> SensoryRuntime.status(context)
+                "sensory.speak" -> JSONObject().apply {
+                    val text = arguments.getString("text").trim()
+                    SensoryRuntime.speak(context, text)
+                    put("spoken", true)
+                    put("chars", text.length)
+                    put("authority", "PHONE_LOCAL_SENSORY_RUNTIME")
+                }
                 "model.status" -> ModelRuntime.status(context)
                 "model.inference" -> ModelRuntime.generate(
                     context,
@@ -84,6 +97,7 @@ object RemoteCommandRouter {
         JSONObject().apply {
             put("remote", RemoteRelayState.status(context))
             put("model", ModelRuntime.status(context))
+            put("sensory", SensoryRuntime.status(context))
             put("agentAccessEnabled", LocalAuthority.agentAccessEnabled(context))
             put("authority", "PHONE_LOCAL_RUNTIME")
         }
