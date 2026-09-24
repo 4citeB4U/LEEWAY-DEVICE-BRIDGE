@@ -313,19 +313,10 @@ Agent Lee: " + (if (response.isBlank()) result.toString(2) else response) }
                 val token = BridgeSecret.ensure(this@MainActivity)
                 val identity = DeviceIdentity.ensure(this@MainActivity)
                 output.text =
-                    "Device ID:
-" + identity.optString("deviceId") +
-                    "
-
-Remote relay:
-" + RemoteRelayState.relayUrl(this@MainActivity) +
-                    "
-
-Owner pairing token (keep private):
-" + token +
-                    "
-
-Local endpoint: http://127.0.0.1:" + LocalBridgeServer.PORT
+                    "Device ID:\\n" + identity.optString("deviceId") +
+                    "\\n\\nRemote relay:\\n" + RemoteRelayState.relayUrl(this@MainActivity) +
+                    "\\n\\nOwner pairing token (keep private):\\n" + token +
+                    "\\n\\nLocal endpoint: http://127.0.0.1:" + LocalBridgeServer.PORT
             }
         }
 
