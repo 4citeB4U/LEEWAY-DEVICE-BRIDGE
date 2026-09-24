@@ -1,8 +1,12 @@
 package industries.leeway.devicebridge
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.os.Bundle
+import android.provider.MediaStore
 import android.view.Gravity
 import android.widget.Button
 import android.widget.LinearLayout
@@ -12,6 +16,12 @@ import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
     private lateinit var output: TextView
+
+    companion object {
+        private const val CAMERA_CAPTURE_REQUEST = 4301
+        private const val AUDIO_PERMISSION_REQUEST = 4302
+        private const val CAMERA_PERMISSION_REQUEST = 4303
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,6 +44,7 @@ class MainActivity : AppCompatActivity() {
         fun refreshRuntimeState() {
             val model = ModelRuntime.status(this@MainActivity)
             val remote = RemoteRelayState.status(this@MainActivity)
+            val sensory = SensoryRuntime.status(this@MainActivity)
             val modelLabel = if (model.optBoolean("verified")) "VERIFIED" else "NOT VERIFIED"
             val remoteLabel = if (remote.optBoolean("connected")) {
                 "CONNECTED"
@@ -44,6 +55,7 @@ class MainActivity : AppCompatActivity() {
             }
             runtimeState.text =
                 "LOCAL MODEL: " + modelLabel +
+                "\nSENSORY HARNESS: " + if (sensory.optBoolean("speechRecognizerAvailable")) "READY" else "PARTIAL" +
                 "\nREMOTE RELAY: " + remoteLabel +
                 "\nDEVICE: " + remote.optString("deviceId")
         }
@@ -184,6 +196,70 @@ class MainActivity : AppCompatActivity() {
                 }.start()
             }
         }
+        val sensoryStatus = Button(this).apply {
+            text = "SENSORY HARNESS STATUS"
+            setOnClickListener {
+                output.text = SensoryRuntime.status(this@MainActivity).toString(2)
+            }
+        }
+
+        val voiceTurn = Button(this).apply {
+            text = "TALK TO AGENT LEE"
+            setOnClickListener {
+                if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), AUDIO_PERMISSION_REQUEST)
+                    output.text = "Microphone permission requested. Approve it, then tap TALK TO AGENT LEE again."
+                } else {
+                    output.text = "Listening..."
+                    SensoryRuntime.listenOnce(
+                        this@MainActivity,
+                        onText = { transcript ->
+                            runOnUiThread { output.text = "You: " + transcript + "\n\nAgent Lee is thinking..." }
+                            Thread {
+                                val result = try {
+                                    SensoryRuntime.reasonFromSpeech(this@MainActivity, transcript)
+                                } catch (e: Exception) {
+                                    org.json.JSONObject().apply {
+                                        put("ok", false)
+                                        put("error", e.message ?: e.javaClass.simpleName)
+                                    }
+                                }
+                                runOnUiThread {
+                                    output.text = result.toString(2)
+                                    if (result.optBoolean("ok")) {
+                                        SensoryRuntime.speak(
+                                            this@MainActivity,
+                                            result.optString("response")
+                                        )
+                                    }
+                                }
+                            }.start()
+                        },
+                        onError = { error ->
+                            runOnUiThread { output.text = "Voice input failed: " + error }
+                        }
+                    )
+                }
+            }
+        }
+
+        val visionTurn = Button(this).apply {
+            text = "SEE WITH AGENT LEE"
+            setOnClickListener {
+                if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(arrayOf(Manifest.permission.CAMERA), CAMERA_PERMISSION_REQUEST)
+                    output.text = "Camera permission requested. Approve it, then tap SEE WITH AGENT LEE again."
+                } else {
+                    val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                    if (cameraIntent.resolveActivity(packageManager) != null) {
+                        startActivityForResult(cameraIntent, CAMERA_CAPTURE_REQUEST)
+                    } else {
+                        output.text = "No camera capture activity is available."
+                    }
+                }
+            }
+        }
+
         val remoteEnable = Button(this).apply {
             text = "ENABLE ALWAYS-ON REMOTE BRIDGE"
             setOnClickListener {
@@ -281,11 +357,11 @@ class MainActivity : AppCompatActivity() {
             gravity = Gravity.CENTER_HORIZONTAL
             setPadding(42, 54, 42, 54)
             addView(TextView(this@MainActivity).apply {
-                text = "LeeWay Device Bridge\nDevice Control Center"
+                text = "LeeWay Live\nSensory Harness + Device Control"
                 textSize = 24f
             })
             addView(TextView(this@MainActivity).apply {
-                text = "PHONE_LOCAL | owner controlled | GitHub Pages distributed"
+                text = "PHONE_LOCAL | model + voice + vision + relay | GitHub Pages distributed"
                 textSize = 14f
                 setPadding(0, 10, 0, 18)
             })
@@ -293,6 +369,7 @@ class MainActivity : AppCompatActivity() {
             listOf(
                 discover, diagnostics, files, receipts, authorizeBluetooth, bluetooth, networkDiscovery,
                 modelStatus, modelDownload, modelTest,
+                sensoryStatus, voiceTurn, visionTurn,
                 remoteEnable, remoteStatus, remoteDisable,
                 enable, startBridge, selfTest, showToken, stopBridge, stop
             ).forEach { addView(it) }
@@ -307,7 +384,32 @@ class MainActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == FileAccess.REQUEST_OPEN_TREE && resultCode == Activity.RESULT_OK) {
             val uri = FileAccess.persistDirectory(this, data)
-            output.text = "Authorized file tree:\n${uri ?: "NONE"}\n\nLeeWay file access remains limited to platform-granted scope."
+            output.text = "Authorized file tree:\n" + (uri ?: "NONE") + "\n\nLeeWay file access remains limited to platform-granted scope."
+        }
+
+        if (requestCode == CAMERA_CAPTURE_REQUEST && resultCode == Activity.RESULT_OK) {
+            val bitmap = data?.extras?.get("data") as? Bitmap
+            if (bitmap == null) {
+                output.text = "Camera returned no image."
+                return
+            }
+            output.text = "Phone-local vision inference running..."
+            SensoryRuntime.analyzeBitmap(
+                this,
+                bitmap,
+                onResult = { result ->
+                    runOnUiThread {
+                        output.text = result.toString(2)
+                        val response = result.optJSONObject("reasoning")?.optString("response").orEmpty()
+                        if (response.isNotBlank()) {
+                            SensoryRuntime.speak(this@MainActivity, response)
+                        }
+                    }
+                },
+                onError = { error ->
+                    runOnUiThread { output.text = "Vision inference failed: " + error }
+                }
+            )
         }
     }
 }
