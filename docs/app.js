@@ -10,6 +10,31 @@ async function resolvePackage(profile){
   const platform=profile.platform.value;
   return {manifest,pkg:manifest.packages.find(p=>p.platform===platform)||null};
 }
+function renderPackage(manifest,pkg){
+  if(!pkg){
+    $("#packageState").textContent="NO ROUTE";
+    $("#packageCard").innerHTML=`<h3>No verified Android package published</h3><p class="package-meta">GitHub Pages will expose a package only after size, SHA-256 and runtime qualification pass.</p>`;
+    return;
+  }
+  $("#packageState").textContent=pkg.status;
+  const measured=pkg.sizeBytes==null?"NOT MEASURED":`${pkg.sizeBytes} bytes`;
+  const formula=pkg.formulaQualification?.status||"UNVERIFIED";
+  const action=pkg.downloadUrl
+    ? `<a class="action" href="${esc(pkg.downloadUrl)}" download>Install / update LeeWay Device Bridge ${esc(pkg.versionName||"")}</a>`
+    : `<button id="handoffBtn" class="action">Package build required</button>`;
+  $("#packageCard").innerHTML=`<h3>${esc(pkg.label)}</h3><p class="package-meta">Current release: ${esc(pkg.versionName||"UNKNOWN")}<br>Source: GitHub Pages<br>Runtime: phone-local<br>Docker required: no<br>Status: ${esc(pkg.status)}<br>Measured size: ${esc(measured)}<br>SHA-256: ${esc(pkg.sha256||"UNVERIFIED")}<br>Formula qualification: ${esc(formula)}<br>Package target ceiling: ${esc(manifest.targetBootstrapPackageMaxBytes)} bytes</p>${action}<p class="package-meta"><a href="./llm-entrypoint.json">LLM entrypoint</a> · <a href="./provider-registry.json">provider registry</a> · <a href="./remote-relay.json">remote relay contract</a></p>`;
+}
+
+async function showPublishedAndroidPackage(){
+  try{
+    const manifest=await fetch("./package-manifest.json",{cache:"no-store"}).then(r=>r.json());
+    const pkg=manifest.packages.find(p=>p.platform==="android")||null;
+    renderPackage(manifest,pkg);
+  }catch{
+    $("#packageState").textContent="UNAVAILABLE";
+  }
+}
+
 function buildBootstrap(profile,pkg){
   const id=crypto.randomUUID?.()||`ldb-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   return {
@@ -39,18 +64,6 @@ $("#discoverBtn").addEventListener("click",async()=>{
   const bootstrap=buildBootstrap(profile,pkg);
   localStorage.setItem("leeway.device.bootstrap",JSON.stringify(bootstrap));
   $("#profileOutput").textContent=JSON.stringify(bootstrap,null,2);
-  if(!pkg){
-    $("#packageState").textContent="NO ROUTE";
-    $("#packageCard").innerHTML=`<h3>No package route yet</h3><p class="package-meta">Platform: ${esc(profile.platform.value)}. No blind package will be offered.</p>`;
-    return;
-  }
-  $("#packageState").textContent=pkg.status;
-  const measured=pkg.sizeBytes==null?"NOT MEASURED":`${pkg.sizeBytes} bytes`;
-  const formula=pkg.formulaQualification?.status||"UNVERIFIED";
-  const action=pkg.downloadUrl
-    ? `<a class="action" href="${esc(pkg.downloadUrl)}" download>Download verified phone package</a>`
-    : `<button id="handoffBtn" class="action">Package build required</button>`;
-  $("#packageCard").innerHTML=`<h3>${esc(pkg.label)}</h3><p class="package-meta">Source: GitHub Pages<br>Runtime: phone-local<br>Docker required: no<br>Route: ${esc(pkg.id)}<br>Status: ${esc(pkg.status)}<br>Measured size: ${esc(measured)}<br>Formula qualification: ${esc(formula)}<br>Package target ceiling: ${esc(manifest.targetBootstrapPackageMaxBytes)} bytes<br>Exact device verification: required in native app</p>${action}<p class="package-meta"><a href="./llm-entrypoint.json">LLM entrypoint</a> · <a href="./provider-registry.json">provider registry</a> · <a href="./runtime-contract.json">runtime contract</a></p>`;
-  const btn=$("#handoffBtn");
-  if(btn) btn.addEventListener("click",()=>alert("No verified native package is published yet. GitHub Pages will expose the download only after package size, SHA-256 and runtime qualification pass."));
+  renderPackage(manifest,pkg);
 });
+showPublishedAndroidPackage();
