@@ -1,0 +1,35 @@
+{
+    "schemaVersion":  "0.1.0",
+    "authority":  "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+    "evidenceType":  "PHONE_LOCAL_MODEL_PHYSICAL_QUALIFICATION",
+    "observedAt":  "2026-09-24T00:28:11Z",
+    "phone":  {
+                  "model":  "SM-F956U",
+                  "platform":  "Android 16"
+              },
+    "model":  {
+                  "id":  "litert-community/SmolLM2-360M-Instruct",
+                  "runtime":  "LiteRT-LM",
+                  "backend":  "CPU",
+                  "format":  "litertlm",
+                  "sizeBytes":  373719040,
+                  "sha256":  "8e2834da211b439751af968ed650febdde5a8cb8d88bc6c1a3059f049caa5c2e",
+                  "installed":  true,
+                  "verified":  true
+              },
+    "inference":  {
+                      "prompt":  "Respond with exactly: LEEWAY_MODEL_READY",
+                      "response":  "I\u0027m ready to assist.",
+                      "elapsedMs":  4273,
+                      "result":  "PASS",
+                      "instructionExactMatch":  false
+                  },
+    "package":  {
+                    "versionName":  "0.5.0",
+                    "versionCode":  5,
+                    "sizeBytes":  64664235,
+                    "sha256":  "8045d45841c4696b68c4849ea08f7a0ec9eb23229b16eb504b53d47bb082f2ee"
+                },
+    "classification":  "PHYSICAL_MODEL_INSTALL_AND_INFERENCE_VERIFIED",
+    "claimBoundary":  "Inference execution is verified. Exact-output instruction following did not match the requested literal string."
+}

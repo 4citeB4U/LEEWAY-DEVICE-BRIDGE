@@ -98,6 +98,69 @@ class MainActivity : AppCompatActivity() {
                 }.start()
             }
         }
+        val modelStatus = Button(this).apply {
+            text = "LOCAL MODEL STATUS"
+            setOnClickListener {
+                output.text = ModelRuntime.status(this@MainActivity).toString(2)
+            }
+        }
+
+        val modelDownload = Button(this).apply {
+            text = "DOWNLOAD LOCAL MODEL"
+            setOnClickListener {
+                output.text = "Model download starting..."
+                Thread {
+                    try {
+                        val status = ModelRuntime.download(this@MainActivity) { done, total ->
+                            val pct = if (total > 0) ((done * 100) / total).coerceIn(0, 100) else 0
+                            runOnUiThread {
+                                output.text = "Downloading local model... " + pct + "%\n" + done + " / " + total + " bytes"
+                            }
+                        }
+                        runOnUiThread { output.text = status.toString(2) }
+                    } catch (e: Exception) {
+                        val detail = e.message ?: e.javaClass.simpleName
+                        ReceiptStore.record(
+                            this@MainActivity,
+                            "model.install",
+                            "FAIL",
+                            detail
+                        )
+                        runOnUiThread {
+                            output.text = "Model download failed: " + detail
+                        }
+                    }
+                }.start()
+            }
+        }
+
+        val modelTest = Button(this).apply {
+            text = "RUN LOCAL MODEL TEST"
+            setOnClickListener {
+                output.text = "Local model inference starting..."
+                Thread {
+                    val result = try {
+                        ModelRuntime.generate(
+                            this@MainActivity,
+                            "Respond with exactly: LEEWAY_MODEL_READY"
+                        )
+                    } catch (e: Exception) {
+                        val detail = e.message ?: e.javaClass.simpleName
+                        ReceiptStore.record(
+                            this@MainActivity,
+                            "model.inference",
+                            "FAIL",
+                            detail
+                        )
+                        org.json.JSONObject().apply {
+                            put("ok", false)
+                            put("error", detail)
+                        }
+                    }
+                    runOnUiThread { output.text = result.toString(2) }
+                }.start()
+            }
+        }
         val enable = Button(this).apply {
             text = "ENABLE LOCAL AGENT SESSION"
             setOnClickListener {
@@ -165,6 +228,7 @@ class MainActivity : AppCompatActivity() {
             })
             listOf(
                 discover, diagnostics, files, receipts, authorizeBluetooth, bluetooth, networkDiscovery,
+                modelStatus, modelDownload, modelTest,
                 enable, startBridge, selfTest, showToken, stopBridge, stop
             ).forEach { addView(it) }
             addView(output)

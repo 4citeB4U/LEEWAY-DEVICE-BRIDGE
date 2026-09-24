@@ -1,0 +1,15 @@
+{
+    "receiptType":  "LEEWAY_DEVICE_BRIDGE_PHONE_LOCAL_MODEL_QUALIFICATION",
+    "timestamp":  "2026-09-24T00:28:11Z",
+    "authority":  "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+    "result":  "PASS",
+    "capability":  "model.inference",
+    "modelId":  "litert-community/SmolLM2-360M-Instruct",
+    "modelSha256":  "8e2834da211b439751af968ed650febdde5a8cb8d88bc6c1a3059f049caa5c2e",
+    "modelSizeBytes":  373719040,
+    "inferenceElapsedMs":  4273,
+    "packageSha256":  "8045d45841c4696b68c4849ea08f7a0ec9eb23229b16eb504b53d47bb082f2ee",
+    "packageSizeBytes":  64664235,
+    "dockerRuntimeRequired":  false,
+    "evidencePath":  "evidence/PHONE-LOCAL-MODEL-QUALIFICATION-20260923.json"
+}
