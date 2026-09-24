@@ -43,6 +43,8 @@ object SensoryRuntime {
             put("speechRecognizerAvailable", recognizerAvailable)
             put("onDeviceSpeechRecognizerAvailable", onDeviceRecognizerAvailable)
             put("speechOutput", "ANDROID_TEXT_TO_SPEECH")
+            put("agentLeeCloneVoice", false)
+            put("voiceIdentityState", "BLOCKED_CLONE_ENGINE_NOT_BOUND")
             put("visionInference", "ML_KIT_BUNDLED_IMAGE_LABELING")
             put("reasoningModel", ModelRuntime.MODEL_ID)
             put("modelVerified", model.optBoolean("verified"))
