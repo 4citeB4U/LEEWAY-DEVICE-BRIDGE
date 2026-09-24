@@ -9,6 +9,7 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.label.ImageLabeling
 import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
@@ -89,24 +90,78 @@ object SensoryRuntime {
         return recognizer
     }
 
-    fun speak(context: Context, text: String, onDone: (() -> Unit)? = null) {
-        if (text.isBlank()) return
-        val app = context.applicationContext
-        val existing = tts
-        if (existing != null) {
-            existing.speak(text, TextToSpeech.QUEUE_FLUSH, null, "leeway-live")
-            ReceiptStore.record(context, "sensory.voice.output", "PASS", "chars=" + text.length)
-            onDone?.invoke()
+    fun speak(
+        context: Context,
+        text: String,
+        onDone: (() -> Unit)? = null,
+        onError: ((String) -> Unit)? = null
+    ) {
+        if (text.isBlank()) {
+            onError?.invoke("EMPTY_TTS_TEXT")
             return
         }
+
+        val utteranceId = "leeway-live-" + System.currentTimeMillis()
+        val app = context.applicationContext
+
+        fun speakNow(engine: TextToSpeech) {
+            engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                override fun onStart(id: String?) {
+                    if (id == utteranceId) {
+                        ReceiptStore.record(context, "sensory.voice.output", "STARTED", "chars=" + text.length)
+                    }
+                }
+
+                override fun onDone(id: String?) {
+                    if (id == utteranceId) {
+                        ReceiptStore.record(context, "sensory.voice.output", "PASS", "chars=" + text.length)
+                        onDone?.invoke()
+                    }
+                }
+
+                @Deprecated("Deprecated in Android SDK")
+                override fun onError(id: String?) {
+                    if (id == utteranceId) {
+                        ReceiptStore.record(context, "sensory.voice.output", "FAIL", "TTS_ERROR")
+                        onError?.invoke("TTS_ERROR")
+                    }
+                }
+
+                override fun onError(id: String?, errorCode: Int) {
+                    if (id == utteranceId) {
+                        ReceiptStore.record(context, "sensory.voice.output", "FAIL", "ttsError=" + errorCode)
+                        onError?.invoke("TTS_ERROR_" + errorCode)
+                    }
+                }
+            })
+
+            val result = engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
+            if (result == TextToSpeech.ERROR) {
+                ReceiptStore.record(context, "sensory.voice.output", "FAIL", "speakQueueError")
+                onError?.invoke("TTS_QUEUE_ERROR")
+            }
+        }
+
+        val existing = tts
+        if (existing != null) {
+            speakNow(existing)
+            return
+        }
+
         tts = TextToSpeech(app) { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                tts?.language = Locale.getDefault()
-                tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "leeway-live")
-                ReceiptStore.record(context, "sensory.voice.output", "PASS", "chars=" + text.length)
-                onDone?.invoke()
+            val engine = tts
+            if (status == TextToSpeech.SUCCESS && engine != null) {
+                val languageResult = engine.setLanguage(Locale.getDefault())
+                if (languageResult == TextToSpeech.LANG_MISSING_DATA ||
+                    languageResult == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    ReceiptStore.record(context, "sensory.voice.output", "FAIL", "languageUnavailable")
+                    onError?.invoke("TTS_LANGUAGE_UNAVAILABLE")
+                    return@TextToSpeech
+                }
+                speakNow(engine)
             } else {
                 ReceiptStore.record(context, "sensory.voice.output", "FAIL", "ttsInit=" + status)
+                onError?.invoke("TTS_INIT_" + status)
             }
         }
     }
