@@ -23,7 +23,8 @@
     "deviceContract": "../contracts/device.schema.json",
     "modelManifest": "./model-manifest.json",
     "remoteRelay": "./remote-relay.json",
-    "androidActionsStatus": "./android-actions-status.json"
+    "androidActionsStatus": "./android-actions-status.json",
+    "sensoryRuntime": "../apps/android/app/src/main/java/industries/leeway/devicebridge/SensoryRuntime.kt"
   },
   "phoneRuntime": {
     "required": true,
@@ -32,7 +33,19 @@
     "offlineCapable": true,
     "ownerStopRequired": true,
     "autoReconnect": true,
-    "bootRestart": true
+    "bootRestart": true,
+    "sensoryHarness": {
+      "voiceInput": "OWNER_INITIATED_ANDROID_SPEECH_RECOGNIZER",
+      "voiceOutput": "ANDROID_TEXT_TO_SPEECH",
+      "visionInput": "OWNER_INITIATED_CAMERA_CAPTURE",
+      "visionInference": "BUNDLED_ML_KIT_IMAGE_LABELING",
+      "reasoningModel": "PHONE_LOCAL_LITERT_MODEL",
+      "remoteSafe": [
+        "sensory.status",
+        "sensory.speak"
+      ],
+      "remoteSensorActivation": "NOT_AUTHORIZED"
+    }
   },
   "llmContract": {
     "rule": "LLMs consume the Device Bridge contract; no model becomes device authority.",
@@ -60,7 +73,8 @@
     "remoteRelay": "PERMANENT_RELAY_E2E_VERIFIED",
     "remotePhoneConnection": "PENDING_V0_7_PHYSICAL_INSTALL",
     "remoteFormulaGate": "LW_F8_SOURCE_TEST_AND_ANDROID_BUILD_VERIFIED",
-    "androidActions": "BLOCKED_ACCOUNT_BILLING_LOCAL_BUILD_PASS"
+    "androidActions": "BLOCKED_ACCOUNT_BILLING_LOCAL_BUILD_PASS",
+    "sensoryHarness": "V0_8_SOURCE_STAGED_NOT_BUILT"
   },
   "deviceFabric": {
     "modelIndependent": true,
