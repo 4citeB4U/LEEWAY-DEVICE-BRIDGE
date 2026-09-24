@@ -1,0 +1,40 @@
+import fs from "node:fs";
+import assert from "node:assert/strict";
+
+const root="apps/android/app/src/main";
+const service=fs.readFileSync(root+"/java/industries/leeway/devicebridge/RemoteBridgeService.kt","utf8");
+const prefs=fs.readFileSync(root+"/java/industries/leeway/devicebridge/RemoteBridgePrefs.kt","utf8");
+const boot=fs.readFileSync(root+"/java/industries/leeway/devicebridge/RemoteBridgeBootReceiver.kt","utf8");
+const identity=fs.readFileSync(root+"/java/industries/leeway/devicebridge/DeviceIdentity.kt","utf8");
+const main=fs.readFileSync(root+"/java/industries/leeway/devicebridge/MainActivity.kt","utf8");
+const manifest=fs.readFileSync(root+"/AndroidManifest.xml","utf8");
+const gradle=fs.readFileSync("apps/android/app/build.gradle.kts","utf8");
+const relay=fs.readFileSync("relay/vercel/app/api/ws/route.js","utf8");
+const config=JSON.parse(fs.readFileSync("docs/relay-config.json","utf8"));
+const identities=JSON.parse(fs.readFileSync("docs/relay-identities.json","utf8"));
+
+assert.match(service,/FormulaF8Gate\.evaluate/);
+assert.match(service,/model\.inference/);
+assert.match(service,/device\.health/);
+assert.match(service,/scheduleReconnect/);
+assert.match(service,/CONFIG_URL/);
+assert.match(identity,/SHA256withECDSA/);
+assert.match(identity,/signBase64/);
+assert.match(prefs,/remote_bridge_enabled/);
+assert.match(boot,/BOOT_COMPLETED/);
+assert.match(main,/START REMOTE BRIDGE/);
+assert.match(main,/LOCAL MODEL:/);
+assert.match(manifest,/FOREGROUND_SERVICE_REMOTE_MESSAGING/);
+assert.match(manifest,/RemoteBridgeService/);
+assert.match(manifest,/RemoteBridgeBootReceiver/);
+assert.match(gradle,/okhttp:4\.12\.0/);
+assert.match(gradle,/versionName = "0\.6\.0"/);
+assert.match(relay,/experimental_upgradeWebSocket/);
+assert.match(relay,/crypto\.verify/);
+assert.match(relay,/IDENTITIES_URL/);
+assert.equal(config.status,"DEPLOYMENT_REQUIRED");
+assert.equal(config.phoneInitiated,true);
+assert.ok(identities.devices.length>=1);
+assert.ok(identities.controllers.length>=1);
+
+console.log("PASS remote no-USB transport source contract");
