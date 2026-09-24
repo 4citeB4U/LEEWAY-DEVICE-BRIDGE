@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "0.1.0",
+  "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "evidenceType": "V0_7_RELEASE_CANONICALIZATION",
+  "observedAt": "2026-09-24T03:16:00Z",
+  "historicalBuild": {
+    "commit": "4dd1b9232ccb33e253f02c02cd18b32fdf00fe72",
+    "sha256": "d57e7fee2eb26bacd3cfc51b50fad0d3a3e463ca67839e259b33293114095349",
+    "sizeBytes": 65869689,
+    "state": "SUPERSEDED"
+  },
+  "canonicalBuild": {
+    "commit": "c836ed2c7503dbee369c6e145aee922cc7705acd",
+    "sourceCommit": "bab9429d3cad1419b41156866badf68ae0699259",
+    "sha256": "d5c001eb94aaebaf08347c3cde1df109d4dc0865adfee146134634a84321c4f9",
+    "sizeBytes": 65869689,
+    "state": "CURRENT"
+  },
+  "packageManifest": "docs/package-manifest.json",
+  "activeBuildEvidence": "evidence/ANDROID-V070-REMOTE-BUILD-QUALIFICATION-20260924.json",
+  "rule": "Historical receipts remain unchanged. Active discovery points only to the final qualified artifact.",
+  "classification": "VERIFIED_FROM_GIT_COMMIT_HISTORY"
+}
