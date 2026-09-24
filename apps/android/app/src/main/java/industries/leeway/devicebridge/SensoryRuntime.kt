@@ -1,15 +1,20 @@
 package industries.leeway.devicebridge
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
+import androidx.core.content.ContextCompat
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.label.ImageLabeling
 import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
@@ -20,18 +25,40 @@ import java.util.Locale
 object SensoryRuntime {
     private var tts: TextToSpeech? = null
 
-    fun status(context: Context): JSONObject = JSONObject().apply {
-        put("microphone", true)
-        put("camera", true)
-        put("speechRecognizerAvailable", SpeechRecognizer.isRecognitionAvailable(context))
-        put(
-            "onDeviceSpeechRecognizerAvailable",
+    fun status(context: Context): JSONObject {
+        val microphonePermission =
+            ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) ==
+                PackageManager.PERMISSION_GRANTED
+        val recognizerAvailable = SpeechRecognizer.isRecognitionAvailable(context)
+        val onDeviceRecognizerAvailable =
             Build.VERSION.SDK_INT >= 31 && SpeechRecognizer.isOnDeviceRecognitionAvailable(context)
-        )
-        put("speechOutput", "ANDROID_TEXT_TO_SPEECH")
-        put("visionInference", "ML_KIT_BUNDLED_IMAGE_LABELING")
-        put("reasoningModel", ModelRuntime.MODEL_ID)
-        put("authority", "PHONE_LOCAL_SENSORY_RUNTIME")
+        val model = ModelRuntime.status(context)
+        val relay = RemoteRelayState.status(context)
+        val agentAccess = LocalAuthority.agentAccessEnabled(context)
+
+        return JSONObject().apply {
+            put("microphone", true)
+            put("microphonePermissionGranted", microphonePermission)
+            put("camera", true)
+            put("speechRecognizerAvailable", recognizerAvailable)
+            put("onDeviceSpeechRecognizerAvailable", onDeviceRecognizerAvailable)
+            put("speechOutput", "ANDROID_TEXT_TO_SPEECH")
+            put("visionInference", "ML_KIT_BUNDLED_IMAGE_LABELING")
+            put("reasoningModel", ModelRuntime.MODEL_ID)
+            put("modelVerified", model.optBoolean("verified"))
+            put("relayEnabled", relay.optBoolean("enabled"))
+            put("relayConnected", relay.optBoolean("connected"))
+            put("agentAccessEnabled", agentAccess)
+            put(
+                "voiceReady",
+                microphonePermission && recognizerAvailable && model.optBoolean("verified")
+            )
+            put(
+                "dailyReachabilityReady",
+                model.optBoolean("verified") && relay.optBoolean("enabled") && agentAccess
+            )
+            put("authority", "PHONE_LOCAL_SENSORY_RUNTIME")
+        }
     }
 
     fun listenOnce(
@@ -96,6 +123,13 @@ object SensoryRuntime {
         onDone: (() -> Unit)? = null,
         onError: ((String) -> Unit)? = null
     ) {
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            Handler(Looper.getMainLooper()).post {
+                speak(context, text, onDone, onError)
+            }
+            return
+        }
+
         if (text.isBlank()) {
             onError?.invoke("EMPTY_TTS_TEXT")
             return
