@@ -20,9 +20,9 @@ function renderPackage(manifest,pkg){
   const measured=pkg.sizeBytes==null?"NOT MEASURED":`${pkg.sizeBytes} bytes`;
   const formula=pkg.formulaQualification?.status||"UNVERIFIED";
   const action=pkg.downloadUrl
-    ? `<a class="action" href="${esc(pkg.downloadUrl)}" download>Install / update LeeWay Device Bridge ${esc(pkg.versionName||"")}</a>`
+    ? `<a class="action" href="${esc(pkg.downloadUrl)}" download>Download & update LeeWay Device Bridge ${esc(pkg.versionName||"")}</a>`
     : `<button id="handoffBtn" class="action">Package build required</button>`;
-  $("#packageCard").innerHTML=`<h3>${esc(pkg.label)}</h3><p class="package-meta">Current release: ${esc(pkg.versionName||"UNKNOWN")}<br>Source: GitHub Pages<br>Runtime: phone-local<br>Docker required: no<br>Status: ${esc(pkg.status)}<br>Measured size: ${esc(measured)}<br>SHA-256: ${esc(pkg.sha256||"UNVERIFIED")}<br>Formula qualification: ${esc(formula)}<br>Package target ceiling: ${esc(manifest.targetBootstrapPackageMaxBytes)} bytes</p>${action}<p class="package-meta"><a href="./llm-entrypoint.json">LLM entrypoint</a> · <a href="./provider-registry.json">provider registry</a> · <a href="./remote-relay.json">remote relay contract</a></p>`;
+  $("#packageCard").innerHTML=`<h3>${esc(pkg.label)}</h3><p class="package-meta">Current release: ${esc(pkg.versionName||"UNKNOWN")}<br>Source: GitHub Pages<br>Runtime: phone-local<br>Docker required: no<br>Status: ${esc(pkg.status)}<br>Measured size: ${esc(measured)}<br>SHA-256: ${esc(pkg.sha256||"UNVERIFIED")}<br>Formula qualification: ${esc(formula)}<br>Package target ceiling: ${esc(manifest.targetBootstrapPackageMaxBytes)} bytes</p>${action}<p class="package-meta"><strong>After installing v0.7.0:</strong> open the app and tap <strong>ENABLE ALWAYS-ON REMOTE BRIDGE</strong> once. After that, the phone maintains its outbound connection and reconnects after restart; USB/PC are not part of the runtime path.</p><p class="package-meta"><a href="./llm-entrypoint.json">LLM entrypoint</a> · <a href="./provider-registry.json">provider registry</a> · <a href="./remote-relay.json">remote relay contract</a></p>`;
 }
 
 async function showPublishedAndroidPackage(){
