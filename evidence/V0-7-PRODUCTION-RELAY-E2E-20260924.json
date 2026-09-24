@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "0.1.0",
+  "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "evidenceType": "V0_7_PRODUCTION_RELAY_E2E_QUALIFICATION",
+  "observedAt": "2026-09-24T03:20:00Z",
+  "relay": {
+    "url": "wss://agent-lee-x.vercel.app/api/device-relay",
+    "deployment": "Vercel production",
+    "authority": "NONE_TRANSPORT_ONLY",
+    "protocol": "LEEWAY_DEVICE_RELAY_TOKEN_ROOM_V1"
+  },
+  "test": {
+    "method": "DISPOSABLE_TEST_ROOM",
+    "phoneHelloAck": true,
+    "clientHelloAck": true,
+    "commandRouted": true,
+    "resultReturned": true,
+    "result": "PASS"
+  },
+  "physicalFoldV07": {
+    "installed": false,
+    "state": "PENDING_USER_INSTALL",
+    "reason": "Phone is not reachable over USB or wireless ADB; Android package installation requires a user-authorized install path."
+  },
+  "classification": "RELAY_E2E_VERIFIED_PHYSICAL_PHONE_V07_PENDING"
+}
