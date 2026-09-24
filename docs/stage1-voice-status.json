@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.0.0",
+  "stage": "LEEWAY_LIVE_STAGE_1_VOICE",
+  "branch": "feature/leeway-live-sensory-harness-v1",
+  "sourceState": "VERIFIED_SOURCE",
+  "sourceGate": {
+    "passed": 29,
+    "total": 29,
+    "status": "PASS"
+  },
+  "runtimePath": [
+    "owner taps TALK TO AGENT LEE",
+    "RECORD_AUDIO permission",
+    "Android SpeechRecognizer",
+    "prefer on-device recognizer when available",
+    "phone-local LiteRT model verification",
+    "phone-local LiteRT model inference",
+    "Android TextToSpeech",
+    "UtteranceProgressListener onDone",
+    "sensory.voice.turn PASS receipt"
+  ],
+  "dailyReadiness": {
+    "modelStorage": "context.filesDir/models",
+    "modelHashPinned": true,
+    "relayEnabledPersisted": true,
+    "relayBootRestart": true,
+    "relayPackageReplaceRestart": true,
+    "readinessFields": [
+      "voiceReady",
+      "dailyReachabilityReady",
+      "modelVerified",
+      "relayEnabled",
+      "relayConnected",
+      "agentAccessEnabled"
+    ]
+  },
+  "remoteBoundary": {
+    "allowed": [
+      "sensory.status",
+      "sensory.speak"
+    ],
+    "prohibited": [
+      "remote microphone activation",
+      "remote camera activation"
+    ]
+  },
+  "buildState": "BLOCKED_BEFORE_RUNNER_STEPS",
+  "buildBlocker": "GITHUB_ACCOUNT_ACTIONS_LOCK",
+  "latestRunId": 35953965499,
+  "latestJobId": 107488216482,
+  "latestJobSteps": null,
+  "physicalPhoneVoiceTurn": "NOT_EXECUTED",
+  "promotionRule": "Do not publish v0.8 or claim voice runtime PASS until APK build, install, transcript, local model response, audible TTS completion, and sensory.voice.turn PASS receipt are physically verified."
+}
