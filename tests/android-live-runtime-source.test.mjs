@@ -29,6 +29,6 @@ assert.match(activity,/STOP AGENT ACCESS/);
 assert.match(activity,/SHOW PAIRING TOKEN/);
 assert.match(activity,/LocalBridgeServer\.start/);
 assert.match(manifest,/android\.permission\.INTERNET/);
-assert.match(gradle,/versionName = "0\.5\.0"/);
+assert.match(gradle,/versionName = "0\.6\.0"/);
 
 console.log("PASS android live runtime source contract");
