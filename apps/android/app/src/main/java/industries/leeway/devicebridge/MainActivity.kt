@@ -343,10 +343,7 @@ Local endpoint: http://127.0.0.1:" + LocalBridgeServer.PORT
                 RemoteRelayService.stop(this@MainActivity)
                 ReceiptStore.record(this@MainActivity, "device.session.stop", "PASS", "Owner emergency stop")
                 refreshRuntimeState()
-                output.text = "Agent access stopped locally.
-Remote relay: OFF
-Protected bridge routes: BLOCKED
-Remote commands: NOT AUTHORIZED"
+                output.text = "Agent access stopped locally.\\nRemote relay: OFF\\nProtected bridge routes: BLOCKED\\nRemote commands: NOT AUTHORIZED"
             }
         }
 
@@ -355,8 +352,7 @@ Remote commands: NOT AUTHORIZED"
             gravity = Gravity.CENTER_HORIZONTAL
             setPadding(42, 54, 42, 54)
             addView(TextView(this@MainActivity).apply {
-                text = "LeeWay Device Bridge
-Device Control Center"
+                text = "LeeWay Device Bridge\\nDevice Control Center"
                 textSize = 24f
             })
             addView(TextView(this@MainActivity).apply {
@@ -388,10 +384,7 @@ Device Control Center"
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == FileAccess.REQUEST_OPEN_TREE && resultCode == Activity.RESULT_OK) {
             val uri = FileAccess.persistDirectory(this, data)
-            output.text = "Authorized file tree:
-${uri ?: "NONE"}
-
-LeeWay file access remains limited to platform-granted scope."
+            output.text = "Authorized file tree:\\n${uri ?: "NONE"}\\n\\nLeeWay file access remains limited to platform-granted scope."
         }
     }
 }
