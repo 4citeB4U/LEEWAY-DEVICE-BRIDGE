@@ -22,7 +22,8 @@
     "universalHarness": "./UNIVERSAL-DEVICE-HARNESS.md",
     "deviceContract": "../contracts/device.schema.json",
     "modelManifest": "./model-manifest.json",
-    "remoteRelay": "./remote-relay.json"
+    "remoteRelay": "./remote-relay.json",
+    "androidActionsStatus": "./android-actions-status.json"
   },
   "phoneRuntime": {
     "required": true,
@@ -87,6 +88,7 @@
     "homeAssistantDiscovery": "../evidence/HOME-ASSISTANT-LIVE-DISCOVERY-20260923.json",
     "localModel": "../evidence/PHONE-LOCAL-MODEL-QUALIFICATION-20260923.json",
     "remoteV07Build": "../evidence/ANDROID-V070-REMOTE-BUILD-QUALIFICATION-20260924.json",
-    "v07ReleaseCanonicalization": "../evidence/V0-7-RELEASE-CANONICALIZATION-20260924.json"
+    "v07ReleaseCanonicalization": "../evidence/V0-7-RELEASE-CANONICALIZATION-20260924.json",
+    "productionRelayV07": "../evidence/V0-7-PRODUCTION-RELAY-E2E-20260924.json"
   }
 }
