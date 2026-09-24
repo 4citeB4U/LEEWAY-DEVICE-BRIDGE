@@ -8,6 +8,7 @@ import org.json.JSONObject
 import java.security.KeyPairGenerator
 import java.security.KeyStore
 import java.security.MessageDigest
+import java.security.Signature
 import java.util.UUID
 
 object DeviceIdentity {
@@ -46,5 +47,15 @@ object DeviceIdentity {
             put("publicKeyDerBase64",Base64.encodeToString(publicKey,Base64.NO_WRAP))
             put("authority","ANDROID_KEYSTORE")
         }
+    }
+
+    fun signBase64(context: Context, payload: String): String {
+        ensure(context)
+        val store=KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+        val privateKey=store.getKey(ALIAS,null) as java.security.PrivateKey
+        val signer=Signature.getInstance("SHA256withECDSA")
+        signer.initSign(privateKey)
+        signer.update(payload.toByteArray(Charsets.UTF_8))
+        return Base64.encodeToString(signer.sign(),Base64.NO_WRAP)
     }
 }
