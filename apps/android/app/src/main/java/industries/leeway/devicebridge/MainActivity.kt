@@ -2,7 +2,7 @@ package industries.leeway.devicebridge
 
 import android.app.Activity
 import android.content.Intent
-import android.os.Bundle
+import android.os.Bundle\nimport android.speech.RecognizerIntent\nimport android.speech.SpeechRecognizer\nimport android.content.pm.PackageManager\nimport android.Manifest
 import android.view.Gravity
 import android.widget.Button
 import android.widget.LinearLayout
@@ -184,6 +184,56 @@ class MainActivity : AppCompatActivity() {
                 }.start()
             }
         }
+        val speakTest = Button(this).apply {
+            text = "TEST AGENT LEE VOICE"
+            setOnClickListener {
+                val result = VoiceRuntime.speak(this@MainActivity, "Agent Lee voice path is active on this phone.")
+                output.text = result.toString(2)
+            }
+        }
+
+        val talkToLee = Button(this).apply {
+            text = "TALK TO AGENT LEE"
+            setOnClickListener {
+                if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), 4203)
+                    output.text = "Microphone permission requested. Approve it, then tap TALK TO AGENT LEE again."
+                } else if (!SpeechRecognizer.isRecognitionAvailable(this@MainActivity)) {
+                    output.text = "Android speech recognition is not available on this device."
+                } else {
+                    speechRecognizer?.destroy()
+                    speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this@MainActivity)
+                    speechRecognizer?.setRecognitionListener(object : android.speech.RecognitionListener {
+                        override fun onReadyForSpeech(params: Bundle?) { output.text = "Listening..." }
+                        override fun onBeginningOfSpeech() {}
+                        override fun onRmsChanged(rmsdB: Float) {}
+                        override fun onBufferReceived(buffer: ByteArray?) {}
+                        override fun onEndOfSpeech() { output.text = "Thinking..." }
+                        override fun onError(error: Int) { output.text = "Speech recognition error: " + error }
+                        override fun onPartialResults(partialResults: Bundle?) {}
+                        override fun onEvent(eventType: Int, params: Bundle?) {}
+                        override fun onResults(results: Bundle?) {
+                            val heard = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull().orEmpty()
+                            if (heard.isBlank()) { output.text = "I did not hear a complete request."; return }
+                            output.text = "You: " + heard + "\n\nAgent Lee is thinking..."
+                            Thread {
+                                val result = ModelRuntime.generate(this@MainActivity, heard)
+                                val response = result.optString("response")
+                                if (result.optBoolean("ok") && response.isNotBlank()) VoiceRuntime.speak(this@MainActivity, response)
+                                ReceiptStore.record(this@MainActivity, "agent.voice.conversation", if (result.optBoolean("ok")) "PASS" else "FAIL", "speech input -> model -> TTS")
+                                runOnUiThread { output.text = "You: " + heard + "\n\nAgent Lee: " + (if (response.isBlank()) result.toString(2) else response) }
+                            }.start()
+                        }
+                    })
+                    val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                        putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                        putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
+                    }
+                    speechRecognizer?.startListening(intent)
+                }
+            }
+        }
+
         val remoteEnable = Button(this).apply {
             text = "ENABLE ALWAYS-ON REMOTE BRIDGE"
             setOnClickListener {
@@ -302,7 +352,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(ScrollView(this).apply { addView(root) })
     }
 
-    @Deprecated("Legacy activity result retained for minimum-compatible SAF handoff")
+    override fun onDestroy() {\n        speechRecognizer?.destroy()\n        VoiceRuntime.shutdown()\n        super.onDestroy()\n    }\n\n    @Deprecated("Legacy activity result retained for minimum-compatible SAF handoff")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == FileAccess.REQUEST_OPEN_TREE && resultCode == Activity.RESULT_OK) {
