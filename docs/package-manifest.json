@@ -32,6 +32,15 @@
       "upgradeSafety": {
         "inPlaceSignatureCompatibility": "UNVERIFIED",
         "instruction": "Attempt install as an update. If Android reports a signature/package conflict, DO NOT uninstall the existing app; preserve its model/data and use the controlled migration path."
+      },
+      "githubActionsQualification": {
+        "state": "VERIFIED",
+        "runId": 36036397343,
+        "headSha": "de3a3142bb64566092cf0e7ae252490ba209190d",
+        "artifactId": 10825202249,
+        "apkSizeBytes": 65869689,
+        "apkSha256": "0fba49ce08f28f1264de8d83bd944e8c2d7e691de2b14e586ce6efcbefaccd00",
+        "note": "GitHub-hosted debug build verified. Its APK hash differs from the current Pages debug APK because debug builds/signing are not reproducible across build environments; the Pages package remains the current install artifact until stable release signing is introduced."
       }
     },
     {
