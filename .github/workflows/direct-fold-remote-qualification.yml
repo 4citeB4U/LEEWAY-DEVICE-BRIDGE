@@ -22,6 +22,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: Validate Termux qualification script
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n clients/remote-controller/termux-qualify.sh
+          grep -q '127.0.0.1:5323/health' clients/remote-controller/termux-qualify.sh
+          grep -q 'agent.chat' clients/remote-controller/termux-qualify.sh
+          grep -q 'voice.speak' clients/remote-controller/termux-qualify.sh
+          ! grep -Eq 'PAIRING_TOKEN=.*[^}]' clients/remote-controller/termux-qualify.sh
       - name: Verify existing secret bindings without exposing values
         shell: bash
         run: |
