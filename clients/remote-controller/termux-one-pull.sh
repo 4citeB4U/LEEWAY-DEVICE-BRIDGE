@@ -78,8 +78,9 @@ printf '  4. Tap ENABLE ALWAYS-ON REMOTE BRIDGE\n'
 printf '  5. Tap SHOW PAIRING TOKEN and copy ONLY the full token after the label\n'
 printf '  6. Return to Termux; this same script is still running\n\n'
 if command -v am >/dev/null 2>&1; then
-  am start -n "$PKG/.MainActivity" >/dev/null 2>&1 || true
+  am start -n "$PKG/.MainActivity" --es leeway_action SHOW_PAIRING >/dev/null 2>&1 || true
 fi
+printf 'The app should open directly in Pairing Mode. Tap COPY PAIRING TOKEN, return here, and paste once.\n'
 printf 'When you return, paste the 43-character token at the hidden prompt.\n'
 printf 'Nothing will appear while you paste. Press Enter once.\n'
 read -r -s -p "Pairing token: " LEEWAY_PAIRING_TOKEN
