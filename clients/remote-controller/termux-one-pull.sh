@@ -72,7 +72,15 @@ install_latest_bridge(){
   version="$(node -e 'const v=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));process.stdout.write(String(v.versionName||""))' "$EVIDENCE_DIR/latest-package.json")"
   sha="$(node -e 'const v=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));process.stdout.write(String(v.sha256||""))' "$EVIDENCE_DIR/latest-package.json")"
   if [ "$version" != "$TARGET_VERSION" ] || [ -z "$sha" ]; then
-    fail "Published package is not the qualified $TARGET_VERSION build."
+    obs "GitHub Pages manifest is stale or incomplete; retrying from raw GitHub."
+    meta="$(curl -fsSL --max-time 20 "$RAW_META_URL" 2>/dev/null || true)"
+    [ -n "$meta" ] || { fail "Raw GitHub package metadata is unavailable."; return 1; }
+    printf '%s\n' "$meta" > "$EVIDENCE_DIR/latest-package.json"
+    version="$(node -e 'const v=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));process.stdout.write(String(v.versionName||""))' "$EVIDENCE_DIR/latest-package.json")"
+    sha="$(node -e 'const v=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));process.stdout.write(String(v.sha256||""))' "$EVIDENCE_DIR/latest-package.json")"
+  fi
+  if [ "$version" != "$TARGET_VERSION" ] || [ -z "$sha" ]; then
+    fail "Neither Pages nor raw GitHub exposes the qualified $TARGET_VERSION package."
     return 1
   fi
   if ! curl -fL --max-time 240 "$LATEST_APK_URL" -o "$APK_FILE"; then
