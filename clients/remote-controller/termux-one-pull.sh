@@ -156,7 +156,7 @@ function classify(name,envelope){
 }
 
 const summary={
-  schema:"leeway-termux-one-pull-v1",
+  schema:"leeway-termux-one-pull-v2-durable-relay",
   testedAt:new Date().toISOString(),
   deviceId,
   relay,
@@ -168,10 +168,19 @@ const summary={
 
 try{
   const ack=await connected;
-  summary.hello={role:ack.role,phoneOnline:Boolean(ack.phoneOnline),relayAuthority:ack.relayAuthority||null};
-  console.log("[LeeWay][PASS] Remote controller authenticated.");
-  console.log("[LeeWay]["+(ack.phoneOnline?"PASS":"BLOCKED")+"] phoneOnline="+Boolean(ack.phoneOnline));
-  if(!ack.phoneOnline)throw new Error("PHONE_OFFLINE");
+  const durable=ack.deliveryMode==="VERCEL_QUEUE_DURABLE_V1";
+  summary.hello={
+    role:ack.role,
+    phoneOnlineHint:ack.phoneOnline??null,
+    presenceMode:ack.presenceMode||null,
+    deliveryMode:ack.deliveryMode||null,
+    queueRegion:ack.queueRegion||null,
+    relayAuthority:ack.relayAuthority||null
+  };
+  console.log("[LeeWay][PASS] Relay controller session established.");
+  console.log("[LeeWay][OBSERVED] deliveryMode="+String(ack.deliveryMode||"LEGACY_OR_UNKNOWN"));
+  console.log("[LeeWay][OBSERVED] presenceMode="+String(ack.presenceMode||"LEGACY_HINT"));
+  if(!durable && ack.phoneOnline===false)throw new Error("LEGACY_RELAY_PHONE_OFFLINE");
 
   for(const [name,cap,args,timeout] of commands){
     const started=Date.now();
@@ -216,8 +225,15 @@ try{
       }
     }catch(error){
       const elapsedMs=Date.now()-started;
-      summary.checks[name]={relayOk:false,phoneOk:false,capability:cap,elapsedMs,error:String(error?.message||error)};
-      console.log("[LeeWay][BLOCKED] "+cap+" error="+String(error?.message||error));
+      const detail=String(error?.message||error);
+      summary.checks[name]={relayOk:false,phoneOk:false,capability:cap,elapsedMs,error:detail};
+      console.log("[LeeWay][BLOCKED] "+cap+" error="+detail);
+      if(name==="device-health"){
+        throw new Error(
+          "DEVICE_HEALTH_UNREACHABLE: the controller reached the durable relay but no phone runtime answered. "+
+          "Verify the owner pairing token matches the phone and the always-on remote bridge has reconnected."
+        );
+      }
     }
     await wait(150);
   }
@@ -261,7 +277,9 @@ if [ -f "$SUMMARY" ]; then
 const fs=require('fs');
 const s=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
 console.log("LEEWAY_PHONE_QUALIFICATION="+s.overall);
-console.log("phoneOnline="+Boolean(s.hello?.phoneOnline));
+console.log("relayDeliveryMode="+String(s.hello?.deliveryMode||"UNKNOWN"));
+console.log("relayPresenceMode="+String(s.hello?.presenceMode||"UNKNOWN"));
+console.log("deviceHealth="+(s.checks?.["device-health"]?.relayOk&&s.checks?.["device-health"]?.phoneOk?"PASS":"BLOCKED"));
 console.log("agentAccessEnabled="+String(s.observations?.agentAccessEnabled));
 console.log("modelId="+String(s.observations?.model?.modelId||"UNKNOWN"));
 console.log("modelVerified="+Boolean(s.observations?.model?.verified));
