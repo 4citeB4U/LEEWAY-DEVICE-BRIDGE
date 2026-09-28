@@ -26,9 +26,7 @@ object VoiceRuntime {
             initAttempts = attempt
             val latch = CountDownLatch(1)
             var callbackCode = TextToSpeech.ERROR
-            var engine: TextToSpeech? = null
-
-            engine = TextToSpeech(app) { code ->
+            val engine = TextToSpeech(app) { code ->
                 callbackCode = code
                 latch.countDown()
             }
