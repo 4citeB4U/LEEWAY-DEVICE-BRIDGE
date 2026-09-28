@@ -2,6 +2,9 @@ package industries.leeway.devicebridge
 
 import android.app.Activity
 import android.content.Intent
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.os.Bundle
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
@@ -35,6 +38,34 @@ class MainActivity : AppCompatActivity() {
             textSize = 15f
             setPadding(0, 12, 0, 18)
         }
+
+        val pairingToken = BridgeSecret.ensure(this)
+        val pairingPanel = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(24, 24, 24, 24)
+        }
+        val pairingTitle = TextView(this).apply {
+            text = "PAIRING TOKEN"
+            textSize = 18f
+        }
+        val pairingTokenView = TextView(this).apply {
+            text = pairingToken
+            textSize = 18f
+            setTextIsSelectable(true)
+            setPadding(0, 16, 0, 16)
+        }
+        val copyPairingToken = Button(this).apply {
+            text = "COPY PAIRING TOKEN"
+            setOnClickListener {
+                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                clipboard.setPrimaryClip(ClipData.newPlainText("LeeWay pairing token", pairingToken))
+                output.text = "Pairing token copied. Return to Termux and paste at the hidden prompt."
+                ReceiptStore.record(this@MainActivity, "device.pairing.copy", "PASS", "Owner copied pairing token")
+            }
+        }
+        pairingPanel.addView(pairingTitle)
+        pairingPanel.addView(pairingTokenView)
+        pairingPanel.addView(copyPairingToken)
 
         fun refreshRuntimeState() {
             val model = ModelRuntime.status(this@MainActivity)
@@ -301,13 +332,9 @@ class MainActivity : AppCompatActivity() {
         val showToken = Button(this).apply {
             text = "SHOW PAIRING TOKEN"
             setOnClickListener {
-                val token = BridgeSecret.ensure(this@MainActivity)
-                val identity = DeviceIdentity.ensure(this@MainActivity)
-                output.text =
-                    "Device ID:\\n" + identity.optString("deviceId") +
-                    "\\n\\nRemote relay:\\n" + RemoteRelayState.relayUrl(this@MainActivity) +
-                    "\\n\\nOwner pairing token (keep private):\\n" + token +
-                    "\\n\\nLocal endpoint: http://127.0.0.1:" + LocalBridgeServer.PORT
+                pairingTokenView.text = pairingToken
+                pairingPanel.requestFocus()
+                output.text = "Pairing token is shown above. Tap COPY PAIRING TOKEN."
             }
         }
 
@@ -343,6 +370,7 @@ class MainActivity : AppCompatActivity() {
                 setPadding(0, 10, 0, 18)
             })
             addView(runtimeState)
+            addView(pairingPanel)
             listOf(
                 discover, diagnostics, files, receipts, authorizeBluetooth, bluetooth, networkDiscovery,
                 modelStatus, modelDownload, modelTest, speakTest, talkToLee,
@@ -353,6 +381,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         setContentView(ScrollView(this).apply { addView(root) })
+
+        if (intent?.getStringExtra("leeway_action") == "SHOW_PAIRING") {
+            pairingPanel.requestFocus()
+            output.text = "Pairing mode opened by Termux. Tap COPY PAIRING TOKEN, then return to Termux."
+        }
     }
 
     override fun onDestroy() {
