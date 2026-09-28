@@ -69,7 +69,18 @@ else
   obs "Local loopback server is not listening; the remote phone path will still be tested."
 fi
 
-printf '\nPaste the LeeWay Device Bridge owner pairing token at the hidden prompt.\n'
+say "Opening the LeeWay Device Bridge owner control center."
+printf '\nOWNER AUTHORITY GATE — in the Device Bridge app, do these once:\n'
+printf '  1. Tap ENABLE LOCAL AGENT SESSION\n'
+printf '  2. Tap START LOCAL DEVICE BRIDGE\n'
+printf '  3. Tap DISABLE ALWAYS-ON REMOTE BRIDGE\n'
+printf '  4. Tap ENABLE ALWAYS-ON REMOTE BRIDGE\n'
+printf '  5. Tap SHOW PAIRING TOKEN and copy ONLY the full token after the label\n'
+printf '  6. Return to Termux; this same script is still running\n\n'
+if command -v am >/dev/null 2>&1; then
+  am start -n "$PKG/.MainActivity" >/dev/null 2>&1 || true
+fi
+printf 'When you return, paste the 43-character token at the hidden prompt.\n'
 printf 'Nothing will appear while you paste. Press Enter once.\n'
 read -r -s -p "Pairing token: " LEEWAY_PAIRING_TOKEN
 printf '\n'
@@ -83,6 +94,19 @@ if [ "$TOKEN_LEN" -ne 43 ]; then
   exit 6
 fi
 pass "Canonical Device Bridge owner-token shape confirmed locally."
+
+LOCAL_HEALTH_AFTER="$(curl -fsS --max-time 4 http://127.0.0.1:5323/health 2>/dev/null || true)"
+if [ -n "$LOCAL_HEALTH_AFTER" ]; then
+  printf '%s\n' "$LOCAL_HEALTH_AFTER" > "$EVIDENCE_DIR/local-health-after-owner-gate.json"
+  node - "$EVIDENCE_DIR/local-health-after-owner-gate.json" <<'NODE_LOCAL_AFTER' || true
+const fs=require('fs');
+const v=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+console.log('[LeeWay]['+(v.running?'PASS':'BLOCKED')+'] localBridgeRunningAfterOwnerGate='+Boolean(v.running));
+console.log('[LeeWay]['+(v.agentAccessEnabled?'PASS':'BLOCKED')+'] localAgentAccessAfterOwnerGate='+Boolean(v.agentAccessEnabled));
+NODE_LOCAL_AFTER
+else
+  blocked "Local bridge is still not listening after the owner gate; remote durable path will continue."
+fi
 
 cat > "$WORK_ROOT/package.json" <<'JSON_PACKAGE'
 {"name":"leeway-termux-one-pull","private":true,"type":"module","dependencies":{"ws":"8.18.3"}}
