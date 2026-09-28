@@ -6,6 +6,8 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.content.pm.PackageManager
@@ -382,9 +384,42 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(ScrollView(this).apply { addView(root) })
 
-        if (intent?.getStringExtra("leeway_action") == "SHOW_PAIRING") {
-            pairingPanel.requestFocus()
-            output.text = "Pairing mode opened by Termux. Tap COPY PAIRING TOKEN, then return to Termux."
+        when (intent?.getStringExtra("leeway_action")) {
+            "SHOW_PAIRING" -> {
+                pairingPanel.requestFocus()
+                output.text = "Pairing mode opened by Termux. Tap COPY PAIRING TOKEN, then return to Termux."
+            }
+            "TERMUX_BOOTSTRAP" -> {
+                val nonce = intent?.getStringExtra("leeway_nonce").orEmpty()
+                val bootstrap = LocalBridgeServer.armOwnerBootstrap(this, nonce)
+                if (bootstrap.optBoolean("ok")) {
+                    LocalAuthority.setAgentAccess(this, true)
+                    RemoteRelayService.stop(this)
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        RemoteRelayService.start(this)
+                        refreshRuntimeState()
+                    }, 750L)
+                    output.text =
+                        "Termux owner bootstrap armed.\n" +
+                        "Local bridge: STARTED\n" +
+                        "Remote relay: RECONNECTING\n" +
+                        "You can return to Termux. No token copy is required."
+                    ReceiptStore.record(
+                        this,
+                        "device.owner.bootstrap",
+                        "PASS",
+                        "Owner launched Termux bootstrap flow"
+                    )
+                } else {
+                    output.text = "Termux bootstrap blocked: " + bootstrap.optString("error")
+                    ReceiptStore.record(
+                        this,
+                        "device.owner.bootstrap",
+                        "BLOCKED",
+                        bootstrap.optString("error")
+                    )
+                }
+            }
         }
     }
 
