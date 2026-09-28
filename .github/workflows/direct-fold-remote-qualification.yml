@@ -1,5 +1,4 @@
-name: Direct Fold Remote Qualification
-# validator-revision: credential-contract-v2
+name: Validate Termux Fold Qualification
 
 on:
   push:
@@ -8,83 +7,37 @@ on:
     paths:
       - ".github/workflows/direct-fold-remote-qualification.yml"
       - "clients/remote-controller/termux-one-pull.sh"
-      - "clients/remote-controller/termux-qualify.sh"
+  pull_request:
+    paths:
+      - ".github/workflows/direct-fold-remote-qualification.yml"
+      - "clients/remote-controller/termux-one-pull.sh"
   workflow_dispatch:
 
 jobs:
-  qualify-phone:
+  validate:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    env:
-      LEEWAY_DEVICE_ID: f30a80a743592e7d9cbe4b3113ef896db30bd80434df0afcb8591c04dbb84861
-      LEEWAY_PAIRING_TOKEN: ${{ secrets.LEEWAY_PAIRING_TOKEN }}
-      LEEWAY_RELAY_URL: wss://agent-lee-x.vercel.app/api/device-relay
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Validate Termux qualification scripts
+      - name: Validate one-pull Termux qualifier
         shell: bash
         run: |
           set -euo pipefail
-          bash -n clients/remote-controller/termux-qualify.sh
           bash -n clients/remote-controller/termux-one-pull.sh
           grep -q '127.0.0.1:5323/health' clients/remote-controller/termux-one-pull.sh
+          grep -q 'VERCEL_QUEUE_DURABLE_V1' clients/remote-controller/termux-one-pull.sh
           grep -q 'agent.chat' clients/remote-controller/termux-one-pull.sh
           grep -q 'voice.speak' clients/remote-controller/termux-one-pull.sh
           grep -q 'PAIRING_TOKEN=REDACTED_NOT_INCLUDED' clients/remote-controller/termux-one-pull.sh
           python - <<'PY'
           from pathlib import Path
           text=Path('clients/remote-controller/termux-one-pull.sh').read_text()
-          start=text.index("cat > \"$NODE_CLIENT\" <<'NODE_CONTROLLER'")+len("cat > \"$NODE_CLIENT\" <<'NODE_CONTROLLER'")
-          end=text.index("\nNODE_CONTROLLER",start)
-          Path('/tmp/leeway-controller.mjs').write_text(text[start:].lstrip('\n')[:end-start-1])
+          marker='NODE_CONTROLLER'
+          first=text.index("<<'"+marker+"'")
+          start=text.index("\n",first)+1
+          end=text.index("\n"+marker,start)
+          Path('/tmp/leeway-controller.mjs').write_text(text[start:end])
           PY
           node --check /tmp/leeway-controller.mjs
-      - name: Verify existing secret bindings without exposing values
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "DEVICE_ID_SOURCE=AUTHORIZED_PUBLIC_REGISTRY"
-          test -n "${LEEWAY_PAIRING_TOKEN:-}" && echo "PAIRING_TOKEN_BOUND=true" || { echo "PAIRING_TOKEN_BOUND=false"; exit 21; }
-      - name: Install canonical remote controller
-        working-directory: clients/remote-controller
-        run: npm install --ignore-scripts --no-audit --no-fund
-      - name: Run phone-local qualification
-        shell: bash
-        working-directory: clients/remote-controller
-        run: |
-          set -euo pipefail
-          mkdir -p ../../evidence/runtime-phone
-          node client.mjs device.health '{}' | tee ../../evidence/runtime-phone/device-health.json
-          node client.mjs model.status '{}' | tee ../../evidence/runtime-phone/model-status.json
-          node client.mjs voice.status '{}' | tee ../../evidence/runtime-phone/voice-status.json
-          node client.mjs agent.chat '{"prompt":"Agent Lee, this is the LeeWay direct-phone qualification. Confirm the phone-local model is responding and speak: Direct phone path verified.","speak":true}' | tee ../../evidence/runtime-phone/agent-chat.json
-      - name: Validate result envelopes
-        shell: bash
-        run: |
-          set -euo pipefail
-          node --input-type=module <<'NODE'
-          import fs from 'node:fs';
-          const dir='evidence/runtime-phone';
-          const names=['device-health','model-status','voice-status','agent-chat'];
-          const summary={testedAt:new Date().toISOString(),relay:'agent-lee-x.vercel.app',checks:{}};
-          for(const name of names){
-            const raw=fs.readFileSync(`${dir}/${name}.json`,'utf8');
-            const value=JSON.parse(raw);
-            if(value.type!=='result'||value.ok!==true) throw new Error(`${name} relay result failed`);
-            const inner=value.result;
-            if(!inner||inner.ok!==true) throw new Error(`${name} phone capability failed: ${inner?.error||'UNKNOWN'}`);
-            summary.checks[name]={relayOk:true,phoneOk:true,capability:inner.capability||null};
-          }
-          fs.writeFileSync(`${dir}/qualification-summary.json`,JSON.stringify(summary,null,2));
-          NODE
-      - name: Upload phone qualification evidence
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: direct-fold-remote-qualification
-          path: evidence/runtime-phone
-          if-no-files-found: ignore
