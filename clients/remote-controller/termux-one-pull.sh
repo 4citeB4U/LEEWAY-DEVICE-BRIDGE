@@ -104,6 +104,7 @@ install_latest_bridge(){
 
   for i in $(seq 1 120); do
     [ "$(installed_version)" = "$TARGET_VERSION" ] && return 0
+    if [ $((i % 10)) -eq 0 ]; then say "Waiting for Android update confirmation... ${i}s"; fi
     sleep 1
   done
 
@@ -111,6 +112,7 @@ install_latest_bridge(){
   am start -a android.intent.action.DELETE -d "package:$PKG" >/dev/null 2>&1 || true
   for i in $(seq 1 120); do
     [ -z "$(cmd package path "$PKG" 2>/dev/null || true)" ] && break
+    if [ $((i % 10)) -eq 0 ]; then say "Waiting for Android uninstall confirmation... ${i}s"; fi
     sleep 1
   done
   if [ -n "$(cmd package path "$PKG" 2>/dev/null || true)" ]; then
@@ -126,6 +128,7 @@ install_latest_bridge(){
   say "Approve Install. The script will continue as soon as Device Bridge $TARGET_VERSION is present."
   for i in $(seq 1 180); do
     [ "$(installed_version)" = "$TARGET_VERSION" ] && return 0
+    if [ $((i % 10)) -eq 0 ]; then say "Waiting for Android install confirmation... ${i}s"; fi
     sleep 1
   done
   fail "Device Bridge $TARGET_VERSION was not installed."
@@ -345,8 +348,13 @@ try{
       continue;
     }
     const started=Date.now();
+    console.log("[LeeWay][RUNNING] "+cap);
+    const heartbeat=setInterval(()=>{
+      console.log("[LeeWay][RUNNING] "+cap+" elapsedMs="+(Date.now()-started));
+    },15000);
     try{
       const envelope=await command(cap,args,timeout);
+      clearInterval(heartbeat);
       const elapsedMs=Date.now()-started;
       write(name,envelope);
       const state=classify(name,envelope);
@@ -385,6 +393,7 @@ try{
         };
       }
     }catch(error){
+      clearInterval(heartbeat);
       const elapsedMs=Date.now()-started;
       const detail=String(error?.message||error);
       summary.checks[name]={relayOk:false,phoneOk:false,capability:cap,elapsedMs,error:detail};
