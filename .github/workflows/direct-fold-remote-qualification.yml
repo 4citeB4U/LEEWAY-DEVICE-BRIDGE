@@ -7,6 +7,8 @@ on:
       - "phone-direct-qualification-20260928"
     paths:
       - ".github/workflows/direct-fold-remote-qualification.yml"
+      - "clients/remote-controller/termux-one-pull.sh"
+      - "clients/remote-controller/termux-qualify.sh"
   workflow_dispatch:
 
 jobs:
