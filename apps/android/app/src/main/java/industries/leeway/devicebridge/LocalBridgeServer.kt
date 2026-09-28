@@ -8,12 +8,70 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
+import java.net.URLDecoder
 import kotlin.concurrent.thread
 
 object LocalBridgeServer {
     const val PORT = 5323
     @Volatile private var server: ServerSocket? = null
     @Volatile private var worker: Thread? = null
+    @Volatile private var ownerBootstrapNonce: String? = null
+    @Volatile private var ownerBootstrapExpiresAt: Long = 0L
+
+    fun armOwnerBootstrap(context: Context, nonce: String): JSONObject {
+        val clean = nonce.trim()
+        val valid = clean.matches(Regex("^[A-Za-z0-9_-]{32,128}$"))
+        if (!valid) {
+            return JSONObject().put("ok", false).put("error", "INVALID_BOOTSTRAP_NONCE")
+        }
+        LocalAuthority.setAgentAccess(context, true)
+        if (!isRunning()) start(context)
+        ownerBootstrapNonce = clean
+        ownerBootstrapExpiresAt = System.currentTimeMillis() + 120_000L
+        ReceiptStore.record(
+            context.applicationContext,
+            "device.owner.bootstrap.arm",
+            "PASS",
+            "Loopback owner bootstrap armed for Termux"
+        )
+        return JSONObject().apply {
+            put("ok", true)
+            put("armed", true)
+            put("expiresInMs", 120_000)
+            put("bindAddress", "127.0.0.1")
+            put("port", PORT)
+        }
+    }
+
+    @Synchronized
+    private fun consumeOwnerBootstrap(context: Context, nonce: String?): JSONObject {
+        val expected = ownerBootstrapNonce
+        val now = System.currentTimeMillis()
+        if (expected.isNullOrBlank() || now > ownerBootstrapExpiresAt) {
+            ownerBootstrapNonce = null
+            ownerBootstrapExpiresAt = 0L
+            return JSONObject().put("ok", false).put("error", "BOOTSTRAP_NOT_ARMED_OR_EXPIRED")
+        }
+        if (nonce.isNullOrBlank() || nonce != expected) {
+            return JSONObject().put("ok", false).put("error", "BOOTSTRAP_NONCE_MISMATCH")
+        }
+        ownerBootstrapNonce = null
+        ownerBootstrapExpiresAt = 0L
+        val identity = DeviceIdentity.ensure(context)
+        ReceiptStore.record(
+            context.applicationContext,
+            "device.owner.bootstrap.consume",
+            "PASS",
+            "Termux consumed one-time owner bootstrap"
+        )
+        return JSONObject().apply {
+            put("ok", true)
+            put("deviceId", identity.optString("deviceId"))
+            put("pairingToken", BridgeSecret.ensure(context))
+            put("relayUrl", RemoteRelayState.relayUrl(context))
+            put("authority", "OWNER_LOCAL_LOOPBACK_BOOTSTRAP")
+        }
+    }
 
     fun isRunning(): Boolean = server?.isClosed == false
 
@@ -65,7 +123,19 @@ object LocalBridgeServer {
             val requestLine = reader.readLine() ?: return
             val parts = requestLine.split(" ")
             val method = parts.getOrNull(0) ?: ""
-            val path = parts.getOrNull(1)?.substringBefore("?") ?: "/"
+            val target = parts.getOrNull(1) ?: "/"
+            val path = target.substringBefore("?")
+            val query = target.substringAfter("?", "")
+            val queryParams = query.split("&")
+                .mapNotNull { part ->
+                    if (part.isBlank()) null
+                    else {
+                        val idx = part.indexOf("=")
+                        if (idx <= 0) null
+                        else URLDecoder.decode(part.substring(0, idx), "UTF-8") to
+                            URLDecoder.decode(part.substring(idx + 1), "UTF-8")
+                    }
+                }.toMap()
             var authorization: String? = null
             while (true) {
                 val line = reader.readLine() ?: break
@@ -82,6 +152,12 @@ object LocalBridgeServer {
 
             if (path == "/health") {
                 respond(client, 200, status(context))
+                return
+            }
+
+            if (path == "/owner-bootstrap") {
+                val body = consumeOwnerBootstrap(context, queryParams["nonce"])
+                respond(client, if (body.optBoolean("ok")) 200 else 401, body)
                 return
             }
 

@@ -7,7 +7,7 @@ object RemoteCommandRouter {
     private val remoteQualified = setOf(
         "device.health", "device.info", "device.capabilities",
         "device.bluetooth.list-bonded", "device.network.discover", "device.receipts",
-        "model.status", "model.inference", "voice.status", "voice.speak", "agent.chat"
+        "model.status", "model.install", "model.inference", "voice.status", "voice.speak", "agent.chat"
     )
 
     fun execute(context: Context, commandId: String, capability: String, arguments: JSONObject, firstSeen: Boolean): JSONObject {
@@ -40,6 +40,7 @@ object RemoteCommandRouter {
                 "device.network.discover" -> NetworkDiscoveryProvider.discover(context)
                 "device.receipts" -> JSONObject().put("receipts", ReceiptStore.list(context))
                 "model.status" -> ModelRuntime.status(context)
+                "model.install" -> ModelRuntime.download(context) { _, _ -> }
                 "model.inference" -> ModelRuntime.generate(context, prompt)
                 "voice.status" -> VoiceRuntime.initialize(context)
                 "voice.speak" -> VoiceRuntime.speak(context, text)

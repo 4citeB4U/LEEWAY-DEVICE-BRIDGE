@@ -19,7 +19,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -82,3 +82,35 @@ jobs:
           path: |
             apps/android/app/build/outputs/apk/debug/app-debug.apk
             apps/android/package-evidence.txt
+
+      - name: Publish latest verified Android APK to GitHub Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p docs/downloads
+          APK_SRC=apps/android/app/build/outputs/apk/debug/app-debug.apk
+          APK_DST=docs/downloads/leeway-device-bridge-android-latest-debug.apk
+          cp "$APK_SRC" "$APK_DST"
+          BYTES=$(stat -c%s "$APK_DST")
+          SHA=$(sha256sum "$APK_DST" | awk '{print $1}')
+          cat > docs/downloads/leeway-device-bridge-android-latest.json <<JSON
+          {
+            "versionName": "0.8.2",
+            "versionCode": 10,
+            "sha256": "$SHA",
+            "sizeBytes": $BYTES,
+            "downloadUrl": "./leeway-device-bridge-android-latest-debug.apk",
+            "sourceRunId": "${{ github.run_id }}",
+            "sourceCommit": "${{ github.sha }}"
+          }
+          JSON
+          git config user.name "LeeWay Veritas"
+          git config user.email "actions@users.noreply.github.com"
+          git add docs/downloads/leeway-device-bridge-android-latest-debug.apk docs/downloads/leeway-device-bridge-android-latest.json
+          if git diff --cached --quiet; then
+            echo "Published APK unchanged."
+            exit 0
+          fi
+          git commit -m "Publish verified Device Bridge 0.8.2 APK"
+          git push origin HEAD:main
