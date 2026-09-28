@@ -8,7 +8,7 @@
 # WHO = LeeWay Industries / Agent Lee / Creator
 # WHERE = Termux -> production Device Bridge relay -> phone-local runtime
 # WHEN = 2026-09-28
-# HOW = self-install dependencies, hidden owner credential input, one relay session, full capability campaign, evidence
+# HOW = self-install dependencies, capability-detect Device Bridge, one-time local owner bootstrap, durable relay campaign, evidence
 set -uo pipefail
 
 PKG="industries.leeway.devicebridge"
@@ -50,10 +50,21 @@ if ! command -v node >/dev/null 2>&1; then
 fi
 command -v npm >/dev/null 2>&1 || { fail "npm is unavailable."; exit 5; }
 
-installed_version(){
-  local dump
-  dump="$(dumpsys package "$PKG" 2>/dev/null || cmd package dump "$PKG" 2>/dev/null || true)"
-  printf '%s\n' "$dump" | sed -n 's/.*versionName=//p' | head -n1 | tr -d '\r'
+probe_owner_bootstrap(){
+  local nonce body
+  nonce="$(node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))")"
+  am start -n "$PKG/.MainActivity" \
+    --es leeway_action TERMUX_BOOTSTRAP \
+    --es leeway_nonce "$nonce" >/dev/null 2>&1 || return 1
+  for i in $(seq 1 24); do
+    body="$(curl -fsS --max-time 2 "http://127.0.0.1:5323/owner-bootstrap?nonce=$nonce" 2>/dev/null || true)"
+    if [ -n "$body" ]; then
+      printf '%s\n' "$body"
+      return 0
+    fi
+    sleep 0.5
+  done
+  return 1
 }
 
 install_latest_bridge(){
@@ -103,7 +114,10 @@ install_latest_bridge(){
   say "Android installer opened. Approve the update/install; this script will detect completion automatically."
 
   for i in $(seq 1 120); do
-    [ "$(installed_version)" = "$TARGET_VERSION" ] && return 0
+    if probe_owner_bootstrap >/dev/null 2>&1; then
+      pass "Device Bridge owner-bootstrap capability is live."
+      return 0
+    fi
     if [ $((i % 10)) -eq 0 ]; then say "Waiting for Android update confirmation... ${i}s"; fi
     sleep 1
   done
@@ -127,7 +141,10 @@ install_latest_bridge(){
   fi
   say "Approve Install. The script will continue as soon as Device Bridge $TARGET_VERSION is present."
   for i in $(seq 1 180); do
-    [ "$(installed_version)" = "$TARGET_VERSION" ] && return 0
+    if probe_owner_bootstrap >/dev/null 2>&1; then
+      pass "Device Bridge owner-bootstrap capability is live."
+      return 0
+    fi
     if [ $((i % 10)) -eq 0 ]; then say "Waiting for Android install confirmation... ${i}s"; fi
     sleep 1
   done
@@ -135,12 +152,13 @@ install_latest_bridge(){
   return 1
 }
 
-CURRENT_VERSION="$(installed_version)"
-if [ "$CURRENT_VERSION" != "$TARGET_VERSION" ]; then
-  obs "Installed Device Bridge version=${CURRENT_VERSION:-UNKNOWN}; target=$TARGET_VERSION."
-  install_latest_bridge || exit 5
+if BOOTSTRAP_PRECHECK="$(probe_owner_bootstrap 2>/dev/null)"; then
+  pass "Device Bridge owner-bootstrap capability already live; package reinstall skipped."
+  printf '%s\n' "$BOOTSTRAP_PRECHECK" > "$EVIDENCE_DIR/bootstrap-precheck.json"
+  unset BOOTSTRAP_PRECHECK
 else
-  pass "Device Bridge $TARGET_VERSION already installed."
+  obs "Owner-bootstrap capability is not live yet; installing verified Device Bridge $TARGET_VERSION."
+  install_latest_bridge || exit 5
 fi
 
 PACKAGE_PATH="$(cmd package path "$PKG" 2>/dev/null | head -n1 || true)"
