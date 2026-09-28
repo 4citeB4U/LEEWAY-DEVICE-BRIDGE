@@ -241,6 +241,7 @@ const commands=[
   ["device-health","device.health",{},30000],
   ["device-capabilities","device.capabilities",{},30000],
   ["model-status","model.status",{},30000],
+  ["model-install","model.install",{},600000],
   ["voice-status-before","voice.status",{},30000],
   ["model-inference","model.inference",{prompt:"Respond briefly and include this marker: LEEWAY_PHONE_MODEL_READY"},180000],
   ["voice-speak","voice.speak",{text:"Agent Lee phone voice execution path is verified."},60000],
@@ -321,6 +322,11 @@ try{
   if(!durable && ack.phoneOnline===false)throw new Error("LEGACY_RELAY_PHONE_OFFLINE");
 
   for(const [name,cap,args,timeout] of commands){
+    if(name==="model-install" && summary.observations?.model?.verified===true){
+      summary.checks[name]={relayOk:true,phoneOk:true,capability:cap,elapsedMs:0,skipped:"ALREADY_VERIFIED"};
+      console.log("[LeeWay][PASS] model.install skipped; model already verified.");
+      continue;
+    }
     const started=Date.now();
     try{
       const envelope=await command(cap,args,timeout);
@@ -334,7 +340,7 @@ try{
         summary.observations.phoneAuthority=value?.authority||null;
         summary.observations.agentAccessEnabled=value?.agentAccessEnabled??null;
         summary.observations.remote=value?.remote||null;
-      }else if(name==="model-status"){
+      }else if(name==="model-status" || name==="model-install"){
         summary.observations.model={
           modelId:value?.modelId||null,
           verified:Boolean(value?.verified),
@@ -376,7 +382,7 @@ try{
     await wait(150);
   }
 
-  const required=["device-health","model-status","voice-speak","agent-chat"];
+  const required=["device-health","model-status","model-install","voice-speak","agent-chat"];
   summary.overall=required.every(n=>summary.checks[n]?.relayOk&&summary.checks[n]?.phoneOk)?"EXECUTION_PASS":"PARTIAL_OR_BLOCKED";
 }catch(error){
   summary.fatal=String(error?.message||error);
