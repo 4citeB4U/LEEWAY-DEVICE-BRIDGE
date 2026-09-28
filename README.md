@@ -2,6 +2,14 @@
 
 Governed native-first device fabric for Agent Lee and model-independent LLM clients.
 
+## Ecosystem portability contract
+
+This bridge follows the shared [LeeWay ecosystem portability policy](https://github.com/4citeB4U/LeeWay-Agent-Skills/blob/main/config/portability-contract.md). Canonical authority and logical capabilities remain independent of filesystem paths, operating systems, devices, browsers, and model providers. Deployment bindings select authorized native, transport, browser, and model adapters according to actual host capabilities; no particular vendor or model becomes LeeWay authority.
+
+The current reference implementation targets Android/Samsung through the native device package. Device operations require the applicable installed runtime, pairing and authorization state, platform permissions, and a verified capability handshake. Other platforms require their own compatible adapters and qualification. An optional browser or model client cannot substitute for the native device authority and permission checks.
+
+Keep source discovery, package availability, paired connectivity, authorized execution, and verified receipts distinct. Missing adapters or permissions must be reported explicitly. This shared policy does not claim universal device support or testing across operating systems, browser engines, model providers, or physical devices.
+
 ## Canonical deployment law
 
 **GitHub is the public source, discovery and distribution authority. The phone is the runtime. Docker is development/qualification only.**
