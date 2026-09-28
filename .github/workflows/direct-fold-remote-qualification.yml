@@ -1,0 +1,43 @@
+name: Validate Termux Fold Qualification
+
+on:
+  push:
+    branches:
+      - "phone-direct-qualification-20260928"
+    paths:
+      - ".github/workflows/direct-fold-remote-qualification.yml"
+      - "clients/remote-controller/termux-one-pull.sh"
+  pull_request:
+    paths:
+      - ".github/workflows/direct-fold-remote-qualification.yml"
+      - "clients/remote-controller/termux-one-pull.sh"
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate one-pull Termux qualifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n clients/remote-controller/termux-one-pull.sh
+          grep -q '127.0.0.1:5323/health' clients/remote-controller/termux-one-pull.sh
+          grep -q 'VERCEL_QUEUE_DURABLE_V1' clients/remote-controller/termux-one-pull.sh
+          grep -q 'agent.chat' clients/remote-controller/termux-one-pull.sh
+          grep -q 'voice.speak' clients/remote-controller/termux-one-pull.sh
+          grep -q 'PAIRING_TOKEN=REDACTED_NOT_INCLUDED' clients/remote-controller/termux-one-pull.sh
+          python - <<'PY'
+          from pathlib import Path
+          text=Path('clients/remote-controller/termux-one-pull.sh').read_text()
+          marker='NODE_CONTROLLER'
+          first=text.index("<<'"+marker+"'")
+          start=text.index("\n",first)+1
+          end=text.index("\n"+marker,start)
+          Path('/tmp/leeway-controller.mjs').write_text(text[start:end])
+          PY
+          node --check /tmp/leeway-controller.mjs
