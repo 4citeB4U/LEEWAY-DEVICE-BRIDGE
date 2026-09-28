@@ -75,12 +75,14 @@ read -r -s -p "Pairing token: " LEEWAY_PAIRING_TOKEN
 printf '\n'
 LEEWAY_PAIRING_TOKEN="$(printf '%s' "$LEEWAY_PAIRING_TOKEN" | tr -d '\r\n\t ')"
 TOKEN_LEN=${#LEEWAY_PAIRING_TOKEN}
-if [ "$TOKEN_LEN" -lt 20 ] || [ "$TOKEN_LEN" -gt 256 ]; then
-  fail "The pasted credential is outside the production relay length contract (20-256 characters)."
+if [ "$TOKEN_LEN" -ne 43 ]; then
+  fail "The installed LeeWay Device Bridge owner token must be 43 characters. Received length=$TOKEN_LEN."
+  printf 'Open LeeWay Device Bridge -> SHOW PAIRING TOKEN -> copy ONLY the full token after the label.\n'
+  printf 'Do not copy the Device ID, relay URL, or local endpoint.\n'
   unset LEEWAY_PAIRING_TOKEN
   exit 6
 fi
-obs "Credential accepted for relay verification; length=$TOKEN_LEN."
+pass "Canonical Device Bridge owner-token shape confirmed locally."
 
 cat > "$WORK_ROOT/package.json" <<'JSON_PACKAGE'
 {"name":"leeway-termux-one-pull","private":true,"type":"module","dependencies":{"ws":"8.18.3"}}
