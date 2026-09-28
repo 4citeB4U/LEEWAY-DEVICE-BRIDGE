@@ -21,6 +21,8 @@ NODE_CLIENT="${WORK_ROOT}/controller.mjs"
 TARGET_VERSION="0.8.2"
 LATEST_META_URL="https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/downloads/leeway-device-bridge-android-latest.json"
 LATEST_APK_URL="https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/downloads/leeway-device-bridge-android-latest-debug.apk"
+RAW_META_URL="https://raw.githubusercontent.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/main/docs/downloads/leeway-device-bridge-android-latest.json"
+RAW_APK_URL="https://raw.githubusercontent.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/main/docs/downloads/leeway-device-bridge-android-latest-debug.apk"
 APK_FILE="${WORK_ROOT}/leeway-device-bridge-latest.apk"
 
 say(){ printf '\n[LeeWay] %s\n' "$*"; }
@@ -59,7 +61,11 @@ install_latest_bridge(){
   local meta sha version
   meta="$(curl -fsSL --max-time 20 "$LATEST_META_URL" 2>/dev/null || true)"
   if [ -z "$meta" ]; then
-    fail "Verified Device Bridge package metadata is not available yet."
+    obs "GitHub Pages metadata not ready; falling back to raw GitHub."
+    meta="$(curl -fsSL --max-time 20 "$RAW_META_URL" 2>/dev/null || true)"
+  fi
+  if [ -z "$meta" ]; then
+    fail "Verified Device Bridge package metadata is unavailable from both Pages and raw GitHub."
     return 1
   fi
   printf '%s\n' "$meta" > "$EVIDENCE_DIR/latest-package.json"
@@ -69,7 +75,10 @@ install_latest_bridge(){
     fail "Published package is not the qualified $TARGET_VERSION build."
     return 1
   fi
-  curl -fL --max-time 180 "$LATEST_APK_URL" -o "$APK_FILE" || return 1
+  if ! curl -fL --max-time 240 "$LATEST_APK_URL" -o "$APK_FILE"; then
+    obs "GitHub Pages APK not ready; falling back to raw GitHub."
+    curl -fL --max-time 240 "$RAW_APK_URL" -o "$APK_FILE" || return 1
+  fi
   local actual
   actual="$(sha256sum "$APK_FILE" | awk '{print $1}')"
   if [ "$actual" != "$sha" ]; then
