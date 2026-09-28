@@ -69,32 +69,64 @@ else
   obs "Local loopback server is not listening; the remote phone path will still be tested."
 fi
 
-say "Opening the LeeWay Device Bridge owner control center."
-printf '\nOWNER AUTHORITY GATE — in the Device Bridge app, do these once:\n'
-printf '  1. Tap ENABLE LOCAL AGENT SESSION\n'
-printf '  2. Tap START LOCAL DEVICE BRIDGE\n'
-printf '  3. Tap DISABLE ALWAYS-ON REMOTE BRIDGE\n'
-printf '  4. Tap ENABLE ALWAYS-ON REMOTE BRIDGE\n'
-printf '  5. Tap SHOW PAIRING TOKEN and copy ONLY the full token after the label\n'
-printf '  6. Return to Termux; this same script is still running\n\n'
-if command -v am >/dev/null 2>&1; then
-  am start -n "$PKG/.MainActivity" --es leeway_action SHOW_PAIRING >/dev/null 2>&1 || true
+say "Starting owner-authorized Termux bootstrap."
+BOOTSTRAP_NONCE="$(node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))")"
+
+if ! command -v am >/dev/null 2>&1; then
+  fail "Android activity manager command is unavailable in this Termux environment."
+  exit 6
 fi
-printf 'The app should open directly in Pairing Mode. Tap COPY PAIRING TOKEN, return here, and paste once.\n'
-printf 'When you return, paste the 43-character token at the hidden prompt.\n'
-printf 'Nothing will appear while you paste. Press Enter once.\n'
-read -r -s -p "Pairing token: " LEEWAY_PAIRING_TOKEN
-printf '\n'
-LEEWAY_PAIRING_TOKEN="$(printf '%s' "$LEEWAY_PAIRING_TOKEN" | tr -d '\r\n\t ')"
+
+am start -n "$PKG/.MainActivity" \
+  --es leeway_action TERMUX_BOOTSTRAP \
+  --es leeway_nonce "$BOOTSTRAP_NONCE" >/dev/null 2>&1 || {
+    fail "Could not launch LeeWay Device Bridge bootstrap activity."
+    exit 6
+  }
+
+say "Waiting for the one-time loopback owner handoff."
+BOOTSTRAP_JSON=""
+for attempt in $(seq 1 40); do
+  BOOTSTRAP_JSON="$(curl -fsS --max-time 2 \
+    "http://127.0.0.1:5323/owner-bootstrap?nonce=$BOOTSTRAP_NONCE" 2>/dev/null || true)"
+  if [ -n "$BOOTSTRAP_JSON" ]; then
+    break
+  fi
+  sleep 0.5
+done
+unset BOOTSTRAP_NONCE
+
+if [ -z "$BOOTSTRAP_JSON" ]; then
+  fail "Device Bridge did not provide the one-time owner bootstrap within 20 seconds."
+  printf 'The installed app may be older than the owner-bootstrap build.\n'
+  exit 6
+fi
+
+printf '%s\n' "$BOOTSTRAP_JSON" > "$EVIDENCE_DIR/owner-bootstrap.json"
+
+eval "$(node - "$EVIDENCE_DIR/owner-bootstrap.json" <<'NODE_BOOTSTRAP'
+const fs=require('fs');
+const v=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+if(v.ok!==true) process.exit(20);
+const q=s=>JSON.stringify(String(s||""));
+console.log("LEEWAY_PAIRING_TOKEN="+q(v.pairingToken));
+console.log("LEEWAY_DEVICE_ID="+q(v.deviceId));
+console.log("LEEWAY_RELAY_URL="+q(v.relayUrl));
+NODE_BOOTSTRAP
+)" || {
+  fail "Owner bootstrap response was invalid."
+  exit 6
+}
+
 TOKEN_LEN=${#LEEWAY_PAIRING_TOKEN}
-if [ "$TOKEN_LEN" -ne 43 ]; then
-  fail "The installed LeeWay Device Bridge owner token must be 43 characters. Received length=$TOKEN_LEN."
-  printf 'Open LeeWay Device Bridge -> SHOW PAIRING TOKEN -> copy ONLY the full token after the label.\n'
-  printf 'Do not copy the Device ID, relay URL, or local endpoint.\n'
+if [ "$TOKEN_LEN" -lt 20 ] || [ "$TOKEN_LEN" -gt 256 ]; then
+  fail "Owner bootstrap returned an invalid credential length."
   unset LEEWAY_PAIRING_TOKEN
   exit 6
 fi
-pass "Canonical Device Bridge owner-token shape confirmed locally."
+
+pass "Owner bootstrap completed with no copy/paste."
+pass "Local bridge authority and remote relay restart were requested by Device Bridge."
 
 LOCAL_HEALTH_AFTER="$(curl -fsS --max-time 4 http://127.0.0.1:5323/health 2>/dev/null || true)"
 if [ -n "$LOCAL_HEALTH_AFTER" ]; then
@@ -106,7 +138,7 @@ console.log('[LeeWay]['+(v.running?'PASS':'BLOCKED')+'] localBridgeRunningAfterO
 console.log('[LeeWay]['+(v.agentAccessEnabled?'PASS':'BLOCKED')+'] localAgentAccessAfterOwnerGate='+Boolean(v.agentAccessEnabled));
 NODE_LOCAL_AFTER
 else
-  blocked "Local bridge is still not listening after the owner gate; remote durable path will continue."
+  blocked "Local bridge is not listening after bootstrap."
 fi
 
 cat > "$WORK_ROOT/package.json" <<'JSON_PACKAGE'
