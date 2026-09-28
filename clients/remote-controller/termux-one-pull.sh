@@ -18,6 +18,10 @@ WORK_ROOT="${HOME}/.leeway/device-bridge-one-pull"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 EVIDENCE_DIR="${HOME}/leeway-evidence/device-bridge-${STAMP}"
 NODE_CLIENT="${WORK_ROOT}/controller.mjs"
+TARGET_VERSION="0.8.2"
+LATEST_META_URL="https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/downloads/leeway-device-bridge-android-latest.json"
+LATEST_APK_URL="https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/downloads/leeway-device-bridge-android-latest-debug.apk"
+APK_FILE="${WORK_ROOT}/leeway-device-bridge-latest.apk"
 
 say(){ printf '\n[LeeWay] %s\n' "$*"; }
 pass(){ printf '[LeeWay][PASS] %s\n' "$*"; }
@@ -43,6 +47,81 @@ if ! command -v node >/dev/null 2>&1; then
   pkg install -y nodejs || exit 4
 fi
 command -v npm >/dev/null 2>&1 || { fail "npm is unavailable."; exit 5; }
+
+installed_version(){
+  local dump
+  dump="$(dumpsys package "$PKG" 2>/dev/null || cmd package dump "$PKG" 2>/dev/null || true)"
+  printf '%s\n' "$dump" | sed -n 's/.*versionName=//p' | head -n1 | tr -d '\r'
+}
+
+install_latest_bridge(){
+  say "Checking verified Device Bridge package."
+  local meta sha version
+  meta="$(curl -fsSL --max-time 20 "$LATEST_META_URL" 2>/dev/null || true)"
+  if [ -z "$meta" ]; then
+    fail "Verified Device Bridge package metadata is not available yet."
+    return 1
+  fi
+  printf '%s\n' "$meta" > "$EVIDENCE_DIR/latest-package.json"
+  version="$(node -e 'const v=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));process.stdout.write(String(v.versionName||""))' "$EVIDENCE_DIR/latest-package.json")"
+  sha="$(node -e 'const v=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));process.stdout.write(String(v.sha256||""))' "$EVIDENCE_DIR/latest-package.json")"
+  if [ "$version" != "$TARGET_VERSION" ] || [ -z "$sha" ]; then
+    fail "Published package is not the qualified $TARGET_VERSION build."
+    return 1
+  fi
+  curl -fL --max-time 180 "$LATEST_APK_URL" -o "$APK_FILE" || return 1
+  local actual
+  actual="$(sha256sum "$APK_FILE" | awk '{print $1}')"
+  if [ "$actual" != "$sha" ]; then
+    fail "Downloaded APK hash mismatch."
+    return 1
+  fi
+  pass "Verified Device Bridge $TARGET_VERSION APK downloaded."
+
+  if command -v termux-open >/dev/null 2>&1; then
+    termux-open --view "$APK_FILE" >/dev/null 2>&1 || true
+  else
+    am start -a android.intent.action.VIEW -d "file://$APK_FILE" -t application/vnd.android.package-archive >/dev/null 2>&1 || true
+  fi
+  say "Android installer opened. Approve the update/install; this script will detect completion automatically."
+
+  for i in $(seq 1 120); do
+    [ "$(installed_version)" = "$TARGET_VERSION" ] && return 0
+    sleep 1
+  done
+
+  blocked "In-place update did not complete. Opening Android uninstall confirmation for the old debug-signed app."
+  am start -a android.intent.action.DELETE -d "package:$PKG" >/dev/null 2>&1 || true
+  for i in $(seq 1 120); do
+    [ -z "$(cmd package path "$PKG" 2>/dev/null || true)" ] && break
+    sleep 1
+  done
+  if [ -n "$(cmd package path "$PKG" 2>/dev/null || true)" ]; then
+    fail "Old Device Bridge package is still installed; Android did not approve removal."
+    return 1
+  fi
+
+  if command -v termux-open >/dev/null 2>&1; then
+    termux-open --view "$APK_FILE" >/dev/null 2>&1 || true
+  else
+    am start -a android.intent.action.VIEW -d "file://$APK_FILE" -t application/vnd.android.package-archive >/dev/null 2>&1 || true
+  fi
+  say "Approve Install. The script will continue as soon as Device Bridge $TARGET_VERSION is present."
+  for i in $(seq 1 180); do
+    [ "$(installed_version)" = "$TARGET_VERSION" ] && return 0
+    sleep 1
+  done
+  fail "Device Bridge $TARGET_VERSION was not installed."
+  return 1
+}
+
+CURRENT_VERSION="$(installed_version)"
+if [ "$CURRENT_VERSION" != "$TARGET_VERSION" ]; then
+  obs "Installed Device Bridge version=${CURRENT_VERSION:-UNKNOWN}; target=$TARGET_VERSION."
+  install_latest_bridge || exit 5
+else
+  pass "Device Bridge $TARGET_VERSION already installed."
+fi
 
 PACKAGE_PATH="$(cmd package path "$PKG" 2>/dev/null | head -n1 || true)"
 if [ -z "$PACKAGE_PATH" ]; then
