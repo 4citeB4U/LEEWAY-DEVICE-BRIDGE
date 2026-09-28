@@ -73,11 +73,14 @@ printf '\nPaste the LeeWay Device Bridge owner pairing token at the hidden promp
 printf 'Nothing will appear while you paste. Press Enter once.\n'
 read -r -s -p "Pairing token: " LEEWAY_PAIRING_TOKEN
 printf '\n'
-if [[ ! "$LEEWAY_PAIRING_TOKEN" =~ ^[A-Za-z0-9_-]{43}$ ]]; then
-  fail "The token format is not the expected 43-character Device Bridge credential."
+LEEWAY_PAIRING_TOKEN="$(printf '%s' "$LEEWAY_PAIRING_TOKEN" | tr -d '\r\n\t ')"
+TOKEN_LEN=${#LEEWAY_PAIRING_TOKEN}
+if [ "$TOKEN_LEN" -lt 20 ] || [ "$TOKEN_LEN" -gt 256 ]; then
+  fail "The pasted credential is outside the production relay length contract (20-256 characters)."
   unset LEEWAY_PAIRING_TOKEN
   exit 6
 fi
+obs "Credential accepted for relay verification; length=$TOKEN_LEN."
 
 cat > "$WORK_ROOT/package.json" <<'JSON_PACKAGE'
 {"name":"leeway-termux-one-pull","private":true,"type":"module","dependencies":{"ws":"8.18.3"}}
