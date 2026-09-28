@@ -1,9 +1,9 @@
 {
   "versionName": "0.8.2",
   "versionCode": 10,
-  "sha256": "5c25ccb12e82bcc62f0e564d2fea49c38a42009a77383cda5f3085b20ca62dd0",
+  "sha256": "0c644dabc8c8b0c4e2ea536c5b4d62be2a474f4cc00da6924bcd4e632237bb9a",
   "sizeBytes": 65886121,
   "downloadUrl": "./leeway-device-bridge-android-latest-debug.apk",
-  "sourceRunId": "36470806759",
-  "sourceCommit": "d90160a8aa082b704847abe7beb306971d0949aa"
+  "sourceRunId": "36472009363",
+  "sourceCommit": "ad2ee84cb6ccd889bcee6b0dcc948c8f8b728f18"
 }
