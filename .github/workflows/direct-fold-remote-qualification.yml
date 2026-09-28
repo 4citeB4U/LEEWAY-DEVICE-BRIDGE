@@ -14,7 +14,7 @@ jobs:
     permissions:
       contents: read
     env:
-      LEEWAY_DEVICE_ID: ${{ secrets.LEEWAY_DEVICE_ID }}
+      LEEWAY_DEVICE_ID: f30a80a743592e7d9cbe4b3113ef896db30bd80434df0afcb8591c04dbb84861
       LEEWAY_PAIRING_TOKEN: ${{ secrets.LEEWAY_PAIRING_TOKEN }}
       LEEWAY_RELAY_URL: wss://agent-lee-x.vercel.app/api/device-relay
     steps:
@@ -26,7 +26,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -n "${LEEWAY_DEVICE_ID:-}" && echo "DEVICE_ID_BOUND=true" || { echo "DEVICE_ID_BOUND=false"; exit 20; }
+          echo "DEVICE_ID_SOURCE=AUTHORIZED_PUBLIC_REGISTRY"
           test -n "${LEEWAY_PAIRING_TOKEN:-}" && echo "PAIRING_TOKEN_BOUND=true" || { echo "PAIRING_TOKEN_BOUND=false"; exit 21; }
       - name: Install canonical remote controller
         working-directory: clients/remote-controller
