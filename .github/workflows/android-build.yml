@@ -94,10 +94,12 @@ jobs:
           cp "$APK_SRC" "$APK_DST"
           BYTES=$(stat -c%s "$APK_DST")
           SHA=$(sha256sum "$APK_DST" | awk '{print $1}')
+          VERSION_NAME=$(grep -oP 'versionName = "\\K[^"]+' apps/android/app/build.gradle.kts)
+          VERSION_CODE=$(grep -oP 'versionCode = \\K[0-9]+' apps/android/app/build.gradle.kts)
           cat > docs/downloads/leeway-device-bridge-android-latest.json <<JSON
           {
-            "versionName": "0.8.2",
-            "versionCode": 10,
+            "versionName": "$VERSION_NAME",
+            "versionCode": $VERSION_CODE,
             "sha256": "$SHA",
             "sizeBytes": $BYTES,
             "downloadUrl": "./leeway-device-bridge-android-latest-debug.apk",
@@ -112,5 +114,5 @@ jobs:
             echo "Published APK unchanged."
             exit 0
           fi
-          git commit -m "Publish verified Device Bridge 0.8.2 APK"
+          git commit -m "Publish verified Device Bridge ${VERSION_NAME} APK"
           git push origin HEAD:main
