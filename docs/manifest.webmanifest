@@ -1,10 +1,31 @@
 {
-  "name": "LeeWay Device Bridge",
-  "short_name": "LeeWay Bridge",
-  "description": "LeeWay universal device discovery, bootstrap and package handoff surface.",
+  "id": "./",
+  "name": "LeeWay Device-Neutral Workstation",
+  "short_name": "LeeWay Workstation",
+  "description": "Device-neutral LeeWay workstation shell for discovery, workplane access, cloud development and optional native capability adapters.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0b0f14",
-  "theme_color": "#0b0f14"
+  "background_color": "#030814",
+  "theme_color": "#030814",
+  "prefer_related_applications": false,
+  "categories": [
+    "productivity",
+    "utilities",
+    "developer"
+  ],
+  "icons": [
+    {
+      "src": "./icons/leeway-workstation-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icons/leeway-workstation-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }
