@@ -1,4 +1,4 @@
-const BASE=process.env.DEVICE_BRIDGE_URL||'https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/';
+const BASE=process.env.DEVICE_BRIDGE_URL||'https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/';
 const checks=[
   ['',['Secondary Workstation Mode','Open Phone Cloud Workstation','leeway-phone-workstation','PENDING_REMOTE_QUALIFICATION']],
   ['secondary-workstation-node.json',['leeway-phone-workstation','mobile-secondary-workstation','PHONE_LOCAL_PLUS_CLOUD_ATTACHMENT']],
