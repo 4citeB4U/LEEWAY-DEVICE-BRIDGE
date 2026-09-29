@@ -9,7 +9,8 @@ const ASSETS = [
   "./package-manifest.json",
   "./provider-registry.json",
   "./UNIVERSAL-DEVICE-HARNESS.md",
-  "./PHONE-RUNTIME-CONTRACT.md"
+  "./PHONE-RUNTIME-CONTRACT.md",
+  "./secondary-workstation-node.json"
 ];
 
 self.addEventListener("install", event => {
