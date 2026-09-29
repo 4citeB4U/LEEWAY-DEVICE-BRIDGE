@@ -10,15 +10,15 @@
       "platform": "android",
       "architecture": "any",
       "channel": "development",
-      "label": "LeeWay Device Bridge for Android",
+      "label": "LeeWay Device Bridge Android Native Capability Extension",
       "source": "github-pages",
-      "status": "SECONDARY_WORKSTATION_BUILD_QUALIFIED_INSTALL_REQUIRED",
+      "status": "OPTIONAL_NATIVE_EXTENSION_BUILD_QUALIFIED",
       "nativeVerification": true,
       "runtimeLocation": "phone",
       "dockerRequired": false,
       "downloadUrl": "./downloads/leeway-device-bridge-android-latest-debug.apk",
-      "sha256": "f92d7a1703c4fefe1014be1c5a6adb17d4aa895eb2b57279c61c5d79ead58320",
-      "sizeBytes": 65902505,
+      "sha256": "b65710deba8579d0e2eb38cf289d976e3622b25d1ed6f8d5d2ef9114033f5bec",
+      "sizeBytes": 66327240,
       "formulaQualification": {
         "required": true,
         "status": "MEASURED_SIZE_GATE_PASS_NO_COMPRESSION_REQUIRED",
@@ -27,19 +27,19 @@
         "measuredBytes": 65869689,
         "measuredSha256": "d5c001eb94aaebaf08347c3cde1df109d4dc0865adfee146134634a84321c4f9"
       },
-      "versionName": "0.8.4",
-      "versionCode": 12,
+      "versionName": "0.8.5",
+      "versionCode": 13,
       "upgradeSafety": {
         "inPlaceSignatureCompatibility": "UNVERIFIED",
         "instruction": "Attempt install as an update. If Android reports a signature/package conflict, do not uninstall automatically; preserve existing app data and use the controlled migration path."
       },
       "githubActionsQualification": {
         "state": "VERIFIED",
-        "runId": 36599908501,
-        "headSha": "1029f44bcc31611de17816f60ca091c078fba127",
-        "apkSizeBytes": 65902505,
-        "apkSha256": "f92d7a1703c4fefe1014be1c5a6adb17d4aa895eb2b57279c61c5d79ead58320",
-        "note": "Current 0.8.4 secondary-workstation build; Voice One authority enforced and Android TTS fallback removed."
+        "runId": 36618387554,
+        "headSha": "f9b8d36c5a2a2e38ac855004fb256195553b2272",
+        "apkSizeBytes": 66327240,
+        "apkSha256": "b65710deba8579d0e2eb38cf289d976e3622b25d1ed6f8d5d2ef9114033f5bec",
+        "note": "Optional Android native capability extension. Base workstation is the device-neutral PWA."
       }
     },
     {
