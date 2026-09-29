@@ -1,5 +1,6 @@
 const BASE=process.env.DEVICE_BRIDGE_URL||'https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/';
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
 async function fetchText(path){
   const url=BASE+path;
   const r=await fetch(url,{redirect:'error',cache:'no-store'});
@@ -20,28 +21,38 @@ async function waitFor(path,needles,{attempts=30,delayMs=10000}={}){
 
 let failed=false;
 try{
+  // PRIMARY: device-neutral workstation/PWA
   await waitFor('',[
-    'Secondary Workstation Mode',
-    'Open Phone Cloud Workstation',
-    'leeway-phone-workstation',
-    'PENDING_REMOTE_QUALIFICATION'
+    'LeeWay Device-Neutral Workstation',
+    'Install LeeWay Device-Neutral Workstation',
+    'INSTALL LEEWAY WORKSTATION',
+    'Native Android capability packages are optional extensions'
   ]);
-  await waitFor('secondary-workstation-node.json',[
-    'leeway-phone-workstation',
-    'mobile-secondary-workstation',
-    'PHONE_LOCAL_PLUS_CLOUD_ATTACHMENT'
+  await waitFor('manifest.webmanifest',[
+    'LeeWay Device-Neutral Workstation',
+    'standalone',
+    'leeway-official-logo-192.png',
+    'leeway-official-logo-512.png'
   ]);
-  await waitFor('package-manifest.json',[
-    'leeway-device-bridge-android-latest-debug.apk',
+  for(const icon of ['icons/leeway-official-logo-192.png','icons/leeway-official-logo-512.png']){
+    const r=await fetch(BASE+icon,{method:'HEAD',redirect:'error',cache:'no-store'});
+    console.log(JSON.stringify({icon,status:r.status,contentLength:r.headers.get('content-length')}));
+    if(!r.ok)throw new Error('PWA_ICON_FAIL:'+icon+':'+r.status);
+  }
+  const sw=await fetch(BASE+'sw.js',{cache:'no-store'});
+  console.log(JSON.stringify({serviceWorkerStatus:sw.status}));
+  if(!sw.ok)throw new Error('SERVICE_WORKER_FAIL:'+sw.status);
+
+  // OPTIONAL: Android native extension must not block base workstation
+  const pkg=await waitFor('package-manifest.json',[
+    'OPTIONAL_NATIVE_EXTENSION_BUILD_QUALIFIED',
     '0.8.5',
-    'SECONDARY_WORKSTATION_BUILD_QUALIFIED_INSTALL_REQUIRED'
+    'b65710deba8579d0e2eb38cf289d976e3622b25d1ed6f8d5d2ef9114033f5bec'
   ]);
-  const apk=await fetch(BASE+'downloads/leeway-device-bridge-android-latest-debug.apk',{method:'HEAD',redirect:'error',cache:'no-store'});
-  console.log(JSON.stringify({apkStatus:apk.status,contentLength:apk.headers.get('content-length')}));
-  if(!apk.ok)throw new Error('APK_HEAD_FAIL:'+apk.status);
+  console.log('OPTIONAL_ANDROID_EXTENSION=AVAILABLE');
 }catch(e){
   console.error(e?.stack||e);
   failed=true;
 }
 if(failed)process.exit(1);
-console.log('DEVICE_BRIDGE_SECONDARY_WORKSTATION_LIVE_GATE=PASS');
+console.log('LEEWAY_DEVICE_NEUTRAL_WORKSTATION_LIVE_GATE=PASS');
