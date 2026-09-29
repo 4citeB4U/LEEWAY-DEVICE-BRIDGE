@@ -13,17 +13,26 @@ jobs:
   verify-pages-apk:
     runs-on: ubuntu-latest
     steps:
-      - name: Wait for GitHub Pages latest package
+      - uses: actions/checkout@v4
+      - name: Read expected Android version from source
+        id: expected
         shell: bash
         run: |
+          VERSION=$(grep -oP 'versionName = "\K[^"]+' apps/android/app/build.gradle.kts)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Wait for GitHub Pages latest package
+        shell: bash
+        env:
+          EXPECTED_VERSION: ${{ steps.expected.outputs.version }}
+        run: |
           set -euo pipefail
-          META="https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/downloads/leeway-device-bridge-android-latest.json"
-          APK="https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/downloads/leeway-device-bridge-android-latest-debug.apk"
+          META="https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/downloads/leeway-device-bridge-android-latest.json"
+          APK="https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/downloads/leeway-device-bridge-android-latest-debug.apk"
           ok=0
           for i in $(seq 1 30); do
             if curl -fsSL --max-time 20 "$META" -o latest.json; then
               VERSION=$(node -e 'const v=require("./latest.json");process.stdout.write(String(v.versionName||""))')
-              if [ "$VERSION" = "0.8.2" ]; then ok=1; break; fi
+              if [ "$VERSION" = "$EXPECTED_VERSION" ]; then ok=1; break; fi
             fi
             sleep 10
           done
@@ -33,10 +42,10 @@ jobs:
           ACTUAL=$(sha256sum latest.apk | awk '{print $1}')
           test "$ACTUAL" = "$EXPECTED"
           BYTES=$(stat -c%s latest.apk)
-          echo "version=0.8.2"
+          echo "version=$EXPECTED_VERSION"
           echo "sha256=$ACTUAL"
           echo "bytes=$BYTES"
-          printf '%s\n' "{\"versionName\":\"0.8.2\",\"sha256\":\"$ACTUAL\",\"sizeBytes\":$BYTES,\"pagesDownload\":\"PASS\"}" > pages-apk-verification.json
+          printf '%s\n' "{\"versionName\":\"$EXPECTED_VERSION\",\"sha256\":\"$ACTUAL\",\"sizeBytes\":$BYTES,\"pagesDownload\":\"PASS\"}" > pages-apk-verification.json
       - uses: actions/upload-artifact@v4
         with:
           name: device-bridge-pages-apk-verification
