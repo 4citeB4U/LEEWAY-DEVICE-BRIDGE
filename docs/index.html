@@ -67,6 +67,16 @@ State: PENDING_REMOTE_QUALIFICATION
 Required proof: paired remote device.health + receipt without USB</pre>
   </section>
 
+
+  <section class="panel" id="remoteQualification">
+    <div class="panel-head"><div><p class="kicker">STEP 05</p><h2>Remote workstation qualification</h2></div><span id="remoteQualState" class="badge">NOT TESTED</span></div>
+    <p class="muted">Pair and test from this browser without putting the owner token in chat. Credentials are kept in memory for this page session and are not written to localStorage by this console.</p>
+    <label>LeeWay Device ID <input id="deviceIdInput" autocomplete="off" placeholder="device id"></label>
+    <label>Owner pairing token <input id="pairingTokenInput" type="password" autocomplete="off" placeholder="pairing token"></label>
+    <div class="panel-head"><button id="remoteHealthBtn">Test remote device.health</button><button id="clearPairingBtn">Clear credentials</button></div>
+    <pre id="remoteQualOutput" class="profile">Waiting for owner-supplied pairing values.</pre>
+  </section>
+
   <section class="panel compact">
     <h2>Truth boundary</h2>
     <p><b>Observed</b> means the browser exposed it. <b>Inferred</b> means a standards-based interpretation was made. <b>Native verification required</b> means the Pages surface refuses to guess. Docker is not a production dependency.</p>
