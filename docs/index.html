@@ -16,6 +16,16 @@
     <p class="lede">GitHub Pages publishes discovery, contracts and the verified phone package. The installed phone runtime performs privileged device execution locally.</p>
   </header>
 
+  <section class="panel" id="downloadSecondaryWorkstation">
+    <div class="panel-head">
+      <div><p class="kicker">SECONDARY WORKSTATION</p><h2>Install LeeWay Secondary Workstation 0.8.4</h2></div>
+      <span class="badge">VERIFIED BUILD</span>
+    </div>
+    <p class="muted">Current Android package · versionCode 12 · phone-local execution · always-on remote relay · Agent Lee Voice One authority.</p>
+    <a class="action" href="./downloads/leeway-device-bridge-android-latest-debug.apk" download>DOWNLOAD LEEWAY SECONDARY WORKSTATION 0.8.4</a>
+    <p class="package-meta">After Android finishes installing, open LeeWay Device Bridge and tap <strong>ENABLE SECONDARY WORKSTATION</strong>. That one control enables local authority, starts the local bridge, and starts the always-on remote relay.</p>
+  </section>
+
   <section class="status-grid" aria-label="Bootstrap status">
     <article><span>PAGES</span><strong id="pagesState">LIVE</strong></article>
     <article><span>DISCOVERY</span><strong id="discoveryState">READY</strong></article>
@@ -51,12 +61,12 @@
     <div class="panel-head"><div><p class="kicker">STEP 04</p><h2>Secondary Workstation Mode</h2></div><span id="workstationState" class="badge">NOT QUALIFIED</span></div>
     <p class="muted">Turn this phone into the persistent LeeWay secondary workstation. Android remains the phone runtime; browser/cloud development supplies containerized Linux tooling when desktop-class development is required.</p>
     <ol class="workstation-steps">
-      <li><strong>Install/update the current verified Android package</strong> from the package above. Do not uninstall an existing app if Android reports a signature conflict.</li>
-      <li>Open LeeWay Device Bridge and enable <strong>LOCAL AGENT SESSION</strong>.</li>
-      <li>Enable <strong>ALWAYS-ON REMOTE BRIDGE</strong> and keep its foreground notification enabled.</li>
-      <li>Use <strong>SHOW PAIRING TOKEN</strong> only when pairing an authorized LeeWay client.</li>
+      <li><strong>Download and install LeeWay Secondary Workstation 0.8.4</strong> using the button above.</li>
+      <li>Open LeeWay Device Bridge and tap <strong>ENABLE SECONDARY WORKSTATION</strong>.</li>
+      <li>Keep the LeeWay Remote Bridge foreground notification enabled. The runtime already maintains a 20-second transport ping plus automatic reconnect.</li>
+      <li>The no-copy owner bootstrap is the preferred pairing path. Manual token copy is fallback only.</li>
+      <li>After the relay is live, run <code>device.health</code> to promote the phone from pending to verified.</li>
       <li>Open the cloud development workspace when container/Linux development is needed.</li>
-      <li>After pairing, run <code>device.health</code>. The phone is not a verified workstation node until a remote receipt returns without USB.</li>
     </ol>
     <div class="panel-head">
       <a class="action" id="codespacesBtn" href="https://github.com/codespaces/new?hide_repo_select=true&repo=1380304068" target="_blank" rel="noopener">Open Phone Cloud Workstation</a>
