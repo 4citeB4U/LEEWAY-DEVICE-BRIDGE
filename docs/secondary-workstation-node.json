@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "1.0.0",
+  "nodeId": "leeway-phone-workstation",
+  "displayName": "LeeWay Phone Secondary Workstation",
+  "nodeClass": "mobile-secondary-workstation",
+  "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "runtimeOwner": "4citeB4U/Leeway-Runtime-Fabric",
+  "executionLocation": "PHONE_LOCAL_PLUS_CLOUD_ATTACHMENT",
+  "primaryRoles": [
+    "always-on heartbeat",
+    "device-local execution",
+    "workplane control",
+    "browser/GitHub access",
+    "cloud-development attachment",
+    "checkpoint/receipt return"
+  ],
+  "capabilities": {
+    "nativePhone": [
+      "device.info",
+      "device.health",
+      "device.files.read",
+      "device.files.write",
+      "device.screen.observe",
+      "device.ui.pointer",
+      "device.ui.control",
+      "device.camera",
+      "device.notifications",
+      "device.apps",
+      "device.heartbeat",
+      "device.execute",
+      "pairing.session",
+      "receipts"
+    ],
+    "cloudAttached": [
+      "git.repository.read",
+      "git.repository.write",
+      "dev.shell.linux",
+      "dev.test.run",
+      "dev.build.linux",
+      "dev.container.workspace",
+      "vscode.web"
+    ],
+    "notClaimed": [
+      "windows.native",
+      "docker.desktop.local",
+      "windows.vscode.extension.host",
+      "desktop.gpu",
+      "pc.attached.usb"
+    ]
+  },
+  "transport": {
+    "deviceBridge": "outbound websocket relay",
+    "github": "https/browser",
+    "cloudDev": "GitHub Codespaces/browser",
+    "phoneLink": "optional convenience only when Windows PC is online"
+  },
+  "persistence": {
+    "heartbeatRequired": true,
+    "autoReconnect": true,
+    "bootRestart": true,
+    "workIdPreservation": true,
+    "checkpointRequired": true
+  },
+  "failover": {
+    "eligible": true,
+    "preserveParentObjective": true,
+    "preserveWorkId": true,
+    "requireCapabilityReResolution": true,
+    "forbidUnsupportedCapabilityEmulation": true
+  },
+  "verificationState": {
+    "contractPortable": true,
+    "phoneRuntimeHistoricalExecutionVerified": true,
+    "cloudDevAttached": false,
+    "workplaneConnected": false,
+    "crossNodeHandoffTested": false,
+    "failoverVerified": false
+  }
+}
