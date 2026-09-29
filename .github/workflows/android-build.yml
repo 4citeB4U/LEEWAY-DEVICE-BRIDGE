@@ -96,8 +96,10 @@ jobs:
           cp "$APK_SRC" "$APK_DST"
           BYTES=$(stat -c%s "$APK_DST")
           SHA=$(sha256sum "$APK_DST" | awk '{print $1}')
-          VERSION_NAME=$(grep -oP 'versionName = "\\K[^"]+' apps/android/app/build.gradle.kts)
-          VERSION_CODE=$(grep -oP 'versionCode = \\K[0-9]+' apps/android/app/build.gradle.kts)
+          VERSION_NAME=$(sed -n 's/.*versionName = "\([^"]*\)".*/\1/p' apps/android/app/build.gradle.kts)
+          VERSION_CODE=$(sed -n 's/.*versionCode = \([0-9][0-9]*\).*/\1/p' apps/android/app/build.gradle.kts)
+          test -n "$VERSION_NAME"
+          test -n "$VERSION_CODE"
           cat > docs/downloads/leeway-device-bridge-android-latest.json <<JSON
           {
             "versionName": "$VERSION_NAME",
