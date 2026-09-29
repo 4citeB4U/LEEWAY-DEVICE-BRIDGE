@@ -1,1 +1,23 @@
-import fs from"node:fs";import assert from"node:assert/strict";const b="apps/android/app/src/main";const voice=fs.readFileSync(b+"/java/industries/leeway/devicebridge/VoiceRuntime.kt","utf8"),router=fs.readFileSync(b+"/java/industries/leeway/devicebridge/RemoteCommandRouter.kt","utf8"),activity=fs.readFileSync(b+"/java/industries/leeway/devicebridge/MainActivity.kt","utf8"),manifest=fs.readFileSync(b+"/AndroidManifest.xml","utf8"),gradle=fs.readFileSync("apps/android/app/build.gradle.kts","utf8");assert.match(voice,/TextToSpeech/);assert.match(voice,/PHONE_LOCAL_VOICE_RENDERER/);assert.match(router,/"voice\.speak"/);assert.match(router,/"agent\.chat"/);assert.match(router,/ModelRuntime\.generate/);assert.match(router,/VoiceRuntime\.speak/);assert.match(activity,/TALK TO AGENT LEE/);assert.match(activity,/SpeechRecognizer/);assert.match(activity,/VoiceRuntime\.speak/);assert.match(manifest,/RECORD_AUDIO/);assert.match(gradle,/versionName = "0\.8\.4"/);console.log("PASS Android Agent Lee voice source contract")
+import fs from"node:fs";
+import assert from"node:assert/strict";
+const b="apps/android/app/src/main";
+const voice=fs.readFileSync(b+"/java/industries/leeway/devicebridge/VoiceRuntime.kt","utf8");
+const router=fs.readFileSync(b+"/java/industries/leeway/devicebridge/RemoteCommandRouter.kt","utf8");
+const activity=fs.readFileSync(b+"/java/industries/leeway/devicebridge/MainActivity.kt","utf8");
+const manifest=fs.readFileSync(b+"/AndroidManifest.xml","utf8");
+const gradle=fs.readFileSync("apps/android/app/build.gradle.kts","utf8");
+
+assert.doesNotMatch(voice,/TextToSpeech/);
+assert.match(voice,/LEEWAY_VOICE_FABRIC/);
+assert.match(voice,/agent-lee-voice-one/);
+assert.match(voice,/fallbackAllowed/);
+assert.match(voice,/VOICE_UNAVAILABLE/);
+assert.match(voice,/openVoiceFabric/);
+assert.match(router,/"voice\.speak"/);
+assert.match(router,/"agent\.chat"/);
+assert.match(router,/VoiceRuntime\.speak/);
+assert.match(activity,/OPEN AGENT LEE VOICE ONE/);
+assert.match(activity,/VoiceRuntime\.openVoiceFabric/);
+assert.match(manifest,/RECORD_AUDIO/);
+assert.match(gradle,/versionName = "0\.8\.4"/);
+console.log("PASS Android Agent Lee Voice Fabric authority contract");
