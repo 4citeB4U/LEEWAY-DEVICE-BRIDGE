@@ -6,12 +6,14 @@ on:
       - "apps/android/**"
       - "contracts/**"
       - "tests/**"
+      - "clients/remote-controller/**"
       - ".github/workflows/android-build.yml"
   pull_request:
     paths:
       - "apps/android/**"
       - "contracts/**"
       - "tests/**"
+      - "clients/remote-controller/**"
       - ".github/workflows/android-build.yml"
   workflow_dispatch:
 
