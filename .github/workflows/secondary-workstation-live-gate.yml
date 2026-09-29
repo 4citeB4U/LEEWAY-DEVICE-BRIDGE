@@ -1,0 +1,19 @@
+name: Secondary Workstation Live Pages Gate
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'tests/secondary-workstation-live-gate.mjs'
+      - '.github/workflows/secondary-workstation-live-gate.yml'
+jobs:
+  verify-live-secondary-workstation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for Pages propagation
+        run: sleep 30
+      - name: Verify deployed secondary workstation surface
+        run: node tests/secondary-workstation-live-gate.mjs
