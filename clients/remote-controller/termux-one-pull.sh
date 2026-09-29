@@ -12,15 +12,14 @@
 set -uo pipefail
 
 PKG="industries.leeway.devicebridge"
-DEVICE_ID="f30a80a743592e7d9cbe4b3113ef896db30bd80434df0afcb8591c04dbb84861"
 RELAY_URL="wss://agent-lee-x.vercel.app/api/device-relay"
 WORK_ROOT="${HOME}/.leeway/device-bridge-one-pull"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 EVIDENCE_DIR="${HOME}/leeway-evidence/device-bridge-${STAMP}"
 NODE_CLIENT="${WORK_ROOT}/controller.mjs"
-TARGET_VERSION="0.8.2"
-LATEST_META_URL="https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/downloads/leeway-device-bridge-android-latest.json"
-LATEST_APK_URL="https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/downloads/leeway-device-bridge-android-latest-debug.apk"
+TARGET_VERSION="0.8.3"
+LATEST_META_URL="https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/downloads/leeway-device-bridge-android-latest.json"
+LATEST_APK_URL="https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/downloads/leeway-device-bridge-android-latest-debug.apk"
 RAW_META_URL="https://raw.githubusercontent.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/main/docs/downloads/leeway-device-bridge-android-latest.json"
 RAW_APK_URL="https://raw.githubusercontent.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/main/docs/downloads/leeway-device-bridge-android-latest-debug.apk"
 APK_FILE="${WORK_ROOT}/leeway-device-bridge-latest.apk"
