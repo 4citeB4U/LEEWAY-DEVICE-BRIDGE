@@ -90,3 +90,50 @@ $("#remoteHealthBtn")?.addEventListener("click",async()=>{
     if(m.type==="error"&&!settled){settled=true;clearTimeout(timer);qualState("FAILED");qualOut(m);try{ws.close();}catch{}}
   };
 });
+
+
+let deferredInstallPrompt=null;
+const pwaState=message=>{const el=$("#pwaState");if(el)el.textContent=message;};
+const pwaOut=message=>{const el=$("#pwaOutput");if(el)el.textContent=message;};
+const isStandalone=()=>window.matchMedia?.("(display-mode: standalone)")?.matches||window.navigator.standalone===true;
+
+function refreshPwaInstallState(){
+  if(isStandalone()){
+    pwaState("INSTALLED");
+    pwaOut("LeeWay Device-Neutral Workstation is running as an installed app.");
+    const btn=$("#installPwaBtn");if(btn){btn.disabled=true;btn.textContent="LEEWAY WORKSTATION INSTALLED";}
+    return;
+  }
+  if(deferredInstallPrompt){
+    pwaState("READY TO INSTALL");
+    pwaOut("Install the LeeWay Device-Neutral Workstation directly from this browser.");
+    return;
+  }
+  pwaState("BROWSER INSTALL");
+  pwaOut("If this browser does not show a direct install prompt yet, use its menu and choose Install app or Add to Home screen. No APK is required for the base workstation.");
+}
+
+addEventListener("beforeinstallprompt",event=>{
+  event.preventDefault();
+  deferredInstallPrompt=event;
+  refreshPwaInstallState();
+});
+addEventListener("appinstalled",()=>{
+  deferredInstallPrompt=null;
+  refreshPwaInstallState();
+});
+$("#installPwaBtn")?.addEventListener("click",async()=>{
+  if(isStandalone()){refreshPwaInstallState();return;}
+  if(!deferredInstallPrompt){
+    pwaState("USE BROWSER INSTALL");
+    pwaOut("Open the browser menu and choose Install app or Add to Home screen. This installs the device-neutral workstation without sideloading an APK.");
+    return;
+  }
+  deferredInstallPrompt.prompt();
+  const choice=await deferredInstallPrompt.userChoice.catch(()=>null);
+  deferredInstallPrompt=null;
+  pwaState(choice?.outcome==="accepted"?"INSTALL ACCEPTED":"INSTALL NOT COMPLETED");
+  pwaOut(choice?.outcome==="accepted"?"LeeWay Workstation installation was accepted.":"The workstation remains available in the browser; no APK is required.");
+});
+$("#launchPwaBtn")?.addEventListener("click",()=>location.reload());
+refreshPwaInstallState();
