@@ -6,19 +6,19 @@
   "targetBootstrapPackageMaxBytes": 104857600,
   "packages": [
     {
-      "id": "android-universal-debug",
+      "id": "android-latest-debug",
       "platform": "android",
       "architecture": "any",
       "channel": "development",
       "label": "LeeWay Device Bridge for Android",
       "source": "github-pages",
-      "status": "F8_GOVERNED_ALWAYS_ON_REMOTE_BUILD_QUALIFIED_INSTALL_REQUIRED",
+      "status": "SECONDARY_WORKSTATION_BUILD_QUALIFIED_INSTALL_REQUIRED",
       "nativeVerification": true,
       "runtimeLocation": "phone",
       "dockerRequired": false,
-      "downloadUrl": "./downloads/leeway-device-bridge-android-v0.7.0-debug.apk",
-      "sha256": "d5c001eb94aaebaf08347c3cde1df109d4dc0865adfee146134634a84321c4f9",
-      "sizeBytes": 65869689,
+      "downloadUrl": "./downloads/leeway-device-bridge-android-latest-debug.apk",
+      "sha256": "f92d7a1703c4fefe1014be1c5a6adb17d4aa895eb2b57279c61c5d79ead58320",
+      "sizeBytes": 65902505,
       "formulaQualification": {
         "required": true,
         "status": "MEASURED_SIZE_GATE_PASS_NO_COMPRESSION_REQUIRED",
@@ -27,20 +27,19 @@
         "measuredBytes": 65869689,
         "measuredSha256": "d5c001eb94aaebaf08347c3cde1df109d4dc0865adfee146134634a84321c4f9"
       },
-      "versionName": "0.7.0",
-      "versionCode": 7,
+      "versionName": "0.8.4",
+      "versionCode": 12,
       "upgradeSafety": {
         "inPlaceSignatureCompatibility": "UNVERIFIED",
-        "instruction": "Attempt install as an update. If Android reports a signature/package conflict, DO NOT uninstall the existing app; preserve its model/data and use the controlled migration path."
+        "instruction": "Attempt install as an update. If Android reports a signature/package conflict, do not uninstall automatically; preserve existing app data and use the controlled migration path."
       },
       "githubActionsQualification": {
         "state": "VERIFIED",
-        "runId": 36036397343,
-        "headSha": "de3a3142bb64566092cf0e7ae252490ba209190d",
-        "artifactId": 10825202249,
-        "apkSizeBytes": 65869689,
-        "apkSha256": "0fba49ce08f28f1264de8d83bd944e8c2d7e691de2b14e586ce6efcbefaccd00",
-        "note": "GitHub-hosted debug build verified. Its APK hash differs from the current Pages debug APK because debug builds/signing are not reproducible across build environments; the Pages package remains the current install artifact until stable release signing is introduced."
+        "runId": 36599908501,
+        "headSha": "1029f44bcc31611de17816f60ca091c078fba127",
+        "apkSizeBytes": 65902505,
+        "apkSha256": "f92d7a1703c4fefe1014be1c5a6adb17d4aa895eb2b57279c61c5d79ead58320",
+        "note": "Current 0.8.4 secondary-workstation build; Voice One authority enforced and Android TTS fallback removed."
       }
     },
     {
