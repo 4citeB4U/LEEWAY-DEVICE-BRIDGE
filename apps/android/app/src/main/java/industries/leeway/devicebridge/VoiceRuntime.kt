@@ -1,141 +1,84 @@
 package industries.leeway.devicebridge
 
 import android.content.Context
-import android.speech.tts.TextToSpeech
+import android.content.Intent
+import android.net.Uri
 import org.json.JSONObject
-import java.util.Locale
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 object VoiceRuntime {
-    private var tts: TextToSpeech? = null
-    @Volatile private var ready = false
-    @Volatile private var lastInitCode = TextToSpeech.ERROR
-    @Volatile private var initAttempts = 0
+    const val VOICE_PACKAGE_ID = "agent-lee-voice-one"
+    const val VOICE_FABRIC_URL = "https://4citeb4u.github.io/LeeWay-Voice-Fabric/"
 
-    @Synchronized
-    fun initialize(context: Context): JSONObject {
-        if (ready && tts != null) return status(context)
-        val app = context.applicationContext
-        shutdown()
-
-        var finalCode = TextToSpeech.ERROR
-        var finalLanguage = TextToSpeech.LANG_NOT_SUPPORTED
-
-        for (attempt in 1..3) {
-            initAttempts = attempt
-            val latch = CountDownLatch(1)
-            var callbackCode = TextToSpeech.ERROR
-            val engine = TextToSpeech(app) { code ->
-                callbackCode = code
-                latch.countDown()
-            }
-            tts = engine
-
-            val callbackArrived = latch.await(8, TimeUnit.SECONDS)
-            if (callbackArrived && callbackCode == TextToSpeech.SUCCESS) {
-                val languageResult = engine.setLanguage(Locale.getDefault())
-                finalCode = callbackCode
-                finalLanguage = languageResult
-                if (languageResult != TextToSpeech.LANG_MISSING_DATA &&
-                    languageResult != TextToSpeech.LANG_NOT_SUPPORTED
-                ) {
-                    ready = true
-                    lastInitCode = callbackCode
-                    ReceiptStore.record(
-                        app,
-                        "voice.tts.init",
-                        "PASS",
-                        "attempt=${attempt} language=${Locale.getDefault().toLanguageTag()} result=${languageResult}"
-                    )
-                    return status(app)
-                }
-            }
-
-            finalCode = callbackCode
-            lastInitCode = callbackCode
-            ready = false
-            try { engine.stop() } catch (_: Exception) {}
-            try { engine.shutdown() } catch (_: Exception) {}
-            tts = null
-
-            if (attempt < 3) {
-                try { Thread.sleep(1200L * attempt) } catch (_: InterruptedException) {
-                    Thread.currentThread().interrupt()
-                    break
-                }
-            }
-        }
-
-        ReceiptStore.record(
-            app,
-            "voice.tts.init",
-            "FAIL",
-            "attempts=${initAttempts} init=${finalCode} languageResult=${finalLanguage} language=${Locale.getDefault().toLanguageTag()}"
-        )
-        return status(app)
-    }
+    fun initialize(context: Context): JSONObject = status(context)
 
     fun status(context: Context): JSONObject = JSONObject().apply {
-        put("available", tts != null)
-        put("ready", ready)
-        put("engine", "ANDROID_TEXT_TO_SPEECH")
-        put("language", Locale.getDefault().toLanguageTag())
-        put("authority", "PHONE_LOCAL_VOICE_RENDERER")
-        put("initAttempts", initAttempts)
-        put("lastInitCode", lastInitCode)
-        put("note", "Renderer only; Agent Lee identity remains governed above TTS")
+        put("available", false)
+        put("ready", false)
+        put("engine", "LEEWAY_VOICE_FABRIC")
+        put("voicePackageId", VOICE_PACKAGE_ID)
+        put("authority", "4citeB4U/LeeWay-Voice-Fabric")
+        put("fallbackAllowed", false)
+        put("state", "VOICE_UNAVAILABLE")
+        put("note", "Android/system TTS is not an authorized Agent Lee fallback. Voice One must execute through LeeWay Voice Fabric.")
+    }
+
+    fun openVoiceFabric(context: Context): JSONObject {
+        return try {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(VOICE_FABRIC_URL)).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context.startActivity(intent)
+            ReceiptStore.record(
+                context,
+                "voice.fabric.open",
+                "PASS",
+                "Opened canonical Voice Fabric for " + VOICE_PACKAGE_ID
+            )
+            JSONObject().apply {
+                put("ok", true)
+                put("opened", true)
+                put("voicePackageId", VOICE_PACKAGE_ID)
+                put("voiceFabricUrl", VOICE_FABRIC_URL)
+                put("authority", "4citeB4U/LeeWay-Voice-Fabric")
+            }
+        } catch (e: Exception) {
+            ReceiptStore.record(
+                context,
+                "voice.fabric.open",
+                "FAIL",
+                e.message ?: e.javaClass.simpleName
+            )
+            JSONObject().apply {
+                put("ok", false)
+                put("opened", false)
+                put("voicePackageId", VOICE_PACKAGE_ID)
+                put("error", e.message ?: e.javaClass.simpleName)
+            }
+        }
     }
 
     fun speak(context: Context, text: String): JSONObject {
         val clean = text.trim()
         if (clean.isEmpty()) return JSONObject().put("ok", false).put("error", "TEXT_REQUIRED")
-        if (clean.length > 4000) return JSONObject().put("ok", false).put("error", "TEXT_TOO_LONG")
-
-        val initialized = if (!ready || tts == null) initialize(context) else status(context)
-        if (!initialized.optBoolean("ready")) {
-            ReceiptStore.record(context, "voice.tts.speak", "FAIL", "renderer_not_ready chars=${clean.length}")
-            return JSONObject().apply {
-                put("ok", false)
-                put("spoken", false)
-                put("chars", clean.length)
-                put("engine", "ANDROID_TEXT_TO_SPEECH")
-                put("error", "TTS_NOT_READY")
-                put("status", initialized)
-            }
-        }
-
-        val result = tts?.speak(
-            clean,
-            TextToSpeech.QUEUE_FLUSH,
-            null,
-            "leeway-" + System.currentTimeMillis()
-        ) ?: TextToSpeech.ERROR
-        val ok = result == TextToSpeech.SUCCESS
         ReceiptStore.record(
             context,
-            "voice.tts.speak",
-            if (ok) "PASS" else "FAIL",
-            "chars=${clean.length} queueResult=${result}"
+            "voice.fabric.speak",
+            "BLOCKED",
+            "Voice Fabric native phone adapter not yet qualified; chars=" + clean.length
         )
         return JSONObject().apply {
-            put("ok", ok)
-            put("spoken", ok)
+            put("ok", false)
+            put("spoken", false)
             put("chars", clean.length)
-            put("engine", "ANDROID_TEXT_TO_SPEECH")
-            put("queueResult", result)
+            put("engine", "LEEWAY_VOICE_FABRIC")
+            put("voicePackageId", VOICE_PACKAGE_ID)
+            put("error", "VOICE_UNAVAILABLE")
+            put("fallbackAllowed", false)
+            put("next", "Open canonical Voice Fabric and qualify the native phone adapter.")
         }
     }
 
-    fun stop() {
-        try { tts?.stop() } catch (_: Exception) {}
-    }
+    fun stop() {}
 
-    @Synchronized
-    fun shutdown() {
-        try { tts?.stop() } catch (_: Exception) {}
-        try { tts?.shutdown() } catch (_: Exception) {}
-        tts = null
-        ready = false
-    }
+    fun shutdown() {}
 }
