@@ -1,9 +1,13 @@
-const CACHE = "leeway-device-bridge-v2";
+const CACHE = "leeway-device-bridge-v3";
 const ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
+  "./icons/leeway-official-logo-512.png",
+  "./icons/leeway-official-logo-192.png",
+  "./brand/leeway-official-logo.png",
+  "./manifest.webmanifest",
   "./device-discovery.js",
   "./llm-entrypoint.json",
   "./package-manifest.json",
