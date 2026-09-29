@@ -221,10 +221,9 @@ class MainActivity : AppCompatActivity() {
             }
         }
         val speakTest = Button(this).apply {
-            text = "TEST AGENT LEE VOICE"
+            text = "OPEN AGENT LEE VOICE ONE"
             setOnClickListener {
-                val result = VoiceRuntime.speak(this@MainActivity, "Agent Lee voice path is active on this phone.")
-                output.text = result.toString(2)
+                output.text = VoiceRuntime.openVoiceFabric(this@MainActivity).toString(2)
             }
         }
 
