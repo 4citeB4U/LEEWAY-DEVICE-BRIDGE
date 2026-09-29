@@ -33,7 +33,7 @@ try{
   ]);
   await waitFor('package-manifest.json',[
     'leeway-device-bridge-android-latest-debug.apk',
-    '0.8.4',
+    '0.8.5',
     'SECONDARY_WORKSTATION_BUILD_QUALIFIED_INSTALL_REQUIRED'
   ]);
   const apk=await fetch(BASE+'downloads/leeway-device-bridge-android-latest-debug.apk',{method:'HEAD',redirect:'error',cache:'no-store'});
