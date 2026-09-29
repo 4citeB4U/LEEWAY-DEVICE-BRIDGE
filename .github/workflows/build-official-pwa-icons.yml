@@ -47,4 +47,6 @@ jobs:
             exit 0
           fi
           git commit -m "Generate PWA icons from official LeeWay logo"
+          git fetch origin main
+          git rebase origin/main
           git push origin HEAD:main
