@@ -16,15 +16,15 @@
   ],
   "icons": [
     {
-      "src": "./icons/leeway-workstation-192.svg",
+      "src": "./icons/leeway-official-logo-192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "./icons/leeway-workstation-512.svg",
+      "src": "./icons/leeway-official-logo-512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]
