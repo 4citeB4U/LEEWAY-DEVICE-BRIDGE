@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 const script=fs.readFileSync("clients/remote-controller/termux-one-pull.sh","utf8");
 const router=fs.readFileSync("apps/android/app/src/main/java/industries/leeway/devicebridge/RemoteCommandRouter.kt","utf8");
 
-assert.match(script,/TARGET_VERSION="0\.8\.4"/);
+assert.match(script,/TARGET_VERSION="0\.8\.5"/);
 assert.match(script,/leeway-device-bridge-android-latest\.json/);
 assert.match(script,/sha256sum/);
 assert.match(script,/termux-open --view/);
