@@ -16,16 +16,10 @@
   ],
   "icons": [
     {
-      "src": "./icons/leeway-official-logo-192.png",
-      "sizes": "192x192",
+      "src": "./leeway-official-logo.png",
+      "sizes": "any",
       "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "./icons/leeway-official-logo-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }
