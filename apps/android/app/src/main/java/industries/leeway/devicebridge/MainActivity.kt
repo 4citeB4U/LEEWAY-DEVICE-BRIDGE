@@ -270,6 +270,41 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        val enableSecondaryWorkstation = Button(this).apply {
+            text = "ENABLE SECONDARY WORKSTATION"
+            setOnClickListener {
+                LocalAuthority.setAgentAccess(this@MainActivity, true)
+                val local = try {
+                    LocalBridgeServer.start(this@MainActivity)
+                } catch (e: Exception) {
+                    org.json.JSONObject().apply {
+                        put("ok", false)
+                        put("error", e.message ?: e.javaClass.simpleName)
+                    }
+                }
+                RemoteRelayService.start(this@MainActivity)
+                Handler(Looper.getMainLooper()).postDelayed({
+                    val remote = RemoteRelayState.status(this@MainActivity)
+                    refreshRuntimeState()
+                    val result = org.json.JSONObject().apply {
+                        put("mode", "LEEWAY_SECONDARY_WORKSTATION")
+                        put("deviceId", remote.optString("deviceId"))
+                        put("localBridge", local)
+                        put("remoteRelay", remote)
+                        put("pairingTokenReady", pairingToken.isNotBlank())
+                        put("next", "Use AUTOMATIC OWNER BOOTSTRAP / remote qualification. Manual token copy is fallback only.")
+                    }
+                    output.text = result.toString(2)
+                    ReceiptStore.record(
+                        this@MainActivity,
+                        "workstation.secondary.enable",
+                        if (remote.optBoolean("enabled")) "PASS" else "BLOCKED",
+                        "Owner enabled secondary workstation mode"
+                    )
+                }, 1000L)
+            }
+        }
+
         val remoteEnable = Button(this).apply {
             text = "ENABLE ALWAYS-ON REMOTE BRIDGE"
             setOnClickListener {
@@ -376,7 +411,7 @@ class MainActivity : AppCompatActivity() {
             listOf(
                 discover, diagnostics, files, receipts, authorizeBluetooth, bluetooth, networkDiscovery,
                 modelStatus, modelDownload, modelTest, speakTest, talkToLee,
-                remoteEnable, remoteStatus, remoteDisable,
+                enableSecondaryWorkstation, remoteEnable, remoteStatus, remoteDisable,
                 enable, startBridge, selfTest, showToken, stopBridge, stop
             ).forEach { addView(it) }
             addView(output)
