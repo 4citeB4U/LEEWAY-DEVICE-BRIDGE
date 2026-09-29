@@ -15,6 +15,8 @@
     <application
         android:theme="@style/Theme.LeewayDeviceBridge"
         android:label="LeeWay Device Bridge"
+        android:icon="@drawable/leeway_official_logo"
+        android:roundIcon="@drawable/leeway_official_logo"
         android:allowBackup="false">
         <activity android:name=".MainActivity" android:exported="true">
             <intent-filter>
