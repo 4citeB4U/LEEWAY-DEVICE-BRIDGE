@@ -3,14 +3,14 @@ import assert from "node:assert/strict";
 
 const voice=fs.readFileSync("apps/android/app/src/main/java/industries/leeway/devicebridge/VoiceRuntime.kt","utf8");
 
-assert.match(voice,/for \(attempt in 1\.\.3\)/);
-assert.match(voice,/await\(8, TimeUnit\.SECONDS\)/);
-assert.match(voice,/Thread\.sleep\(1200L \* attempt\)/);
-assert.match(voice,/LANG_MISSING_DATA/);
-assert.match(voice,/LANG_NOT_SUPPORTED/);
-assert.match(voice,/TTS_NOT_READY/);
-assert.match(voice,/queueResult/);
-assert.match(voice,/voice\.tts\.init/);
-assert.match(voice,/voice\.tts\.speak/);
+assert.doesNotMatch(voice,/TextToSpeech/);
+assert.doesNotMatch(voice,/voice\.tts\./);
+assert.match(voice,/LEEWAY_VOICE_FABRIC/);
+assert.match(voice,/agent-lee-voice-one/);
+assert.match(voice,/VOICE_UNAVAILABLE/);
+assert.match(voice,/fallbackAllowed/);
+assert.match(voice,/openVoiceFabric/);
+assert.match(voice,/voice\.fabric\.open/);
+assert.match(voice,/voice\.fabric\.speak/);
 
-console.log("PASS Android TTS cold-start retry contract");
+console.log("PASS Voice Fabric fail-closed authority contract");
