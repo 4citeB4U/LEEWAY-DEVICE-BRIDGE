@@ -2,7 +2,7 @@ const BASE=process.env.DEVICE_BRIDGE_URL||'https://4citeb4u.github.io/LEEWAY-DEV
 const checks=[
   ['',['Secondary Workstation Mode','Open Phone Cloud Workstation','leeway-phone-workstation','PENDING_REMOTE_QUALIFICATION']],
   ['secondary-workstation-node.json',['leeway-phone-workstation','mobile-secondary-workstation','PHONE_LOCAL_PLUS_CLOUD_ATTACHMENT']],
-  ['package-manifest.json',['leeway-device-bridge-android-v0.7.0-debug.apk','0.7.0','F8_GOVERNED_ALWAYS_ON_REMOTE_BUILD_QUALIFIED_INSTALL_REQUIRED']]
+  ['package-manifest.json',['leeway-device-bridge-android-latest-debug.apk','0.8.4','SECONDARY_WORKSTATION_BUILD_QUALIFIED_INSTALL_REQUIRED']]
 ];
 let failed=false;
 for(const [path,needles] of checks){
@@ -13,7 +13,7 @@ for(const [path,needles] of checks){
  if(!r.ok){failed=true;console.error('HTTP_FAIL',url,r.status);continue;}
  for(const n of needles){if(!t.includes(n)){failed=true;console.error('CONTENT_FAIL',url,n)}else console.log('CONTENT_PASS',url,n)}
 }
-const apk=await fetch(BASE+'downloads/leeway-device-bridge-android-v0.7.0-debug.apk',{method:'HEAD',redirect:'error',cache:'no-store'});
+const apk=await fetch(BASE+'downloads/leeway-device-bridge-android-latest-debug.apk',{method:'HEAD',redirect:'error',cache:'no-store'});
 console.log(JSON.stringify({apkStatus:apk.status,contentLength:apk.headers.get('content-length')}));
 if(!apk.ok){failed=true;console.error('APK_HEAD_FAIL',apk.status)}
 if(failed)process.exit(1);
