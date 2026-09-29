@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0b0f14">
-  <title>LeeWay Device Bridge</title>
+  <title>LeeWay Device-Neutral Workstation</title>
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./styles.css">
 </head>
@@ -12,18 +12,32 @@
 <main class="shell">
   <header>
     <p class="eyebrow">LEEWAY DEVICE BRIDGE</p>
-    <h1>Universal device harness from GitHub Pages.</h1>
-    <p class="lede">GitHub Pages publishes discovery, contracts and the verified phone package. The installed phone runtime performs privileged device execution locally.</p>
+    <h1>LeeWay Device-Neutral Workstation.</h1>
+    <p class="lede">Install the same LeeWay workstation shell from the browser on supported devices. Native Android capability packages are optional extensions, not the base workstation.</p>
   </header>
 
   <section class="panel" id="downloadSecondaryWorkstation">
+
     <div class="panel-head">
-      <div><p class="kicker">SECONDARY WORKSTATION</p><h2>Install LeeWay Secondary Workstation 0.8.4</h2></div>
+      <div><p class="kicker">OPTIONAL NATIVE ANDROID EXTENSION</p><h2>Android Native Capability Package 0.8.4</h2></div>
       <span class="badge">VERIFIED BUILD</span>
     </div>
-    <p class="muted">Current Android package · versionCode 12 · phone-local execution · always-on remote relay · Agent Lee Voice One authority.</p>
-    <a class="action" href="./downloads/leeway-device-bridge-android-latest-debug.apk" download>DOWNLOAD LEEWAY SECONDARY WORKSTATION 0.8.4</a>
+    <p class="muted">Optional Android extension for privileged phone-local capabilities that a browser cannot expose. The base workstation no longer depends on this APK.</p>
+    <a class="action" href="./downloads/leeway-device-bridge-android-latest-debug.apk" download>DOWNLOAD OPTIONAL ANDROID NATIVE EXTENSION 0.8.4</a>
     <p class="package-meta">After Android finishes installing, open LeeWay Device Bridge and tap <strong>ENABLE SECONDARY WORKSTATION</strong>. That one control enables local authority, starts the local bridge, and starts the always-on remote relay.</p>
+  </section>
+
+  <section class="panel" id="deviceNeutralInstall">
+    <div class="panel-head">
+      <div><p class="kicker">PRIMARY INSTALL</p><h2>Install LeeWay Device-Neutral Workstation</h2></div>
+      <span id="pwaState" class="badge">CHECKING</span>
+    </div>
+    <p class="muted">This is the canonical workstation package. It runs from the same GitHub Pages origin across supported browsers and does not require APK sideloading.</p>
+    <div class="panel-head">
+      <button class="action" id="installPwaBtn">INSTALL LEEWAY WORKSTATION</button>
+      <button id="launchPwaBtn">LAUNCH / REFRESH WORKSTATION</button>
+    </div>
+    <pre id="pwaOutput" class="profile">Checking browser install capability…</pre>
   </section>
 
   <section class="status-grid" aria-label="Bootstrap status">
