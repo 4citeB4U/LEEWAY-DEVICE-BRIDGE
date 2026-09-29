@@ -46,6 +46,27 @@
     </div>
   </section>
 
+
+  <section class="panel" id="secondaryWorkstation">
+    <div class="panel-head"><div><p class="kicker">STEP 04</p><h2>Secondary Workstation Mode</h2></div><span id="workstationState" class="badge">NOT QUALIFIED</span></div>
+    <p class="muted">Turn this phone into the persistent LeeWay secondary workstation. Android remains the phone runtime; browser/cloud development supplies containerized Linux tooling when desktop-class development is required.</p>
+    <ol class="workstation-steps">
+      <li><strong>Install/update v0.7.0</strong> from the package above. Do not uninstall an existing app if Android reports a signature conflict.</li>
+      <li>Open LeeWay Device Bridge and enable <strong>LOCAL AGENT SESSION</strong>.</li>
+      <li>Enable <strong>ALWAYS-ON REMOTE BRIDGE</strong> and keep its foreground notification enabled.</li>
+      <li>Use <strong>SHOW PAIRING TOKEN</strong> only when pairing an authorized LeeWay client.</li>
+      <li>Open the cloud development workspace when container/Linux development is needed.</li>
+      <li>After pairing, run <code>device.health</code>. The phone is not a verified workstation node until a remote receipt returns without USB.</li>
+    </ol>
+    <div class="panel-head">
+      <a class="action" id="codespacesBtn" href="https://github.com/codespaces/new?hide_repo_select=true&repo=1380304068" target="_blank" rel="noopener">Open Phone Cloud Workstation</a>
+      <a class="action" href="./secondary-workstation-node.json">Workstation node contract</a>
+    </div>
+    <pre id="workstationProfile" class="profile">Node: leeway-phone-workstation
+State: PENDING_REMOTE_QUALIFICATION
+Required proof: paired remote device.health + receipt without USB</pre>
+  </section>
+
   <section class="panel compact">
     <h2>Truth boundary</h2>
     <p><b>Observed</b> means the browser exposed it. <b>Inferred</b> means a standards-based interpretation was made. <b>Native verification required</b> means the Pages surface refuses to guess. Docker is not a production dependency.</p>
