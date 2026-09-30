@@ -78,7 +78,7 @@ object PackageInstallBroker {
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         context.startActivity(install)
-        ReceiptStore.record(context, "device.apps.install", "PASS", "Verified APK handed to Android installer sha256=$actual")
+        ReceiptStore.record(context, "device.apps.install.handoff", "PASS", "Verified APK handed to Android installer sha256=$actual; installation not yet verified")
         return JSONObject().put("ok", true)
             .put("state", "INSTALLER_OPENED")
             .put("sha256", actual)
