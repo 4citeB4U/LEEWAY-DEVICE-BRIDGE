@@ -8,11 +8,12 @@ assert.match(script,/TARGET_VERSION="0\.8\.6"/);
 assert.match(script,/leeway-device-bridge-android-latest\.json/);
 assert.match(script,/sha256sum/);
 assert.match(script,/termux-open --view/);
-assert.doesNotMatch(script,/android\.intent\.action\.DELETE/);\nassert.match(script,/Automatic uninstall is forbidden/);
+assert.doesNotMatch(script,/android\.intent\.action\.DELETE/);
+assert.match(script,/Automatic uninstall is forbidden/);
 assert.match(script,/TERMUX_BOOTSTRAP/);
 assert.match(script,/owner-bootstrap\?nonce=/);
 assert.match(script,/model\.install/);
 assert.match(router,/"model\.install"/);
 assert.match(router,/ModelRuntime\.download/);
 
-console.log("PASS one-pull upgrade/bootstrap/model recovery contract");
+console.log("PASS one-pull state-preserving upgrade/bootstrap/model recovery contract");
