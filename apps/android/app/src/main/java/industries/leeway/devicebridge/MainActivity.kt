@@ -5,6 +5,8 @@ import android.content.Intent
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.net.Uri
+import android.provider.Settings
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -252,11 +254,14 @@ class MainActivity : AppCompatActivity() {
                             if (heard.isBlank()) { output.text = "I did not hear a complete request."; return }
                             output.text = "You: " + heard + "\\n\\nAgent Lee is thinking..."
                             Thread {
-                                val result = ModelRuntime.generate(this@MainActivity, heard)
+                                val result = AgentLeeConversation.respond(this@MainActivity, heard, true)
                                 val response = result.optString("response")
-                                if (result.optBoolean("ok") && response.isNotBlank()) VoiceRuntime.speak(this@MainActivity, response)
-                                ReceiptStore.record(this@MainActivity, "agent.voice.conversation", if (result.optBoolean("ok")) "PASS" else "FAIL", "speech input -> model -> TTS")
-                                runOnUiThread { output.text = "You: " + heard + "\\n\\nAgent Lee: " + (if (response.isBlank()) result.toString(2) else response) }
+                                runOnUiThread {
+                                    output.text = "You: " + heard + "\\n\\nAgent Lee: " +
+                                        (if (response.isBlank()) result.toString(2) else response) +
+                                        "\\n\\nSkill: " + result.optString("focalSkill") +
+                                        " • Formula: " + result.optString("formulaExecutionState")
+                                }
                             }.start()
                         }
                     })
@@ -269,10 +274,38 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        val floatingMic = Button(this).apply {
+            text = "ENABLE FLOATING AGENT LEE MIC"
+            setOnClickListener {
+                FloatingMicOverlay.setEnabled(this@MainActivity, true)
+                if (!FloatingMicOverlay.canDraw(this@MainActivity)) {
+                    output.text = "Allow LeeWay Device Bridge to display over other apps. The Agent Lee mic will attach when you return."
+                    startActivity(
+                        Intent(
+                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            Uri.parse("package:" + packageName)
+                        )
+                    )
+                } else {
+                    RemoteRelayService.start(this@MainActivity)
+                    output.text = "Floating Agent Lee mic enabled."
+                }
+            }
+        }
+
         val enableSecondaryWorkstation = Button(this).apply {
             text = "ENABLE SECONDARY WORKSTATION"
             setOnClickListener {
                 LocalAuthority.setAgentAccess(this@MainActivity, true)
+                FloatingMicOverlay.setEnabled(this@MainActivity, true)
+                if (!FloatingMicOverlay.canDraw(this@MainActivity)) {
+                    startActivity(
+                        Intent(
+                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            Uri.parse("package:" + packageName)
+                        )
+                    )
+                }
                 val local = try {
                     LocalBridgeServer.start(this@MainActivity)
                 } catch (e: Exception) {
@@ -385,6 +418,7 @@ class MainActivity : AppCompatActivity() {
             text = "STOP AGENT ACCESS"
             setOnClickListener {
                 LocalAuthority.setAgentAccess(this@MainActivity, false)
+                FloatingMicOverlay.setEnabled(this@MainActivity, false)
                 RemoteRelayService.stop(this@MainActivity)
                 ReceiptStore.record(this@MainActivity, "device.session.stop", "PASS", "Owner emergency stop")
                 refreshRuntimeState()
@@ -409,7 +443,7 @@ class MainActivity : AppCompatActivity() {
             addView(pairingPanel)
             listOf(
                 discover, diagnostics, files, receipts, authorizeBluetooth, bluetooth, networkDiscovery,
-                modelStatus, modelDownload, modelTest, speakTest, talkToLee,
+                modelStatus, modelDownload, modelTest, speakTest, talkToLee, floatingMic,
                 enableSecondaryWorkstation, remoteEnable, remoteStatus, remoteDisable,
                 enable, startBridge, selfTest, showToken, stopBridge, stop
             ).forEach { addView(it) }
@@ -454,6 +488,13 @@ class MainActivity : AppCompatActivity() {
                     )
                 }
             }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (FloatingMicOverlay.enabled(this) && FloatingMicOverlay.canDraw(this)) {
+            RemoteRelayService.start(this)
         }
     }
 
