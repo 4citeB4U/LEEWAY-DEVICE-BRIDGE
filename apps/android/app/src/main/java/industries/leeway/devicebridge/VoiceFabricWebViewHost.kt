@@ -27,6 +27,7 @@ object VoiceFabricWebViewHost {
     @Volatile private var windowManager: WindowManager? = null
     @Volatile private var ready = false
     @Volatile private var pageReady = false
+    @Volatile private var prepareRequested = false
     private var appContext: Context? = null
 
     private fun prefs(context: Context) =
@@ -64,6 +65,7 @@ object VoiceFabricWebViewHost {
     fun prepare(context: Context): JSONObject {
         val init = initialize(context)
         if (!init.optBoolean("ok")) return init
+        prepareRequested = true
         prefs(context).edit().putString("state", "VOICE_PREPARING").apply()
         handler.post {
             webView?.evaluateJavascript(
@@ -127,6 +129,7 @@ object VoiceFabricWebViewHost {
             windowManager = null
             ready = false
             pageReady = false
+            prepareRequested = false
             synchronized(pending) { pending.clear() }
         }
     }
@@ -155,9 +158,15 @@ object VoiceFabricWebViewHost {
                 override fun onPageFinished(v: WebView?, url: String?) {
                     pageReady = true
                     prefs(app).edit()
-                        .putString("state", "VOICE_BRIDGE_READY_ENGINE_NOT_PREPARED")
+                        .putString("state", if (prepareRequested) "VOICE_PREPARING" else "VOICE_BRIDGE_READY_ENGINE_NOT_PREPARED")
                         .putString("last_event", "WEBVIEW_PAGE_FINISHED")
                         .apply()
+                    if (prepareRequested) {
+                        v?.evaluateJavascript(
+                            "globalThis.LeeWayMobileVoice?.prepare().catch(()=>{});",
+                            null
+                        )
+                    }
                 }
             }
 
@@ -188,10 +197,9 @@ object VoiceFabricWebViewHost {
         } ?: return
         val quoted = JSONObject.quote(next)
         webView?.evaluateJavascript(
-            "globalThis.LeeWayMobileVoice.speak($quoted).catch(()=>{});"
-        ) {
-            handler.post { if (ready) drainPending() }
-        }
+            "globalThis.LeeWayMobileVoice.speak($quoted).catch(()=>{});",
+            null
+        )
     }
 
     private class NativeBridge(private val context: Context) {
@@ -208,6 +216,7 @@ object VoiceFabricWebViewHost {
                 }
                 "voice.engine.ready" -> {
                     ready = true
+                    prepareRequested = false
                     edit.putString("state", "VOICE_READY")
                         .remove("last_error")
                     ReceiptStore.record(
@@ -230,12 +239,16 @@ object VoiceFabricWebViewHost {
                         "PASS",
                         "Voice One playback completed; chars=" + data.optInt("chars")
                     )
+                    handler.post { drainPending() }
                 }
                 "voice.stop" -> {
                     edit.putString("state", "VOICE_READY")
                 }
                 "voice.error" -> {
-                    if (data.optString("phase") == "prepare") ready = false
+                    if (data.optString("phase") == "prepare") {
+                        ready = false
+                        prepareRequested = false
+                    }
                     edit.putString("state", "VOICE_ERROR")
                         .putString("last_error", data.optString("message", "Voice Fabric error"))
                     ReceiptStore.record(
