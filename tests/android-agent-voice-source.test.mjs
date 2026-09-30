@@ -20,7 +20,7 @@ assert.match(activity,/OPEN AGENT LEE VOICE ONE/);
 assert.match(activity,/VoiceRuntime\.openVoiceFabric/);
 assert.match(manifest,/RECORD_AUDIO/);
 assert.match(manifest,/VoiceOneActivity/);
-assert.match(voice,/mobile-runtime\.html/);
+assert.match(voice,/android-bridge\.html/);
 assert.match(gradle,/versionName = "0\.8\.6"/);
 assert.match(gradle,/versionCode = 14/);
 console.log("PASS Android Agent Lee Voice Fabric authority contract");
