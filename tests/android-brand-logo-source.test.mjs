@@ -18,7 +18,7 @@ assert.match(manifest,/android:icon="@drawable\/leeway_official_logo"/);
 assert.match(manifest,/android:roundIcon="@drawable\/leeway_official_logo"/);
 assert.match(page,/href="\.\/leeway-official-logo\.png"/);
 assert.match(pwa,/\.\/leeway-official-logo\.png/);
-assert.match(gradle,/versionName = "0\.8\.5"/);
-assert.match(gradle,/versionCode = 13/);
+assert.match(gradle,/versionName = "0\.9\.0"/);
+assert.match(gradle,/versionCode = 14/);
 
-console.log("PASS canonical LeeWay logo authority and Android 0.8.5 branding");
+console.log("PASS canonical LeeWay logo authority and Android 0.9.0 branding");

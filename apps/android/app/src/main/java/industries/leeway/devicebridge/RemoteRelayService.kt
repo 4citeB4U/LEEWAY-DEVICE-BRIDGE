@@ -42,6 +42,10 @@ class RemoteRelayService : Service() {
         super.onCreate()
         createChannel()
         startAsForeground("Connecting to LeeWay relay")
+        if (AgentLeeOverlayController.canShow(this)) {
+            AgentLeeOverlayController.show(this)
+            VoiceRuntime.initialize(this)
+        }
         connect()
     }
 
@@ -49,6 +53,10 @@ class RemoteRelayService : Service() {
         if (!RemoteRelayState.enabled(this)) {
             stopSelf()
             return START_NOT_STICKY
+        }
+        if (AgentLeeOverlayController.canShow(this)) {
+            AgentLeeOverlayController.show(this)
+            VoiceRuntime.initialize(this)
         }
         if (webSocket == null && !connecting) connect()
         return START_STICKY
@@ -62,6 +70,8 @@ class RemoteRelayService : Service() {
         webSocket = null
         connecting = false
         RemoteRelayState.setConnection(this, false, "SERVICE_STOPPED")
+        AgentLeeOverlayController.hide(this)
+        VoiceRuntime.shutdown()
         client.dispatcher.executorService.shutdown()
         super.onDestroy()
     }
