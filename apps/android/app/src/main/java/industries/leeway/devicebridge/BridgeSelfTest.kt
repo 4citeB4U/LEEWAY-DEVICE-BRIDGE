@@ -36,14 +36,19 @@ object BridgeSelfTest {
             missingRejected &&
             wrongRejected &&
             ownerTokenAccepted &&
-            executeGate.optInt("qA") == 69 &&
-            emptyGate.optInt("qA") == 0
+            executeGate.optBoolean("localAuthorizationPassed") &&
+            !emptyGate.optBoolean("localAuthorizationPassed") &&
+            !executeGate.optBoolean("q69ResultClaimed")
 
         val detail =
-            "running=$bridgeRunning access=$accessEnabled " +
-            "missingRejected=$missingRejected wrongRejected=$wrongRejected " +
-            "ownerTokenAccepted=$ownerTokenAccepted qA=${executeGate.optInt("qA")} " +
-            "emptyQ=${emptyGate.optInt("qA")}"
+            "running=" + bridgeRunning +
+            " access=" + accessEnabled +
+            " missingRejected=" + missingRejected +
+            " wrongRejected=" + wrongRejected +
+            " ownerTokenAccepted=" + ownerTokenAccepted +
+            " localAuthorizationPassed=" + executeGate.optBoolean("localAuthorizationPassed") +
+            " emptyBlocked=" + !emptyGate.optBoolean("localAuthorizationPassed") +
+            " formula=" + executeGate.optString("formulaExecutionState")
 
         ReceiptStore.record(
             appContext,
