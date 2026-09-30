@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0.0",
+  "evidenceType": "LEEWAY_AGENT_LEE_VOICE_ONE_ANDROID_BRIDGE_BUILD",
+  "observedAt": "2026-09-30T07:20:31Z",
+  "status": "BUILD_VERIFIED_DEVICE_PLAYBACK_PENDING",
+  "packageId": "industries.leeway.readaloud",
+  "versionName": "0.2.0",
+  "versionCode": 2,
+  "voicePackageId": "agent-lee-voice-one",
+  "authority": "4citeB4U/LeeWay-Voice-Fabric",
+  "architecture": {
+    "preparedTextControl": "127.0.0.1:54321",
+    "renderer": "embedded Android WebView -> LeeWay Voice Fabric",
+    "delivery": [
+      "speak",
+      "streamStart",
+      "streamChunk",
+      "streamEnd",
+      "stop",
+      "resume"
+    ],
+    "systemTtsFallback": false,
+    "bootPersistentService": true
+  },
+  "build": {
+    "workflowRunId": "36683140360",
+    "sourceCommit": "3c42346b45a9f2e3a1e2bad1a53aed37231794f3",
+    "gradleRc": 0,
+    "result": "PASS",
+    "apkSha256": "38bd47e41b654912bf8a83d0851b40531374e6bfafcc14bf245eb3b60a3fea2c",
+    "sizeBytes": 31837
+  },
+  "deviceRuntime": {
+    "installed": false,
+    "prepared": false,
+    "speechHeard": false,
+    "streamingVerified": false,
+    "stopResumeVerified": false,
+    "state": "PENDING_PHYSICAL_FOLD_QUALIFICATION"
+  },
+  "blocker": {
+    "code": "FOLD_WORKSTATION_REMOTE_OFFLINE_AFTER_TERMUX_AUDIO_WORKLOAD",
+    "note": "Voice workload has been moved into a separate Android foreground media service to isolate it from the Termux workstation control plane."
+  }
+}
