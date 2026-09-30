@@ -40,8 +40,8 @@ object RemoteCommandRouter {
                 firstSeen, capabilityPrecondition
             )
         )
-        if (gate.optInt("qA") != 69) return JSONObject().apply {
-            put("ok", false); put("error", "FORMULA_HOLD"); put("capability", capability); put("gate", gate)
+        if (!gate.optBoolean("fire")) return JSONObject().apply {
+            put("ok", false); put("error", "LOCAL_ELIGIBILITY_HOLD"); put("capability", capability); put("gate", gate); put("formulaAuthority", FormulaF8Gate.FORMULA_AUTHORITY); put("canonicalFormulaState", "NOT_EXECUTED")
         }
         return try {
             val value = when (capability) {
@@ -94,12 +94,12 @@ object RemoteCommandRouter {
             JSONObject().apply {
                 put("ok", valueOk)
                 put("capability", capability)
-                put("gate", gate)
+                put("gate", gate); put("formulaAuthority", FormulaF8Gate.FORMULA_AUTHORITY); put("canonicalFormulaState", "NOT_EXECUTED")
                 put("result", value)
                 if (!valueOk) put("error", value.optString("error", "CAPABILITY_EXECUTION_FAILED"))
             }
         } catch (e: Exception) {
-            JSONObject().apply { put("ok", false); put("capability", capability); put("gate", gate); put("error", e.message ?: e.javaClass.simpleName) }
+            JSONObject().apply { put("ok", false); put("capability", capability); put("gate", gate); put("formulaAuthority", FormulaF8Gate.FORMULA_AUTHORITY); put("canonicalFormulaState", "NOT_EXECUTED"); put("error", e.message ?: e.javaClass.simpleName) }
         }
     }
 
