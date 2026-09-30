@@ -55,10 +55,10 @@ jobs:
           cat > docs/downloads/leeway-read-aloud-bridge-latest.json <<JSON
           {
             "packageId": "industries.leeway.readaloud",
-            "versionName": "0.1.0",
-            "versionCode": 1,
-            "engine": "com.samsung.SMT",
-            "authority": "LEEWAY_ACCESSIBILITY_READ_ALOUD_NOT_AGENT_LEE_VOICE_ONE",
+            "versionName": "0.2.0",
+            "versionCode": 2,
+            "engine": "agent-lee-voice-one",
+            "authority": "4citeB4U/LeeWay-Voice-Fabric",
             "sha256": "$SHA",
             "sizeBytes": $BYTES,
             "downloadUrl": "./leeway-read-aloud-bridge-latest-debug.apk",
