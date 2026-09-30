@@ -1,0 +1,12 @@
+{
+  "receiptId": "LDB-DEVICE-OPERATOR-BUILD-20260930",
+  "timestamp": "2026-09-30T11:41:13Z",
+  "action": "universal-device-operator-source-build",
+  "result": "PASS",
+  "sourceCommit": "24c155687af0947047ddebb21dc7a03c064c1d80",
+  "workflowRunId": 36709934838,
+  "apkSha256": "2ac3252006ac7b835ed31a68ac296222816d9766a0bb355a7d0a662c9128e088",
+  "apkSizeBytes": 66362573,
+  "physicalExecution": "NOT_EXECUTED",
+  "learningLedger": "NOT_UPDATED"
+}
