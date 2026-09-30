@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0.0",
+  "evidenceType": "LEEWAY_PHONE_WORKSTATION_REMOTE_EXECUTION",
+  "workflowRunId": "36667477261",
+  "workflowSha": "6b27e9310aad868f52d41a95e0291ad1f0cf64e2",
+  "observedAt": "2026-09-30T04:08:22.362Z",
+  "pcRequired": false,
+  "usbRequired": false,
+  "result": {
+    "ok": false,
+    "error": "VERCEL_QUEUE_OIDC_TOKEN_MISSING"
+  }
+}
