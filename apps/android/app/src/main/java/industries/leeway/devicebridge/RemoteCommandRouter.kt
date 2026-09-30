@@ -9,6 +9,7 @@ object RemoteCommandRouter {
         "device.bluetooth.list-bonded", "device.network.discover", "device.receipts",
         "device.ui.snapshot", "device.ui.back", "device.ui.home", "device.ui.recents",
         "device.ui.tap", "device.ui.swipe", "device.ui.text",
+        "device.apps.install.status", "device.apps.install",
         "model.status", "model.install", "model.inference", "voice.status", "voice.speak", "agent.chat"
     )
 
@@ -24,6 +25,8 @@ object RemoteCommandRouter {
             "device.ui.swipe" -> arguments.has("x1") && arguments.has("y1") &&
                 arguments.has("x2") && arguments.has("y2")
             "device.ui.text" -> text.isNotEmpty()
+            "device.apps.install" -> arguments.optString("url").startsWith("https://") &&
+                arguments.optString("sha256").matches(Regex("^[A-Fa-f0-9]{64}$"))
             else -> true
         }
         val gate = FormulaF8Gate.evaluate(
@@ -61,6 +64,12 @@ object RemoteCommandRouter {
                     arguments.optLong("durationMs", 300L)
                 )
                 "device.ui.text" -> DeviceOperatorAccessibilityService.setFocusedText(text)
+                "device.apps.install.status" -> PackageInstallBroker.status(context)
+                "device.apps.install" -> PackageInstallBroker.installFromUrl(
+                    context,
+                    arguments.getString("url"),
+                    arguments.getString("sha256")
+                )
                 "model.status" -> ModelRuntime.status(context)
                 "model.install" -> ModelRuntime.download(context) { _, _ -> }
                 "model.inference" -> ModelRuntime.generate(context, prompt)
