@@ -64,10 +64,11 @@ class DeviceOperatorAccessibilityService : AccessibilityService() {
                 out.put("children", children)
                 return out
             }
+            val tree = nodeJson(root, 0)
             return JSONObject().apply {
                 put("ok", true)
                 put("nodeCount", count)
-                put("tree", nodeJson(root, 0))
+                put("tree", tree)
             }
         }
 
