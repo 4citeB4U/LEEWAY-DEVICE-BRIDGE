@@ -293,6 +293,24 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        val enableSideMic = Button(this).apply {
+            text = "ENABLE AGENT LEE SIDE MIC"
+            setOnClickListener {
+                if (!Settings.canDrawOverlays(this@MainActivity)) {
+                    val intent = Intent(
+                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        android.net.Uri.parse("package:$packageName")
+                    )
+                    startActivity(intent)
+                    output.text = "Approve display-over-other-apps for LeeWay Device Bridge, then return and tap ENABLE AGENT LEE SIDE MIC again."
+                    ReceiptStore.record(this@MainActivity, "agent.lee.side.mic.authorize", "OBSERVED", "Owner opened overlay authorization")
+                } else {
+                    val attached = FloatingAgentLeeOverlay.attach(this@MainActivity)
+                    output.text = if (attached) "Agent Lee side microphone is active." else "Agent Lee side microphone could not be attached."
+                }
+            }
+        }
+
         val authorizeWorkstationKeeper = Button(this).apply {
             text = "AUTHORIZE BACKGROUND WORKSTATION KEEPER"
             setOnClickListener {
@@ -453,7 +471,7 @@ class MainActivity : AppCompatActivity() {
             addView(pairingPanel)
             listOf(
                 discover, diagnostics, files, authorizeDeviceOperator, authorizeMediaOperator, receipts, authorizeBluetooth, bluetooth, networkDiscovery,
-                modelStatus, modelDownload, modelTest, speakTest, talkToLee,
+                modelStatus, modelDownload, modelTest, speakTest, talkToLee, enableSideMic,
                 authorizeWorkstationKeeper, enableSecondaryWorkstation, remoteEnable, remoteStatus, remoteDisable,
                 enable, startBridge, selfTest, showToken, stopBridge, stop
             ).forEach { addView(it) }
@@ -463,6 +481,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(ScrollView(this).apply { addView(root) })
 
         when (intent?.getStringExtra("leeway_action")) {
+            "TALK_TO_AGENT_LEE" -> {
+                talkToLee.performClick()
+            }
             "SHOW_PAIRING" -> {
                 pairingPanel.requestFocus()
                 output.text = "Pairing mode opened by Termux. Tap COPY PAIRING TOKEN, then return to Termux."
