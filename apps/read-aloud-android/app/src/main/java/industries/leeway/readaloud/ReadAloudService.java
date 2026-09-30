@@ -5,11 +5,10 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
-import android.speech.tts.TextToSpeech;
-import android.speech.tts.UtteranceProgressListener;
+import android.os.PowerManager;
+
+import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -19,71 +18,61 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
 
 public final class ReadAloudService extends Service {
     public static final int PORT = 54321;
-    public static final String ENGINE_PACKAGE = "com.samsung.SMT";
-    public static final String AUTHORITY = "LEEWAY_ACCESSIBILITY_READ_ALOUD_NOT_AGENT_LEE_VOICE_ONE";
+    public static final String ENGINE = "agent-lee-voice-one";
+    public static final String AUTHORITY = "4citeB4U/LeeWay-Voice-Fabric";
     private static final String CHANNEL = "leeway-read-aloud";
     private static final int NOTIFICATION_ID = 54321;
 
-    private final Handler main = new Handler(Looper.getMainLooper());
-    private volatile boolean ready = false;
-    private volatile boolean speaking = false;
-    private volatile String lastError = "INITIALIZING";
-    private volatile int lastChars = 0;
-    private TextToSpeech tts;
+    private volatile boolean muted = false;
+    private volatile String lastError = "";
     private ServerSocket server;
     private Thread serverThread;
+    private VoiceOneHost voice;
+    private PowerManager.WakeLock wakeLock;
 
     @Override
     public void onCreate() {
         super.onCreate();
         startInForeground();
-        initTts();
+        acquireWakeLock();
+        voice = new VoiceOneHost(this);
+        voice.start();
+        voice.prepare();
         startLoopbackServer();
     }
 
     private void startInForeground() {
         NotificationManager nm = getSystemService(NotificationManager.class);
         if (android.os.Build.VERSION.SDK_INT >= 26) {
-            NotificationChannel c = new NotificationChannel(CHANNEL, "LeeWay Read Aloud", NotificationManager.IMPORTANCE_LOW);
-            c.setDescription("Keeps the owner-authorized Samsung TTS read-aloud bridge available on localhost");
+            NotificationChannel c = new NotificationChannel(
+                    CHANNEL,
+                    "LeeWay Agent Lee Voice One",
+                    NotificationManager.IMPORTANCE_LOW
+            );
+            c.setDescription("Keeps the owner-authorized Agent Lee Voice One prepared-text bridge available on localhost");
             nm.createNotificationChannel(c);
         }
         Notification n = new Notification.Builder(this, CHANNEL)
-                .setContentTitle("LeeWay Read Aloud Bridge")
-                .setContentText("Samsung TTS accessibility renderer on 127.0.0.1:" + PORT)
+                .setContentTitle("LeeWay Agent Lee Voice One")
+                .setContentText("Prepared-text and streaming voice bridge on 127.0.0.1:" + PORT)
                 .setSmallIcon(android.R.drawable.ic_btn_speak_now)
                 .setOngoing(true)
                 .build();
         startForeground(NOTIFICATION_ID, n);
     }
 
-    private void initTts() {
-        main.post(() -> {
-            try {
-                tts = new TextToSpeech(getApplicationContext(), status -> {
-                    ready = status == TextToSpeech.SUCCESS;
-                    lastError = ready ? "" : "SAMSUNG_TTS_INIT_FAILED_" + status;
-                    if (!ready) return;
-                    tts.setLanguage(Locale.US);
-                    tts.setPitch(1.0f);
-                    tts.setSpeechRate(1.0f);
-                    tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
-                        @Override public void onStart(String utteranceId) { speaking = true; }
-                        @Override public void onDone(String utteranceId) { if (utteranceId.endsWith("-last")) speaking = false; }
-                        @Override public void onError(String utteranceId) { speaking = false; lastError = "TTS_UTTERANCE_ERROR"; }
-                    });
-                }, ENGINE_PACKAGE);
-            } catch (Throwable t) {
-                ready = false;
-                lastError = t.getClass().getSimpleName() + ":" + String.valueOf(t.getMessage());
-            }
-        });
+    private void acquireWakeLock() {
+        try {
+            PowerManager pm = getSystemService(PowerManager.class);
+            if (pm == null) return;
+            wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "LeeWay:VoiceOneBridge");
+            wakeLock.setReferenceCounted(false);
+            wakeLock.acquire();
+        } catch (Throwable ignored) {
+        }
     }
 
     private void startLoopbackServer() {
@@ -109,9 +98,15 @@ public final class ReadAloudService extends Service {
     private void handle(Socket socket) {
         try (Socket s = socket; InputStream in = s.getInputStream(); OutputStream out = s.getOutputStream()) {
             String request = readLine(in);
-            if (request == null || request.isEmpty()) { respond(out, 400, "{\"ok\":false,\"error\":\"BAD_REQUEST\"}"); return; }
+            if (request == null || request.isEmpty()) {
+                respond(out, 400, jsonError("BAD_REQUEST"));
+                return;
+            }
             String[] first = request.split(" ");
-            if (first.length < 2) { respond(out, 400, "{\"ok\":false,\"error\":\"BAD_REQUEST\"}"); return; }
+            if (first.length < 2) {
+                respond(out, 400, jsonError("BAD_REQUEST"));
+                return;
+            }
             String method = first[0];
             String path = first[1];
             int contentLength = 0;
@@ -119,87 +114,195 @@ public final class ReadAloudService extends Service {
             while ((line = readLine(in)) != null && !line.isEmpty()) {
                 int colon = line.indexOf(':');
                 if (colon > 0 && line.substring(0, colon).trim().equalsIgnoreCase("Content-Length")) {
-                    try { contentLength = Integer.parseInt(line.substring(colon + 1).trim()); } catch (NumberFormatException ignored) {}
+                    try {
+                        contentLength = Integer.parseInt(line.substring(colon + 1).trim());
+                    } catch (NumberFormatException ignored) {
+                    }
                 }
             }
+            if (contentLength < 0 || contentLength > 250000) {
+                respond(out, 400, jsonError("BODY_TOO_LARGE"));
+                return;
+            }
+            String body = contentLength == 0
+                    ? ""
+                    : new String(readBody(in, contentLength), StandardCharsets.UTF_8);
 
             if ("GET".equals(method) && "/health".equals(path)) {
                 respond(out, 200, healthJson());
                 return;
             }
+            if ("POST".equals(method) && "/prepare".equals(path)) {
+                voice.prepare();
+                respond(out, 202, new JSONObject()
+                        .put("ok", true)
+                        .put("accepted", true)
+                        .put("operation", "prepare")
+                        .put("voicePackageId", VoiceOneHost.VOICE_ID)
+                        .put("authority", AUTHORITY)
+                        .toString());
+                return;
+            }
             if ("POST".equals(method) && "/stop".equals(path)) {
-                stopSpeech();
-                respond(out, 200, "{\"ok\":true,\"stopped\":true,\"authority\":\"" + AUTHORITY + "\"}");
+                muted = true;
+                voice.stop();
+                respond(out, 200, new JSONObject()
+                        .put("ok", true)
+                        .put("stopped", true)
+                        .put("muted", true)
+                        .put("voicePackageId", VoiceOneHost.VOICE_ID)
+                        .put("authority", AUTHORITY)
+                        .toString());
+                return;
+            }
+            if ("POST".equals(method) && "/resume".equals(path)) {
+                muted = false;
+                voice.prepare();
+                respond(out, 200, new JSONObject()
+                        .put("ok", true)
+                        .put("resumed", true)
+                        .put("muted", false)
+                        .put("voicePackageId", VoiceOneHost.VOICE_ID)
+                        .put("authority", AUTHORITY)
+                        .toString());
                 return;
             }
             if ("POST".equals(method) && "/speak".equals(path)) {
-                if (contentLength <= 0 || contentLength > 250000) {
-                    respond(out, 400, "{\"ok\":false,\"error\":\"TEXT_REQUIRED_OR_TOO_LARGE\"}");
+                if (muted) {
+                    respond(out, 409, jsonError("READ_ALOUD_MUTED"));
                     return;
                 }
-                String text = new String(readBody(in, contentLength), StandardCharsets.UTF_8).trim();
-                if (text.isEmpty()) { respond(out, 400, "{\"ok\":false,\"error\":\"TEXT_REQUIRED\"}"); return; }
-                if (!ready) { respond(out, 503, healthJson()); return; }
-                lastChars = text.length();
-                speakPrepared(text);
-                respond(out, 202, "{\"ok\":true,\"accepted\":true,\"chars\":" + text.length() + ",\"engine\":\"" + ENGINE_PACKAGE + "\",\"authority\":\"" + AUTHORITY + "\"}");
+                String text = extractText(body);
+                if (text.isEmpty()) {
+                    respond(out, 400, jsonError("TEXT_REQUIRED"));
+                    return;
+                }
+                if (!voice.status().optBoolean("ready")) {
+                    voice.prepare();
+                    respond(out, 503, healthJson());
+                    return;
+                }
+                boolean accepted = voice.speak(text);
+                if (!accepted) {
+                    respond(out, 503, healthJson());
+                    return;
+                }
+                respond(out, 202, new JSONObject()
+                        .put("ok", true)
+                        .put("accepted", true)
+                        .put("chars", text.length())
+                        .put("voicePackageId", VoiceOneHost.VOICE_ID)
+                        .put("engine", "LEEWAY_VOICE_FABRIC")
+                        .put("authority", AUTHORITY)
+                        .toString());
                 return;
             }
-            respond(out, 404, "{\"ok\":false,\"error\":\"NOT_FOUND\"}");
+            if ("POST".equals(method) && "/stream/start".equals(path)) {
+                if (muted) {
+                    respond(out, 409, jsonError("READ_ALOUD_MUTED"));
+                    return;
+                }
+                JSONObject value = parseJson(body);
+                String streamId = value.optString("streamId").trim();
+                if (streamId.isEmpty()) {
+                    respond(out, 400, jsonError("STREAM_ID_REQUIRED"));
+                    return;
+                }
+                if (!voice.streamStart(streamId)) {
+                    voice.prepare();
+                    respond(out, 503, healthJson());
+                    return;
+                }
+                respond(out, 202, new JSONObject()
+                        .put("ok", true)
+                        .put("accepted", true)
+                        .put("streamId", streamId)
+                        .put("voicePackageId", VoiceOneHost.VOICE_ID)
+                        .put("authority", AUTHORITY)
+                        .toString());
+                return;
+            }
+            if ("POST".equals(method) && "/stream/chunk".equals(path)) {
+                if (muted) {
+                    respond(out, 409, jsonError("READ_ALOUD_MUTED"));
+                    return;
+                }
+                JSONObject value = parseJson(body);
+                String streamId = value.optString("streamId").trim();
+                String text = value.optString("text");
+                if (streamId.isEmpty() || text.isEmpty()) {
+                    respond(out, 400, jsonError("STREAM_ID_AND_TEXT_REQUIRED"));
+                    return;
+                }
+                if (!voice.streamChunk(streamId, text)) {
+                    respond(out, 409, jsonError("STREAM_NOT_ACTIVE"));
+                    return;
+                }
+                respond(out, 202, new JSONObject()
+                        .put("ok", true)
+                        .put("accepted", true)
+                        .put("streamId", streamId)
+                        .put("chars", text.length())
+                        .toString());
+                return;
+            }
+            if ("POST".equals(method) && "/stream/end".equals(path)) {
+                JSONObject value = parseJson(body);
+                String streamId = value.optString("streamId").trim();
+                if (streamId.isEmpty()) {
+                    respond(out, 400, jsonError("STREAM_ID_REQUIRED"));
+                    return;
+                }
+                if (!voice.streamEnd(streamId)) {
+                    respond(out, 409, jsonError("STREAM_NOT_ACTIVE"));
+                    return;
+                }
+                respond(out, 202, new JSONObject()
+                        .put("ok", true)
+                        .put("accepted", true)
+                        .put("streamId", streamId)
+                        .toString());
+                return;
+            }
+            respond(out, 404, jsonError("NOT_FOUND"));
         } catch (Throwable t) {
             lastError = "REQUEST:" + t.getClass().getSimpleName() + ":" + String.valueOf(t.getMessage());
         }
     }
 
     private String healthJson() {
-        return "{\"ok\":true,\"ready\":" + ready
-                + ",\"speaking\":" + speaking
-                + ",\"engine\":\"" + ENGINE_PACKAGE + "\""
-                + ",\"lastChars\":" + lastChars
-                + ",\"lastError\":\"" + json(lastError) + "\""
-                + ",\"loopback\":\"127.0.0.1:" + PORT + "\""
-                + ",\"authority\":\"" + AUTHORITY + "\"}";
+        JSONObject status = voice == null ? new JSONObject() : voice.status();
+        status.put("ok", true);
+        status.put("muted", muted);
+        status.put("loopback", "127.0.0.1:" + PORT);
+        status.put("serviceError", lastError);
+        status.put("engine", "LEEWAY_VOICE_FABRIC");
+        status.put("voicePackageId", VoiceOneHost.VOICE_ID);
+        status.put("authority", AUTHORITY);
+        return status.toString();
     }
 
-    private void speakPrepared(String text) {
-        final List<String> chunks = chunk(text, 3500);
-        main.post(() -> {
-            if (tts == null || !ready) return;
-            tts.stop();
-            speaking = true;
-            long stamp = System.currentTimeMillis();
-            for (int i = 0; i < chunks.size(); i++) {
-                boolean last = i == chunks.size() - 1;
-                String id = "leeway-" + stamp + "-" + i + (last ? "-last" : "");
-                int mode = i == 0 ? TextToSpeech.QUEUE_FLUSH : TextToSpeech.QUEUE_ADD;
-                int rc = tts.speak(chunks.get(i), mode, null, id);
-                if (rc == TextToSpeech.ERROR) {
-                    speaking = false;
-                    lastError = "TTS_SPEAK_REJECTED";
-                    break;
-                }
+    private static String extractText(String body) {
+        String clean = body == null ? "" : body.trim();
+        if (clean.startsWith("{")) {
+            try {
+                return new JSONObject(clean).optString("text").trim();
+            } catch (Throwable ignored) {
             }
-        });
-    }
-
-    private void stopSpeech() {
-        main.post(() -> {
-            if (tts != null) tts.stop();
-            speaking = false;
-        });
-    }
-
-    private static List<String> chunk(String text, int max) {
-        List<String> out = new ArrayList<>();
-        String remaining = text.replace('\u0000', ' ').trim();
-        while (remaining.length() > max) {
-            int cut = remaining.lastIndexOf(' ', max);
-            if (cut < max / 2) cut = max;
-            out.add(remaining.substring(0, cut).trim());
-            remaining = remaining.substring(cut).trim();
         }
-        if (!remaining.isEmpty()) out.add(remaining);
-        return out;
+        return clean;
+    }
+
+    private static JSONObject parseJson(String body) {
+        try {
+            return new JSONObject(body == null ? "{}" : body);
+        } catch (Throwable ignored) {
+            return new JSONObject();
+        }
+    }
+
+    private static String jsonError(String error) {
+        return new JSONObject().put("ok", false).put("error", error).toString();
     }
 
     private static String readLine(InputStream in) throws Exception {
@@ -228,15 +331,21 @@ public final class ReadAloudService extends Service {
         return shortBody;
     }
 
-    private static String json(String s) {
-        if (s == null) return "";
-        return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "");
-    }
-
     private static void respond(OutputStream out, int code, String body) throws Exception {
         byte[] payload = body.getBytes(StandardCharsets.UTF_8);
-        String reason = code == 200 ? "OK" : code == 202 ? "Accepted" : code == 400 ? "Bad Request" : code == 404 ? "Not Found" : "Service Unavailable";
-        String header = "HTTP/1.1 " + code + " " + reason + "\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: " + payload.length + "\r\nConnection: close\r\n\r\n";
+        String reason;
+        switch (code) {
+            case 200: reason = "OK"; break;
+            case 202: reason = "Accepted"; break;
+            case 400: reason = "Bad Request"; break;
+            case 404: reason = "Not Found"; break;
+            case 409: reason = "Conflict"; break;
+            default: reason = "Service Unavailable";
+        }
+        String header = "HTTP/1.1 " + code + " " + reason
+                + "\r\nContent-Type: application/json; charset=utf-8"
+                + "\r\nContent-Length: " + payload.length
+                + "\r\nConnection: close\r\n\r\n";
         out.write(header.getBytes(StandardCharsets.US_ASCII));
         out.write(payload);
         out.flush();
@@ -244,16 +353,26 @@ public final class ReadAloudService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (voice != null) voice.prepare();
         return START_STICKY;
     }
 
     @Override
     public void onDestroy() {
-        try { if (server != null) server.close(); } catch (Exception ignored) {}
-        if (tts != null) { tts.stop(); tts.shutdown(); }
+        try {
+            if (server != null) server.close();
+        } catch (Exception ignored) {
+        }
+        if (voice != null) voice.destroy();
+        try {
+            if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
+        } catch (Throwable ignored) {
+        }
         super.onDestroy();
     }
 
     @Override
-    public IBinder onBind(Intent intent) { return null; }
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
 }
