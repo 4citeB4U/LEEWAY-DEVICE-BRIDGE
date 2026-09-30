@@ -24,6 +24,12 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <activity
+            android:name=".PocketBridgeActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@style/Theme.LeewayDeviceBridge.Transparent"/>
         <service
             android:name=".RemoteRelayService"
             android:exported="false"
