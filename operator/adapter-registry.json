@@ -1,0 +1,288 @@
+{
+  "schemaVersion": "1.0.0",
+  "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "operatorId": "leeway.device.operator",
+  "law": "One Device Operator contract; replaceable platform adapters; capability state is never inferred from platform name.",
+  "adapters": [
+    {
+      "adapterId": "leeway.operator.android",
+      "platform": "android",
+      "version": "0.1.0",
+      "implementationStatus": "PARTIAL",
+      "authorityBoundary": "Android application UID plus owner-authorized AccessibilityService, MediaStore/SAF, PackageInstaller handoff, and explicitly authorized providers. No root or system privilege is implied.",
+      "nativeMechanisms": [
+        "AccessibilityService",
+        "Storage Access Framework",
+        "MediaStore",
+        "PackageInstaller",
+        "Foreground Service",
+        "Termux provider bridge"
+      ],
+      "capabilities": {
+        "device.info": {
+          "state": "VERIFIED",
+          "requiresHumanConsent": false
+        },
+        "device.files.read": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": true
+        },
+        "device.files.write": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": true
+        },
+        "device.screen.observe": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": true
+        },
+        "device.ui.control": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": true
+        },
+        "device.apps.launch": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": false
+        },
+        "device.apps.install": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": true
+        },
+        "device.media.scan": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "MediaStore read permission required; candidate classification does not authorize deletion."
+        },
+        "device.media.delete": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Uses Android owner-confirmed MediaStore delete request; deletion remains unverified until rescan."
+        },
+        "device.screen.capture": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Requires owner-enabled Android Accessibility service; physical verification pending."
+        },
+        "device.apps.list": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": false,
+          "notes": "Launcher-visible apps only."
+        }
+      },
+      "evidenceState": "OBSERVED",
+      "implementationPath": "apps/android",
+      "documentation": "docs/DEVICE-OPERATOR.md"
+    },
+    {
+      "adapterId": "leeway.operator.ios",
+      "platform": "ios",
+      "version": "0.1.0",
+      "implementationStatus": "PROPOSED",
+      "authorityBoundary": "Apple sandbox and entitlement model. Cross-app arbitrary UI control is not claimed. Use App Intents, Shortcuts, document/photo pickers, ScreenCaptureKit where authorized, and managed-device APIs only when legitimately provisioned.",
+      "nativeMechanisms": [
+        "App Intents",
+        "Shortcuts",
+        "ScreenCaptureKit",
+        "UIDocumentPicker",
+        "PhotosPicker"
+      ],
+      "capabilities": {
+        "device.info": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false
+        },
+        "device.files.read": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true
+        },
+        "device.screen.observe": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true
+        },
+        "device.ui.control": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true
+        },
+        "device.apps.launch": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false
+        },
+        "device.apps.install": {
+          "state": "BLOCKED",
+          "requiresHumanConsent": true
+        }
+      },
+      "evidenceState": "PROPOSED",
+      "implementationPath": null,
+      "documentation": "docs/DEVICE-OPERATOR.md"
+    },
+    {
+      "adapterId": "leeway.operator.ipados",
+      "platform": "ipados",
+      "version": "0.1.0",
+      "implementationStatus": "PROPOSED",
+      "authorityBoundary": "Same Apple sandbox/entitlement boundary as iOS; no arbitrary cross-app control claim.",
+      "nativeMechanisms": [
+        "App Intents",
+        "Shortcuts",
+        "ScreenCaptureKit",
+        "UIDocumentPicker",
+        "PhotosPicker"
+      ],
+      "capabilities": {
+        "device.info": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false
+        },
+        "device.files.read": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true
+        },
+        "device.screen.observe": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true
+        },
+        "device.ui.control": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true
+        },
+        "device.apps.launch": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false
+        },
+        "device.apps.install": {
+          "state": "BLOCKED",
+          "requiresHumanConsent": true
+        }
+      },
+      "evidenceState": "PROPOSED",
+      "implementationPath": null,
+      "documentation": "docs/DEVICE-OPERATOR.md"
+    },
+    {
+      "adapterId": "leeway.operator.windows",
+      "platform": "windows",
+      "version": "0.1.0",
+      "implementationStatus": "PROPOSED",
+      "authorityBoundary": "Current user token plus Windows UI Automation and explicit elevation for administrator-only actions.",
+      "nativeMechanisms": [
+        "Microsoft UI Automation",
+        "PowerShell",
+        "Win32",
+        "Windows App SDK"
+      ],
+      "capabilities": {
+        "device.files.read": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false
+        },
+        "device.files.write": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false
+        },
+        "device.screen.observe": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true
+        },
+        "device.ui.control": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true
+        },
+        "device.apps.launch": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false
+        },
+        "device.apps.install": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true
+        }
+      },
+      "evidenceState": "PROPOSED",
+      "implementationPath": null,
+      "documentation": "docs/DEVICE-OPERATOR.md"
+    },
+    {
+      "adapterId": "leeway.operator.macos",
+      "platform": "macos",
+      "version": "0.1.0",
+      "implementationStatus": "PROPOSED",
+      "authorityBoundary": "Current user plus owner-granted macOS Accessibility and Screen Recording permissions; administrator-only actions require legitimate elevation.",
+      "nativeMechanisms": [
+        "AXUIElement",
+        "ScreenCaptureKit",
+        "NSWorkspace",
+        "Security-Scoped Bookmarks"
+      ],
+      "capabilities": {
+        "device.files.read": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true
+        },
+        "device.files.write": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true
+        },
+        "device.screen.observe": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true
+        },
+        "device.ui.control": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true
+        },
+        "device.apps.launch": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false
+        },
+        "device.apps.install": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true
+        }
+      },
+      "evidenceState": "PROPOSED",
+      "implementationPath": null,
+      "documentation": "docs/DEVICE-OPERATOR.md"
+    },
+    {
+      "adapterId": "leeway.operator.linux",
+      "platform": "linux",
+      "version": "0.1.0",
+      "implementationStatus": "PROPOSED",
+      "authorityBoundary": "Current Unix user plus desktop-session authorization; sandboxed applications use XDG portals; elevated operations require legitimate policy authorization.",
+      "nativeMechanisms": [
+        "AT-SPI",
+        "D-Bus",
+        "XDG Desktop Portal",
+        "systemd user services"
+      ],
+      "capabilities": {
+        "device.files.read": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false
+        },
+        "device.files.write": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false
+        },
+        "device.screen.observe": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true
+        },
+        "device.ui.control": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true
+        },
+        "device.apps.launch": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false
+        },
+        "device.apps.install": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true
+        }
+      },
+      "evidenceState": "PROPOSED",
+      "implementationPath": null,
+      "documentation": "docs/DEVICE-OPERATOR.md"
+    }
+  ]
+}

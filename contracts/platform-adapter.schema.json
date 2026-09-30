@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leeway.local/contracts/platform-adapter.schema.json",
+  "title": "LeeWay Device Operator Platform Adapter",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["adapterId","platform","version","implementationStatus","authorityBoundary","capabilities","evidenceState"],
+  "properties": {
+    "adapterId": {"type":"string","minLength":1},
+    "platform": {"enum":["android","ios","ipados","windows","macos","linux"]},
+    "version": {"type":"string","minLength":1},
+    "implementationStatus": {"enum":["REFERENCE","IMPLEMENTED","PARTIAL","PROPOSED","BLOCKED"]},
+    "authorityBoundary": {"type":"string","minLength":1},
+    "nativeMechanisms": {"type":"array","items":{"type":"string"}},
+    "capabilities": {
+      "type":"object",
+      "additionalProperties": {
+        "type":"object",
+        "required":["state"],
+        "properties":{
+          "state":{"enum":["SUPPORTED","AVAILABLE","AUTHORIZED","ACTIVE","HEALTHY","VERIFIED","DEGRADED","BLOCKED","UNAVAILABLE","UNKNOWN"]},
+          "requiresHumanConsent":{"type":"boolean"},
+          "notes":{"type":["string","null"]}
+        }
+      }
+    },
+    "evidenceState":{"enum":["VERIFIED","OBSERVED","INFERRED","PROPOSED","UNVERIFIED","FAILED","BLOCKED"]},
+    "implementationPath":{"type":["string","null"]},
+    "documentation":{"type":["string","null"]}
+  }
+}

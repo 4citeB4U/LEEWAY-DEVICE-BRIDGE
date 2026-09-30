@@ -6,12 +6,14 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.os.Bundle
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.content.pm.PackageManager
 import android.Manifest
+import android.provider.Settings
 import android.view.Gravity
 import android.widget.Button
 import android.widget.LinearLayout
@@ -107,6 +109,28 @@ class MainActivity : AppCompatActivity() {
         val files = Button(this).apply {
             text = "AUTHORIZE A FILE FOLDER"
             setOnClickListener { FileAccess.requestDirectory(this@MainActivity) }
+        }
+
+        val authorizeDeviceOperator = Button(this).apply {
+            text = "AUTHORIZE DEVICE OPERATOR"
+            setOnClickListener {
+                startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                output.text = "Enable LeeWay Device Bridge in Accessibility. This owner action authorizes UI observation/control; it does not grant root or system privilege."
+                ReceiptStore.record(this@MainActivity, "device.ui.control.authorize", "OBSERVED", "Owner opened Android Accessibility authorization")
+            }
+        }
+
+        val authorizeMediaOperator = Button(this).apply {
+            text = "AUTHORIZE MEDIA OPERATOR"
+            setOnClickListener {
+                val permissions = if (Build.VERSION.SDK_INT >= 33) {
+                    arrayOf(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO)
+                } else {
+                    arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+                }
+                requestPermissions(permissions, 4205)
+                output.text = "Android media permission request opened. Approval authorizes MediaStore inspection only; deletion still requires a separate owner-confirmed Android request."
+            }
         }
 
         val receipts = Button(this).apply {
@@ -265,6 +289,24 @@ class MainActivity : AppCompatActivity() {
                         putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
                     }
                     speechRecognizer?.startListening(intent)
+                }
+            }
+        }
+
+        val enableSideMic = Button(this).apply {
+            text = "ENABLE AGENT LEE SIDE MIC"
+            setOnClickListener {
+                if (!Settings.canDrawOverlays(this@MainActivity)) {
+                    val intent = Intent(
+                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        android.net.Uri.parse("package:$packageName")
+                    )
+                    startActivity(intent)
+                    output.text = "Approve display-over-other-apps for LeeWay Device Bridge, then return and tap ENABLE AGENT LEE SIDE MIC again."
+                    ReceiptStore.record(this@MainActivity, "agent.lee.side.mic.authorize", "OBSERVED", "Owner opened overlay authorization")
+                } else {
+                    val attached = FloatingAgentLeeOverlay.attach(this@MainActivity)
+                    output.text = if (attached) "Agent Lee side microphone is active." else "Agent Lee side microphone could not be attached."
                 }
             }
         }
@@ -428,8 +470,8 @@ class MainActivity : AppCompatActivity() {
             addView(runtimeState)
             addView(pairingPanel)
             listOf(
-                discover, diagnostics, files, receipts, authorizeBluetooth, bluetooth, networkDiscovery,
-                modelStatus, modelDownload, modelTest, speakTest, talkToLee,
+                discover, diagnostics, files, authorizeDeviceOperator, authorizeMediaOperator, receipts, authorizeBluetooth, bluetooth, networkDiscovery,
+                modelStatus, modelDownload, modelTest, speakTest, talkToLee, enableSideMic,
                 authorizeWorkstationKeeper, enableSecondaryWorkstation, remoteEnable, remoteStatus, remoteDisable,
                 enable, startBridge, selfTest, showToken, stopBridge, stop
             ).forEach { addView(it) }
@@ -439,6 +481,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(ScrollView(this).apply { addView(root) })
 
         when (intent?.getStringExtra("leeway_action")) {
+            "TALK_TO_AGENT_LEE" -> {
+                talkToLee.performClick()
+            }
             "SHOW_PAIRING" -> {
                 pairingPanel.requestFocus()
                 output.text = "Pairing mode opened by Termux. Tap COPY PAIRING TOKEN, then return to Termux."
@@ -479,6 +524,16 @@ class MainActivity : AppCompatActivity() {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 4205) {
+            val granted = grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+            output.text = if (granted) {
+                ReceiptStore.record(this, "device.media.authorize", "PASS", "Owner granted Android media read permissions")
+                "Media inspection authorized. Destructive media actions still require separate owner confirmation."
+            } else {
+                ReceiptStore.record(this, "device.media.authorize", "BLOCKED", "Owner did not grant Android media read permissions")
+                "Media inspection permission was not granted."
+            }
+        }
         if (requestCode == 4204) {
             if (WorkstationKeeper.hasPermission(this)) {
                 LocalAuthority.setAgentAccess(this, true)

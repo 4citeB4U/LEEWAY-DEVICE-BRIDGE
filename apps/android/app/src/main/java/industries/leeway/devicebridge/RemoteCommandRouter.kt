@@ -7,6 +7,10 @@ object RemoteCommandRouter {
     private val remoteQualified = setOf(
         "device.health", "device.info", "device.capabilities",
         "device.bluetooth.list-bonded", "device.network.discover", "device.receipts",
+        "device.screen.capture", "device.ui.snapshot", "device.ui.back", "device.ui.home", "device.ui.recents",
+        "device.ui.tap", "device.ui.swipe", "device.ui.text",
+        "device.apps.list", "device.apps.launch", "device.apps.install.status", "device.apps.install",
+        "device.media.scan", "device.media.delete.request",
         "model.status", "model.install", "model.inference", "voice.status", "voice.speak", "agent.chat"
     )
 
@@ -18,6 +22,14 @@ object RemoteCommandRouter {
         val capabilityPrecondition = when (capability) {
             "model.inference", "agent.chat" -> prompt.isNotEmpty()
             "voice.speak" -> text.isNotEmpty()
+            "device.ui.tap" -> arguments.has("x") && arguments.has("y")
+            "device.ui.swipe" -> arguments.has("x1") && arguments.has("y1") &&
+                arguments.has("x2") && arguments.has("y2")
+            "device.ui.text" -> text.isNotEmpty()
+            "device.apps.launch" -> arguments.optString("packageName").isNotBlank()
+            "device.media.delete.request" -> arguments.optJSONArray("uris")?.length()?.let { it > 0 } == true
+            "device.apps.install" -> arguments.optString("url").startsWith("https://") &&
+                arguments.optString("sha256").matches(Regex("^[A-Fa-f0-9]{64}$"))
             else -> true
         }
         val gate = FormulaF8Gate.evaluate(
@@ -39,6 +51,37 @@ object RemoteCommandRouter {
                 "device.bluetooth.list-bonded" -> BluetoothProvider.snapshot(context)
                 "device.network.discover" -> NetworkDiscoveryProvider.discover(context)
                 "device.receipts" -> JSONObject().put("receipts", ReceiptStore.list(context))
+                "device.screen.capture" -> DeviceOperatorAccessibilityService.captureScreen()
+                "device.ui.snapshot" -> DeviceOperatorAccessibilityService.snapshot()
+                "device.ui.back" -> DeviceOperatorAccessibilityService.global("back")
+                "device.ui.home" -> DeviceOperatorAccessibilityService.global("home")
+                "device.ui.recents" -> DeviceOperatorAccessibilityService.global("recents")
+                "device.ui.tap" -> DeviceOperatorAccessibilityService.tap(
+                    arguments.getDouble("x").toFloat(),
+                    arguments.getDouble("y").toFloat()
+                )
+                "device.ui.swipe" -> DeviceOperatorAccessibilityService.swipe(
+                    arguments.getDouble("x1").toFloat(),
+                    arguments.getDouble("y1").toFloat(),
+                    arguments.getDouble("x2").toFloat(),
+                    arguments.getDouble("y2").toFloat(),
+                    arguments.optLong("durationMs", 300L)
+                )
+                "device.ui.text" -> DeviceOperatorAccessibilityService.setFocusedText(text)
+                "device.apps.list" -> AppOperator.listLaunchable(context)
+                "device.apps.launch" -> AppOperator.launch(context, arguments.getString("packageName"))
+                "device.apps.install.status" -> PackageInstallBroker.status(context)
+                "device.apps.install" -> PackageInstallBroker.installFromUrl(
+                    context,
+                    arguments.getString("url"),
+                    arguments.getString("sha256")
+                )
+                "device.media.scan" -> MediaOperator.scan(context, arguments.optInt("maxItems", 500))
+                "device.media.delete.request" -> {
+                    val raw = arguments.getJSONArray("uris")
+                    val uris = (0 until raw.length()).map { raw.getString(it) }
+                    MediaOperator.requestDelete(context, uris)
+                }
                 "model.status" -> ModelRuntime.status(context)
                 "model.install" -> ModelRuntime.download(context) { _, _ -> }
                 "model.inference" -> ModelRuntime.generate(context, prompt)
@@ -47,7 +90,14 @@ object RemoteCommandRouter {
                 "agent.chat" -> chat(context, prompt, arguments.optBoolean("speak", true))
                 else -> JSONObject().put("error", "CAPABILITY_NOT_REMOTE_QUALIFIED")
             }
-            JSONObject().apply { put("ok", true); put("capability", capability); put("gate", gate); put("result", value) }
+            val valueOk = !value.has("ok") || value.optBoolean("ok")
+            JSONObject().apply {
+                put("ok", valueOk)
+                put("capability", capability)
+                put("gate", gate)
+                put("result", value)
+                if (!valueOk) put("error", value.optString("error", "CAPABILITY_EXECUTION_FAILED"))
+            }
         } catch (e: Exception) {
             JSONObject().apply { put("ok", false); put("capability", capability); put("gate", gate); put("error", e.message ?: e.javaClass.simpleName) }
         }

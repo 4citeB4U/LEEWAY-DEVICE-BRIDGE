@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0.0",
+  "evidenceId": "LDB-UNIVERSAL-DEVICE-OPERATOR-BUILD-20260930",
+  "classification": "VERIFIED",
+  "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "sourceBranch": "agent-lee/universal-device-operator",
+  "sourceCommit": "24c155687af0947047ddebb21dc7a03c064c1d80",
+  "workflowRunId": 36709934838,
+  "workflowConclusion": "success",
+  "verification": {
+    "universalOperatorCore": "PASS",
+    "androidOperatorSourceIntegration": "PASS",
+    "androidGradleBuild": "PASS",
+    "packageSizeBytes": 66362573,
+    "packageSha256": "2ac3252006ac7b835ed31a68ac296222816d9766a0bb355a7d0a662c9128e088",
+    "packageCeilingBytes": 104857600
+  },
+  "formulaAuthority": {
+    "funnelSha256": "11f82ca97a18802a686147580ec61297f93893b0d3fa7bb2f355d87a0cd47625",
+    "domainAdapterContractSha256": "b797f2663d143a50678b2c36c0095e32f8dbcbffce27328e6506dc1feb51da2a",
+    "executionState": "NOT_EXECUTED",
+    "note": "Formula Funnel and adapter contract were verified and applied as governance. Canonical numeric evaluator did not execute in this session."
+  },
+  "platformState": {
+    "android": "SOURCE_BUILD_VERIFIED_PHYSICAL_OPERATOR_QUALIFICATION_PENDING",
+    "ios": "PROPOSED",
+    "ipados": "PROPOSED",
+    "windows": "PROPOSED",
+    "macos": "PROPOSED",
+    "linux": "PROPOSED"
+  },
+  "notes": [
+    "Device Operator remains an execution layer inside canonical Device Bridge, not a competing authority.",
+    "Android Accessibility, app launch, package handoff, screen capture and media operator source are built; owner grants and physical Fold acceptance remain required.",
+    "No root/system privilege is claimed."
+  ]
+}

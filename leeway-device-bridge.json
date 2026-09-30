@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "0.2.0",
+  "schemaVersion": "0.3.0",
   "name": "LeeWay Device Bridge",
   "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
   "pagesRoot": "https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/",
@@ -8,6 +8,9 @@
   "providerRegistry": "https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/provider-registry.json",
   "runtimeLocation": "PHONE_LOCAL",
   "dockerRequired": false,
-  "executionRule": "GitHub Pages publishes and bootstraps. The installed phone runtime performs privileged device execution.",
-  "status": "PUBLIC_DISCOVERY_READY"
+  "executionRule": "GitHub Pages publishes and bootstraps. The installed native runtime resolves Device Operator capabilities through the authorized platform adapter; no platform privilege is inferred.",
+  "status": "PUBLIC_DISCOVERY_READY",
+  "deviceOperatorContract": "https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/DEVICE-OPERATOR.md",
+  "platformAdapterContract": "https://raw.githubusercontent.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/main/contracts/platform-adapter.schema.json",
+  "platformAdapterRegistry": "https://raw.githubusercontent.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/main/operator/adapter-registry.json"
 }

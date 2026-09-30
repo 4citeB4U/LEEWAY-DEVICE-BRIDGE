@@ -56,6 +56,7 @@ class RemoteRelayService : Service() {
             workstation.optString("state")
         )
         handler.postDelayed(workstationKeeperTick, WORKSTATION_KEEPER_INTERVAL_MS)
+        FloatingAgentLeeOverlay.attach(this)
         connect()
     }
 
@@ -78,6 +79,7 @@ class RemoteRelayService : Service() {
         connecting = false
         RemoteRelayState.setConnection(this, false, "SERVICE_STOPPED")
         client.dispatcher.executorService.shutdown()
+        FloatingAgentLeeOverlay.detach(this)
         super.onDestroy()
     }
 

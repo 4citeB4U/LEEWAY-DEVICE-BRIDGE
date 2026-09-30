@@ -15,7 +15,7 @@ assert.match(keeper,/com\.termux\.app\.RunCommandService/);
 assert.match(keeper,/RUN_COMMAND_PATH/);
 assert.match(keeper,/RUN_COMMAND_WORKDIR/);
 assert.match(keeper,/RUN_COMMAND_BACKGROUND/);
-assert.match(keeper,/ensure-desktop-commander-once\.sh/);
+assert.match(keeper,/desktop-commander-keeper\.sh/);
 
 assert.match(relay,/workstationKeeperTick/);
 assert.match(relay,/WORKSTATION_KEEPER_INTERVAL_MS = 30_000L/);
@@ -27,12 +27,13 @@ assert.match(main,/WorkstationKeeper\.TERMUX_PERMISSION/);
 assert.match(main,/requestPermissions/);
 
 assert.match(bootstrap,/allow-external-apps=true/);
-assert.match(bootstrap,/ensure-desktop-commander-once\.sh/);
+assert.match(bootstrap,/desktop-commander-keeper\.sh/);
 assert.match(bootstrap,/pgrep -f/);
 assert.match(bootstrap,/setsid nohup desktop-commander remote/);
-assert.doesNotMatch(bootstrap,/while true/);
+assert.match(bootstrap,/flock -n 9/);
+assert.match(bootstrap,/while true/);
 
-assert.match(gradle,/versionCode = 14/);
-assert.match(gradle,/versionName = "0\.8\.6"/);
+assert.match(gradle,/versionCode = 15/);
+assert.match(gradle,/versionName = "0\.9\.0"/);
 
 console.log("PASS android-workstation-keeper-source");
