@@ -1,0 +1,24 @@
+name: Portable protocol and MCP
+on:
+  pull_request:
+    paths: ['packages/**', 'apps/desktop/**', 'tests/mcp/**', 'package*.json', '.github/workflows/protocol-mcp.yml']
+  push:
+    paths: ['packages/**', 'apps/desktop/**', 'tests/mcp/**', 'package*.json', '.github/workflows/protocol-mcp.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  protocol:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run test:mcp
