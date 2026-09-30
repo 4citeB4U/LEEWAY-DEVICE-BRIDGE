@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "1.1.0",
+  "evidenceType": "LEEWAY_ANDROID_SECONDARY_WORKSTATION_COLD_BOOT_QUALIFICATION",
+  "observedAt": "2026-09-30T06:01:44Z",
+  "status": "PASS",
+  "nodeAlias": "leeway-phone-workstation",
+  "referenceDevice": {
+    "class": "Android phone",
+    "model": "Samsung Galaxy Z Fold6",
+    "android": "16",
+    "architecture": "arm64"
+  },
+  "runtime": {
+    "desktopCommander": "0.2.52",
+    "node": "26.3.1",
+    "git": "2.54.0",
+    "ripgrep": "15.1.0",
+    "shell": "Termux bash"
+  },
+  "acceptance": {
+    "directRemoteRegistration": "PASS",
+    "directPing": "PASS",
+    "directShellExecution": "PASS",
+    "filesystemReadWrite": "PASS",
+    "contentSearch": "PASS",
+    "gitLocalCommit": "PASS",
+    "githubNetworkReachability": "PASS",
+    "pcIndependentExecution": "PASS",
+    "usbIndependentExecution": "PASS",
+    "remoteSessionSelfRecovery": "PASS",
+    "coldBootAutoReconnect": "PASS",
+    "postColdBootExecution": "PASS"
+  },
+  "topology": {
+    "primaryWindowsRemoteNodeUsedForFinalAcceptance": false,
+    "physicalUsbDisconnectedByOwner": true,
+    "acceptedRuntimePath": "Online LLM/agent -> Desktop Commander Remote MCP -> Android/Termux workstation"
+  },
+  "securityBoundary": {
+    "scope": "TERMUX_APP_UID_NON_ROOT",
+    "root": false,
+    "protectedAndroidSystemServices": false,
+    "otherAppPrivateStorage": false,
+    "passwordsOrMfa": false,
+    "privilegedUiOrHardwareControl": "SEPARATE_DEVICE_BRIDGE_PROVIDER_REQUIRED"
+  },
+  "sourceArtifacts": [
+    "clients/phone-workstation/bootstrap-desktop-commander.sh",
+    "clients/phone-workstation/patch-desktop-commander-android.mjs",
+    "docs/ANDROID-SECONDARY-WORKSTATION.md",
+    "docs/secondary-workstation-node.json",
+    "docs/provider-registry.json"
+  ],
+  "privacy": {
+    "remoteMcpDeviceIdPublished": false,
+    "accountEmailPublished": false,
+    "authTokensPublished": false
+  },
+  "conclusion": "LEEWAY_PHONE_SECONDARY_WORKSTATION_COLD_BOOT_VERIFIED_PASS"
+}
