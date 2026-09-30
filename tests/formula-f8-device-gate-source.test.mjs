@@ -7,11 +7,14 @@ const src=fs.readFileSync(
 );
 
 assert.match(src,/LW-F8/);
-assert.match(src,/qA/);
-assert.match(src,/69/);
-assert.match(src,/EXECUTE/);
-assert.match(src,/HOLD/);
+assert.match(src,/LOCAL_PRE_GATE_ONLY/);
+assert.match(src,/localAuthorizationPassed/);
+assert.match(src,/formulaEvaluatorState", "UNEXPOSED"/);
+assert.match(src,/formulaExecutionState", "NOT_EXECUTED"/);
+assert.match(src,/q69ResultClaimed", false/);
 assert.match(src,/EMPTY_CONDITIONS_BLOCKED/);
 assert.match(src,/canonicalPolicyGapClosed", false/);
+assert.doesNotMatch(src,/put\("qA"/);
+assert.doesNotMatch(src,/val qA/);
 
-console.log("PASS F8 Device Bridge source policy");
+console.log("PASS F8 local pre-gate truth boundary");
