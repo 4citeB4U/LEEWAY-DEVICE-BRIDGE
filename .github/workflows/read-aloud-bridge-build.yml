@@ -72,7 +72,7 @@ jobs:
             "authority": "4citeB4U/LeeWay-Voice-Fabric",
             "sha256": "$SHA",
             "sizeBytes": $BYTES,
-            "downloadUrl": "./leeway-read-aloud-bridge-latest-debug.apk",
+            "downloadUrl": "https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/downloads/leeway-read-aloud-bridge-latest-debug.apk",
             "sourceRunId": "${{ github.run_id }}",
             "sourceCommit": "${{ github.sha }}"
           }
