@@ -14,6 +14,13 @@ package industries.leeway.devicebridge
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
 import android.graphics.Path
+import android.graphics.Bitmap
+import android.util.Base64
+import android.view.Display
+import java.io.ByteArrayOutputStream
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import android.os.Bundle
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
@@ -70,6 +77,62 @@ class DeviceOperatorAccessibilityService : AccessibilityService() {
                 put("nodeCount", count)
                 put("tree", tree)
             }
+        }
+
+
+        fun captureScreen(): JSONObject {
+            val service = current ?: return blocked("ACCESSIBILITY_SERVICE_NOT_ACTIVE")
+            val latch = CountDownLatch(1)
+            var result: JSONObject = blocked("SCREENSHOT_TIMEOUT")
+            val executor = Executors.newSingleThreadExecutor()
+            service.takeScreenshot(
+                Display.DEFAULT_DISPLAY,
+                executor,
+                object : TakeScreenshotCallback {
+                    override fun onSuccess(screenshot: ScreenshotResult) {
+                        try {
+                            val hardware = screenshot.hardwareBuffer
+                            val wrapped = Bitmap.wrapHardwareBuffer(hardware, screenshot.colorSpace)
+                            if (wrapped == null) {
+                                result = blocked("SCREENSHOT_BITMAP_UNAVAILABLE")
+                            } else {
+                                val software = wrapped.copy(Bitmap.Config.ARGB_8888, false)
+                                val maxWidth = 1440
+                                val scaled = if (software.width > maxWidth) {
+                                    val height = (software.height.toDouble() * maxWidth / software.width).toInt()
+                                    Bitmap.createScaledBitmap(software, maxWidth, height, true)
+                                } else software
+                                val bytes = ByteArrayOutputStream()
+                                scaled.compress(Bitmap.CompressFormat.JPEG, 72, bytes)
+                                result = JSONObject().apply {
+                                    put("ok", true)
+                                    put("mimeType", "image/jpeg")
+                                    put("width", scaled.width)
+                                    put("height", scaled.height)
+                                    put("base64", Base64.encodeToString(bytes.toByteArray(), Base64.NO_WRAP))
+                                }
+                                if (scaled !== software) scaled.recycle()
+                                software.recycle()
+                            }
+                            hardware.close()
+                        } catch (e: Exception) {
+                            result = blocked("SCREENSHOT_FAILED:" + e.javaClass.simpleName)
+                        } finally {
+                            latch.countDown()
+                        }
+                    }
+
+                    override fun onFailure(errorCode: Int) {
+                        result = JSONObject().put("ok", false)
+                            .put("error", "SCREENSHOT_ERROR")
+                            .put("errorCode", errorCode)
+                        latch.countDown()
+                    }
+                }
+            )
+            latch.await(4, TimeUnit.SECONDS)
+            executor.shutdown()
+            return result
         }
 
         fun global(action: String): JSONObject {
