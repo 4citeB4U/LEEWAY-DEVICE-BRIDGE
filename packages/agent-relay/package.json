@@ -4,5 +4,5 @@
   "private": true,
   "type": "module",
   "exports": "./index.mjs",
-  "dependencies": { "ws": "8.22.0" }
+  "dependencies": { "@leeway/device-protocol": "*", "ws": "8.22.0" }
 }

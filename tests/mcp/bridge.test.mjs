@@ -7,7 +7,7 @@ import { WebSocketServer } from 'ws';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { Bridge, digest } from '../../packages/protocol/index.mjs';
-import { RelayAdapter } from '../../packages/agent-relay/index.mjs';
+import { RelayAdapter, parseRemoteQualified } from '../../packages/agent-relay/index.mjs';
 import { DesktopAdapter } from '../../apps/desktop/adapter.mjs';
 
 test('real SDK stdio tools/list and tools/call create/read plus fail-closed checks and receipts', async t => {
@@ -111,6 +111,33 @@ test('existing relay wire contract, authentication failure, capability discovery
   await assert.rejects(new RelayAdapter({ ...options, token: 'wrong' }).discover(), /RELAY_REJECTED/);
   assert.equal(commands, 3);
   assert.throws(() => new RelayAdapter({ ...options, allowLoopbackTest: false }), /TLS_REQUIRED/);
+});
+
+test('bounded legacy Android capability list accepts only declared names and rejects malformed input', () => {
+  const actualLegacy = '[device.health, device.info, device.capabilities, device.bluetooth.list-bonded, device.network.discover, device.receipts, model.status, model.inference, voice.status, voice.speak, agent.chat]';
+  assert.deepEqual(parseRemoteQualified(actualLegacy), ['device.health', 'device.info', 'model.status', 'model.inference', 'voice.status', 'voice.speak']);
+  assert.deepEqual(parseRemoteQualified(['device.health', 'device.health', 'device.unsupported']), ['device.health']);
+  assert.deepEqual(parseRemoteQualified('[]'), []);
+  assert.deepEqual(parseRemoteQualified('[ device.health ]'), ['device.health']);
+  for (const malformed of [null, {}, true, 'device.health', '[device.health,]', '[,device.health]', '["device.health"]', '[device.health; process.exit()]', '[device.health\n]', '[[device.health]]', '[device.health,,model.status]', '[device.health]suffix', ['device.health', 42], ['device.health', ''], Array(257).fill('device.health'), '[' + 'a'.repeat(16384) + ']']) {
+    assert.throws(() => parseRemoteQualified(malformed), /INVALID_CAPABILITY_RESPONSE/);
+  }
+});
+
+test('legacy serialized discovery supports governed bridge invocation over mock relay', async t => {
+  const server = new WebSocketServer({ host: '127.0.0.1', port: 0 });
+  await new Promise(resolve => server.once('listening', resolve));
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  server.on('connection', socket => socket.on('message', raw => {
+    const message = JSON.parse(raw.toString());
+    if (message.type === 'hello') socket.send(JSON.stringify({ type: 'hello-ack' }));
+    else if (message.type === 'command') socket.send(JSON.stringify({ type: 'result', id: message.id, capability: message.capability, ok: true,
+      result: message.capability === 'device.capabilities' ? { remoteQualified: '[device.health, model.status]', capabilities: [] } : { remote: {}, model: {}, voice: {} } }));
+  }));
+  const adapter = new RelayAdapter({ deviceId: 'legacy-fold', token: 'test', url: `ws://127.0.0.1:${server.address().port}`, allowLoopbackTest: true });
+  const bridge = new Bridge([{ id: 'legacy-fold', grants: ['device.health', 'device.ui.tap'], adapter }], { admission: async () => true, receiptSink: async () => {} });
+  assert.equal((await bridge.call('legacy-fold', 'device.health', {})).ok, true);
+  assert.equal((await bridge.call('legacy-fold', 'device.ui.tap', { x: 1, y: 1 })).error, 'CAPABILITY_UNAVAILABLE');
 });
 
 test('desktop adapter rejects links and bounds file reads', async t => {
