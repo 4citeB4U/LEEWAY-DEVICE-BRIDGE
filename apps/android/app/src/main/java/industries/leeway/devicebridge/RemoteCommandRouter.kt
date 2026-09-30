@@ -9,7 +9,7 @@ object RemoteCommandRouter {
         "device.bluetooth.list-bonded", "device.network.discover", "device.receipts",
         "device.ui.snapshot", "device.ui.back", "device.ui.home", "device.ui.recents",
         "device.ui.tap", "device.ui.swipe", "device.ui.text",
-        "device.apps.install.status", "device.apps.install",
+        "device.apps.launch", "device.apps.install.status", "device.apps.install",
         "model.status", "model.install", "model.inference", "voice.status", "voice.speak", "agent.chat"
     )
 
@@ -25,6 +25,7 @@ object RemoteCommandRouter {
             "device.ui.swipe" -> arguments.has("x1") && arguments.has("y1") &&
                 arguments.has("x2") && arguments.has("y2")
             "device.ui.text" -> text.isNotEmpty()
+            "device.apps.launch" -> arguments.optString("packageName").isNotBlank()
             "device.apps.install" -> arguments.optString("url").startsWith("https://") &&
                 arguments.optString("sha256").matches(Regex("^[A-Fa-f0-9]{64}$"))
             else -> true
@@ -64,6 +65,7 @@ object RemoteCommandRouter {
                     arguments.optLong("durationMs", 300L)
                 )
                 "device.ui.text" -> DeviceOperatorAccessibilityService.setFocusedText(text)
+                "device.apps.launch" -> AppOperator.launch(context, arguments.getString("packageName"))
                 "device.apps.install.status" -> PackageInstallBroker.status(context)
                 "device.apps.install" -> PackageInstallBroker.installFromUrl(
                     context,
@@ -78,7 +80,14 @@ object RemoteCommandRouter {
                 "agent.chat" -> chat(context, prompt, arguments.optBoolean("speak", true))
                 else -> JSONObject().put("error", "CAPABILITY_NOT_REMOTE_QUALIFIED")
             }
-            JSONObject().apply { put("ok", true); put("capability", capability); put("gate", gate); put("result", value) }
+            val valueOk = !value.has("ok") || value.optBoolean("ok")
+            JSONObject().apply {
+                put("ok", valueOk)
+                put("capability", capability)
+                put("gate", gate)
+                put("result", value)
+                if (!valueOk) put("error", value.optString("error", "CAPABILITY_EXECUTION_FAILED"))
+            }
         } catch (e: Exception) {
             JSONObject().apply { put("ok", false); put("capability", capability); put("gate", gate); put("error", e.message ?: e.javaClass.simpleName) }
         }
