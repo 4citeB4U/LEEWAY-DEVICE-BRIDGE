@@ -32,7 +32,7 @@ assert.match(bootstrap,/pgrep -f/);
 assert.match(bootstrap,/setsid nohup desktop-commander remote/);
 assert.doesNotMatch(bootstrap,/while true/);
 
-assert.match(gradle,/versionCode = 14/);
-assert.match(gradle,/versionName = "0\.8\.6"/);
+assert.match(gradle,/versionCode = 15/);
+assert.match(gradle,/versionName = "0\.9\.0"/);
 
 console.log("PASS android-workstation-keeper-source");
