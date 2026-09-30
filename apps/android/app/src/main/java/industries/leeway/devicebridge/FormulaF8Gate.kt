@@ -1,35 +1,21 @@
 package industries.leeway.devicebridge
 
-import org.json.JSONArray
 import org.json.JSONObject
 
+/**
+ * Legacy compatibility marker.
+ *
+ * Device Bridge no longer synthesizes Q69 or Formula results locally. Formula
+ * claims require execution evidence from the canonical Leeway-formula-live
+ * evaluator. Local command authorization uses LocalAutomationGate instead.
+ */
+@Deprecated("Not a Formula evaluator. Use LocalAutomationGate for local authorization.")
 object FormulaF8Gate {
-    fun evaluate(
-        trigger: Boolean,
-        governance: Boolean,
-        conditions: List<Boolean>
-    ): JSONObject {
-        val conditionsPresent = conditions.isNotEmpty()
-        val conditionsPass = conditionsPresent && conditions.all { it }
-        val fire = trigger && governance && conditionsPass
-        val qA = if (fire) 69 else 0
-
-        return JSONObject().apply {
-            put("family", "LW-F8")
-            put("equation", "Fire_a(t)=T_a(t)G_a(t)product_j(C_a,j(t))")
-            put("trigger", trigger)
-            put("governance", governance)
-            put("conditionsPresent", conditionsPresent)
-            put("conditions", JSONArray(conditions))
-            put("conditionsPass", conditionsPass)
-            put("fire", fire)
-            put("qA", qA)
-            put("disposition", if (qA == 69) "EXECUTE" else "HOLD")
-            put(
-                "deviceBridgePolicy",
-                if (conditionsPresent) "CONDITIONS_EVALUATED" else "EMPTY_CONDITIONS_BLOCKED"
-            )
-            put("canonicalPolicyGapClosed", false)
-        }
+    fun unavailable(): JSONObject = JSONObject().apply {
+        put("ok", false)
+        put("error", "CANONICAL_FORMULA_EVALUATOR_REQUIRED")
+        put("formulaAuthority", "4citeB4U/Leeway-formula-live")
+        put("formulaExecution", "NOT_EXECUTED")
+        put("evidenceState", "BLOCKED")
     }
 }
