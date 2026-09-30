@@ -1,0 +1,49 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import os from 'node:os';
+
+// Bounded workspace files only. No shell execution, native UI or host-wide access.
+export class DesktopAdapter {
+  constructor(root) { this.root = path.resolve(root); }
+  async discover() { await fs.access(this.root); return ['device.health', 'device.info', 'device.files.read', 'device.files.write']; }
+  async safePath(relative, writing = false) {
+    if (path.isAbsolute(relative) || relative.includes(':') || relative.includes('\0')) throw new Error('PATH_OUTSIDE_WORKSPACE');
+    const parts = relative.replaceAll('\\', '/').split('/');
+    if (parts.some(p => !p || p === '.' || p === '..' || /[. ]$/.test(p) || /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\.|$)/i.test(p))) throw new Error('INVALID_PATH');
+    const root = await fs.realpath(this.root);
+    let current = root;
+    for (let i = 0; i < parts.length; i++) {
+      current = path.join(current, parts[i]);
+      try {
+        const stat = await fs.lstat(current);
+        if (stat.isSymbolicLink()) throw new Error('LINK_NOT_ALLOWED');
+        if (i < parts.length - 1 && !stat.isDirectory()) throw new Error('INVALID_PATH');
+        if (i === parts.length - 1 && !stat.isFile()) throw new Error('REGULAR_FILE_REQUIRED');
+        if (i === parts.length - 1 && stat.nlink > 1) throw new Error('LINK_NOT_ALLOWED');
+      } catch (e) { if (!(writing && i === parts.length - 1 && e.code === 'ENOENT')) throw e; }
+    }
+    return current;
+  }
+  async execute(capability, args) {
+    if (capability === 'device.health') return { ok: true, platform: process.platform, adapter: 'bounded-workspace', uiControl: false };
+    if (capability === 'device.info') return { platform: process.platform, architecture: os.arch(), node: process.version, uiControl: false };
+    if (capability === 'device.files.read') {
+      const handle = await fs.open(await this.safePath(args.path), 'r');
+      try {
+        const stat = await handle.stat();
+        if (!stat.isFile() || stat.size > 65536) throw new Error('FILE_TOO_LARGE');
+        const buffer = Buffer.alloc(65537);
+        const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
+        if (bytesRead > 65536) throw new Error('FILE_TOO_LARGE');
+        return { text: buffer.subarray(0, bytesRead).toString('utf8') };
+      } finally { await handle.close(); }
+    }
+    if (capability === 'device.files.write') {
+      if (Buffer.byteLength(args.text, 'utf8') > 65536) throw new Error('FILE_TOO_LARGE');
+      // Create-only prevents replacement of user files. Owner can rename/delete externally.
+      await fs.writeFile(await this.safePath(args.path, true), args.text, { flag: 'wx', mode: 0o600 });
+      return { created: true, bytes: Buffer.byteLength(args.text, 'utf8') };
+    }
+    throw new Error('CAPABILITY_UNAVAILABLE');
+  }
+}
