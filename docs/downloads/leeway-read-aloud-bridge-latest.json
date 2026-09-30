@@ -1,0 +1,12 @@
+{
+  "packageId": "industries.leeway.readaloud",
+  "versionName": "0.1.0",
+  "versionCode": 1,
+  "engine": "com.samsung.SMT",
+  "authority": "LEEWAY_ACCESSIBILITY_READ_ALOUD_NOT_AGENT_LEE_VOICE_ONE",
+  "sha256": "ddf4479e4f1d0692353dbe1af24ce034db485898cce95e74151f25ef6ca3b457",
+  "sizeBytes": 24905,
+  "downloadUrl": "./leeway-read-aloud-bridge-latest-debug.apk",
+  "sourceRunId": "36679445261",
+  "sourceCommit": "1c8cdcb606185728cbcb777f5dbfd211de195d52"
+}
