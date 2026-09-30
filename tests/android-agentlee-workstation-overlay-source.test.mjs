@@ -23,7 +23,7 @@ assert.match(authority,/selectFocalSkill/);
 assert.match(conversation,/FORMULA_EXECUTION_STATE=NOT_EXECUTED|formulaExecutionState/);
 assert.match(conversation,/VoiceRuntime\.speak/);
 assert.match(voice,/agent-lee-voice-one/);
-assert.match(voice,/LeeWay-Voice-Fabric\/mobile-runtime\.html/);
+assert.match(voice,/LeeWay-Voice-Fabric\/android-bridge\.html/);
 assert.doesNotMatch(voice,/TextToSpeech/);
 assert.match(main,/ENABLE FLOATING AGENT LEE MIC/);
 assert.match(main,/AgentLeeConversation\.respond/);
