@@ -41,6 +41,15 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/leeway_accessibility_service"/>
         </service>
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/leeway_file_paths"/>
+        </provider>
         <receiver
             android:name=".BootReceiver"
             android:enabled="true"
