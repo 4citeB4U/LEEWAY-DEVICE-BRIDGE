@@ -18,12 +18,14 @@ assert.match(router,/FormulaF8Gate\.evaluate/);
 assert.match(router,/governance = governance/);
 assert.match(router,/supported/);
 assert.match(router,/firstSeen/);
-assert.match(router,/FORMULA_HOLD/);
-assert.match(router,/qA/);
+assert.match(router,/AUTHORITY_HOLD/);
+assert.match(router,/localAuthorizationPassed/);
+assert.match(router,/AgentLeeConversation\.respond/);
+assert.doesNotMatch(router,/optInt\("qA"\)/);
 assert.match(service,/seenCommandIds/);
 assert.match(service,/seenCommandIds\.add\(id\)/);
 assert.match(service,/RemoteCommandRouter\.execute\(this, id, capability, args, firstSeen\)/);
 assert.match(main,/Owner enabled always-on remote bridge/);
 assert.match(main,/RemoteRelayService\.stop\(this@MainActivity\)/);
 
-console.log("PASS remote Formula F8 governance contract");
+console.log("PASS remote local pre-gate governance contract");
