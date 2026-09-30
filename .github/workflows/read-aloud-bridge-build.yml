@@ -1,5 +1,9 @@
 name: Read Aloud Bridge Android Build
 
+concurrency:
+  group: read-aloud-bridge-main
+  cancel-in-progress: true
+
 on:
   push:
     paths:
@@ -75,6 +79,8 @@ jobs:
           JSON
           git config user.name "LeeWay Veritas"
           git config user.email "actions@users.noreply.github.com"
+          git fetch origin main
+          git rebase origin/main
           git add "$DST" docs/downloads/leeway-read-aloud-bridge-latest.json
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "Publish verified Read Aloud Bridge APK"
@@ -106,6 +112,8 @@ jobs:
           fi
           git config user.name "LeeWay Veritas"
           git config user.email "actions@users.noreply.github.com"
+          git fetch origin main
+          git rebase origin/main
           git add docs/downloads/leeway-read-aloud-bridge-build-status.json docs/downloads/leeway-read-aloud-bridge-build-log.txt
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "Evidence Read Aloud Bridge build status"
