@@ -1,0 +1,40 @@
+import fs from "node:fs";
+import assert from "node:assert/strict";
+
+const base="apps/android/app/src/main/java/industries/leeway/devicebridge";
+const manifest=fs.readFileSync("apps/android/app/src/main/AndroidManifest.xml","utf8");
+const overlay=fs.readFileSync(base+"/AgentLeeOverlayController.kt","utf8");
+const talk=fs.readFileSync(base+"/AgentLeeTalkActivity.kt","utf8");
+const voice=fs.readFileSync(base+"/VoiceRuntime.kt","utf8");
+const host=fs.readFileSync(base+"/VoiceFabricWebViewHost.kt","utf8");
+const conversation=fs.readFileSync(base+"/AgentLeeConversationEngine.kt","utf8");
+const authority=fs.readFileSync(base+"/EcosystemAuthorityContext.kt","utf8");
+const main=fs.readFileSync(base+"/MainActivity.kt","utf8");
+const service=fs.readFileSync(base+"/RemoteRelayService.kt","utf8");
+const updater=fs.readFileSync("clients/remote-controller/termux-one-pull.sh","utf8");
+
+assert.match(manifest,/SYSTEM_ALERT_WINDOW/);
+assert.match(overlay,/TYPE_APPLICATION_OVERLAY/);
+assert.match(overlay,/AgentLeeTalkActivity/);
+assert.match(talk,/SpeechRecognizer/);
+assert.match(talk,/AgentLeeConversationEngine\.chat/);
+assert.match(voice,/VOICE_PACKAGE_ID = "agent-lee-voice-one"/);
+assert.match(host,/LeeWay-Voice-Fabric\/mobile\.html/);
+assert.match(host,/LeeWayMobileVoice/);
+assert.match(host,/OBSERVED_PHONE_PLAYBACK_COMPLETION/);
+assert.doesNotMatch(voice,/TextToSpeech|speechSynthesis|System\.Speech/i);
+assert.doesNotMatch(host,/TextToSpeech|speechSynthesis|System\.Speech/i);
+assert.match(conversation,/EcosystemAuthorityContext\.promptPrefix/);
+assert.match(conversation,/formulaExecution", "NOT_EXECUTED"/);
+assert.match(conversation,/skillExecution", "NOT_EXECUTED"/);
+assert.match(authority,/4citeB4U\/LeeWay-Agent-Skills/);
+assert.match(authority,/4citeB4U\/Leeway-formula-live/);
+assert.match(authority,/4citeB4U\/Leeway-Runtime-Fabric/);
+assert.match(main,/ACTION_MANAGE_OVERLAY_PERMISSION/);
+assert.match(main,/VoiceRuntime\.prepare/);
+assert.match(service,/AgentLeeOverlayController\.show/);
+assert.match(service,/VoiceRuntime\.initialize/);
+assert.doesNotMatch(updater,/android\.intent\.action\.DELETE/);
+assert.match(updater,/Existing Device Bridge app\/data were preserved/);
+
+console.log("PASS Agent Lee side mic, Voice One and fail-closed phone updater contract");
