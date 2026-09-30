@@ -13,8 +13,8 @@ object WorkstationKeeper {
     private const val EXTRA_COMMAND_PATH = "com.termux.RUN_COMMAND_PATH"
     private const val EXTRA_WORKDIR = "com.termux.RUN_COMMAND_WORKDIR"
     private const val EXTRA_BACKGROUND = "com.termux.RUN_COMMAND_BACKGROUND"
-    private const val ENSURE_SCRIPT =
-        "/data/data/com.termux/files/home/.leeway/workstation/ensure-desktop-commander-once.sh"
+    private const val KEEPER_SCRIPT =
+        "/data/data/com.termux/files/home/.leeway/workstation/desktop-commander-keeper.sh"
     private const val TERMUX_HOME = "/data/data/com.termux/files/home"
 
     fun hasPermission(context: Context): Boolean =
@@ -31,7 +31,7 @@ object WorkstationKeeper {
 
         val intent = Intent(ACTION_RUN_COMMAND).apply {
             setClassName(TERMUX_PACKAGE, TERMUX_SERVICE)
-            putExtra(EXTRA_COMMAND_PATH, ENSURE_SCRIPT)
+            putExtra(EXTRA_COMMAND_PATH, KEEPER_SCRIPT)
             putExtra(EXTRA_WORKDIR, TERMUX_HOME)
             putExtra(EXTRA_BACKGROUND, true)
         }
@@ -40,13 +40,13 @@ object WorkstationKeeper {
             context.startService(intent)
             JSONObject().apply {
                 put("ok", true)
-                put("state", "TERMUX_WORKSTATION_ENSURE_DISPATCHED")
-                put("script", ENSURE_SCRIPT)
+                put("state", "TERMUX_WORKSTATION_KEEPER_DISPATCHED")
+                put("script", KEEPER_SCRIPT)
             }
         } catch (e: Exception) {
             JSONObject().apply {
                 put("ok", false)
-                put("state", "TERMUX_WORKSTATION_ENSURE_FAILED")
+                put("state", "TERMUX_WORKSTATION_KEEPER_FAILED")
                 put("error", e.message ?: e.javaClass.simpleName)
             }
         }
