@@ -4,6 +4,7 @@ import fs from "node:fs";
 const bootstrap=fs.readFileSync("clients/phone-workstation/bootstrap-desktop-commander.sh","utf8");
 const patch=fs.readFileSync("clients/phone-workstation/patch-desktop-commander-android.mjs","utf8");
 const doc=fs.readFileSync("docs/ANDROID-SECONDARY-WORKSTATION.md","utf8");
+const cleanup=fs.readFileSync("clients/phone-workstation/cleanup-legacy-workstation.sh","utf8");
 
 for(const token of ["nodejs","git","ripgrep","curl","openssh","desktop-commander","01-desktop-commander-remote","termux-wake-lock"]){
   assert.ok(bootstrap.includes(token),`bootstrap missing ${token}`);
@@ -28,5 +29,8 @@ for(const token of [
   "first success != completion"
 ]){
   assert.ok(doc.includes(token),`guide missing ${token}`);
+}
+for(const token of ["remove_npx_copy","pkg uninstall -y espeak","leeway-device-bridge-0.8.5.apk","models_are_not_modified=true","CLEANUP_COMPLETE"]){
+  assert.ok(cleanup.includes(token),`cleanup missing ${token}`);
 }
 console.log("PASS phone-workstation-desktop-commander-source");
