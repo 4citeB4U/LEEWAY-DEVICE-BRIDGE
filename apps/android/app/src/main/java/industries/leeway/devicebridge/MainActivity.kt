@@ -12,8 +12,6 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.content.pm.PackageManager
 import android.Manifest
-import android.provider.Settings
-import android.net.Uri
 import android.view.Gravity
 import android.widget.Button
 import android.widget.LinearLayout
@@ -271,29 +269,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        val enableAgentLeeSideMic = Button(this).apply {
-            text = "ENABLE AGENT LEE SIDE MIC"
-            setOnClickListener {
-                if (!Settings.canDrawOverlays(this@MainActivity)) {
-                    output.text = "Android requires owner approval for the Agent Lee side mic. Enable Display over other apps, then return here."
-                    ReceiptStore.record(this@MainActivity, "agent.lee.side.mic", "BLOCKED", "Owner overlay permission required")
-                    startActivity(
-                        Intent(
-                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                            Uri.parse("package:" + packageName)
-                        )
-                    )
-                } else {
-                    val attached = FloatingAgentLeeOverlay.attach(this@MainActivity)
-                    output.text = if (attached) {
-                        "Agent Lee side mic is active. Tap MIC from any screen to talk."
-                    } else {
-                        "Agent Lee side mic could not be attached."
-                    }
-                }
-            }
-        }
-
         val enableSecondaryWorkstation = Button(this).apply {
             text = "ENABLE SECONDARY WORKSTATION"
             setOnClickListener {
@@ -434,7 +409,7 @@ class MainActivity : AppCompatActivity() {
             addView(pairingPanel)
             listOf(
                 discover, diagnostics, files, receipts, authorizeBluetooth, bluetooth, networkDiscovery,
-                modelStatus, modelDownload, modelTest, speakTest, talkToLee, enableAgentLeeSideMic,
+                modelStatus, modelDownload, modelTest, speakTest, talkToLee,
                 enableSecondaryWorkstation, remoteEnable, remoteStatus, remoteDisable,
                 enable, startBridge, selfTest, showToken, stopBridge, stop
             ).forEach { addView(it) }
@@ -444,7 +419,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(ScrollView(this).apply { addView(root) })
 
         when (intent?.getStringExtra("leeway_action")) {
-            "TALK_TO_AGENT_LEE" -> talkToLee.performClick()
             "SHOW_PAIRING" -> {
                 pairingPanel.requestFocus()
                 output.text = "Pairing mode opened by Termux. Tap COPY PAIRING TOKEN, then return to Termux."
@@ -480,13 +454,6 @@ class MainActivity : AppCompatActivity() {
                     )
                 }
             }
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (Settings.canDrawOverlays(this)) {
-            FloatingAgentLeeOverlay.attach(this)
         }
     }
 
