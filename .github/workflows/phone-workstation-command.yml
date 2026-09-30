@@ -1,0 +1,98 @@
+name: LeeWay Phone Workstation Command
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "workstation/request.json"
+      - ".github/workflows/phone-workstation-command.yml"
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: leeway-phone-workstation
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate request
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const r=JSON.parse(fs.readFileSync('workstation/request.json','utf8'));
+          if(typeof r.deviceId!=='string'||r.deviceId.length<8)throw new Error('DEVICE_ID_REQUIRED');
+          const allowed=new Set(['device.health','device.info','device.capabilities','device.receipts','device.network.discover','model.status','model.inference','agent.chat']);
+          if(!allowed.has(r.capability))throw new Error('CAPABILITY_NOT_WORKSTATION_QUALIFIED');
+          NODE
+
+      - name: Obtain GitHub OIDC credential
+        shell: bash
+        run: |
+          set -euo pipefail
+          RESPONSE="$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN"             "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=leeway-phone-workstation")"
+          TOKEN="$(printf '%s' "$RESPONSE" | python -c 'import json,sys; print(json.load(sys.stdin)["value"])')"
+          test -n "$TOKEN"
+          echo "::add-mask::$TOKEN"
+          printf '%s' "$TOKEN" > "$RUNNER_TEMP/leeway-oidc-token"
+
+      - name: Execute on phone through LeeWay relay
+        id: phone
+        shell: bash
+        run: |
+          set +e
+          TOKEN="$(cat "$RUNNER_TEMP/leeway-oidc-token")"
+          mkdir -p workstation/receipts
+          HTTP="$(curl -sS --max-time 210             -o "$RUNNER_TEMP/phone-result.json"             -w '%{http_code}'             -H "Authorization: Bearer $TOKEN"             -H 'Content-Type: application/json'             --data-binary @workstation/request.json             https://agent-lee-x.vercel.app/api/device-workstation)"
+          CURL_RC=$?
+          set -e
+          if [ -f "$RUNNER_TEMP/phone-result.json" ]; then
+            cp "$RUNNER_TEMP/phone-result.json" workstation/receipts/latest.json
+          else
+            printf '{"ok":false,"error":"NO_PHONE_RESULT","curlRc":%s,"httpStatus":"%s"}\n' "$CURL_RC" "$HTTP" > workstation/receipts/latest.json
+          fi
+          node - <<'NODE'
+          const fs=require('fs');
+          const p='workstation/receipts/latest.json';
+          let r={};try{r=JSON.parse(fs.readFileSync(p,'utf8'))}catch(e){r={ok:false,error:'INVALID_RESULT_JSON',detail:String(e)}}
+          const envelope={
+            schemaVersion:'1.0.0',
+            evidenceType:'LEEWAY_PHONE_WORKSTATION_REMOTE_EXECUTION',
+            workflowRunId:process.env.GITHUB_RUN_ID,
+            workflowSha:process.env.GITHUB_SHA,
+            observedAt:new Date().toISOString(),
+            pcRequired:false,
+            usbRequired:false,
+            result:r
+          };
+          fs.writeFileSync(p,JSON.stringify(envelope,null,2)+'\n');
+          NODE
+          echo "http_status=$HTTP" >> "$GITHUB_OUTPUT"
+          echo "curl_rc=$CURL_RC" >> "$GITHUB_OUTPUT"
+
+      - name: Commit phone execution receipt
+        if: always()
+        shell: bash
+        run: |
+          git config user.name "LeeWay Veritas"
+          git config user.email "actions@users.noreply.github.com"
+          git add workstation/receipts/latest.json
+          git diff --cached --quiet || git commit -m "Record phone workstation remote execution receipt"
+          git push origin HEAD:main
+
+      - name: Veritas acceptance gate
+        shell: bash
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const e=JSON.parse(fs.readFileSync('workstation/receipts/latest.json','utf8'));
+          if(e.pcRequired!==false||e.usbRequired!==false)throw new Error('INDEPENDENCE_CLAIM_INVALID');
+          if(e.result?.ok!==true)throw new Error('PHONE_WORKSTATION_REMOTE_EXECUTION_FAILED:'+String(e.result?.error||'UNKNOWN'));
+          console.log('PASS LeeWay phone workstation remote execution');
+          NODE
