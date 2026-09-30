@@ -1,137 +1,179 @@
 {
-    "schemaVersion":  "0.2.0",
-    "authority":  "4citeB4U/LEEWAY-DEVICE-BRIDGE",
-    "rule":  "providers donate capabilities; Device Bridge retains authority",
-    "providers":  [
-                      {
-                          "id":  "phone-native",
-                          "class":  "native",
-                          "role":  "phone-local runtime",
-                          "status":  "PHYSICAL_RUNTIME_VERIFIED"
-                      },
-                      {
-                          "id":  "home-assistant",
-                          "class":  "aggregator",
-                          "role":  "device/entity state and actuation",
-                          "status":  "SOURCE_PROMOTED_CONTRACT_MOCK_VERIFIED_LIVE_INSTANCE_NOT_FOUND",
-                          "interfaces":  [
-                                             "REST",
-                                             "WebSocket"
-                                         ],
-                          "liveInstanceObserved":  false,
-                          "lastContractVerifiedAt":  "2026-09-23T22:10:08.5577350Z",
-                          "sourcePath":  "providers/home-assistant/index.mjs"
-                      },
-                      {
-                          "id":  "n8n",
-                          "class":  "automation",
-                          "role":  "deterministic workflows schedules retries callbacks MCP",
-                          "status":  "DEVICE_WORKFLOW_EXECUTION_VERIFIED_DEVELOPMENT",
-                          "interfaces":  [
-                                             "Webhook",
-                                             "REST",
-                                             "MCP"
-                                         ],
-                          "lastVerifiedAt":  "2026-09-23T22:10:08.5577350Z",
-                          "qualifiedCapability":  "automation.n8n.device-bridge-health",
-                          "workflowSource":  "providers/n8n/workflows/leeway-device-bridge-health.json"
-                      },
-                      {
-                          "id":  "matter",
-                          "class":  "iot",
-                          "role":  "Matter controller/provider via Home Assistant or authorized controller",
-                          "status":  "PROVIDER_REQUIRED"
-                      },
-                      {
-                          "id":  "mqtt",
-                          "class":  "iot",
-                          "role":  "publish/subscribe device transport",
-                          "status":  "PROVIDER_REQUIRED"
-                      },
-                      {
-                          "id":  "bluetooth",
-                          "class":  "local-radio",
-                          "role":  "BLE discovery/control",
-                          "status":  "PHYSICAL_READ_DISCOVERY_VERIFIED",
-                          "lastVerifiedAt":  "2026-09-23T22:01:57.9010061Z",
-                          "qualifiedCapability":  "device.bluetooth.list-bonded"
-                      },
-                      {
-                          "id":  "usb",
-                          "class":  "local-bus",
-                          "role":  "USB device discovery/control",
-                          "status":  "LEGACY_PROVIDER_SOURCE_RECOVERED"
-                      },
-                      {
-                          "id":  "serial",
-                          "class":  "local-bus",
-                          "role":  "serial device discovery/control",
-                          "status":  "LEGACY_PROVIDER_SOURCE_RECOVERED"
-                      },
-                      {
-                          "id":  "hid",
-                          "class":  "local-bus",
-                          "role":  "human-interface device access",
-                          "status":  "LEGACY_PROVIDER_SOURCE_RECOVERED"
-                      },
-                      {
-                          "id":  "ssdp-upnp",
-                          "class":  "network",
-                          "role":  "LAN service/device discovery/control",
-                          "status":  "PHONE_LOCAL_DISCOVERY_VERIFIED"
-                      },
-                      {
-                          "id":  "mdns",
-                          "class":  "network",
-                          "role":  "LAN service discovery",
-                          "status":  "PHONE_LOCAL_DISCOVERY_VERIFIED"
-                      },
-                      {
-                          "id":  "snmp",
-                          "class":  "network",
-                          "role":  "managed network device observation/control where supported",
-                          "status":  "LEGACY_PROVIDER_SOURCE_RECOVERED"
-                      },
-                      {
-                          "id":  "cec",
-                          "class":  "av",
-                          "role":  "HDMI-CEC control",
-                          "status":  "LEGACY_PROVIDER_SOURCE_RECOVERED"
-                      },
-                      {
-                          "id":  "ir-rf",
-                          "class":  "legacy-remote",
-                          "role":  "IR/RF control through physical proxy",
-                          "status":  "PHYSICAL_PROXY_REQUIRED"
-                      },
-                      {
-                          "id":  "modbus",
-                          "class":  "industrial",
-                          "role":  "Modbus device access",
-                          "status":  "LEGACY_PROVIDER_SOURCE_RECOVERED"
-                      },
-                      {
-                          "id":  "canbus",
-                          "class":  "industrial",
-                          "role":  "CAN bus device access",
-                          "status":  "LEGACY_PROVIDER_SOURCE_RECOVERED"
-                      },
-                      {
-                          "id":  "nmea",
-                          "class":  "sensor",
-                          "role":  "NMEA device/telemetry access",
-                          "status":  "LEGACY_PROVIDER_SOURCE_RECOVERED"
-                      },
-                      {
-                          "id":  "network-discovery",
-                          "class":  "network",
-                          "role":  "phone-local SSDP and DNS-SD discovery",
-                          "status":  "PHYSICAL_READ_DISCOVERY_VERIFIED",
-                          "lastVerifiedAt":  "2026-09-23T22:22:00Z",
-                          "qualifiedCapability":  "device.network.discover",
-                          "sourcePath":  "apps/android/app/src/main/java/industries/leeway/devicebridge/NetworkDiscoveryProvider.kt",
-                          "currentObservationCount":  0,
-                          "actuationAvailable":  false
-                      }
-                  ]
+  "schemaVersion": "0.3.0",
+  "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "rule": "providers donate capabilities; Device Bridge retains authority",
+  "providers": [
+    {
+      "id": "phone-native",
+      "class": "native",
+      "role": "phone-local runtime",
+      "status": "PHYSICAL_RUNTIME_VERIFIED"
+    },
+    {
+      "id": "home-assistant",
+      "class": "aggregator",
+      "role": "device/entity state and actuation",
+      "status": "SOURCE_PROMOTED_CONTRACT_MOCK_VERIFIED_LIVE_INSTANCE_NOT_FOUND",
+      "interfaces": [
+        "REST",
+        "WebSocket"
+      ],
+      "liveInstanceObserved": false,
+      "lastContractVerifiedAt": "2026-09-23T22:10:08.5577350Z",
+      "sourcePath": "providers/home-assistant/index.mjs"
+    },
+    {
+      "id": "n8n",
+      "class": "automation",
+      "role": "deterministic workflows schedules retries callbacks MCP",
+      "status": "DEVICE_WORKFLOW_EXECUTION_VERIFIED_DEVELOPMENT",
+      "interfaces": [
+        "Webhook",
+        "REST",
+        "MCP"
+      ],
+      "lastVerifiedAt": "2026-09-23T22:10:08.5577350Z",
+      "qualifiedCapability": "automation.n8n.device-bridge-health",
+      "workflowSource": "providers/n8n/workflows/leeway-device-bridge-health.json"
+    },
+    {
+      "id": "matter",
+      "class": "iot",
+      "role": "Matter controller/provider via Home Assistant or authorized controller",
+      "status": "PROVIDER_REQUIRED"
+    },
+    {
+      "id": "mqtt",
+      "class": "iot",
+      "role": "publish/subscribe device transport",
+      "status": "PROVIDER_REQUIRED"
+    },
+    {
+      "id": "bluetooth",
+      "class": "local-radio",
+      "role": "BLE discovery/control",
+      "status": "PHYSICAL_READ_DISCOVERY_VERIFIED",
+      "lastVerifiedAt": "2026-09-23T22:01:57.9010061Z",
+      "qualifiedCapability": "device.bluetooth.list-bonded"
+    },
+    {
+      "id": "usb",
+      "class": "local-bus",
+      "role": "USB device discovery/control",
+      "status": "LEGACY_PROVIDER_SOURCE_RECOVERED"
+    },
+    {
+      "id": "serial",
+      "class": "local-bus",
+      "role": "serial device discovery/control",
+      "status": "LEGACY_PROVIDER_SOURCE_RECOVERED"
+    },
+    {
+      "id": "hid",
+      "class": "local-bus",
+      "role": "human-interface device access",
+      "status": "LEGACY_PROVIDER_SOURCE_RECOVERED"
+    },
+    {
+      "id": "ssdp-upnp",
+      "class": "network",
+      "role": "LAN service/device discovery/control",
+      "status": "PHONE_LOCAL_DISCOVERY_VERIFIED"
+    },
+    {
+      "id": "mdns",
+      "class": "network",
+      "role": "LAN service discovery",
+      "status": "PHONE_LOCAL_DISCOVERY_VERIFIED"
+    },
+    {
+      "id": "snmp",
+      "class": "network",
+      "role": "managed network device observation/control where supported",
+      "status": "LEGACY_PROVIDER_SOURCE_RECOVERED"
+    },
+    {
+      "id": "cec",
+      "class": "av",
+      "role": "HDMI-CEC control",
+      "status": "LEGACY_PROVIDER_SOURCE_RECOVERED"
+    },
+    {
+      "id": "ir-rf",
+      "class": "legacy-remote",
+      "role": "IR/RF control through physical proxy",
+      "status": "PHYSICAL_PROXY_REQUIRED"
+    },
+    {
+      "id": "modbus",
+      "class": "industrial",
+      "role": "Modbus device access",
+      "status": "LEGACY_PROVIDER_SOURCE_RECOVERED"
+    },
+    {
+      "id": "canbus",
+      "class": "industrial",
+      "role": "CAN bus device access",
+      "status": "LEGACY_PROVIDER_SOURCE_RECOVERED"
+    },
+    {
+      "id": "nmea",
+      "class": "sensor",
+      "role": "NMEA device/telemetry access",
+      "status": "LEGACY_PROVIDER_SOURCE_RECOVERED"
+    },
+    {
+      "id": "network-discovery",
+      "class": "network",
+      "role": "phone-local SSDP and DNS-SD discovery",
+      "status": "PHYSICAL_READ_DISCOVERY_VERIFIED",
+      "lastVerifiedAt": "2026-09-23T22:22:00Z",
+      "qualifiedCapability": "device.network.discover",
+      "sourcePath": "apps/android/app/src/main/java/industries/leeway/devicebridge/NetworkDiscoveryProvider.kt",
+      "currentObservationCount": 0,
+      "actuationAvailable": false
+    },
+    {
+      "id": "desktop-commander-android-workstation",
+      "class": "remote-workstation",
+      "role": "authenticated Internet-reachable Android/Termux workstation endpoint for authorized LLM and agent execution",
+      "status": "PHYSICAL_COLD_BOOT_REMOTE_EXECUTION_VERIFIED",
+      "interfaces": [
+        "Remote MCP",
+        "Termux shell",
+        "filesystem",
+        "process",
+        "search",
+        "Git",
+        "HTTPS"
+      ],
+      "boundNode": "leeway-phone-workstation",
+      "securityBoundary": "TERMUX_APP_UID_NON_ROOT",
+      "pcRequired": false,
+      "usbRequired": false,
+      "bootReconnectVerified": true,
+      "sessionRecoveryVerified": true,
+      "referenceQualification": {
+        "platform": "Android 16",
+        "architecture": "arm64",
+        "desktopCommander": "0.2.52",
+        "node": "26.3.1",
+        "git": "2.54.0",
+        "ripgrep": "15.1.0",
+        "verifiedAt": "2026-09-30T06:01:44Z"
+      },
+      "qualifiedCapabilities": [
+        "workstation.remote.ping",
+        "workstation.shell.execute",
+        "workstation.files.read",
+        "workstation.files.write",
+        "workstation.search",
+        "workstation.git.local",
+        "workstation.github.network",
+        "workstation.session.recover",
+        "workstation.boot.reconnect"
+      ],
+      "boundaryNote": "Does not grant root, protected system-service access, other-app private storage, credentials/MFA, or privileged Android UI/hardware control. Route those through separately authorized Device Bridge providers."
+    }
+  ]
 }
