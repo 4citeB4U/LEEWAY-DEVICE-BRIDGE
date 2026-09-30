@@ -37,11 +37,25 @@ class RemoteRelayService : Service() {
     @Volatile private var connecting = false
     private var reconnectDelayMs = 1_000L
     private val seenCommandIds = Collections.synchronizedSet(mutableSetOf<String>())
+    private val workstationKeeperTick = object : Runnable {
+        override fun run() {
+            WorkstationKeeper.ensure(this@RemoteRelayService)
+            handler.postDelayed(this, WORKSTATION_KEEPER_INTERVAL_MS)
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
         createChannel()
         startAsForeground("Connecting to LeeWay relay")
+        val workstation = WorkstationKeeper.ensure(this)
+        ReceiptStore.record(
+            this,
+            "workstation.background.ensure",
+            if (workstation.optBoolean("ok")) "PASS" else "BLOCKED",
+            workstation.optString("state")
+        )
+        handler.postDelayed(workstationKeeperTick, WORKSTATION_KEEPER_INTERVAL_MS)
         connect()
     }
 
@@ -50,6 +64,7 @@ class RemoteRelayService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
+        WorkstationKeeper.ensure(this)
         if (webSocket == null && !connecting) connect()
         return START_STICKY
     }
@@ -267,6 +282,7 @@ class RemoteRelayService : Service() {
     companion object {
         private const val CHANNEL_ID = "leeway_remote_bridge"
         private const val NOTIFICATION_ID = 5323
+        private const val WORKSTATION_KEEPER_INTERVAL_MS = 30_000L
 
         fun start(context: Context) {
             RemoteRelayState.setEnabled(context, true)
