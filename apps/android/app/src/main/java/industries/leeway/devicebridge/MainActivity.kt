@@ -12,6 +12,7 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.content.pm.PackageManager
 import android.Manifest
+import android.provider.Settings
 import android.view.Gravity
 import android.widget.Button
 import android.widget.LinearLayout
@@ -107,6 +108,15 @@ class MainActivity : AppCompatActivity() {
         val files = Button(this).apply {
             text = "AUTHORIZE A FILE FOLDER"
             setOnClickListener { FileAccess.requestDirectory(this@MainActivity) }
+        }
+
+        val authorizeDeviceOperator = Button(this).apply {
+            text = "AUTHORIZE DEVICE OPERATOR"
+            setOnClickListener {
+                startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                output.text = "Enable LeeWay Device Bridge in Accessibility. This owner action authorizes UI observation/control; it does not grant root or system privilege."
+                ReceiptStore.record(this@MainActivity, "device.ui.control.authorize", "OBSERVED", "Owner opened Android Accessibility authorization")
+            }
         }
 
         val receipts = Button(this).apply {
@@ -428,7 +438,7 @@ class MainActivity : AppCompatActivity() {
             addView(runtimeState)
             addView(pairingPanel)
             listOf(
-                discover, diagnostics, files, receipts, authorizeBluetooth, bluetooth, networkDiscovery,
+                discover, diagnostics, files, authorizeDeviceOperator, receipts, authorizeBluetooth, bluetooth, networkDiscovery,
                 modelStatus, modelDownload, modelTest, speakTest, talkToLee,
                 authorizeWorkstationKeeper, enableSecondaryWorkstation, remoteEnable, remoteStatus, remoteDisable,
                 enable, startBridge, selfTest, showToken, stopBridge, stop
