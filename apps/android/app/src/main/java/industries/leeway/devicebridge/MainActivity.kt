@@ -269,10 +269,30 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        val authorizeWorkstationKeeper = Button(this).apply {
+            text = "AUTHORIZE BACKGROUND WORKSTATION KEEPER"
+            setOnClickListener {
+                if (WorkstationKeeper.hasPermission(this@MainActivity)) {
+                    val result = WorkstationKeeper.ensure(this@MainActivity)
+                    RemoteRelayService.start(this@MainActivity)
+                    output.text = result.toString(2)
+                } else {
+                    requestPermissions(arrayOf(WorkstationKeeper.TERMUX_PERMISSION), 4204)
+                    output.text = "Termux background-workstation permission opened. Approve once; Device Bridge will keep the workstation alive without opening Termux."
+                }
+            }
+        }
+
         val enableSecondaryWorkstation = Button(this).apply {
             text = "ENABLE SECONDARY WORKSTATION"
             setOnClickListener {
+                if (!WorkstationKeeper.hasPermission(this@MainActivity)) {
+                    requestPermissions(arrayOf(WorkstationKeeper.TERMUX_PERMISSION), 4204)
+                    output.text = "Approve Termux RUN_COMMAND once, then the secondary workstation can be maintained in the background."
+                    return@setOnClickListener
+                }
                 LocalAuthority.setAgentAccess(this@MainActivity, true)
+                WorkstationKeeper.ensure(this@MainActivity)
                 val local = try {
                     LocalBridgeServer.start(this@MainActivity)
                 } catch (e: Exception) {
@@ -410,7 +430,7 @@ class MainActivity : AppCompatActivity() {
             listOf(
                 discover, diagnostics, files, receipts, authorizeBluetooth, bluetooth, networkDiscovery,
                 modelStatus, modelDownload, modelTest, speakTest, talkToLee,
-                enableSecondaryWorkstation, remoteEnable, remoteStatus, remoteDisable,
+                authorizeWorkstationKeeper, enableSecondaryWorkstation, remoteEnable, remoteStatus, remoteDisable,
                 enable, startBridge, selfTest, showToken, stopBridge, stop
             ).forEach { addView(it) }
             addView(output)
@@ -453,6 +473,22 @@ class MainActivity : AppCompatActivity() {
                         bootstrap.optString("error")
                     )
                 }
+            }
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 4204) {
+            if (WorkstationKeeper.hasPermission(this)) {
+                LocalAuthority.setAgentAccess(this, true)
+                val result = WorkstationKeeper.ensure(this)
+                RemoteRelayService.start(this)
+                output.text = result.toString(2)
+                ReceiptStore.record(this, "workstation.background.permission", "PASS", "Owner authorized Termux background keeper")
+            } else {
+                output.text = "Background workstation permission was not granted. Desktop Commander remains manual."
+                ReceiptStore.record(this, "workstation.background.permission", "BLOCKED", "Termux RUN_COMMAND permission not granted")
             }
         }
     }
