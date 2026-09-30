@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "0.1.0",
+  "schemaVersion": "0.1.1",
   "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
   "relayRole": "TRANSPORT_ONLY",
   "relayUrl": "wss://agent-lee-x.vercel.app/api/device-relay",
@@ -29,9 +29,11 @@
   "truthBoundary": {
     "relaySourceBuild": "PASS",
     "durableQueueRuntime": "PASS_SEND_THEN_RECEIVE",
-    "physicalFoldDurableReconnect": "PENDING_OWNER_RECONNECT_AND_TERMUX_E2E"
+    "physicalFoldDurableReconnect": "PENDING_OWNER_RECONNECT_AND_TERMUX_E2E",
+    "localAuthorizationGate": "PASS_WHEN_OWNER_GOVERNANCE_AND_PRECONDITIONS_PASS",
+    "canonicalFormulaExecution": "NOT_EXECUTED_UNLESS_VERIFIED_EVALUATOR_IS_EXPOSED"
   },
-  "formulaGate": "LW-F8_REQUIRED_QA69_EXECUTE_QA0_HOLD",
+  "formulaGate": "LW_F8_LOCAL_PRE_GATE_FORMULA_EVALUATOR_UNEXPOSED_Q69_NOT_CLAIMED",
   "replayProtection": "COMMAND_ID_FIRST_SEEN_REQUIRED",
   "ownerStop": "DISABLES_AGENT_AUTHORITY_AND_REMOTE_RELAY",
   "deliveryMode": "VERCEL_QUEUE_DURABLE_V1",
