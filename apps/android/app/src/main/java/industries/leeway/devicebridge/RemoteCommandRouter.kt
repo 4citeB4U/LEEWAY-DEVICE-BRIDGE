@@ -7,6 +7,8 @@ object RemoteCommandRouter {
     private val remoteQualified = setOf(
         "device.health", "device.info", "device.capabilities",
         "device.bluetooth.list-bonded", "device.network.discover", "device.receipts",
+        "device.ui.snapshot", "device.ui.back", "device.ui.home", "device.ui.recents",
+        "device.ui.tap", "device.ui.swipe", "device.ui.text",
         "model.status", "model.install", "model.inference", "voice.status", "voice.speak", "agent.chat"
     )
 
@@ -18,6 +20,10 @@ object RemoteCommandRouter {
         val capabilityPrecondition = when (capability) {
             "model.inference", "agent.chat" -> prompt.isNotEmpty()
             "voice.speak" -> text.isNotEmpty()
+            "device.ui.tap" -> arguments.has("x") && arguments.has("y")
+            "device.ui.swipe" -> arguments.has("x1") && arguments.has("y1") &&
+                arguments.has("x2") && arguments.has("y2")
+            "device.ui.text" -> text.isNotEmpty()
             else -> true
         }
         val gate = FormulaF8Gate.evaluate(
@@ -39,6 +45,22 @@ object RemoteCommandRouter {
                 "device.bluetooth.list-bonded" -> BluetoothProvider.snapshot(context)
                 "device.network.discover" -> NetworkDiscoveryProvider.discover(context)
                 "device.receipts" -> JSONObject().put("receipts", ReceiptStore.list(context))
+                "device.ui.snapshot" -> DeviceOperatorAccessibilityService.snapshot()
+                "device.ui.back" -> DeviceOperatorAccessibilityService.global("back")
+                "device.ui.home" -> DeviceOperatorAccessibilityService.global("home")
+                "device.ui.recents" -> DeviceOperatorAccessibilityService.global("recents")
+                "device.ui.tap" -> DeviceOperatorAccessibilityService.tap(
+                    arguments.getDouble("x").toFloat(),
+                    arguments.getDouble("y").toFloat()
+                )
+                "device.ui.swipe" -> DeviceOperatorAccessibilityService.swipe(
+                    arguments.getDouble("x1").toFloat(),
+                    arguments.getDouble("y1").toFloat(),
+                    arguments.getDouble("x2").toFloat(),
+                    arguments.getDouble("y2").toFloat(),
+                    arguments.optLong("durationMs", 300L)
+                )
+                "device.ui.text" -> DeviceOperatorAccessibilityService.setFocusedText(text)
                 "model.status" -> ModelRuntime.status(context)
                 "model.install" -> ModelRuntime.download(context) { _, _ -> }
                 "model.inference" -> ModelRuntime.generate(context, prompt)
