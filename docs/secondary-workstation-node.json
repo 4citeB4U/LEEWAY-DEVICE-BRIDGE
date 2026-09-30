@@ -52,14 +52,19 @@
     "deviceBridge": "outbound websocket relay",
     "github": "https/browser",
     "cloudDev": "GitHub Codespaces/browser",
-    "phoneLink": "optional convenience only when Windows PC is online"
+    "phoneLink": "optional convenience only when Windows PC is online",
+    "remoteMcp": "Desktop Commander Remote MCP",
+    "termux": "phone-local Android shell/runtime"
   },
   "persistence": {
     "heartbeatRequired": true,
     "autoReconnect": true,
     "bootRestart": true,
     "workIdPreservation": true,
-    "checkpointRequired": true
+    "checkpointRequired": true,
+    "desktopCommanderSupervisor": true,
+    "coldBootReconnectVerified": true,
+    "sessionRecoveryVerified": true
   },
   "failover": {
     "eligible": true,
@@ -71,9 +76,36 @@
   "verificationState": {
     "contractPortable": true,
     "phoneRuntimeHistoricalExecutionVerified": true,
+    "directRemoteMcpVerified": true,
+    "directShellExecutionVerified": true,
+    "directFilesystemReadWriteVerified": true,
+    "directSearchVerified": true,
+    "gitLocalVerified": true,
+    "githubNetworkReachabilityVerified": true,
+    "usbIndependentVerified": true,
+    "pcIndependentVerified": true,
+    "sessionRecoveryVerified": true,
+    "coldBootReconnectVerified": true,
+    "failoverVerified": true,
     "cloudDevAttached": false,
     "workplaneConnected": false,
     "crossNodeHandoffTested": false,
-    "failoverVerified": false
+    "lastVerifiedAt": "2026-09-30T06:01:44Z"
+  },
+  "securityBoundary": {
+    "desktopCommander": "TERMUX_APP_UID_NON_ROOT",
+    "deviceBridge": "ANDROID_APP_PERMISSION_BOUND",
+    "rootClaimed": false,
+    "otherAppPrivateStorageClaimed": false,
+    "credentialAccessClaimed": false
+  },
+  "referenceQualification": {
+    "platform": "Android 16",
+    "architecture": "arm64",
+    "desktopCommander": "0.2.52",
+    "node": "26.3.1",
+    "git": "2.54.0",
+    "ripgrep": "15.1.0",
+    "publicGuide": "docs/ANDROID-SECONDARY-WORKSTATION.md"
   }
 }
