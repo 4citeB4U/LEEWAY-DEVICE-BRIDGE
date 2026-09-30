@@ -54,7 +54,7 @@ object DevicePassport {
                 put(capability("device.screen.observe", true, operatorActive, false, operatorActive))
                 put(capability("device.ui.control", true, operatorActive, false, operatorActive))
                 put(capability("device.apps.install", true, false, false))
-                put(capability("device.apps.launch", true, true, false))
+                put(capability("device.apps.launch", true, true, false, true))
             })
         }
     }
@@ -71,7 +71,7 @@ object DevicePassport {
         put("available", supported)
         put("authorized", authorized)
         put("active", active)
-        put("healthy", active || !authorized)
+        put("healthy", verified || active)
         put("verified", verified)
     }
 }
