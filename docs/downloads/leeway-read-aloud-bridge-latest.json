@@ -6,7 +6,7 @@
   "authority": "4citeB4U/LeeWay-Voice-Fabric",
   "sha256": "38bd47e41b654912bf8a83d0851b40531374e6bfafcc14bf245eb3b60a3fea2c",
   "sizeBytes": 31837,
-  "downloadUrl": "./leeway-read-aloud-bridge-latest-debug.apk",
+  "downloadUrl": "https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/downloads/leeway-read-aloud-bridge-latest-debug.apk",
   "sourceRunId": "36683140360",
   "sourceCommit": "3c42346b45a9f2e3a1e2bad1a53aed37231794f3"
 }
