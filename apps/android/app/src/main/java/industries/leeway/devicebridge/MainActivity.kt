@@ -423,6 +423,63 @@ class MainActivity : AppCompatActivity() {
                 pairingPanel.requestFocus()
                 output.text = "Pairing mode opened by Termux. Tap COPY PAIRING TOKEN, then return to Termux."
             }
+            "POCKET_BOOTSTRAP" -> {
+                val nonce = intent?.getStringExtra("leeway_nonce").orEmpty()
+                val caller = callingPackage.orEmpty()
+                val nonceValid = nonce.matches(Regex("^[A-Za-z0-9_-]{16,128}$"))
+                if (caller != "industries.leeway.pocket" || !nonceValid) {
+                    ReceiptStore.record(
+                        this,
+                        "device.pocket.grant",
+                        "BLOCKED",
+                        "caller=" + caller.ifBlank { "UNKNOWN" } + " nonceValid=" + nonceValid
+                    )
+                    setResult(Activity.RESULT_CANCELED)
+                    finish()
+                } else {
+                    android.app.AlertDialog.Builder(this)
+                        .setTitle("Connect LeeWay Pocket Agent")
+                        .setMessage(
+                            "Allow the installed LeeWay Pocket Agent to use a scoped local Device Bridge session? " +
+                            "This does not expose the owner remote pairing token."
+                        )
+                        .setPositiveButton("Allow") { _, _ ->
+                            LocalAuthority.setAgentAccess(this, true)
+                            val local = try {
+                                LocalBridgeServer.start(this)
+                            } catch (e: Exception) {
+                                org.json.JSONObject().put("ok", false)
+                                    .put("error", e.message ?: e.javaClass.simpleName)
+                            }
+                            val token = PocketGrantStore.ensure(this)
+                            val result = Intent().apply {
+                                putExtra("leeway_nonce", nonce)
+                                putExtra("leeway_pocket_token", token)
+                                putExtra("leeway_bridge_port", LocalBridgeServer.PORT)
+                            }
+                            ReceiptStore.record(
+                                this,
+                                "device.pocket.grant",
+                                if (local.optBoolean("ok")) "PASS" else "BLOCKED",
+                                "Owner approved scoped Pocket Agent local bridge access"
+                            )
+                            setResult(Activity.RESULT_OK, result)
+                            finish()
+                        }
+                        .setNegativeButton("Deny") { _, _ ->
+                            ReceiptStore.record(
+                                this,
+                                "device.pocket.grant",
+                                "BLOCKED",
+                                "Owner denied Pocket Agent local bridge access"
+                            )
+                            setResult(Activity.RESULT_CANCELED)
+                            finish()
+                        }
+                        .setCancelable(false)
+                        .show()
+                }
+            }
             "TERMUX_BOOTSTRAP" -> {
                 val nonce = intent?.getStringExtra("leeway_nonce").orEmpty()
                 val bootstrap = LocalBridgeServer.armOwnerBootstrap(this, nonce)

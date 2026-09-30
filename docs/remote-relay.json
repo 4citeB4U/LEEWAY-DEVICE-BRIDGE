@@ -31,9 +31,27 @@
     "durableQueueRuntime": "PASS_SEND_THEN_RECEIVE",
     "physicalFoldDurableReconnect": "PENDING_OWNER_RECONNECT_AND_TERMUX_E2E"
   },
-  "formulaGate": "LW-F8_REQUIRED_QA69_EXECUTE_QA0_HOLD",
+  "formulaGate": "LOCAL_LW_F8_SHAPED_ELIGIBILITY; CANONICAL_FORMULA_NOT_EXECUTED_ON_PHONE_GATE",
   "replayProtection": "COMMAND_ID_FIRST_SEEN_REQUIRED",
   "ownerStop": "DISABLES_AGENT_AUTHORITY_AND_REMOTE_RELAY",
   "deliveryMode": "VERCEL_QUEUE_DURABLE_V1",
-  "volatileRoomState": false
+  "volatileRoomState": false,
+  "formulaAuthority": "4citeB4U/Leeway-formula-live",
+  "formulaTruthBoundary": "Phone local gate may HOLD/EXECUTE local capability eligibility, but it MUST NOT invent Q69 or claim centralized Formula execution.",
+  "pocketAgent": {
+    "authority": "4citeB4U/LeeWay-Pocket-Agent",
+    "transport": "SCOPED_ANDROID_ACTIVITY_RESULT_IPC",
+    "ownerApprovalRequired": true,
+    "sharesOwnerRemotePairingSecret": false,
+    "capabilities": [
+      "device.health",
+      "device.info",
+      "device.capabilities",
+      "device.receipts",
+      "model.status",
+      "model.inference",
+      "agent.chat"
+    ],
+    "state": "SOURCE_CANDIDATE_UNTIL_ANDROID_BUILD_AND_PHYSICAL_INSTALL_PASS"
+  }
 }

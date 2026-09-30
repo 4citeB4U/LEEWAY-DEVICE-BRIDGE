@@ -73,6 +73,10 @@ jobs:
           SHA=$(sha256sum "$APK" | awk '{print $1}')
           echo "package_bytes=$BYTES" | tee package-evidence.txt
           echo "sha256=$SHA" | tee -a package-evidence.txt
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          APKSIGNER="$SDK_ROOT/build-tools/35.0.0/apksigner"
+          test -x "$APKSIGNER"
+          "$APKSIGNER" verify --print-certs "$APK" | tee -a package-evidence.txt
           if [ "$BYTES" -gt 104857600 ]; then
             echo "Bootstrap package exceeds LeeWay 100 MiB target."
             exit 1
