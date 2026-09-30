@@ -1,0 +1,9 @@
+{
+  "workflow": "Read Aloud Bridge Android Build",
+  "status": "success",
+  "buildRc": "0",
+  "sourceCommit": "3c42346b45a9f2e3a1e2bad1a53aed37231794f3",
+  "runId": "36683140360",
+  "voicePackageId": "agent-lee-voice-one",
+  "authority": "4citeB4U/LeeWay-Voice-Fabric"
+}
