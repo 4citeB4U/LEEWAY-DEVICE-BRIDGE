@@ -17,8 +17,9 @@ assert.equal(hash(pagesLogo),EXPECTED,"Pages logo must be the canonical LeeWay l
 assert.match(manifest,/android:icon="@drawable\/leeway_official_logo"/);
 assert.match(manifest,/android:roundIcon="@drawable\/leeway_official_logo"/);
 assert.match(page,/href="\.\/leeway-official-logo\.png"/);
-assert.match(pwa,/\.\/leeway-official-logo\.png/);
-assert.match(gradle,/versionName = "0\.8\.5"/);
-assert.match(gradle,/versionCode = 13/);
+assert.match(pwa,/\.\/icons\/leeway-official-logo-192\.png/);
+assert.match(pwa,/\.\/icons\/leeway-official-logo-512\.png/);
+assert.match(gradle,/versionName = "0\.8\.6"/);
+assert.match(gradle,/versionCode = 14/);
 
-console.log("PASS canonical LeeWay logo authority and Android 0.8.5 branding");
+console.log("PASS canonical LeeWay logo authority and Android 0.8.6 branding");
