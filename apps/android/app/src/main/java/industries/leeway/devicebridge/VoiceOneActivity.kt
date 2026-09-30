@@ -33,7 +33,7 @@ class VoiceOneActivity : AppCompatActivity() {
             settings.mediaPlaybackRequiresUserGesture = false
             settings.allowFileAccess = false
             settings.allowContentAccess = false
-            addJavascriptInterface(AndroidVoiceBridge(), "AndroidVoice")
+            addJavascriptInterface(AndroidVoiceBridge(), "LeeWayPocketNative")
             webViewClient = object : WebViewClient() {
                 override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
                     return url?.startsWith("https://4citeb4u.github.io/LeeWay-Voice-Fabric/") != true
@@ -50,7 +50,7 @@ class VoiceOneActivity : AppCompatActivity() {
         speakStarted = true
         val quoted = JSONObject.quote(speechText)
         webView.evaluateJavascript(
-            "window.LeeWayMobileVoice.speak(" + quoted + ").catch(function(){})",
+            "window.LeeWayAndroidVoice.speak(" + quoted + ").catch(function(){})",
             null
         )
     }
@@ -74,6 +74,11 @@ class VoiceOneActivity : AppCompatActivity() {
 
     inner class AndroidVoiceBridge {
         @JavascriptInterface
+        fun onBridgeReady(payload: String) {
+            runOnUiThread { startSpeak() }
+        }
+
+        @JavascriptInterface
         fun onReady(payload: String) {
             runOnUiThread { startSpeak() }
         }
@@ -84,7 +89,7 @@ class VoiceOneActivity : AppCompatActivity() {
         }
 
         @JavascriptInterface
-        fun onComplete(payload: String) {
+        fun onSpeakComplete(payload: String) {
             runOnUiThread { finishWith(true, "VOICE_ONE_PLAYBACK_COMPLETE") }
         }
 
