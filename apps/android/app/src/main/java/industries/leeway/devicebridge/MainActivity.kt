@@ -74,6 +74,8 @@ class MainActivity : AppCompatActivity() {
         fun refreshRuntimeState() {
             val model = ModelRuntime.status(this@MainActivity)
             val remote = RemoteRelayState.status(this@MainActivity)
+            val overlay = AgentLeeOverlayController.status(this@MainActivity)
+            val voice = VoiceRuntime.status(this@MainActivity)
             val modelLabel = if (model.optBoolean("verified")) "VERIFIED" else "NOT VERIFIED"
             val remoteLabel = if (remote.optBoolean("connected")) {
                 "CONNECTED"
@@ -82,9 +84,21 @@ class MainActivity : AppCompatActivity() {
             } else {
                 "OFF"
             }
+            val sideMicLabel = if (overlay.optBoolean("visible")) {
+                "ON"
+            } else if (overlay.optBoolean("permission")) {
+                "READY"
+            } else {
+                "PERMISSION REQUIRED"
+            }
             runtimeState.text =
-                "LOCAL MODEL: " + modelLabel + "\\nREMOTE RELAY: " + remoteLabel + "\\nDEVICE: " + remote.optString("deviceId")
+                "LOCAL MODEL: " + modelLabel +
+                "\\nREMOTE RELAY: " + remoteLabel +
+                "\\nSIDE MIC: " + sideMicLabel +
+                "\\nVOICE ONE: " + voice.optString("state") +
+                "\\nDEVICE: " + remote.optString("deviceId")
         }
+
         refreshRuntimeState()
 
         val discover = Button(this).apply {
@@ -230,7 +244,7 @@ class MainActivity : AppCompatActivity() {
                     startActivity(
                         Intent(
                             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                            Uri.parse("package:$packageName")
+                            Uri.parse("package:${this@MainActivity.packageName}")
                         )
                     )
                 } else {
@@ -275,7 +289,7 @@ class MainActivity : AppCompatActivity() {
                     startActivity(
                         Intent(
                             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                            Uri.parse("package:$packageName")
+                            Uri.parse("package:${this@MainActivity.packageName}")
                         )
                     )
                 } else {
