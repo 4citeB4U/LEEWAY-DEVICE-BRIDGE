@@ -254,6 +254,11 @@ class MainActivity : AppCompatActivity() {
         val talkToLee = Button(this).apply {
             text = "TALK TO AGENT LEE"
             setOnClickListener {
+                val pocket = Intent().setComponent(android.content.ComponentName("industries.leeway.pocket", "industries.leeway.pocket.MainActivity")).putExtra("leeway_action", "TALK_TO_AGENT_LEE")
+                if (packageManager.resolveActivity(pocket, 0) != null) {
+                    startActivity(pocket)
+                    return@setOnClickListener
+                }
                 if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
                     requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), 4203)
                     output.text = "Microphone permission requested. Approve it, then tap TALK TO AGENT LEE again."
@@ -278,8 +283,8 @@ class MainActivity : AppCompatActivity() {
                             Thread {
                                 val result = ModelRuntime.generate(this@MainActivity, heard)
                                 val response = result.optString("response")
-                                if (result.optBoolean("ok") && response.isNotBlank()) VoiceRuntime.speak(this@MainActivity, response)
-                                ReceiptStore.record(this@MainActivity, "agent.voice.conversation", if (result.optBoolean("ok")) "PASS" else "FAIL", "speech input -> model -> TTS")
+                                val voice = if (result.optBoolean("ok") && response.isNotBlank()) VoiceRuntime.speak(this@MainActivity, response) else org.json.JSONObject().put("ok", false)
+                                ReceiptStore.record(this@MainActivity, "agent.voice.conversation", if (result.optBoolean("ok") && voice.optBoolean("ok")) "PASS" else "BLOCKED", "speech input -> model; voiceOk=" + voice.optBoolean("ok"))
                                 runOnUiThread { output.text = "You: " + heard + "\\n\\nAgent Lee: " + (if (response.isBlank()) result.toString(2) else response) }
                             }.start()
                         }
@@ -487,6 +492,63 @@ class MainActivity : AppCompatActivity() {
             "SHOW_PAIRING" -> {
                 pairingPanel.requestFocus()
                 output.text = "Pairing mode opened by Termux. Tap COPY PAIRING TOKEN, then return to Termux."
+            }
+            "POCKET_BOOTSTRAP" -> {
+                val nonce = intent?.getStringExtra("leeway_nonce").orEmpty()
+                val caller = callingPackage.orEmpty()
+                val nonceValid = nonce.matches(Regex("^[A-Za-z0-9_-]{16,128}$"))
+                if (caller != "industries.leeway.pocket" || !nonceValid) {
+                    ReceiptStore.record(
+                        this,
+                        "device.pocket.grant",
+                        "BLOCKED",
+                        "caller=" + caller.ifBlank { "UNKNOWN" } + " nonceValid=" + nonceValid
+                    )
+                    setResult(Activity.RESULT_CANCELED)
+                    finish()
+                } else {
+                    android.app.AlertDialog.Builder(this)
+                        .setTitle("Connect LeeWay Pocket Agent")
+                        .setMessage(
+                            "Allow the installed LeeWay Pocket Agent to use a scoped local Device Bridge session? " +
+                            "This does not expose the owner remote pairing token."
+                        )
+                        .setPositiveButton("Allow") { _, _ ->
+                            LocalAuthority.setAgentAccess(this, true)
+                            val local = try {
+                                LocalBridgeServer.start(this)
+                            } catch (e: Exception) {
+                                org.json.JSONObject().put("ok", false)
+                                    .put("error", e.message ?: e.javaClass.simpleName)
+                            }
+                            val token = PocketGrantStore.ensure(this)
+                            val result = Intent().apply {
+                                putExtra("leeway_nonce", nonce)
+                                putExtra("leeway_pocket_token", token)
+                                putExtra("leeway_bridge_port", LocalBridgeServer.PORT)
+                            }
+                            ReceiptStore.record(
+                                this,
+                                "device.pocket.grant",
+                                if (local.optBoolean("ok")) "PASS" else "BLOCKED",
+                                "Owner approved scoped Pocket Agent local bridge access"
+                            )
+                            setResult(Activity.RESULT_OK, result)
+                            finish()
+                        }
+                        .setNegativeButton("Deny") { _, _ ->
+                            ReceiptStore.record(
+                                this,
+                                "device.pocket.grant",
+                                "BLOCKED",
+                                "Owner denied Pocket Agent local bridge access"
+                            )
+                            setResult(Activity.RESULT_CANCELED)
+                            finish()
+                        }
+                        .setCancelable(false)
+                        .show()
+                }
             }
             "TERMUX_BOOTSTRAP" -> {
                 val nonce = intent?.getStringExtra("leeway_nonce").orEmpty()
