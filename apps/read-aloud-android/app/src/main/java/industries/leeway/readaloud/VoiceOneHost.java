@@ -133,20 +133,32 @@ public final class VoiceOneHost {
     }
 
     public JSONObject status() {
-        return new JSONObject()
-                .put("ok", true)
-                .put("bridgeReady", bridgeReady)
-                .put("ready", voiceReady)
-                .put("speaking", speaking)
-                .put("streaming", streaming)
-                .put("activeStreamId", activeStreamId)
-                .put("state", state)
-                .put("lastError", lastError)
-                .put("lastChars", lastChars)
-                .put("voicePackageId", VOICE_ID)
-                .put("engine", "LEEWAY_VOICE_FABRIC")
-                .put("authority", AUTHORITY)
-                .put("bridgeUrl", BRIDGE_URL);
+        return json(
+                "ok", true,
+                "bridgeReady", bridgeReady,
+                "ready", voiceReady,
+                "speaking", speaking,
+                "streaming", streaming,
+                "activeStreamId", activeStreamId,
+                "state", state,
+                "lastError", lastError,
+                "lastChars", lastChars,
+                "voicePackageId", VOICE_ID,
+                "engine", "LEEWAY_VOICE_FABRIC",
+                "authority", AUTHORITY,
+                "bridgeUrl", BRIDGE_URL
+        );
+    }
+
+    private static JSONObject json(Object... pairs) {
+        JSONObject out = new JSONObject();
+        for (int i = 0; i + 1 < pairs.length; i += 2) {
+            try {
+                out.put(String.valueOf(pairs[i]), pairs[i + 1]);
+            } catch (Throwable ignored) {
+            }
+        }
+        return out;
     }
 
     private void evaluate(String js) {
