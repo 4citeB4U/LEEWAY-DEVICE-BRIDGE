@@ -59,7 +59,7 @@
     "localModel": "PHYSICAL_INSTALL_AND_INFERENCE_VERIFIED",
     "remoteRelay": "PERMANENT_RELAY_E2E_VERIFIED",
     "remotePhoneConnection": "PENDING_V0_7_PHYSICAL_INSTALL",
-    "remoteFormulaGate": "LW_F8_SOURCE_TEST_AND_ANDROID_BUILD_VERIFIED",
+    "remoteFormulaGate": "LOCAL_ELIGIBILITY_ONLY_CANONICAL_FORMULA_NOT_EXECUTED",
     "androidActions": "GITHUB_NATIVE_BUILD_VERIFIED"
   },
   "deviceFabric": {
@@ -91,5 +91,11 @@
     "v07ReleaseCanonicalization": "../evidence/V0-7-RELEASE-CANONICALIZATION-20260924.json",
     "productionRelayV07": "../evidence/V0-7-PRODUCTION-RELAY-E2E-20260924.json",
     "githubActionsAndroidBuild": "../evidence/GITHUB-ACTIONS-ANDROID-BUILD-QUALIFICATION-20260924.json"
+  },
+  "pocketAgent": {
+    "authority": "4citeB4U/LeeWay-Pocket-Agent",
+    "role": "HUMAN_FACING_VOICE_AND_COMMAND_SURFACE",
+    "deviceBridgeBinding": "SCOPED_ANDROID_IPC",
+    "state": "SOURCE_CANDIDATE_UNTIL_BUILD_AND_PHONE_TEST_PASS"
   }
 }
