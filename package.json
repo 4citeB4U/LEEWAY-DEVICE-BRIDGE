@@ -1,0 +1,11 @@
+{
+  "name": "leeway-device-bridge-workspace",
+  "private": true,
+  "type": "module",
+  "workspaces": ["packages/*", "apps/desktop"],
+  "scripts": {
+    "test:mcp": "node --test tests/mcp/*.test.mjs",
+    "mcp": "node apps/desktop/mcp-server.mjs"
+  },
+  "engines": { "node": ">=22" }
+}
