@@ -15,6 +15,7 @@ object DevicePassport {
         val memory = ActivityManager.MemoryInfo().also(activity::getMemoryInfo)
         val stat = StatFs(Environment.getDataDirectory().absolutePath)
         val metrics: DisplayMetrics = context.resources.displayMetrics
+        val operatorActive = DeviceOperatorAccessibilityService.status().optBoolean("active")
 
         return JSONObject().apply {
             put("schemaVersion", "0.1.0")
@@ -50,18 +51,27 @@ object DevicePassport {
                 put(capability("device.health", true, false, false))
                 put(capability("device.files.read", true, false, false))
                 put(capability("device.files.write", true, false, false))
-                put(capability("device.screen.observe", true, false, false))
-                put(capability("device.ui.control", true, false, false))
+                put(capability("device.screen.observe", true, operatorActive, false, operatorActive))
+                put(capability("device.ui.control", true, operatorActive, false, operatorActive))
+                put(capability("device.apps.install", true, false, false))
+                put(capability("device.apps.launch", true, true, false))
             })
         }
     }
 
-    private fun capability(name: String, supported: Boolean, authorized: Boolean, verified: Boolean) =
-        JSONObject().apply {
-            put("name", name)
-            put("supported", supported)
-            put("authorized", authorized)
-            put("active", false)
-            put("verified", verified)
-        }
+    private fun capability(
+        name: String,
+        supported: Boolean,
+        authorized: Boolean,
+        verified: Boolean,
+        active: Boolean = false
+    ) = JSONObject().apply {
+        put("name", name)
+        put("supported", supported)
+        put("available", supported)
+        put("authorized", authorized)
+        put("active", active)
+        put("healthy", active || !authorized)
+        put("verified", verified)
+    }
 }
