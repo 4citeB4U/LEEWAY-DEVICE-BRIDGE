@@ -42,6 +42,7 @@ class RemoteRelayService : Service() {
         super.onCreate()
         createChannel()
         startAsForeground("Connecting to LeeWay relay")
+        FloatingMicOverlay.attach(this)
         connect()
     }
 
@@ -50,6 +51,7 @@ class RemoteRelayService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
+        FloatingMicOverlay.attach(this)
         if (webSocket == null && !connecting) connect()
         return START_STICKY
     }
@@ -62,6 +64,7 @@ class RemoteRelayService : Service() {
         webSocket = null
         connecting = false
         RemoteRelayState.setConnection(this, false, "SERVICE_STOPPED")
+        FloatingMicOverlay.detach()
         client.dispatcher.executorService.shutdown()
         super.onDestroy()
     }
