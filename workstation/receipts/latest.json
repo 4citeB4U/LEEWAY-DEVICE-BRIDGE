@@ -29,7 +29,8 @@
     "usbIndependentExecution": "PASS",
     "remoteSessionSelfRecovery": "PASS",
     "coldBootAutoReconnect": "PASS",
-    "postColdBootExecution": "PASS"
+    "postColdBootExecution": "PASS",
+    "continuousBackgroundDurability": "FAILED_OBSERVED_2026-09-30_AFTER_AUDIO_WORKLOAD"
   },
   "topology": {
     "primaryWindowsRemoteNodeUsedForFinalAcceptance": false,
@@ -56,5 +57,22 @@
     "accountEmailPublished": false,
     "authTokensPublished": false
   },
-  "conclusion": "LEEWAY_PHONE_SECONDARY_WORKSTATION_COLD_BOOT_VERIFIED_PASS"
+  "conclusion": "LEEWAY_PHONE_SECONDARY_WORKSTATION_COLD_BOOT_VERIFIED_CONTINUOUS_DURABILITY_OPEN",
+  "durabilityFinding": {
+    "observedAt": "2026-09-30T06:55:53Z",
+    "state": "OPEN_REPAIR_REQUIRED",
+    "note": "Remote workstation became unreachable without an intentional shutdown after multiple long-running audio/TTS/Termux API processes were launched. Cold-boot reconnect remains verified; continuous liveness under workload is not yet qualified.",
+    "likelyRiskFactors": [
+      "Desktop Commander hosted as Termux background process rather than Android-native foreground service",
+      "Samsung background application management",
+      "multiple stuck Termux API/audio child processes in same runtime"
+    ],
+    "requiredBeforeAlwaysOnClaim": [
+      "isolate voice/media workload from workstation control plane",
+      "remove/kill orphaned audio API processes",
+      "qualify Samsung Never Sleeping / unrestricted battery settings for Termux",
+      "qualify a foreground-service or equivalent durable control-plane mechanism",
+      "run sustained liveness soak test"
+    ]
+  }
 }
