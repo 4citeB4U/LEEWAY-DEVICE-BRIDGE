@@ -1,6 +1,7 @@
 package industries.leeway.devicebridge
 
 import android.content.Context
+import org.json.JSONArray
 import org.json.JSONObject
 
 object RemoteCommandRouter {
@@ -124,11 +125,13 @@ object RemoteCommandRouter {
         put("authority", "PHONE_LOCAL_RUNTIME")
     }
 
+    internal fun qualifiedCapabilities(): JSONArray = JSONArray(remoteQualified.toList())
+
     private fun capabilities(context: Context): JSONObject {
         val passport = BootstrapStore.loadPassport(context) ?: DevicePassport.capture(context)
         return JSONObject().apply {
             put("capabilities", passport.optJSONArray("capabilityClaims"))
-            put("remoteQualified", remoteQualified.toList())
+            put("remoteQualified", qualifiedCapabilities())
         }
     }
 }
