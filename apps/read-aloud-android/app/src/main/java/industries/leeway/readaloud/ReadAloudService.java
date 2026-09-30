@@ -134,37 +134,37 @@ public final class ReadAloudService extends Service {
             }
             if ("POST".equals(method) && "/prepare".equals(path)) {
                 voice.prepare();
-                respond(out, 202, new JSONObject()
-                        .put("ok", true)
-                        .put("accepted", true)
-                        .put("operation", "prepare")
-                        .put("voicePackageId", VoiceOneHost.VOICE_ID)
-                        .put("authority", AUTHORITY)
-                        .toString());
+                respond(out, 202, json(
+                        "ok", true,
+                        "accepted", true,
+                        "operation", "prepare",
+                        "voicePackageId", VoiceOneHost.VOICE_ID,
+                        "authority", AUTHORITY
+                ).toString());
                 return;
             }
             if ("POST".equals(method) && "/stop".equals(path)) {
                 muted = true;
                 voice.stop();
-                respond(out, 200, new JSONObject()
-                        .put("ok", true)
-                        .put("stopped", true)
-                        .put("muted", true)
-                        .put("voicePackageId", VoiceOneHost.VOICE_ID)
-                        .put("authority", AUTHORITY)
-                        .toString());
+                respond(out, 200, json(
+                        "ok", true,
+                        "stopped", true,
+                        "muted", true,
+                        "voicePackageId", VoiceOneHost.VOICE_ID,
+                        "authority", AUTHORITY
+                ).toString());
                 return;
             }
             if ("POST".equals(method) && "/resume".equals(path)) {
                 muted = false;
                 voice.prepare();
-                respond(out, 200, new JSONObject()
-                        .put("ok", true)
-                        .put("resumed", true)
-                        .put("muted", false)
-                        .put("voicePackageId", VoiceOneHost.VOICE_ID)
-                        .put("authority", AUTHORITY)
-                        .toString());
+                respond(out, 200, json(
+                        "ok", true,
+                        "resumed", true,
+                        "muted", false,
+                        "voicePackageId", VoiceOneHost.VOICE_ID,
+                        "authority", AUTHORITY
+                ).toString());
                 return;
             }
             if ("POST".equals(method) && "/speak".equals(path)) {
@@ -187,14 +187,14 @@ public final class ReadAloudService extends Service {
                     respond(out, 503, healthJson());
                     return;
                 }
-                respond(out, 202, new JSONObject()
-                        .put("ok", true)
-                        .put("accepted", true)
-                        .put("chars", text.length())
-                        .put("voicePackageId", VoiceOneHost.VOICE_ID)
-                        .put("engine", "LEEWAY_VOICE_FABRIC")
-                        .put("authority", AUTHORITY)
-                        .toString());
+                respond(out, 202, json(
+                        "ok", true,
+                        "accepted", true,
+                        "chars", text.length(),
+                        "voicePackageId", VoiceOneHost.VOICE_ID,
+                        "engine", "LEEWAY_VOICE_FABRIC",
+                        "authority", AUTHORITY
+                ).toString());
                 return;
             }
             if ("POST".equals(method) && "/stream/start".equals(path)) {
@@ -213,13 +213,13 @@ public final class ReadAloudService extends Service {
                     respond(out, 503, healthJson());
                     return;
                 }
-                respond(out, 202, new JSONObject()
-                        .put("ok", true)
-                        .put("accepted", true)
-                        .put("streamId", streamId)
-                        .put("voicePackageId", VoiceOneHost.VOICE_ID)
-                        .put("authority", AUTHORITY)
-                        .toString());
+                respond(out, 202, json(
+                        "ok", true,
+                        "accepted", true,
+                        "streamId", streamId,
+                        "voicePackageId", VoiceOneHost.VOICE_ID,
+                        "authority", AUTHORITY
+                ).toString());
                 return;
             }
             if ("POST".equals(method) && "/stream/chunk".equals(path)) {
@@ -238,12 +238,12 @@ public final class ReadAloudService extends Service {
                     respond(out, 409, jsonError("STREAM_NOT_ACTIVE"));
                     return;
                 }
-                respond(out, 202, new JSONObject()
-                        .put("ok", true)
-                        .put("accepted", true)
-                        .put("streamId", streamId)
-                        .put("chars", text.length())
-                        .toString());
+                respond(out, 202, json(
+                        "ok", true,
+                        "accepted", true,
+                        "streamId", streamId,
+                        "chars", text.length()
+                ).toString());
                 return;
             }
             if ("POST".equals(method) && "/stream/end".equals(path)) {
@@ -257,11 +257,11 @@ public final class ReadAloudService extends Service {
                     respond(out, 409, jsonError("STREAM_NOT_ACTIVE"));
                     return;
                 }
-                respond(out, 202, new JSONObject()
-                        .put("ok", true)
-                        .put("accepted", true)
-                        .put("streamId", streamId)
-                        .toString());
+                respond(out, 202, json(
+                        "ok", true,
+                        "accepted", true,
+                        "streamId", streamId
+                ).toString());
                 return;
             }
             respond(out, 404, jsonError("NOT_FOUND"));
@@ -272,13 +272,13 @@ public final class ReadAloudService extends Service {
 
     private String healthJson() {
         JSONObject status = voice == null ? new JSONObject() : voice.status();
-        status.put("ok", true);
-        status.put("muted", muted);
-        status.put("loopback", "127.0.0.1:" + PORT);
-        status.put("serviceError", lastError);
-        status.put("engine", "LEEWAY_VOICE_FABRIC");
-        status.put("voicePackageId", VoiceOneHost.VOICE_ID);
-        status.put("authority", AUTHORITY);
+        safePut(status, "ok", true);
+        safePut(status, "muted", muted);
+        safePut(status, "loopback", "127.0.0.1:" + PORT);
+        safePut(status, "serviceError", lastError);
+        safePut(status, "engine", "LEEWAY_VOICE_FABRIC");
+        safePut(status, "voicePackageId", VoiceOneHost.VOICE_ID);
+        safePut(status, "authority", AUTHORITY);
         return status.toString();
     }
 
@@ -301,8 +301,23 @@ public final class ReadAloudService extends Service {
         }
     }
 
+    private static JSONObject json(Object... pairs) {
+        JSONObject out = new JSONObject();
+        for (int i = 0; i + 1 < pairs.length; i += 2) {
+            safePut(out, String.valueOf(pairs[i]), pairs[i + 1]);
+        }
+        return out;
+    }
+
+    private static void safePut(JSONObject out, String key, Object value) {
+        try {
+            out.put(key, value);
+        } catch (Throwable ignored) {
+        }
+    }
+
     private static String jsonError(String error) {
-        return new JSONObject().put("ok", false).put("error", error).toString();
+        return json("ok", false, "error", error).toString();
     }
 
     private static String readLine(InputStream in) throws Exception {
