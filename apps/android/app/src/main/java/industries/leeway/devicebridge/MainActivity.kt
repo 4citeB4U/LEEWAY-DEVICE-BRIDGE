@@ -6,6 +6,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.os.Bundle
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.speech.RecognizerIntent
@@ -116,6 +117,19 @@ class MainActivity : AppCompatActivity() {
                 startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
                 output.text = "Enable LeeWay Device Bridge in Accessibility. This owner action authorizes UI observation/control; it does not grant root or system privilege."
                 ReceiptStore.record(this@MainActivity, "device.ui.control.authorize", "OBSERVED", "Owner opened Android Accessibility authorization")
+            }
+        }
+
+        val authorizeMediaOperator = Button(this).apply {
+            text = "AUTHORIZE MEDIA OPERATOR"
+            setOnClickListener {
+                val permissions = if (Build.VERSION.SDK_INT >= 33) {
+                    arrayOf(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO)
+                } else {
+                    arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+                }
+                requestPermissions(permissions, 4205)
+                output.text = "Android media permission request opened. Approval authorizes MediaStore inspection only; deletion still requires a separate owner-confirmed Android request."
             }
         }
 
@@ -438,7 +452,7 @@ class MainActivity : AppCompatActivity() {
             addView(runtimeState)
             addView(pairingPanel)
             listOf(
-                discover, diagnostics, files, authorizeDeviceOperator, receipts, authorizeBluetooth, bluetooth, networkDiscovery,
+                discover, diagnostics, files, authorizeDeviceOperator, authorizeMediaOperator, receipts, authorizeBluetooth, bluetooth, networkDiscovery,
                 modelStatus, modelDownload, modelTest, speakTest, talkToLee,
                 authorizeWorkstationKeeper, enableSecondaryWorkstation, remoteEnable, remoteStatus, remoteDisable,
                 enable, startBridge, selfTest, showToken, stopBridge, stop
@@ -489,6 +503,16 @@ class MainActivity : AppCompatActivity() {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 4205) {
+            val granted = grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+            output.text = if (granted) {
+                ReceiptStore.record(this, "device.media.authorize", "PASS", "Owner granted Android media read permissions")
+                "Media inspection authorized. Destructive media actions still require separate owner confirmation."
+            } else {
+                ReceiptStore.record(this, "device.media.authorize", "BLOCKED", "Owner did not grant Android media read permissions")
+                "Media inspection permission was not granted."
+            }
+        }
         if (requestCode == 4204) {
             if (WorkstationKeeper.hasPermission(this)) {
                 LocalAuthority.setAgentAccess(this, true)
