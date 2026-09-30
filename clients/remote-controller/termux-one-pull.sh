@@ -17,7 +17,7 @@ WORK_ROOT="${HOME}/.leeway/device-bridge-one-pull"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 EVIDENCE_DIR="${HOME}/leeway-evidence/device-bridge-${STAMP}"
 NODE_CLIENT="${WORK_ROOT}/controller.mjs"
-TARGET_VERSION="0.8.5"
+TARGET_VERSION="0.9.0"
 LATEST_META_URL="https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/downloads/leeway-device-bridge-android-latest.json"
 LATEST_APK_URL="https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/downloads/leeway-device-bridge-android-latest-debug.apk"
 RAW_META_URL="https://raw.githubusercontent.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/main/docs/downloads/leeway-device-bridge-android-latest.json"
@@ -121,34 +121,11 @@ install_latest_bridge(){
     sleep 1
   done
 
-  blocked "In-place update did not complete. Opening Android uninstall confirmation for the old debug-signed app."
-  am start -a android.intent.action.DELETE -d "package:$PKG" >/dev/null 2>&1 || true
-  for i in $(seq 1 120); do
-    [ -z "$(cmd package path "$PKG" 2>/dev/null || true)" ] && break
-    if [ $((i % 10)) -eq 0 ]; then say "Waiting for Android uninstall confirmation... ${i}s"; fi
-    sleep 1
-  done
-  if [ -n "$(cmd package path "$PKG" 2>/dev/null || true)" ]; then
-    fail "Old Device Bridge package is still installed; Android did not approve removal."
-    return 1
-  fi
-
-  if command -v termux-open >/dev/null 2>&1; then
-    termux-open --view "$APK_FILE" >/dev/null 2>&1 || true
-  else
-    am start -a android.intent.action.VIEW -d "file://$APK_FILE" -t application/vnd.android.package-archive >/dev/null 2>&1 || true
-  fi
-  say "Approve Install. The script will continue as soon as Device Bridge $TARGET_VERSION is present."
-  for i in $(seq 1 180); do
-    if probe_owner_bootstrap >/dev/null 2>&1; then
-      pass "Device Bridge owner-bootstrap capability is live."
-      return 0
-    fi
-    if [ $((i % 10)) -eq 0 ]; then say "Waiting for Android install confirmation... ${i}s"; fi
-    sleep 1
-  done
-  fail "Device Bridge $TARGET_VERSION was not installed."
+  blocked "In-place update did not complete. Existing Device Bridge app/data were preserved."
+  blocked "Possible causes: Android owner confirmation is still pending or APK signer compatibility failed."
+  blocked "Do not uninstall automatically. Use the controlled signer/migration gate before replacing the package."
   return 1
+
 }
 
 if BOOTSTRAP_PRECHECK="$(probe_owner_bootstrap 2>/dev/null)"; then
