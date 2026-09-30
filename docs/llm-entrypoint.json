@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "0.3.0",
+  "schemaVersion": "0.4.0",
   "name": "LeeWay Device Bridge",
   "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
   "role": "PUBLIC_DISCOVERY_AND_DISTRIBUTION_AUTHORITY",
@@ -25,7 +25,10 @@
     "remoteRelay": "./remote-relay.json",
     "androidActionsStatus": "./android-actions-status.json",
     "secondaryWorkstationNode": "./secondary-workstation-node.json",
-    "androidSecondaryWorkstationGuide": "./ANDROID-SECONDARY-WORKSTATION.md"
+    "androidSecondaryWorkstationGuide": "./ANDROID-SECONDARY-WORKSTATION.md",
+    "deviceOperatorContract": "./DEVICE-OPERATOR.md",
+    "platformAdapterContract": "../contracts/platform-adapter.schema.json",
+    "platformAdapterRegistry": "../operator/adapter-registry.json"
   },
   "phoneRuntime": {
     "required": true,
@@ -64,7 +67,9 @@
     "remotePhoneConnection": "PENDING_V0_7_PHYSICAL_INSTALL",
     "remoteFormulaGate": "LW_F8_SOURCE_TEST_AND_ANDROID_BUILD_VERIFIED",
     "androidActions": "GITHUB_NATIVE_BUILD_VERIFIED",
-    "secondaryWorkstation": "ANDROID_REMOTE_MCP_PC_USB_INDEPENDENT_COLD_BOOT_VERIFIED"
+    "secondaryWorkstation": "ANDROID_REMOTE_MCP_PC_USB_INDEPENDENT_COLD_BOOT_VERIFIED",
+    "deviceOperatorCore": "SOURCE_IMPLEMENTED_CI_PENDING",
+    "platformAdapterRegistry": "ANDROID_IMPLEMENTED_UNQUALIFIED_OTHER_PLATFORMS_PROPOSED"
   },
   "deviceFabric": {
     "modelIndependent": true,
@@ -86,7 +91,16 @@
     ],
     "rule": "Providers donate capabilities; Device Bridge remains authority.",
     "workstationProvider": "desktop-commander-android-workstation",
-    "workstationBoundary": "TERMUX_APP_UID_NON_ROOT"
+    "workstationBoundary": "TERMUX_APP_UID_NON_ROOT",
+    "deviceOperator": "leeway.device.operator",
+    "platformAdapters": [
+      "android",
+      "ios",
+      "ipados",
+      "windows",
+      "macos",
+      "linux"
+    ]
   },
   "evidence": {
     "pagesInstall": "../evidence/GITHUB-PAGES-PHONE-INSTALL-QUALIFICATION-20260923.json",
