@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "0.2.0",
+  "schemaVersion": "0.3.0",
   "name": "LeeWay Device Bridge",
   "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
   "role": "PUBLIC_DISCOVERY_AND_DISTRIBUTION_AUTHORITY",
@@ -23,7 +23,9 @@
     "deviceContract": "../contracts/device.schema.json",
     "modelManifest": "./model-manifest.json",
     "remoteRelay": "./remote-relay.json",
-    "androidActionsStatus": "./android-actions-status.json"
+    "androidActionsStatus": "./android-actions-status.json",
+    "secondaryWorkstationNode": "./secondary-workstation-node.json",
+    "androidSecondaryWorkstationGuide": "./ANDROID-SECONDARY-WORKSTATION.md"
   },
   "phoneRuntime": {
     "required": true,
@@ -39,10 +41,11 @@
     "requiredSequence": [
       "read llm-entrypoint",
       "read package/capability/session contracts",
-      "discover paired phone runtime",
-      "request capability",
+      "discover paired phone runtime and secondary workstation node",
+      "resolve requested capability to Device Bridge provider or workstation provider",
       "pass owner/LeeWay authorization",
-      "execute on phone",
+      "execute only within provider boundary",
+      "verify post-state",
       "return receipt"
     ],
     "deviceModel": "Every discovered physical or logical device SHALL normalize to the LeeWay Universal Device contract before governed execution."
@@ -60,7 +63,8 @@
     "remoteRelay": "PERMANENT_RELAY_E2E_VERIFIED",
     "remotePhoneConnection": "PENDING_V0_7_PHYSICAL_INSTALL",
     "remoteFormulaGate": "LW_F8_SOURCE_TEST_AND_ANDROID_BUILD_VERIFIED",
-    "androidActions": "GITHUB_NATIVE_BUILD_VERIFIED"
+    "androidActions": "GITHUB_NATIVE_BUILD_VERIFIED",
+    "secondaryWorkstation": "ANDROID_REMOTE_MCP_PC_USB_INDEPENDENT_COLD_BOOT_VERIFIED"
   },
   "deviceFabric": {
     "modelIndependent": true,
@@ -80,7 +84,9 @@
       "nmea",
       "ir-rf"
     ],
-    "rule": "Providers donate capabilities; Device Bridge remains authority."
+    "rule": "Providers donate capabilities; Device Bridge remains authority.",
+    "workstationProvider": "desktop-commander-android-workstation",
+    "workstationBoundary": "TERMUX_APP_UID_NON_ROOT"
   },
   "evidence": {
     "pagesInstall": "../evidence/GITHUB-PAGES-PHONE-INSTALL-QUALIFICATION-20260923.json",
@@ -90,6 +96,7 @@
     "remoteV07Build": "../evidence/ANDROID-V070-REMOTE-BUILD-QUALIFICATION-20260924.json",
     "v07ReleaseCanonicalization": "../evidence/V0-7-RELEASE-CANONICALIZATION-20260924.json",
     "productionRelayV07": "../evidence/V0-7-PRODUCTION-RELAY-E2E-20260924.json",
-    "githubActionsAndroidBuild": "../evidence/GITHUB-ACTIONS-ANDROID-BUILD-QUALIFICATION-20260924.json"
+    "githubActionsAndroidBuild": "../evidence/GITHUB-ACTIONS-ANDROID-BUILD-QUALIFICATION-20260924.json",
+    "secondaryWorkstation": "../workstation/receipts/2026-09-30-android-secondary-workstation-cold-boot.json"
   }
 }
