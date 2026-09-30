@@ -29,7 +29,8 @@ assert.match(main,/requestPermissions/);
 assert.match(bootstrap,/allow-external-apps=true/);
 assert.match(bootstrap,/desktop-commander-keeper\.sh/);
 assert.match(bootstrap,/pgrep -f/);
-assert.match(bootstrap,/setsid nohup desktop-commander remote/);\nassert.match(bootstrap,/flock -n 9/);
+assert.match(bootstrap,/setsid nohup desktop-commander remote/);
+assert.match(bootstrap,/flock -n 9/);
 assert.match(bootstrap,/while true/);
 
 assert.match(gradle,/versionCode = 15/);
