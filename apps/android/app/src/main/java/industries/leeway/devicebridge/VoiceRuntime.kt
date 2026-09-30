@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit
 object VoiceRuntime {
     const val VOICE_PACKAGE_ID = "agent-lee-voice-one"
     const val VOICE_FABRIC_URL = "https://4citeb4u.github.io/LeeWay-Voice-Fabric/"
-    const val MOBILE_RUNTIME_URL = "https://4citeb4u.github.io/LeeWay-Voice-Fabric/mobile-runtime.html"
+    const val MOBILE_RUNTIME_URL = "https://4citeb4u.github.io/LeeWay-Voice-Fabric/android-bridge.html"
 
     private const val PREFS = "leeway_voice_runtime"
     private const val VERIFIED = "voice_one_verified"
