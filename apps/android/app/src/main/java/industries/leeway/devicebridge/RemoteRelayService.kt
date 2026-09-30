@@ -42,6 +42,7 @@ class RemoteRelayService : Service() {
         super.onCreate()
         createChannel()
         startAsForeground("Connecting to LeeWay relay")
+        FloatingAgentLeeOverlay.attach(this)
         connect()
     }
 
@@ -62,6 +63,7 @@ class RemoteRelayService : Service() {
         webSocket = null
         connecting = false
         RemoteRelayState.setConnection(this, false, "SERVICE_STOPPED")
+        FloatingAgentLeeOverlay.detach(this)
         client.dispatcher.executorService.shutdown()
         super.onDestroy()
     }
