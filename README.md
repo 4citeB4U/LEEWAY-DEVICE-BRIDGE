@@ -41,6 +41,18 @@ Machine-readable discovery begins at `docs/llm-entrypoint.json`.
 
 LLMs are replaceable clients. They do not become device authority.
 
+## Universal Device Operator
+
+The Device Bridge now defines one portable Device Operator contract rather than separate competing control systems for each OS:
+
+- portable kernel: `operator/device-operator.mjs`
+- adapter registry: `operator/adapter-registry.json`
+- platform-adapter contract: `contracts/platform-adapter.schema.json`
+- platform architecture/authority map: `docs/DEVICE-OPERATOR.md`
+- native reference implementation: `apps/android`
+
+Registered targets are Android, iOS, iPadOS, Windows, macOS and Linux. Registration is not a claim of native implementation or physical qualification: Android is the active implementation target; the other adapters remain PROPOSED until their native code and acceptance campaigns pass.
+
 ## Development-source promotion
 
 Existing development containers are evidence sources, not production dependencies:
