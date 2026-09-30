@@ -31,7 +31,7 @@ assert.match(service,/seenCommandIds/);
 assert.match(state,/agent-lee-x\.vercel\.app/);
 assert.match(state,/github\.io\/LEEWAY-DEVICE-BRIDGE\/docs\/remote-relay\.json/);
 assert.match(router,/FormulaF8Gate\.evaluate/);
-assert.match(router,/FORMULA_HOLD/);
+assert.match(router,/AUTHORITY_HOLD/);\nassert.match(router,/localAuthorizationPassed/);
 assert.match(router,/model\.inference/);
 assert.match(router,/device\.network\.discover/);
 assert.match(boot,/ACTION_BOOT_COMPLETED/);
