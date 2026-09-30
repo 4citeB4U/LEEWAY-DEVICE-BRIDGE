@@ -15,7 +15,7 @@ object BridgeSelfTest {
         val passport = BootstrapStore.loadPassport(appContext)
             ?: DevicePassport.capture(appContext)
 
-        val executeGate = FormulaF8Gate.evaluate(
+        val executeGate = LocalAutomationGate.evaluate(
             trigger = true,
             governance = accessEnabled,
             conditions = listOf(
@@ -24,7 +24,7 @@ object BridgeSelfTest {
                 passport.optString("authority") == "NATIVE_ANDROID_OBSERVED"
             )
         )
-        val emptyGate = FormulaF8Gate.evaluate(
+        val emptyGate = LocalAutomationGate.evaluate(
             trigger = true,
             governance = true,
             conditions = emptyList()
@@ -36,14 +36,15 @@ object BridgeSelfTest {
             missingRejected &&
             wrongRejected &&
             ownerTokenAccepted &&
-            executeGate.optInt("qA") == 69 &&
-            emptyGate.optInt("qA") == 0
+            executeGate.optBoolean("allow") &&
+            !emptyGate.optBoolean("allow") &&
+            executeGate.optString("formulaExecution") == "NOT_EXECUTED"
 
         val detail =
             "running=$bridgeRunning access=$accessEnabled " +
             "missingRejected=$missingRejected wrongRejected=$wrongRejected " +
-            "ownerTokenAccepted=$ownerTokenAccepted qA=${executeGate.optInt("qA")} " +
-            "emptyQ=${emptyGate.optInt("qA")}"
+            "ownerTokenAccepted=$ownerTokenAccepted allow=${executeGate.optBoolean("allow")} " +
+            "emptyAllow=${emptyGate.optBoolean("allow")} formulaExecution=${executeGate.optString("formulaExecution")}"
 
         ReceiptStore.record(
             appContext,
