@@ -112,13 +112,15 @@ object AgentLeeAuthority {
         return "SOURCE_UNAVAILABLE: " + url
     }
 
-    private fun fetchPlain(url: String, maxChars: Int): String? = try {
-        val request = Request.Builder().url(url).header("Cache-Control", "no-cache").build()
-        client.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) return null
-            response.body?.string()?.take(maxChars)
+    private fun fetchPlain(url: String, maxChars: Int): String? {
+        return try {
+            val request = Request.Builder().url(url).header("Cache-Control", "no-cache").build()
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) null
+                else response.body?.string()?.take(maxChars)
+            }
+        } catch (_: Exception) {
+            null
         }
-    } catch (_: Exception) {
-        null
     }
 }
