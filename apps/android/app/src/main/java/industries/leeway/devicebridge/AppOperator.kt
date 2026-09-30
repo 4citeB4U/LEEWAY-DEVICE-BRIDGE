@@ -13,9 +13,25 @@ package industries.leeway.devicebridge
 
 import android.content.Context
 import android.content.Intent
+import org.json.JSONArray
 import org.json.JSONObject
 
 object AppOperator {
+    fun listLaunchable(context: Context): JSONObject {
+        val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+        val matches = context.packageManager.queryIntentActivities(intent, 0)
+            .sortedBy { it.loadLabel(context.packageManager).toString().lowercase() }
+        val apps = JSONArray()
+        for (info in matches) {
+            apps.put(JSONObject().apply {
+                put("packageName", info.activityInfo.packageName)
+                put("activityName", info.activityInfo.name)
+                put("label", info.loadLabel(context.packageManager).toString())
+            })
+        }
+        return JSONObject().put("ok", true).put("count", apps.length()).put("apps", apps)
+    }
+
     private val packageNamePattern = Regex("^[A-Za-z0-9_]+(\\.[A-Za-z0-9_]+)+$")
 
     fun launch(context: Context, packageName: String): JSONObject {
