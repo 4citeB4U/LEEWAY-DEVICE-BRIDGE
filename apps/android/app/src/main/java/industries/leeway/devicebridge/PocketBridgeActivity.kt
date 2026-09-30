@@ -14,6 +14,10 @@ package industries.leeway.devicebridge
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.view.Gravity
+import android.widget.LinearLayout
+import android.widget.ProgressBar
+import android.widget.TextView
 import org.json.JSONObject
 import java.util.UUID
 import kotlin.concurrent.thread
@@ -57,6 +61,19 @@ class PocketBridgeActivity : Activity() {
             return
         }
 
+        setContentView(LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(32, 32, 32, 32)
+            addView(ProgressBar(this@PocketBridgeActivity))
+            addView(TextView(this@PocketBridgeActivity).apply {
+                text = "Agent Lee is working on your phone.\nPreparing a short response…"
+                textSize = 20f
+                gravity = Gravity.CENTER
+                setPadding(0, 24, 0, 0)
+            })
+        })
+
         thread(name = "leeway-pocket-command") {
             val commandId = "pocket-" + UUID.randomUUID().toString()
             val result = RemoteCommandRouter.execute(
@@ -64,7 +81,8 @@ class PocketBridgeActivity : Activity() {
                 commandId,
                 capability,
                 arguments,
-                true
+                true,
+                conversationRequest = true
             )
             ReceiptStore.record(
                 applicationContext,

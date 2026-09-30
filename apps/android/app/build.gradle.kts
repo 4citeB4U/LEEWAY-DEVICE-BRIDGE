@@ -18,8 +18,8 @@ android {
         applicationId = "industries.leeway.devicebridge"
         minSdk = 29
         targetSdk = 35
-        versionCode = 17
-        versionName = "0.9.2-pocket-rc2"
+        versionCode = 18
+        versionName = "0.9.3-pocket-rc3"
     }
 }
 dependencies {
@@ -28,7 +28,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
-    implementation("com.google.ai.edge.litertlm:litertlm-android:latest.release")
+    implementation("com.google.ai.edge.litertlm:litertlm-android:0.17.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }

@@ -281,7 +281,7 @@ class MainActivity : AppCompatActivity() {
                             if (heard.isBlank()) { output.text = "I did not hear a complete request."; return }
                             output.text = "You: " + heard + "\\n\\nAgent Lee is thinking..."
                             Thread {
-                                val result = ModelRuntime.generate(this@MainActivity, heard)
+                                val result = ModelRuntime.generateConversation(this@MainActivity, heard)
                                 val response = result.optString("response")
                                 val voice = if (result.optBoolean("ok") && response.isNotBlank()) VoiceRuntime.speak(this@MainActivity, response) else org.json.JSONObject().put("ok", false)
                                 ReceiptStore.record(this@MainActivity, "agent.voice.conversation", if (result.optBoolean("ok") && voice.optBoolean("ok")) "PASS" else "BLOCKED", "speech input -> model; voiceOk=" + voice.optBoolean("ok"))

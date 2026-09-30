@@ -15,7 +15,7 @@ object RemoteCommandRouter {
         "model.status", "model.install", "model.inference", "voice.status", "voice.speak", "agent.chat"
     )
 
-    fun execute(context: Context, commandId: String, capability: String, arguments: JSONObject, firstSeen: Boolean): JSONObject {
+    fun execute(context: Context, commandId: String, capability: String, arguments: JSONObject, firstSeen: Boolean, conversationRequest: Boolean = false): JSONObject {
         val governance = LocalAuthority.agentAccessEnabled(context)
         val supported = capability in remoteQualified
         val prompt = arguments.optString("prompt").trim()
@@ -85,7 +85,7 @@ object RemoteCommandRouter {
                 }
                 "model.status" -> ModelRuntime.status(context)
                 "model.install" -> ModelRuntime.download(context) { _, _ -> }
-                "model.inference" -> ModelRuntime.generate(context, prompt)
+                "model.inference" -> if (conversationRequest) ModelRuntime.generateConversation(context, prompt) else ModelRuntime.generate(context, prompt)
                 "voice.status" -> VoiceRuntime.initialize(context)
                 "voice.speak" -> VoiceRuntime.speak(context, text)
                 "agent.chat" -> chat(context, prompt, arguments.optBoolean("speak", true))
@@ -105,7 +105,7 @@ object RemoteCommandRouter {
     }
 
     private fun chat(context: Context, prompt: String, speak: Boolean): JSONObject {
-        val generated = ModelRuntime.generate(context, prompt)
+        val generated = ModelRuntime.generateConversation(context, prompt)
         if (!generated.optBoolean("ok")) return generated
         val response = generated.optString("response")
         val voice = if (speak) VoiceRuntime.speak(context, response)
