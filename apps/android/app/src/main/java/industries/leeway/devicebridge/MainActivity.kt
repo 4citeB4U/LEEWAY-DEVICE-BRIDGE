@@ -12,6 +12,8 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.content.pm.PackageManager
 import android.Manifest
+import android.net.Uri
+import android.provider.Settings
 import android.view.Gravity
 import android.widget.Button
 import android.widget.LinearLayout
@@ -221,9 +223,19 @@ class MainActivity : AppCompatActivity() {
             }
         }
         val speakTest = Button(this).apply {
-            text = "OPEN AGENT LEE VOICE ONE"
+            text = "PREPARE AGENT LEE VOICE ONE"
             setOnClickListener {
-                output.text = VoiceRuntime.openVoiceFabric(this@MainActivity).toString(2)
+                if (!Settings.canDrawOverlays(this@MainActivity)) {
+                    output.text = "Grant Display over other apps once so the persistent Voice One host and side mic can run."
+                    startActivity(
+                        Intent(
+                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            Uri.parse("package:$packageName")
+                        )
+                    )
+                } else {
+                    output.text = VoiceRuntime.prepare(this@MainActivity).toString(2)
+                }
             }
         }
 
@@ -233,38 +245,8 @@ class MainActivity : AppCompatActivity() {
                 if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
                     requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), 4203)
                     output.text = "Microphone permission requested. Approve it, then tap TALK TO AGENT LEE again."
-                } else if (!SpeechRecognizer.isRecognitionAvailable(this@MainActivity)) {
-                    output.text = "Android speech recognition is not available on this device."
                 } else {
-                    speechRecognizer?.destroy()
-                    speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this@MainActivity)
-                    speechRecognizer?.setRecognitionListener(object : android.speech.RecognitionListener {
-                        override fun onReadyForSpeech(params: Bundle?) { output.text = "Listening..." }
-                        override fun onBeginningOfSpeech() {}
-                        override fun onRmsChanged(rmsdB: Float) {}
-                        override fun onBufferReceived(buffer: ByteArray?) {}
-                        override fun onEndOfSpeech() { output.text = "Thinking..." }
-                        override fun onError(error: Int) { output.text = "Speech recognition error: " + error }
-                        override fun onPartialResults(partialResults: Bundle?) {}
-                        override fun onEvent(eventType: Int, params: Bundle?) {}
-                        override fun onResults(results: Bundle?) {
-                            val heard = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull().orEmpty()
-                            if (heard.isBlank()) { output.text = "I did not hear a complete request."; return }
-                            output.text = "You: " + heard + "\\n\\nAgent Lee is thinking..."
-                            Thread {
-                                val result = ModelRuntime.generate(this@MainActivity, heard)
-                                val response = result.optString("response")
-                                if (result.optBoolean("ok") && response.isNotBlank()) VoiceRuntime.speak(this@MainActivity, response)
-                                ReceiptStore.record(this@MainActivity, "agent.voice.conversation", if (result.optBoolean("ok")) "PASS" else "FAIL", "speech input -> model -> TTS")
-                                runOnUiThread { output.text = "You: " + heard + "\\n\\nAgent Lee: " + (if (response.isBlank()) result.toString(2) else response) }
-                            }.start()
-                        }
-                    })
-                    val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                        putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                        putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
-                    }
-                    speechRecognizer?.startListening(intent)
+                    startActivity(Intent(this@MainActivity, AgentLeeTalkActivity::class.java))
                 }
             }
         }
@@ -282,23 +264,55 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
                 RemoteRelayService.start(this@MainActivity)
+
+                if (!Settings.canDrawOverlays(this@MainActivity)) {
+                    ReceiptStore.record(
+                        this@MainActivity,
+                        "workstation.overlay.permission",
+                        "BLOCKED",
+                        "Owner approval required for persistent side mic"
+                    )
+                    startActivity(
+                        Intent(
+                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            Uri.parse("package:$packageName")
+                        )
+                    )
+                } else {
+                    AgentLeeOverlayController.show(this@MainActivity)
+                    VoiceRuntime.prepare(this@MainActivity)
+                }
+
                 Handler(Looper.getMainLooper()).postDelayed({
                     val remote = RemoteRelayState.status(this@MainActivity)
+                    val overlay = AgentLeeOverlayController.status(this@MainActivity)
+                    val voice = VoiceRuntime.status(this@MainActivity)
                     refreshRuntimeState()
                     val result = org.json.JSONObject().apply {
                         put("mode", "LEEWAY_SECONDARY_WORKSTATION")
                         put("deviceId", remote.optString("deviceId"))
                         put("localBridge", local)
                         put("remoteRelay", remote)
+                        put("sideMic", overlay)
+                        put("voice", voice)
+                        put("ecosystem", EcosystemAuthorityContext.status())
                         put("pairingTokenReady", pairingToken.isNotBlank())
-                        put("next", "Use AUTOMATIC OWNER BOOTSTRAP / remote qualification. Manual token copy is fallback only.")
+                        put("formulaExecution", "NOT_EXECUTED")
+                        put("skillExecution", "NOT_EXECUTED")
+                        put(
+                            "next",
+                            if (overlay.optBoolean("permission"))
+                                "Use side mic; Voice One first prepare may still require live phone qualification."
+                            else
+                                "Grant Display over other apps, then return here. No USB is required for that owner approval."
+                        )
                     }
                     output.text = result.toString(2)
                     ReceiptStore.record(
                         this@MainActivity,
                         "workstation.secondary.enable",
-                        if (remote.optBoolean("enabled")) "PASS" else "BLOCKED",
-                        "Owner enabled secondary workstation mode"
+                        if (remote.optBoolean("enabled") && overlay.optBoolean("permission")) "PASS" else "BLOCKED",
+                        "Secondary workstation requested; overlayPermission=" + overlay.optBoolean("permission")
                     )
                 }, 1000L)
             }
@@ -457,9 +471,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (RemoteRelayState.enabled(this) && Settings.canDrawOverlays(this)) {
+            AgentLeeOverlayController.show(this)
+            VoiceRuntime.prepare(this)
+        }
+    }
+
     override fun onDestroy() {
         speechRecognizer?.destroy()
-        VoiceRuntime.shutdown()
         super.onDestroy()
     }
 
