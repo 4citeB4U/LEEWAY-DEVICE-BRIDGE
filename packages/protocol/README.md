@@ -39,6 +39,8 @@ Relative paths resolve against the configuration directory. Set the existing own
 
 `tools/list` advertises a common typed API. `bridge_devices` enumerates configuration; `bridge_capabilities` queries one device now. Invoke `device_files_read`, for example, with `{"deviceId":"local-workstation","arguments":{"path":"proof.txt"}}`. Tool names map dots to underscores; all schemas live in `index.mjs`. The registry includes Android screen, UI, app, model and voice operations, but the desktop adapter reports only its actual file/status capabilities. Call results return `isError: true` on failure.
 
+Successful `device_screen_capture` calls return native MCP ImageContent (JPEG or PNG) and a separate text metadata/receipt block. The formatter checks bounded canonical base64, allowed MIME type, image signature and positive bounded dimensions; it does not duplicate image data in text. Malformed image output returns `INVALID_SCREEN_IMAGE` with no image payload. The preserved receipt hash binds the complete original adapter result; its execution outcome records the adapter result, not proof that the image was rendered or interpreted. Other tools never promote arbitrary returned data to ImageContent. The formatter does not fully decode the image or independently verify declared dimensions.
+
 ## Authority and evidence
 
 Admission requires a known device, known capability, strict bounded arguments, an explicit configuration grant, a positive admission callback, and fresh adapter discovery. The relay remains the device's owner authentication and execution gate. Its `remoteQualified` list is a supported route list, **not** proof of OS permission, verified behavior, or Formula approval. A successful discovery is never labeled verified.

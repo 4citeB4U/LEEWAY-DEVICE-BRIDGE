@@ -6,9 +6,11 @@ import os from 'node:os';
 import { WebSocketServer } from 'ws';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { Bridge, digest } from '../../packages/protocol/index.mjs';
 import { RelayAdapter, parseRemoteQualified } from '../../packages/agent-relay/index.mjs';
 import { DesktopAdapter } from '../../apps/desktop/adapter.mjs';
+import { createServer } from '../../apps/desktop/mcp-server.mjs';
 
 test('real SDK stdio tools/list and tools/call create/read plus fail-closed checks and receipts', async t => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'leeway-mcp-'));
@@ -150,4 +152,42 @@ test('desktop adapter rejects links and bounds file reads', async t => {
   await fs.link(path.join(root, 'original.txt'), path.join(root, 'hardlink.txt'));
   await assert.rejects(adapter.execute('device.files.read', { path: 'hardlink.txt' }), /LINK_NOT_ALLOWED/);
   await assert.rejects(adapter.execute('device.files.read', { path: 'NUL' }), /INVALID_PATH/);
+});
+
+test('MCP screenshot uses native image content once, preserves full result hash, rejects invalid media', async t => {
+  const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jp1sAAAAASUVORK5CYII=';
+  let capture = { ok: true, mimeType: 'image/png', width: 1, height: 1, base64: png };
+  const bridge = new Bridge([{ id: 'screen-device', grants: ['device.screen.capture', 'device.health'], adapter: {
+    discover: async () => ['device.screen.capture', 'device.health'], execute: async () => capture,
+  } }], { admission: async () => true, receiptSink: async () => {} });
+  const server = createServer(bridge);
+  const client = new Client({ name: 'screen-test', version: '1' });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+  t.after(async () => { await client.close(); await server.close(); });
+  const call = name => client.callTool({ name, arguments: { deviceId: 'screen-device', arguments: {} } });
+  const result = await call('device_screen_capture');
+  assert.equal(result.isError, undefined);
+  assert.equal(result.content.length, 2);
+  assert.deepEqual(result.content[1], { type: 'image', mimeType: 'image/png', data: png });
+  assert.ok(!result.content[0].text.includes(png));
+  const metadata = JSON.parse(result.content[0].text);
+  assert.equal(metadata.receipt.resultHash, digest(capture));
+  assert.equal(metadata.result.width, 1);
+  assert.ok(!('base64' in metadata.result));
+  assert.ok(!(await call('device_health')).content.some(c => c.type === 'image'));
+  for (const changes of [
+    { mimeType: 'image/svg+xml' }, { base64: 'not valid base64' }, { base64: '' },
+    { base64: 'SGVsbG8=' }, { base64: png + '=' }, { width: 0 }, { height: 32769 },
+    { base64: 'A'.repeat(8 * 1024 * 1024 + 4) }, { mimeType: 'image/jpeg' },
+  ]) {
+    capture = { ok: true, mimeType: 'image/png', width: 1, height: 1, base64: png, ...changes };
+    const bad = await call('device_screen_capture');
+    assert.equal(bad.isError, true);
+    assert.ok(bad.content.every(c => c.type === 'text'));
+    const failure = JSON.parse(bad.content[0].text);
+    assert.equal(failure.error, 'INVALID_SCREEN_IMAGE');
+    assert.equal(failure.receipt.resultHash, digest(capture));
+    assert.ok(!Object.hasOwn(failure, 'result'));
+  }
 });
