@@ -142,16 +142,33 @@ test('legacy serialized discovery supports governed bridge invocation over mock 
   assert.equal((await bridge.call('legacy-fold', 'device.ui.tap', { x: 1, y: 1 })).error, 'CAPABILITY_UNAVAILABLE');
 });
 
-test('desktop adapter rejects links and bounds file reads', async t => {
+test('desktop adapter bounds file reads and rejects reserved device paths', async t => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'leeway-files-'));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   const adapter = new DesktopAdapter(root);
   await fs.writeFile(path.join(root, 'large.txt'), 'x'.repeat(65537));
   await assert.rejects(adapter.execute('device.files.read', { path: 'large.txt' }), /FILE_TOO_LARGE/);
-  await fs.writeFile(path.join(root, 'original.txt'), 'x');
-  await fs.link(path.join(root, 'original.txt'), path.join(root, 'hardlink.txt'));
-  await assert.rejects(adapter.execute('device.files.read', { path: 'hardlink.txt' }), /LINK_NOT_ALLOWED/);
   await assert.rejects(adapter.execute('device.files.read', { path: 'NUL' }), /INVALID_PATH/);
+});
+
+test('desktop adapter rejects an existing hardlinked file when the host permits a fixture', async t => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'leeway-links-'));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const adapter = new DesktopAdapter(root);
+  await fs.writeFile(path.join(root, 'original.txt'), 'x');
+  try {
+    await fs.link(path.join(root, 'original.txt'), path.join(root, 'hardlink.txt'));
+  } catch (error) {
+    // Android/Termux may deny link(2) before the adapter can inspect a fixture.
+    // Report the missing test coverage; never treat setup failure as a passed defense.
+    if (process.platform === 'android' && ['EACCES', 'EPERM'].includes(error.code)) {
+      t.skip(`Android denied hardlink fixture creation (${error.code}); adapter hardlink defense remains unverified on this host`);
+      return;
+    }
+    throw error;
+  }
+  assert.ok((await fs.lstat(path.join(root, 'hardlink.txt'))).nlink > 1);
+  await assert.rejects(adapter.execute('device.files.read', { path: 'hardlink.txt' }), /LINK_NOT_ALLOWED/);
 });
 
 test('MCP screenshot uses native image content once, preserves full result hash, rejects invalid media', async t => {

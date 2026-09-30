@@ -57,4 +57,6 @@ No desktop screen capture, mouse/keyboard control, web browser control, mobile p
 
 Run `npm run test:mcp` for a real official SDK stdio roundtrip, file read/write, capability denial, missing admission, failed receipt persistence, changed capabilities, traversal/link/file-size defenses, relay authentication, nested execution errors, timeout and malformed response checks. Run `npm audit` for dependency findings.
 
+The hardlink fixture test is separate from file-size/path defenses. Android/Termux may deny creation of any hardlink with `EACCES`/`EPERM`; in that case only the hardlink test reports an explicit skip and that defense is unverified on that host. The adapter's hardlink rejection policy is unchanged. Do not report a skipped platform test as a passed defense.
+
 Official MCP SDK guidance used: [server](https://ts.sdk.modelcontextprotocol.io/server). This implementation pins the supported v1 package API in its lockfile; the common contract is JSON-RPC through MCP, not a proprietary replacement.
