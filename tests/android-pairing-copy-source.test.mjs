@@ -10,7 +10,7 @@ assert.match(activity,/ClipboardManager/);
 assert.match(activity,/ClipData\.newPlainText\("LeeWay pairing token", pairingToken\)/);
 assert.match(activity,/TERMUX_BOOTSTRAP/);
 assert.match(activity,/Pairing mode opened by Termux/);
-assert.match(gradle,/versionCode = 16/);
-assert.match(gradle,/versionName = "0\.9\.1-pocket-rc1"/);
+assert.match(gradle,/versionCode = 17/);
+assert.match(gradle,/versionName = "0\.9\.2-pocket-rc2"/);
 
 console.log("PASS pairing-copy UX source contract");
