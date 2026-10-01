@@ -122,18 +122,42 @@ object RemoteCommandRouter {
                 .put("voice", voice).put("authority", "USER_AUTHORIZED_CREATOR_PROFILE")
                 .put("promptContract", "EXACT_PROFILE_LOOKUP_V1").put("canonicalFormulaState", "NOT_EXECUTED")
         }
-        val generated = ModelRuntime.generateConversation(context, prompt, creatorContext)
+
+        val behavior = AgentLeeBehaviorRuntime.evaluate(context, prompt)
+        if (behavior.directReply != null) {
+            val response = behavior.directReply
+            val voice = if (speak) VoiceRuntime.speak(context, response)
+                else JSONObject().put("ok", true).put("spoken", false)
+            ReceiptStore.record(context, "agent.chat", if (voice.optBoolean("ok")) "PASS" else "FAIL",
+                "source=" + behavior.contract + " modelExecuted=false speak=" + speak)
+            return JSONObject().apply {
+                put("ok", true); put("prompt", prompt); put("response", response)
+                put("modelExecuted", false); put("modelId", JSONObject.NULL); put("elapsedMs", 0)
+                put("voice", voice); put("authority", "AGENT_LEE_DETERMINISTIC_BEHAVIOR")
+                put("promptContract", behavior.contract ?: "AGENT_LEE_BEHAVIOR_V1")
+                put("emotionState", behavior.emotions); put("register", behavior.register)
+                put("criticismStreak", behavior.criticismStreak)
+                put("canonicalFormulaState", "NOT_EXECUTED")
+            }
+        }
+
+        val combinedContext = listOf(creatorContext.trim(), behavior.promptContext)
+            .filter { it.isNotBlank() }.joinToString(" | ")
+        val generated = ModelRuntime.generateConversation(context, prompt, combinedContext)
         if (!generated.optBoolean("ok")) return generated
         val response = generated.optString("response")
         val voice = if (speak) VoiceRuntime.speak(context, response)
             else JSONObject().put("ok", true).put("spoken", false)
         ReceiptStore.record(context, "agent.chat", if (voice.optBoolean("ok")) "PASS" else "FAIL",
-            "model=" + generated.optString("modelId") + " speak=" + speak)
+            "model=" + generated.optString("modelId") + " register=" + behavior.register + " speak=" + speak)
         return JSONObject().apply {
             put("ok", true); put("prompt", prompt); put("response", response)
+            put("modelExecuted", true)
             put("modelId", generated.optString("modelId")); put("elapsedMs", generated.optLong("elapsedMs"))
             put("voice", voice); put("authority", "PHONE_LOCAL_AGENT_CHAT")
-            put("promptContract", "SEPARATE_SYSTEM_AND_USER_V1")
+            put("promptContract", "AGENT_LEE_BEHAVIOR_RUNTIME_V1_PLUS_MODEL")
+            put("emotionState", behavior.emotions); put("register", behavior.register)
+            put("criticismStreak", behavior.criticismStreak)
             put("canonicalFormulaState", "NOT_EXECUTED")
         }
     }
