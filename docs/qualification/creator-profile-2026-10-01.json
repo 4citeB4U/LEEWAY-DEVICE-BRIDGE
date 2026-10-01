@@ -1,0 +1,21 @@
+{
+  "observedAt": "2026-10-01T05:42:41.245Z",
+  "bridgeVersion": "0.9.8-pocket-rc8",
+  "transport": "INTERNET_RELAY",
+  "verified": true,
+  "result": {
+    "ok": true,
+    "prompt": "Who created Agent Lee?",
+    "response": "Agent Lee was created by Leonard J. Lee, the creator of LeeWay.",
+    "modelExecuted": false,
+    "modelId": null,
+    "elapsedMs": 0,
+    "voice": {
+      "ok": true,
+      "spoken": false
+    },
+    "authority": "USER_AUTHORIZED_CREATOR_PROFILE",
+    "promptContract": "EXACT_PROFILE_LOOKUP_V1",
+    "canonicalFormulaState": "NOT_EXECUTED"
+  }
+}

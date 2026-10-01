@@ -17,5 +17,16 @@ conversation path; this narrow repair does not prove general factual reliability
 of the 360M model. Missing or invalid profiles return an unavailable message.
 
 Host tests cover exact identity responses, negative routing, preserved alternate-
-language requests and invalid profile rejection. Live Bridge 23 verification is
-pending installation by the supervising task; no phone execution is claimed here.
+language requests and invalid profile rejection.
+
+Live Bridge 23 (`0.9.8-pocket-rc8`) verification passed through the authenticated
+Internet relay at `2026-10-01T05:42:41.245Z`. The question "Who created Agent Lee?"
+returned "Agent Lee was created by Leonard J. Lee, the creator of LeeWay."
+The result reported `modelExecuted: false`, `modelId: null`, authority
+`USER_AUTHORIZED_CREATOR_PROFILE`, contract `EXACT_PROFILE_LOOKUP_V1` and Formula
+`NOT_EXECUTED`. This verifies the profile lookup on the phone, not model reasoning.
+The request disabled speech and returned `spoken: false`; it does not qualify
+voice playback, audibility or physically unplugged operation.
+
+The supervising task's captured result is preserved in
+[the qualification evidence](qualification/creator-profile-2026-10-01.json).
