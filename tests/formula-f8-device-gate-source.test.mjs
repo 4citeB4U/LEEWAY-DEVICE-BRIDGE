@@ -6,12 +6,17 @@ const src=fs.readFileSync(
   "utf8"
 );
 
+assert.match(src,/DEVICE_BRIDGE_LOCAL_ELIGIBILITY/);
 assert.match(src,/LW-F8/);
-assert.match(src,/qA/);
-assert.match(src,/69/);
+assert.match(src,/4citeB4U\/Leeway-formula-live/);
+assert.match(src,/canonicalFormulaExecuted/);
+assert.match(src,/NOT_EXECUTED/);
+assert.match(src,/canonicalQ69/);
+assert.match(src,/JSONObject\.NULL/);
 assert.match(src,/EXECUTE/);
 assert.match(src,/HOLD/);
 assert.match(src,/EMPTY_CONDITIONS_BLOCKED/);
-assert.match(src,/canonicalPolicyGapClosed", false/);
+assert.doesNotMatch(src,/qA\s*=/);
+assert.doesNotMatch(src,/if \(fire\) 69/);
 
-console.log("PASS F8 Device Bridge source policy");
+console.log("PASS local eligibility gate preserves centralized Formula truth boundary");

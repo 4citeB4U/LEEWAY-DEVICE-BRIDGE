@@ -1,0 +1,8 @@
+{
+  "receiptId": "5e7d60df-fc55-4388-bf5b-b22edf548544",
+  "timestamp": "2026-10-01T05:54:21.450926Z",
+  "capability": "device.pocket.action",
+  "result": "PASS",
+  "detail": "id=1a5cf1de-ad3c-4f92-a02a-b72de741f5e5 action=open state=LAUNCH_REQUESTED verification=FOREGROUND_PACKAGE_MATCH canonicalFormula=NOT_EXECUTED",
+  "authority": "LOCAL_DEVICE_RUNTIME"
+}

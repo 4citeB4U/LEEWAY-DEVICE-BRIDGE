@@ -18,12 +18,13 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
-    <queries>
+    <queries><package android:name="industries.leeway.pocket"/>
         <intent>
             <action android:name="android.intent.action.MAIN"/>
             <category android:name="android.intent.category.LAUNCHER"/>
         </intent>
     </queries>
+    <permission android:name="industries.leeway.devicebridge.POCKET_COMMAND" android:protectionLevel="signature" />
     <application
         android:theme="@style/Theme.LeewayDeviceBridge"
         android:label="LeeWay Device Bridge"
@@ -36,10 +37,13 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <service android:name=".PocketCommandService" android:exported="true" android:permission="industries.leeway.devicebridge.POCKET_COMMAND" />
+        <activity android:name=".PocketBridgeActivity" android:exported="true" android:excludeFromRecents="true" android:theme="@style/Theme.LeewayDeviceBridge.Pocket"/>
         <service
             android:name=".RemoteRelayService"
             android:exported="false"
             android:foregroundServiceType="remoteMessaging"/>
+
         <service
             android:name=".DeviceOperatorAccessibilityService"
             android:exported="true"

@@ -1,0 +1,5 @@
+# Web adapter boundary — not implemented
+
+A browser UI may eventually act as another client of the common device contract. It must advertise only capabilities supported by the browser and granted by the owner. WebUSB requires an eligible browser, compatible device interface and user permission; it is not general Android UI control. WebRTC requires signaling plus permission and an implemented peer adapter; media connectivity does not grant operating-system control. A browser page cannot silently start arbitrary desktop applications, capture every screen or operate unrelated apps.
+
+There is no executable web adapter in this change. Existing Android accessibility and screenshot routes remain Android-specific. The common MCP host can call those routes when the paired device is reachable and authorized, but it does not confer them on Chromebooks, iOS, macOS or other devices. The next web milestone requires an actual permission flow, authenticated relay client, platform capability discovery and platform-specific end-to-end evidence.

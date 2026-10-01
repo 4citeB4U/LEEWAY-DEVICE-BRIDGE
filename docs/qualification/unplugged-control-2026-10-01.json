@@ -1,0 +1,151 @@
+{
+  "evidenceType": "SUMMARY_OF_CAPTURED_CONTROLLER_OBSERVATIONS",
+  "sourceFileSha256": "edc8b46ad9fa8069714492e188ddb3ec91870f88e3c48b08d8241a4d8813af65",
+  "at": "2026-10-01T06:03:32.489Z",
+  "transport": "Internet relay via MCP",
+  "physicalUsb": "DISCONNECTED_OWNER_CONFIRMED",
+  "controllerPC": "ONLINE",
+  "visibleResult": [
+    "4 Calculation result",
+    "7",
+    "4",
+    "1",
+    "C",
+    "8",
+    "9",
+    "×",
+    "5",
+    "6",
+    "−",
+    "2",
+    "3",
+    "+",
+    ".",
+    "0",
+    "=",
+    "( )",
+    "%",
+    "÷"
+  ],
+  "verified": true,
+  "steps": [
+    {
+      "name": "device_apps_launch",
+      "ok": true,
+      "capability": "device.apps.launch",
+      "outcome": "PASS",
+      "receiptId": "a19fdbc3-5975-49cc-8260-10eaf01a2012",
+      "originalControllerReceiptSha256": "4f88fb339d1ea4018c81f96391333d86acf236318cffee96980722a04bf57e03",
+      "formula": "NOT_EVALUATED"
+    },
+    {
+      "name": "device_ui_snapshot",
+      "ok": true,
+      "capability": "device.ui.snapshot",
+      "outcome": "PASS",
+      "receiptId": "dfc188f8-13a5-4b44-b07c-1deebf179d62",
+      "originalControllerReceiptSha256": "d24bbe6d2d8516fef030f9594dc00fad1bf8b14c34d40c8ffe982ef272a443f7",
+      "formula": "NOT_EVALUATED"
+    },
+    {
+      "name": "device_ui_tap",
+      "ok": true,
+      "capability": "device.ui.tap",
+      "outcome": "PASS",
+      "receiptId": "fc40d116-167b-40d4-a68c-aa462ffdfc8b",
+      "originalControllerReceiptSha256": "c0201f2041cb91d899ad158a65dc9c889a8d30e0419bf182d7fd61b01ad18577",
+      "formula": "NOT_EVALUATED"
+    },
+    {
+      "name": "device_ui_snapshot",
+      "ok": true,
+      "capability": "device.ui.snapshot",
+      "outcome": "PASS",
+      "receiptId": "0d097285-9a08-43e9-a4a4-f1e770e550a3",
+      "originalControllerReceiptSha256": "420d7eddcc72d6607a01b8a0b01f9c6535577b989458d1e1c48de0d8cb1107a5",
+      "formula": "NOT_EVALUATED"
+    },
+    {
+      "name": "device_ui_tap",
+      "ok": true,
+      "capability": "device.ui.tap",
+      "outcome": "PASS",
+      "receiptId": "79b64f87-1159-4cde-9aeb-5d216f6cab3d",
+      "originalControllerReceiptSha256": "e7e795b8059ffe9e4fe187530d978b60805ea0f72b8dc823b4bd0b0f936f8bfe",
+      "formula": "NOT_EVALUATED"
+    },
+    {
+      "name": "device_ui_snapshot",
+      "ok": true,
+      "capability": "device.ui.snapshot",
+      "outcome": "PASS",
+      "receiptId": "20cce155-c646-4e0a-a51d-df2816a0e4af",
+      "originalControllerReceiptSha256": "e7fcd80149742855cb734eba526d8a1fd1519a99e5d8073c5c6e61d97640db96",
+      "formula": "NOT_EVALUATED"
+    },
+    {
+      "name": "device_ui_tap",
+      "ok": true,
+      "capability": "device.ui.tap",
+      "outcome": "PASS",
+      "receiptId": "1a504ee6-2476-4506-a858-a27180fe327b",
+      "originalControllerReceiptSha256": "512ff9c319b16c02c4bd174cc845c1d3254841609ecdfcceed63f47a1b836806",
+      "formula": "NOT_EVALUATED"
+    },
+    {
+      "name": "device_ui_snapshot",
+      "ok": true,
+      "capability": "device.ui.snapshot",
+      "outcome": "PASS",
+      "receiptId": "b055a62c-d287-4ff7-839f-98ea24dab363",
+      "originalControllerReceiptSha256": "a4b096e31b26c498e083b598c99d8b9d1fa4ebd43a6008e1d8c9d07eb193a741",
+      "formula": "NOT_EVALUATED"
+    },
+    {
+      "name": "device_ui_tap",
+      "ok": true,
+      "capability": "device.ui.tap",
+      "outcome": "PASS",
+      "receiptId": "9cadeecf-d1ff-47d5-8f98-1f56ef1bde48",
+      "originalControllerReceiptSha256": "b0958c7c01e99ad6f40923cc83289d078c0aa50f1306c57579f9f94d357e4b18",
+      "formula": "NOT_EVALUATED"
+    },
+    {
+      "name": "device_ui_snapshot",
+      "ok": true,
+      "capability": "device.ui.snapshot",
+      "outcome": "PASS",
+      "receiptId": "27998d06-7da5-4fbe-91f1-0235bfc4f886",
+      "originalControllerReceiptSha256": "1a76602c2089590bd71dc741b5db5742290c4920c9927a9a571f315311e4760a",
+      "formula": "NOT_EVALUATED"
+    },
+    {
+      "name": "device_ui_tap",
+      "ok": true,
+      "capability": "device.ui.tap",
+      "outcome": "PASS",
+      "receiptId": "fa009832-3f4d-4318-a84e-0f2d36d4ddda",
+      "originalControllerReceiptSha256": "715bbb1f49c5cd49474f4c84084cac89310d1607cf5141f0555417b678f283cc",
+      "formula": "NOT_EVALUATED"
+    },
+    {
+      "name": "device_ui_snapshot",
+      "ok": true,
+      "capability": "device.ui.snapshot",
+      "outcome": "PASS",
+      "receiptId": "5d8befa8-997f-4860-8414-69cab9839b59",
+      "originalControllerReceiptSha256": "7759397856aed0a4fa7fd8835d8e4088a4f3fe04c568f7afd8031dca1dceb230",
+      "formula": "NOT_EVALUATED"
+    },
+    {
+      "name": "device_ui_home",
+      "ok": true,
+      "capability": "device.ui.home",
+      "outcome": "PASS",
+      "receiptId": "e5a5fcf9-7808-4830-9a58-8d729a32c145",
+      "originalControllerReceiptSha256": "cc683e4aef41eeeccff36795652ffddc0004cd18481618cc37dd70251daccdf0",
+      "formula": "NOT_EVALUATED"
+    }
+  ],
+  "scope": "USB-disconnected Internet control of Calculator, 2+2 result4 observed; no PC-powered-off claim. Original full UI trees retained in supervising task evidence; this summary omits device identity and repeated trees."
+}

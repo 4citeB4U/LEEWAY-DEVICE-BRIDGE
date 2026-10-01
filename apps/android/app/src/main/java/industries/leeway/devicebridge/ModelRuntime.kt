@@ -4,6 +4,10 @@ import android.content.Context
 import com.google.ai.edge.litertlm.Backend
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
+import com.google.ai.edge.litertlm.ConversationConfig
+import com.google.ai.edge.litertlm.Contents
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
@@ -14,6 +18,7 @@ import java.net.URL
 import java.security.MessageDigest
 
 object ModelRuntime {
+    private val inferenceGuard = InferenceGuard()
     const val MODEL_ID = "litert-community/SmolLM2-360M-Instruct"
     const val MODEL_FILE = "SmolLM2_360M_instruct.litertlm"
     const val MODEL_SIZE_BYTES = 373719040L
@@ -43,6 +48,7 @@ object ModelRuntime {
             put("runtime", "LiteRT-LM")
             put("backend", "CPU")
             put("authority", "PHONE_LOCAL_MODEL")
+            put("busy", inferenceGuard.isBusy())
         }
     }
 
@@ -107,51 +113,89 @@ object ModelRuntime {
         return status(context)
     }
 
-    fun generate(context: Context, prompt: String): JSONObject {
-        val file = modelFile(context)
-        val st = status(context)
-        if (!st.optBoolean("verified")) {
-            return JSONObject().apply {
-                put("ok", false)
-                put("error", "MODEL_NOT_VERIFIED")
-                put("status", st)
-            }
-        }
+    fun generate(context: Context, prompt: String): JSONObject =
+        generateBounded(context, prompt, 512, 90000L, 16384)
 
+    fun generateConversation(context: Context, prompt: String, creatorContext: String = ""): JSONObject =
+        generateBounded(context, prompt, 128, 45000L, 4096, ConversationPrompt.systemInstruction(creatorContext))
+
+    private fun generateBounded(context: Context, prompt: String, maxOutputTokens: Int, timeoutMs: Long, maxPromptChars: Int, systemInstruction: String? = null): JSONObject {
+        fun failed(error: String, elapsed: Long = 0L): JSONObject {
+            ReceiptStore.record(context, "model.inference", "BLOCKED", "error=$error elapsedMs=$elapsed")
+            return JSONObject().put("ok", false).put("error", error).put("elapsedMs", elapsed)
+                .put("modelId", MODEL_ID).put("maxOutputTokens", maxOutputTokens)
+                .put("generationTimeoutMs", timeoutMs)
+        }
+        if (prompt.isBlank() || prompt.length > maxPromptChars) return failed("MODEL_PROMPT_LIMIT")
+        if (!inferenceGuard.tryAcquire()) return failed("MODEL_BUSY")
         val started = System.currentTimeMillis()
-        val output = StringBuilder()
-        runBlocking {
-            val config = EngineConfig(
-                modelPath = file.absolutePath,
-                backend = Backend.CPU(),
-                cacheDir = context.cacheDir.absolutePath
-            )
-            Engine(config).use { engine ->
-                engine.initialize()
-                engine.createConversation().use { conversation ->
-                    conversation.sendMessageAsync(prompt).collect { token ->
-                        output.append(token)
+        try {
+            val file = modelFile(context)
+            val st = status(context)
+            if (!st.optBoolean("verified")) {
+                return JSONObject().apply {
+                    put("ok", false)
+                    put("error", "MODEL_NOT_VERIFIED")
+                    put("status", st)
+                }
+            }
+
+            val output = StringBuilder()
+            runBlocking {
+                val config = EngineConfig(
+                    modelPath = file.absolutePath,
+                    backend = Backend.CPU(),
+                    cacheDir = context.cacheDir.absolutePath
+                )
+                Engine(config).use { engine ->
+                    engine.initialize()
+                    engine.createConversation(ConversationConfig(
+                        systemInstruction = systemInstruction?.let { Contents.of(it) },
+                        maxOutputToken = maxOutputTokens,
+                        automaticToolCalling = false
+                    )).use { conversation ->
+                        try {
+                            withTimeout(timeoutMs) {
+                                conversation.sendMessageAsync(prompt, maxOutputToken = maxOutputTokens).collect { token ->
+                                    output.append(token)
+                                }
+                            }
+                        } catch (timeout: TimeoutCancellationException) {
+                            // Explicit native cancellation precedes conversation/engine cleanup.
+                            // Initialization and cleanup are synchronous native operations, not hard-deadline guarantees.
+                            conversation.cancelProcess()
+                            throw timeout
+                        }
                     }
                 }
             }
-        }
 
-        val elapsed = System.currentTimeMillis() - started
-        val result = JSONObject().apply {
-            put("ok", true)
-            put("modelId", MODEL_ID)
-            put("prompt", prompt)
-            put("response", output.toString())
-            put("elapsedMs", elapsed)
-            put("authority", "PHONE_LOCAL_MODEL")
+            val elapsed = System.currentTimeMillis() - started
+            if (output.isBlank()) return failed("MODEL_EMPTY_RESPONSE", elapsed)
+            val result = JSONObject().apply {
+                put("ok", true)
+                put("modelId", MODEL_ID)
+                put("prompt", prompt)
+                put("response", output.toString())
+                put("elapsedMs", elapsed)
+                put("authority", "PHONE_LOCAL_MODEL")
+                put("maxOutputTokens", maxOutputTokens)
+                put("generationTimeoutMs", timeoutMs)
+            }
+            ReceiptStore.record(
+                context,
+                "model.inference",
+                "PASS",
+                "model=" + MODEL_ID + " elapsedMs=" + elapsed
+            )
+            return result
+        } catch (_: TimeoutCancellationException) {
+            return failed("MODEL_TIMEOUT", System.currentTimeMillis() - started)
+        } catch (_: Exception) {
+            return failed("MODEL_INFERENCE_FAILED", System.currentTimeMillis() - started)
+        } finally {
+            inferenceGuard.release()
         }
-        ReceiptStore.record(
-            context,
-            "model.inference",
-            "PASS",
-            "model=" + MODEL_ID + " elapsedMs=" + elapsed
-        )
-        return result
     }
 
     private fun sha256(file: File): String {

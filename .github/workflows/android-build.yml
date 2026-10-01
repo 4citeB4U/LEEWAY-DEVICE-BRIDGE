@@ -60,7 +60,7 @@ jobs:
 
       - name: Build compact Android package
         working-directory: apps/android
-        run: gradle --no-daemon assembleDebug
+        run: gradle --no-daemon testDebugUnitTest assembleDebug
 
       - name: Measure and hash package
         working-directory: apps/android

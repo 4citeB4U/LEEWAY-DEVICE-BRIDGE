@@ -15,6 +15,7 @@ import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
 import android.graphics.Path
 import android.graphics.Bitmap
+import android.graphics.Rect
 import android.util.Base64
 import android.view.Display
 import java.io.ByteArrayOutputStream
@@ -56,6 +57,8 @@ class DeviceOperatorAccessibilityService : AccessibilityService() {
             fun nodeJson(node: AccessibilityNodeInfo?, depth: Int): JSONObject {
                 if (node == null || depth > 20 || count >= 750) return JSONObject().put("truncated", true)
                 count += 1
+                val bounds = Rect()
+                node.getBoundsInScreen(bounds)
                 val out = JSONObject().apply {
                     put("className", node.className?.toString())
                     put("packageName", node.packageName?.toString())
@@ -65,6 +68,13 @@ class DeviceOperatorAccessibilityService : AccessibilityService() {
                     put("scrollable", node.isScrollable)
                     put("editable", node.isEditable)
                     put("enabled", node.isEnabled)
+                    put("visibleToUser", node.isVisibleToUser)
+                    put("boundsInScreen", JSONObject().apply {
+                        put("left", bounds.left)
+                        put("top", bounds.top)
+                        put("right", bounds.right)
+                        put("bottom", bounds.bottom)
+                    })
                 }
                 val children = JSONArray()
                 for (i in 0 until node.childCount) children.put(nodeJson(node.getChild(i), depth + 1))
