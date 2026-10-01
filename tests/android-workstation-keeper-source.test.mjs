@@ -33,7 +33,7 @@ assert.match(bootstrap,/setsid nohup desktop-commander remote/);
 assert.match(bootstrap,/flock -n 9/);
 assert.match(bootstrap,/while true/);
 
-assert.match(gradle,/versionCode = 18/);
-assert.match(gradle,/versionName = "0\.9\.3-pocket-rc3"/);
+assert.match(gradle,/versionCode = 19/);
+assert.match(gradle,/versionName = "0\.9\.4-pocket-rc4"/);
 
 console.log("PASS android-workstation-keeper-source");

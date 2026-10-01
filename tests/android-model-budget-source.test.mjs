@@ -5,8 +5,10 @@ const source = name => fs.readFileSync(new URL(`../apps/android/app/src/main/jav
 
 test('phone conversations use supported native token budget and explicit cancellation before cleanup', () => {
   const model = source('ModelRuntime');
-  assert.match(model, /generateBounded\(context, prompt, 128, 45000L, 4096\)/);
-  assert.match(model, /ConversationConfig\(maxOutputToken = maxOutputTokens, automaticToolCalling = false\)/);
+  assert.match(model, /generateBounded\(context, prompt, 128, 45000L, 4096, ConversationPrompt.systemInstruction/);
+  assert.match(model, /systemInstruction = systemInstruction\?\.let \{ Contents.of\(it\) \}/);
+  assert.match(model, /maxOutputToken = maxOutputTokens/);
+  assert.match(model, /automaticToolCalling = false/);
   assert.match(model, /sendMessageAsync\(prompt, maxOutputToken = maxOutputTokens\)/);
   assert.match(model, /withTimeout\(timeoutMs\)/);
   assert.match(model, /conversation\.cancelProcess\(\)/);

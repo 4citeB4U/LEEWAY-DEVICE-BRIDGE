@@ -5,6 +5,7 @@ import com.google.ai.edge.litertlm.Backend
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
 import com.google.ai.edge.litertlm.ConversationConfig
+import com.google.ai.edge.litertlm.Contents
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.flow.collect
@@ -115,10 +116,10 @@ object ModelRuntime {
     fun generate(context: Context, prompt: String): JSONObject =
         generateBounded(context, prompt, 512, 90000L, 16384)
 
-    fun generateConversation(context: Context, prompt: String): JSONObject =
-        generateBounded(context, prompt, 128, 45000L, 4096)
+    fun generateConversation(context: Context, prompt: String, creatorContext: String = ""): JSONObject =
+        generateBounded(context, prompt, 128, 45000L, 4096, ConversationPrompt.systemInstruction(creatorContext))
 
-    private fun generateBounded(context: Context, prompt: String, maxOutputTokens: Int, timeoutMs: Long, maxPromptChars: Int): JSONObject {
+    private fun generateBounded(context: Context, prompt: String, maxOutputTokens: Int, timeoutMs: Long, maxPromptChars: Int, systemInstruction: String? = null): JSONObject {
         fun failed(error: String, elapsed: Long = 0L): JSONObject {
             ReceiptStore.record(context, "model.inference", "BLOCKED", "error=$error elapsedMs=$elapsed")
             return JSONObject().put("ok", false).put("error", error).put("elapsedMs", elapsed)
@@ -148,7 +149,11 @@ object ModelRuntime {
                 )
                 Engine(config).use { engine ->
                     engine.initialize()
-                    engine.createConversation(ConversationConfig(maxOutputToken = maxOutputTokens, automaticToolCalling = false)).use { conversation ->
+                    engine.createConversation(ConversationConfig(
+                        systemInstruction = systemInstruction?.let { Contents.of(it) },
+                        maxOutputToken = maxOutputTokens,
+                        automaticToolCalling = false
+                    )).use { conversation ->
                         try {
                             withTimeout(timeoutMs) {
                                 conversation.sendMessageAsync(prompt, maxOutputToken = maxOutputTokens).collect { token ->

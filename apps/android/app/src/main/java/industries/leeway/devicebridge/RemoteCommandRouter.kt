@@ -18,7 +18,10 @@ object RemoteCommandRouter {
     fun execute(context: Context, commandId: String, capability: String, arguments: JSONObject, firstSeen: Boolean, conversationRequest: Boolean = false): JSONObject {
         val governance = LocalAuthority.agentAccessEnabled(context)
         val supported = capability in remoteQualified
-        val prompt = arguments.optString("prompt").trim()
+        val prompt = if (capability == "agent.chat") ConversationPrompt.userRequest(
+            if (arguments.has("userRequest")) arguments.optString("userRequest") else null,
+            arguments.optString("prompt")
+        ) else arguments.optString("prompt").trim()
         val text = arguments.optString("text").trim()
         val capabilityPrecondition = when (capability) {
             "model.inference", "agent.chat" -> prompt.isNotEmpty()
@@ -88,7 +91,7 @@ object RemoteCommandRouter {
                 "model.inference" -> if (conversationRequest) ModelRuntime.generateConversation(context, prompt) else ModelRuntime.generate(context, prompt)
                 "voice.status" -> VoiceRuntime.initialize(context)
                 "voice.speak" -> VoiceRuntime.speak(context, text)
-                "agent.chat" -> chat(context, prompt, arguments.optBoolean("speak", true))
+                "agent.chat" -> chat(context, prompt, arguments.optBoolean("speak", true), arguments.optString("creatorContext"))
                 else -> JSONObject().put("error", "CAPABILITY_NOT_REMOTE_QUALIFIED")
             }
             val valueOk = !value.has("ok") || value.optBoolean("ok")
@@ -104,8 +107,8 @@ object RemoteCommandRouter {
         }
     }
 
-    private fun chat(context: Context, prompt: String, speak: Boolean): JSONObject {
-        val generated = ModelRuntime.generateConversation(context, prompt)
+    private fun chat(context: Context, prompt: String, speak: Boolean, creatorContext: String): JSONObject {
+        val generated = ModelRuntime.generateConversation(context, prompt, creatorContext)
         if (!generated.optBoolean("ok")) return generated
         val response = generated.optString("response")
         val voice = if (speak) VoiceRuntime.speak(context, response)
@@ -116,6 +119,8 @@ object RemoteCommandRouter {
             put("ok", true); put("prompt", prompt); put("response", response)
             put("modelId", generated.optString("modelId")); put("elapsedMs", generated.optLong("elapsedMs"))
             put("voice", voice); put("authority", "PHONE_LOCAL_AGENT_CHAT")
+            put("promptContract", "SEPARATE_SYSTEM_AND_USER_V1")
+            put("canonicalFormulaState", "NOT_EXECUTED")
         }
     }
 
