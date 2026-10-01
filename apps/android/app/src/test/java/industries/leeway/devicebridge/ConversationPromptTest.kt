@@ -23,7 +23,7 @@ class ConversationPromptTest {
 
     @Test fun creatorContextIsBoundedAndQuestionIsNotRewritten() {
         val base = ConversationPrompt.systemInstruction()
-        assertEquals(base.length + 200, ConversationPrompt.systemInstruction("x".repeat(1000)).length)
+        assertEquals(base.length + 600, ConversationPrompt.systemInstruction("x".repeat(1000)).length)
         assertEquals("What is 7 times 8?", ConversationPrompt.userRequest("What is 7 times 8?", ""))
         assertTrue(ConversationPrompt.systemInstruction().length < 3900)
     }
