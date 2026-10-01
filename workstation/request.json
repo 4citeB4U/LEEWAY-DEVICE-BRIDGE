@@ -4,8 +4,8 @@
   "deviceId": "LDB-d33c4150-5959-419f-8b22-ed6c2f359549",
   "capability": "agent.chat",
   "arguments": {
-    "prompt": "Who are you? Describe who Agent Lee is in two short sentences.",
+    "prompt": "I have two technical paths. How would you decide between them using LeeWay strategy and Formula thinking? Keep it short.",
     "speak": false
   },
-  "purpose": "Agent Lee pre-training baseline: identity retention"
+  "purpose": "Agent Lee pre-training baseline: strategy, math and Formula discipline"
 }
