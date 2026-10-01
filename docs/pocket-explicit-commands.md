@@ -28,6 +28,20 @@ Every result declares `EXPLICIT_COMMAND_GRAMMAR` and Formula `NOT_EXECUTED`.
 Existing skill-source retrieval and phone-local conversation are separate paths.
 
 Host unit tests cover caller/token/owner combinations, exact/ambiguous labels,
-unsupported commands and concurrent single-flight admission. Actual Binder
-identity, foreground yielding, Android permissions and UI outcomes require a
-paired-device acceptance run; source/build tests do not prove those outcomes.
+unsupported commands and concurrent single-flight admission. Source/build tests
+do not prove Android permissions or actual UI outcomes.
+
+On `2026-10-01T05:54:21.450926Z`, Pocket RC11 (version code 13) with Bridge 23
+passed the bounded app-open acceptance case. The typed request "Open Calculator"
+put Samsung Calculator (`com.sec.android.app.popupcalculator`) in the foreground,
+as observed by the supervising task. Bridge's `device.pocket.action` receipt
+reported `PASS`, `action=open`, `state=LAUNCH_REQUESTED`,
+`verification=FOREGROUND_PACKAGE_MATCH` and Formula `NOT_EXECUTED`.
+The original receipt is preserved in
+[the command evidence](qualification/pocket-device-command-2026-10-01.json).
+
+This proves that one exact-label request reached the installed signed IPC service
+and opened the intended app with foreground verification. It does not prove
+speech recognition, arbitrary app labels, hostile-caller rejection on device,
+back/home/recents through Pocket, or physically unplugged operation. Those remain
+separate acceptance cases; model-selected autonomous tools are not implemented.
