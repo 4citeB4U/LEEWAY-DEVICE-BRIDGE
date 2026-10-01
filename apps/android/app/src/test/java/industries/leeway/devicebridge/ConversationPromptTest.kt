@@ -23,4 +23,13 @@ class ConversationPromptTest {
         assertEquals(base.length + 200, ConversationPrompt.systemInstruction("x".repeat(1000)).length)
         assertEquals("What is 7 times 8?", ConversationPrompt.userRequest("What is 7 times 8?", ""))
     }
+    @Test fun defaultsToEnglishWithoutOverridingExplicitLanguageRequests() {
+        val instruction = ConversationPrompt.systemInstruction("The Creator is Leonard.")
+        assertTrue(instruction.contains("Use English unless the user explicitly asks for another language."))
+        assertTrue(instruction.endsWith("The Creator is Leonard."))
+        assertTrue(ConversationPrompt.systemInstruction().length < 180)
+        val request = "Please answer in Spanish: what is two plus two?"
+        assertEquals(request, ConversationPrompt.userRequest(request, "irrelevant authority context"))
+        assertFalse(instruction.contains("English only"))
+    }
 }
