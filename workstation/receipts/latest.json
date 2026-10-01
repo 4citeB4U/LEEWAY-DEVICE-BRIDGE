@@ -1,34 +1,34 @@
 {
   "schemaVersion": "1.0.0",
   "evidenceType": "LEEWAY_PHONE_WORKSTATION_REMOTE_EXECUTION",
-  "workflowRunId": "36872650412",
-  "workflowSha": "ab0157852b6aac3e54956672d4d876f8832cd7f9",
-  "observedAt": "2026-10-01T13:58:25.327Z",
+  "workflowRunId": "36872765209",
+  "workflowSha": "8bce9a4c7ae1ce93b2f4725372c4aecdd2afd658",
+  "observedAt": "2026-10-01T13:59:26.725Z",
   "pcRequired": false,
   "usbRequired": false,
   "result": {
     "ok": true,
-    "id": "c9c789f0-dc5c-43e1-aab8-44a17eddb81a",
-    "capability": "model.status",
+    "id": "6feb6b23-df3d-4bf7-92cd-8814292648b8",
+    "capability": "agent.chat",
     "result": {
       "type": "result",
-      "id": "c9c789f0-dc5c-43e1-aab8-44a17eddb81a",
+      "id": "6feb6b23-df3d-4bf7-92cd-8814292648b8",
       "ok": true,
       "result": {
+        "ok": true,
+        "prompt": "Hello, Agent Lee.",
+        "response": "Hello, Agent Lee.",
         "modelId": "litert-community/SmolLM2-360M-Instruct",
-        "format": "litertlm",
-        "installed": true,
-        "sizeBytes": 373719040,
-        "expectedSizeBytes": 373719040,
-        "sha256": "8e2834da211b439751af968ed650febdde5a8cb8d88bc6c1a3059f049caa5c2e",
-        "expectedSha256": "8e2834da211b439751af968ed650febdde5a8cb8d88bc6c1a3059f049caa5c2e",
-        "verified": true,
-        "runtime": "LiteRT-LM",
-        "backend": "CPU",
-        "authority": "PHONE_LOCAL_MODEL",
-        "busy": false
+        "elapsedMs": 9458,
+        "voice": {
+          "ok": true,
+          "spoken": false
+        },
+        "authority": "PHONE_LOCAL_AGENT_CHAT",
+        "promptContract": "SEPARATE_SYSTEM_AND_USER_V1",
+        "canonicalFormulaState": "NOT_EXECUTED"
       },
-      "capability": "model.status"
+      "capability": "agent.chat"
     },
     "executionNode": "leeway-phone-workstation",
     "transport": "VERCEL_QUEUE_DURABLE_V1",
