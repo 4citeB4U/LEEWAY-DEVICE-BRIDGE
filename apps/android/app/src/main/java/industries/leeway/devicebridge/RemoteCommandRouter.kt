@@ -108,6 +108,20 @@ object RemoteCommandRouter {
     }
 
     private fun chat(context: Context, prompt: String, speak: Boolean, creatorContext: String): JSONObject {
+        if (CreatorIdentityReply.matches(prompt)) {
+            val profile = runCatching {
+                context.assets.open("leeway-creator-profile.json").bufferedReader().use { JSONObject(it.readText()) }
+            }.getOrNull()
+            val response = CreatorIdentityReply.fromProfile(profile)
+            val voice = if (speak) VoiceRuntime.speak(context, response)
+                else JSONObject().put("ok", true).put("spoken", false)
+            ReceiptStore.record(context, "agent.chat", if (voice.optBoolean("ok")) "PASS" else "FAIL",
+                "source=USER_AUTHORIZED_CREATOR_PROFILE modelExecuted=false speak=$speak")
+            return JSONObject().put("ok", true).put("prompt", prompt).put("response", response)
+                .put("modelExecuted", false).put("modelId", JSONObject.NULL).put("elapsedMs", 0)
+                .put("voice", voice).put("authority", "USER_AUTHORIZED_CREATOR_PROFILE")
+                .put("promptContract", "EXACT_PROFILE_LOOKUP_V1").put("canonicalFormulaState", "NOT_EXECUTED")
+        }
         val generated = ModelRuntime.generateConversation(context, prompt, creatorContext)
         if (!generated.optBoolean("ok")) return generated
         val response = generated.optString("response")
