@@ -19,7 +19,7 @@ assert.match(activity,/RemoteRelayService\.start/);
 assert.match(script,/TERMUX_BOOTSTRAP/);
 assert.match(script,/owner-bootstrap\?nonce=/);
 assert.doesNotMatch(script,/Pairing token:/);
-assert.match(gradle,/versionName = "0\.9\.4-pocket-rc4"/);
-assert.match(gradle,/versionCode = 19/);
+assert.match(gradle,/versionName = "0\.9\.5-pocket-rc5"/);
+assert.match(gradle,/versionCode = 20/);
 
 console.log("PASS Termux one-time owner bootstrap contract");

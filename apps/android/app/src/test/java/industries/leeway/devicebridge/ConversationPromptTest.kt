@@ -10,7 +10,9 @@ class ConversationPromptTest {
         assertEquals(question, ConversationPrompt.userRequest(question, legacy))
         assertFalse(ConversationPrompt.systemInstruction().contains("SNAPSHOT"))
         assertTrue(ConversationPrompt.systemInstruction().contains("Agent Lee"))
-        assertTrue(ConversationPrompt.systemInstruction().contains("without actual evidence"))
+        assertTrue(ConversationPrompt.systemInstruction().contains("directly and briefly"))
+        assertFalse(ConversationPrompt.systemInstruction().contains("Formula"))
+        assertFalse(ConversationPrompt.systemInstruction().contains("without"))
     }
     @Test fun explicitEmptyQuestionNeverFallsBackToAuthorityText() {
         assertEquals("", ConversationPrompt.userRequest("   ", "authority metadata"))
