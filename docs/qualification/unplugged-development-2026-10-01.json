@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-10-01T06:03:26.277Z",
+  "platform": "android",
+  "architecture": "arm64",
+  "node": "v26.3.1",
+  "git": "git version 2.54.0",
+  "home": "/data/data/com.termux/files/home",
+  "fileWriteReadAndModuleExecution": "PASS",
+  "result": 42,
+  "physicalUsb": "DISCONNECTED_OWNER_CONFIRMED",
+  "adbDeviceList": "EMPTY",
+  "transport": "Direct phone Desktop Commander Internet connection",
+  "phoneReceipt": "~/.leeway/workstation/unplugged-qualification/receipt.json",
+  "exitCode": 0,
+  "scope": "Phone-native Node file creation, module import, assertion and execution; controller PC remains online."
+}
