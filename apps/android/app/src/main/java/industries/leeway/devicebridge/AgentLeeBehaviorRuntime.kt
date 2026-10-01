@@ -53,11 +53,11 @@ internal object AgentLeeBehaviorRuntime {
                 "CANONICAL_Q69_SIX_BIT_TRUTH_V1"
         }
 
-        val simpleGreetings = setOf(
-            "hello", "hello.", "hi", "hi.", "hey", "hey.", "yo", "yo.",
-            "what's up", "whats up", "sup", "good morning", "good afternoon", "good evening"
+        val greetingPattern = Regex(
+            "^(hello|hi|hey|yo|what'?s up|whats up|sup|good morning|good afternoon|good evening)(,? agent lee)?[!.]?$",
+            RegexOption.IGNORE_CASE
         )
-        if (normalized in simpleGreetings) {
+        if (greetingPattern.matches(normalized)) {
             return "Yo, what it is, Creator? Mind clear, systems in view. What's the move?" to
                 "AGENT_LEE_GREETING_V1"
         }
