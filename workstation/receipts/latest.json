@@ -1,78 +1,38 @@
 {
-  "schemaVersion": "1.1.0",
-  "evidenceType": "LEEWAY_ANDROID_SECONDARY_WORKSTATION_COLD_BOOT_QUALIFICATION",
-  "observedAt": "2026-09-30T06:01:44Z",
-  "status": "PASS",
-  "nodeAlias": "leeway-phone-workstation",
-  "referenceDevice": {
-    "class": "Android phone",
-    "model": "Samsung Galaxy Z Fold6",
-    "android": "16",
-    "architecture": "arm64"
-  },
-  "runtime": {
-    "desktopCommander": "0.2.52",
-    "node": "26.3.1",
-    "git": "2.54.0",
-    "ripgrep": "15.1.0",
-    "shell": "Termux bash"
-  },
-  "acceptance": {
-    "directRemoteRegistration": "PASS",
-    "directPing": "PASS",
-    "directShellExecution": "PASS",
-    "filesystemReadWrite": "PASS",
-    "contentSearch": "PASS",
-    "gitLocalCommit": "PASS",
-    "githubNetworkReachability": "PASS",
-    "pcIndependentExecution": "PASS",
-    "usbIndependentExecution": "PASS",
-    "remoteSessionSelfRecovery": "PASS",
-    "coldBootAutoReconnect": "PASS",
-    "postColdBootExecution": "PASS",
-    "continuousBackgroundDurability": "FAILED_OBSERVED_2026-09-30_AFTER_AUDIO_WORKLOAD"
-  },
-  "topology": {
-    "primaryWindowsRemoteNodeUsedForFinalAcceptance": false,
-    "physicalUsbDisconnectedByOwner": true,
-    "acceptedRuntimePath": "Online LLM/agent -> Desktop Commander Remote MCP -> Android/Termux workstation"
-  },
-  "securityBoundary": {
-    "scope": "TERMUX_APP_UID_NON_ROOT",
-    "root": false,
-    "protectedAndroidSystemServices": false,
-    "otherAppPrivateStorage": false,
-    "passwordsOrMfa": false,
-    "privilegedUiOrHardwareControl": "SEPARATE_DEVICE_BRIDGE_PROVIDER_REQUIRED"
-  },
-  "sourceArtifacts": [
-    "clients/phone-workstation/bootstrap-desktop-commander.sh",
-    "clients/phone-workstation/patch-desktop-commander-android.mjs",
-    "docs/ANDROID-SECONDARY-WORKSTATION.md",
-    "docs/secondary-workstation-node.json",
-    "docs/provider-registry.json"
-  ],
-  "privacy": {
-    "remoteMcpDeviceIdPublished": false,
-    "accountEmailPublished": false,
-    "authTokensPublished": false
-  },
-  "conclusion": "LEEWAY_PHONE_SECONDARY_WORKSTATION_COLD_BOOT_VERIFIED_CONTINUOUS_DURABILITY_OPEN",
-  "durabilityFinding": {
-    "observedAt": "2026-09-30T06:55:53Z",
-    "state": "OPEN_REPAIR_REQUIRED",
-    "note": "Remote workstation became unreachable without an intentional shutdown after multiple long-running audio/TTS/Termux API processes were launched. Cold-boot reconnect remains verified; continuous liveness under workload is not yet qualified.",
-    "likelyRiskFactors": [
-      "Desktop Commander hosted as Termux background process rather than Android-native foreground service",
-      "Samsung background application management",
-      "multiple stuck Termux API/audio child processes in same runtime"
-    ],
-    "requiredBeforeAlwaysOnClaim": [
-      "isolate voice/media workload from workstation control plane",
-      "remove/kill orphaned audio API processes",
-      "qualify Samsung Never Sleeping / unrestricted battery settings for Termux",
-      "qualify a foreground-service or equivalent durable control-plane mechanism",
-      "run sustained liveness soak test"
-    ]
+  "schemaVersion": "1.0.0",
+  "evidenceType": "LEEWAY_PHONE_WORKSTATION_REMOTE_EXECUTION",
+  "workflowRunId": "36872650412",
+  "workflowSha": "ab0157852b6aac3e54956672d4d876f8832cd7f9",
+  "observedAt": "2026-10-01T13:58:25.327Z",
+  "pcRequired": false,
+  "usbRequired": false,
+  "result": {
+    "ok": true,
+    "id": "c9c789f0-dc5c-43e1-aab8-44a17eddb81a",
+    "capability": "model.status",
+    "result": {
+      "type": "result",
+      "id": "c9c789f0-dc5c-43e1-aab8-44a17eddb81a",
+      "ok": true,
+      "result": {
+        "modelId": "litert-community/SmolLM2-360M-Instruct",
+        "format": "litertlm",
+        "installed": true,
+        "sizeBytes": 373719040,
+        "expectedSizeBytes": 373719040,
+        "sha256": "8e2834da211b439751af968ed650febdde5a8cb8d88bc6c1a3059f049caa5c2e",
+        "expectedSha256": "8e2834da211b439751af968ed650febdde5a8cb8d88bc6c1a3059f049caa5c2e",
+        "verified": true,
+        "runtime": "LiteRT-LM",
+        "backend": "CPU",
+        "authority": "PHONE_LOCAL_MODEL",
+        "busy": false
+      },
+      "capability": "model.status"
+    },
+    "executionNode": "leeway-phone-workstation",
+    "transport": "VERCEL_QUEUE_DURABLE_V1",
+    "pcRequired": false,
+    "usbRequired": false
   }
 }
