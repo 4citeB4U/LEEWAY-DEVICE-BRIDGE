@@ -4,5 +4,5 @@
   "deviceId": "LDB-d33c4150-5959-419f-8b22-ed6c2f359549",
   "capability": "device.apps.list",
   "arguments": {},
-  "purpose": "MC-L1 physical baseline: discover unique Calculator package before launch prediction"
+  "purpose": "MC-L1 physical baseline RETEST after Vercel workstation allowlist deployment: discover unique Calculator package"
 }
