@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0.0",
+  "evidenceId": "LEEWAY-MC-L1-SHADOW-APK-BUILD-20261002",
+  "classification": "VERIFIED_BUILD_ONLY",
+  "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "sourceBranch": "mc-live-consciousness-shadow-l1",
+  "sourceCommit": "ddea7d1dd4e8650708815be99f9f3d3735c9f599",
+  "baseSourceCommit": "e6bb0ba3b72444e42765ea47273fc5b7c281b0db",
+  "package": {
+    "applicationId": "industries.leeway.devicebridge",
+    "versionCode": 24,
+    "versionName": "0.9.9-mc-shadow-l1",
+    "sizeBytes": 66428981,
+    "sha256": "6c3b76042dd7f8fdceff52c50625f53895091c9dda199735731d756bf44fd6bc"
+  },
+  "workflow": {
+    "name": "Android Build",
+    "runId": 36968692060,
+    "conclusion": "success",
+    "artifactId": 11211035763,
+    "artifactName": "leeway-device-bridge-debug-apk",
+    "artifactArchiveDigest": "sha256:aca5be74d1690264dfb645de6fb2a120fd973252365f851289bc0dd60fe80929"
+  },
+  "verification": {
+    "sourceAndContracts": "PASS",
+    "androidSdkSetup": "PASS",
+    "gradleUnitTestsAndAssembleDebug": "PASS",
+    "packageMeasureAndHash": "PASS",
+    "artifactUpload": "PASS"
+  },
+  "authorityBoundary": {
+    "installedOnPhone": false,
+    "liveShadowExecuted": false,
+    "physicalTaskExecutedByThisBuild": false,
+    "canonicalFormulaExecutedByShadow": false,
+    "promotionState": "NOT_PROMOTED"
+  },
+  "nextGate": "Capture production baseline and prove installed package state before installing this experimental APK."
+}
