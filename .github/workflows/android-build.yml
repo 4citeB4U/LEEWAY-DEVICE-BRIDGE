@@ -85,6 +85,22 @@ jobs:
             apps/android/app/build/outputs/apk/debug/app-debug.apk
             apps/android/package-evidence.txt
 
+      - name: Publish consciousness candidate APK to candidate branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/codex/consciousness-shadow-live'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p candidate-downloads
+          APK_SRC=apps/android/app/build/outputs/apk/debug/app-debug.apk
+          APK_DST=candidate-downloads/leeway-device-bridge-consciousness-shadow-debug.apk
+          cp "$APK_SRC" "$APK_DST"
+          sha256sum "$APK_DST" > candidate-downloads/leeway-device-bridge-consciousness-shadow-debug.sha256
+          git config user.name "LeeWay Veritas"
+          git config user.email "actions@users.noreply.github.com"
+          git add candidate-downloads
+          git commit -m "Publish consciousness shadow candidate APK"
+          git push origin HEAD:codex/consciousness-shadow-live
+
       - name: Publish latest verified Android APK to GitHub Pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         shell: bash
