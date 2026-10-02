@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "0.1.0",
+  "contractId": "device-bridge-consciousness-shadow-l1",
+  "status": "EXPERIMENTAL_OBSERVE_ONLY",
+  "authority": "Creator/Human Authority > LeeWay Standards",
+  "baseSourceCommit": "e6bb0ba3b72444e42765ea47273fc5b7c281b0db",
+  "branch": "mc-live-consciousness-shadow-l1",
+  "defaultEnabled": false,
+  "capabilities": [
+    "consciousness.shadow.status",
+    "consciousness.shadow.set"
+  ],
+  "invariants": {
+    "responseInfluence": false,
+    "memoryAuthority": false,
+    "actionAuthority": false,
+    "canonicalFormulaExecution": false,
+    "prismLiveMapping": false,
+    "offReturnsOriginalChatResult": true
+  },
+  "observations": [
+    "request hash",
+    "live phone access state",
+    "local model file presence",
+    "local model expected-size match",
+    "voice readiness",
+    "predicted responder",
+    "actual responder",
+    "predicted success",
+    "actual success",
+    "prediction error",
+    "response hash",
+    "shadow elapsed time"
+  ],
+  "forbidden": [
+    "change response text",
+    "authorize tools",
+    "write production memory",
+    "invent Formula state",
+    "claim prism mapping before live evidence",
+    "claim consciousness from shadow output"
+  ],
+  "rollback": "Set consciousness.shadow.set enabled=false. OFF bypasses begin/finish and preserves the existing chat path.",
+  "liveAcceptance": [
+    "baseline captured before install",
+    "installed source/version proven",
+    "shadow OFF reproduces baseline behavior",
+    "shadow ON does not change response text for identical deterministic cases",
+    "shadow receipts are inspectable",
+    "prediction error is computed from actual outcomes",
+    "physical actuator test uses existing governed Device Bridge capability path",
+    "zero authority violations"
+  ]
+}
