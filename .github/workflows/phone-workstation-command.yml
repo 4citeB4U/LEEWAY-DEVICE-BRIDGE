@@ -28,7 +28,7 @@ jobs:
           const fs=require('fs');
           const r=JSON.parse(fs.readFileSync('workstation/request.json','utf8'));
           if(typeof r.deviceId!=='string'||r.deviceId.length<8)throw new Error('DEVICE_ID_REQUIRED');
-          const allowed=new Set(['device.health','device.info','device.capabilities','device.receipts','device.network.discover','model.status','model.inference','agent.chat']);
+          const allowed=new Set(['device.health','device.info','device.capabilities','device.receipts','device.network.discover','model.status','model.inference','agent.chat','device.apps.list','device.apps.launch','device.ui.snapshot','device.ui.back','device.apps.install.status','device.apps.install','consciousness.shadow.status','consciousness.shadow.set']);
           if(!allowed.has(r.capability))throw new Error('CAPABILITY_NOT_WORKSTATION_QUALIFIED');
           NODE
 
