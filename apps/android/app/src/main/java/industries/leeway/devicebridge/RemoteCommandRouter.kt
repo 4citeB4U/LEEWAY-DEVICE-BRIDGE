@@ -15,7 +15,7 @@ object RemoteCommandRouter {
         "model.status", "model.install", "model.inference", "voice.status", "voice.speak", "agent.chat"
     )
 
-    fun execute(context: Context, commandId: String, capability: String, arguments: JSONObject, firstSeen: Boolean, conversationRequest: Boolean = false): JSONObject {
+    fun execute(context: Context, commandId: String, capability: String, arguments: JSONObject, firstSeen: Boolean, conversationRequest: Boolean = false, onStream: ((String) -> Unit)? = null): JSONObject {
         val governance = LocalAuthority.agentAccessEnabled(context)
         val supported = capability in remoteQualified
         val prompt = if (capability == "agent.chat") ConversationPrompt.userRequest(
@@ -91,7 +91,7 @@ object RemoteCommandRouter {
                 "model.inference" -> if (conversationRequest) ModelRuntime.generateConversation(context, prompt) else ModelRuntime.generate(context, prompt)
                 "voice.status" -> VoiceRuntime.initialize(context)
                 "voice.speak" -> VoiceRuntime.speak(context, text)
-                "agent.chat" -> chat(context, prompt, arguments.optBoolean("speak", true), arguments.optString("creatorContext"))
+                "agent.chat" -> chat(context, prompt, arguments.optBoolean("speak", true), arguments.optString("creatorContext"), onStream)
                 else -> JSONObject().put("error", "CAPABILITY_NOT_REMOTE_QUALIFIED")
             }
             val valueOk = !value.has("ok") || value.optBoolean("ok")
@@ -107,7 +107,7 @@ object RemoteCommandRouter {
         }
     }
 
-    private fun chat(context: Context, prompt: String, speak: Boolean, creatorContext: String): JSONObject {
+    private fun chat(context: Context, prompt: String, speak: Boolean, creatorContext: String, onStream: ((String) -> Unit)? = null): JSONObject {
         if (CreatorIdentityReply.matches(prompt)) {
             val profile = runCatching {
                 context.assets.open("leeway-creator-profile.json").bufferedReader().use { JSONObject(it.readText()) }
@@ -122,42 +122,18 @@ object RemoteCommandRouter {
                 .put("voice", voice).put("authority", "USER_AUTHORIZED_CREATOR_PROFILE")
                 .put("promptContract", "EXACT_PROFILE_LOOKUP_V1").put("canonicalFormulaState", "NOT_EXECUTED")
         }
-
-        val behavior = AgentLeeBehaviorRuntime.evaluate(context, prompt)
-        if (behavior.directReply != null) {
-            val response = behavior.directReply
-            val voice = if (speak) VoiceRuntime.speak(context, response)
-                else JSONObject().put("ok", true).put("spoken", false)
-            ReceiptStore.record(context, "agent.chat", if (voice.optBoolean("ok")) "PASS" else "FAIL",
-                "source=" + behavior.contract + " modelExecuted=false speak=" + speak)
-            return JSONObject().apply {
-                put("ok", true); put("prompt", prompt); put("response", response)
-                put("modelExecuted", false); put("modelId", JSONObject.NULL); put("elapsedMs", 0)
-                put("voice", voice); put("authority", "AGENT_LEE_DETERMINISTIC_BEHAVIOR")
-                put("promptContract", behavior.contract ?: "AGENT_LEE_BEHAVIOR_V1")
-                put("emotionState", behavior.emotions); put("register", behavior.register)
-                put("criticismStreak", behavior.criticismStreak)
-                put("canonicalFormulaState", "NOT_EXECUTED")
-            }
-        }
-
-        val combinedContext = listOf(creatorContext.trim(), behavior.promptContext)
-            .filter { it.isNotBlank() }.joinToString(" | ")
-        val generated = ModelRuntime.generateConversation(context, prompt, combinedContext)
+        val generated = ModelRuntime.generateConversation(context, prompt, creatorContext, onStream)
         if (!generated.optBoolean("ok")) return generated
         val response = generated.optString("response")
         val voice = if (speak) VoiceRuntime.speak(context, response)
             else JSONObject().put("ok", true).put("spoken", false)
         ReceiptStore.record(context, "agent.chat", if (voice.optBoolean("ok")) "PASS" else "FAIL",
-            "model=" + generated.optString("modelId") + " register=" + behavior.register + " speak=" + speak)
+            "model=" + generated.optString("modelId") + " speak=" + speak)
         return JSONObject().apply {
             put("ok", true); put("prompt", prompt); put("response", response)
-            put("modelExecuted", true)
             put("modelId", generated.optString("modelId")); put("elapsedMs", generated.optLong("elapsedMs"))
             put("voice", voice); put("authority", "PHONE_LOCAL_AGENT_CHAT")
-            put("promptContract", "AGENT_LEE_BEHAVIOR_RUNTIME_V1_PLUS_MODEL")
-            put("emotionState", behavior.emotions); put("register", behavior.register)
-            put("criticismStreak", behavior.criticismStreak)
+            put("promptContract", "SEPARATE_SYSTEM_AND_USER_V1")
             put("canonicalFormulaState", "NOT_EXECUTED")
         }
     }

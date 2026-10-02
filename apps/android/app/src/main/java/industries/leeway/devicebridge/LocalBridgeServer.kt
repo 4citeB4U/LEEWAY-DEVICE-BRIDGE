@@ -112,6 +112,11 @@ object LocalBridgeServer {
         put("bindAddress", "127.0.0.1")
         put("port", PORT)
         put("agentAccessEnabled", LocalAuthority.agentAccessEnabled(context))
+        put("appVersionName", BuildConfig.VERSION_NAME)
+        put("appVersionCode", BuildConfig.VERSION_CODE)
+        put("updateMetadataUrl", AgentLeeUpdate.LOCAL_PREPARE_URL)
+        put("pocketUpdateMetadataUrl", AgentLeeUpdate.PUBLIC_POCKET_METADATA)
+        put("bridgeUpdateMetadataUrl", AgentLeeUpdate.PUBLIC_BRIDGE_METADATA)
         put("transport", "LOCAL_LOOPBACK")
         put("authority", "PHONE_LOCAL_RUNTIME")
     }

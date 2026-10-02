@@ -30,7 +30,8 @@
         android:label="LeeWay Device Bridge"
         android:icon="@drawable/leeway_official_logo"
         android:roundIcon="@drawable/leeway_official_logo"
-        android:allowBackup="false">
+        android:allowBackup="false"
+        android:networkSecurityConfig="@xml/leeway_network_security">
         <activity android:name=".MainActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
