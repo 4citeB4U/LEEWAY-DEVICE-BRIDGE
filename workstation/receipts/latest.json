@@ -1,57 +1,47 @@
 {
   "schemaVersion": "1.0.0",
   "evidenceType": "LEEWAY_PHONE_WORKSTATION_REMOTE_EXECUTION",
-  "workflowRunId": "36968865887",
-  "workflowSha": "787f651b9a109be2a54c054a4cd1ec152e992510",
-  "observedAt": "2026-10-02T05:25:51.705Z",
+  "workflowRunId": "36968940762",
+  "workflowSha": "c23ac3fe42389ce114a6edc94e0e623c12ef8928",
+  "observedAt": "2026-10-02T05:27:08.515Z",
   "pcRequired": false,
   "usbRequired": false,
   "result": {
     "ok": true,
-    "id": "d5b63ebc-1618-49b4-b214-5e40e7a139aa",
-    "capability": "device.health",
+    "id": "2b2135d6-e85b-4ddc-80c0-164974061e59",
+    "capability": "agent.chat",
     "result": {
       "type": "result",
-      "id": "d5b63ebc-1618-49b4-b214-5e40e7a139aa",
+      "id": "2b2135d6-e85b-4ddc-80c0-164974061e59",
       "ok": true,
       "result": {
-        "remote": {
-          "enabled": true,
-          "connected": true,
-          "relayUrl": "wss://agent-lee-x.vercel.app/api/device-relay",
-          "lastEvent": "AUTHENTICATED",
-          "deviceId": "LDB-d33c4150-5959-419f-8b22-ed6c2f359549",
-          "pairingTokenProvisioned": true,
-          "authority": "PHONE_LOCAL_REMOTE_TRANSPORT"
-        },
-        "model": {
-          "modelId": "litert-community/SmolLM2-360M-Instruct",
-          "format": "litertlm",
-          "installed": true,
-          "sizeBytes": 373719040,
-          "expectedSizeBytes": 373719040,
-          "sha256": "8e2834da211b439751af968ed650febdde5a8cb8d88bc6c1a3059f049caa5c2e",
-          "expectedSha256": "8e2834da211b439751af968ed650febdde5a8cb8d88bc6c1a3059f049caa5c2e",
-          "verified": true,
-          "runtime": "LiteRT-LM",
-          "backend": "CPU",
-          "authority": "PHONE_LOCAL_MODEL",
-          "busy": false
-        },
+        "ok": true,
+        "prompt": "What is 7 + 8? Answer with only the number.",
+        "response": "7 + 8 = 15",
+        "modelExecuted": true,
+        "modelId": "litert-community/SmolLM2-360M-Instruct",
+        "elapsedMs": 19713,
         "voice": {
-          "available": false,
-          "ready": false,
-          "engine": "LEEWAY_VOICE_FABRIC",
-          "voicePackageId": "agent-lee-voice-one",
-          "authority": "4citeB4U/LeeWay-Voice-Fabric",
-          "fallbackAllowed": false,
-          "state": "VOICE_UNAVAILABLE",
-          "note": "Android/system TTS is not an authorized Agent Lee fallback. Voice One must execute through LeeWay Voice Fabric."
+          "ok": true,
+          "spoken": false
         },
-        "agentAccessEnabled": true,
-        "authority": "PHONE_LOCAL_RUNTIME"
+        "authority": "PHONE_LOCAL_AGENT_CHAT",
+        "promptContract": "AGENT_LEE_BEHAVIOR_RUNTIME_V1_PLUS_MODEL",
+        "emotionState": {
+          "calm": 0.2646975517272949,
+          "confused": 0.23237498104572296,
+          "excited": 0.23237498104572296,
+          "frustrated": 0.42249995470046997,
+          "angry": 0,
+          "sad": 0,
+          "jolly": 0,
+          "curious": 0
+        },
+        "register": "hiphop_poetic",
+        "criticismStreak": 0,
+        "canonicalFormulaState": "NOT_EXECUTED"
       },
-      "capability": "device.health"
+      "capability": "agent.chat"
     },
     "executionNode": "leeway-phone-workstation",
     "transport": "VERCEL_QUEUE_DURABLE_V1",
