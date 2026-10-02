@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0.0",
+  "evidenceId": "AGENT-LEE-ONE-TAP-UPDATE-0.9.9-20261002",
+  "status": "BUILT_SIGNED_INSTALL_PENDING",
+  "repository": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "branch": "codex/agent-lee-one-tap-update",
+  "versionName": "0.9.9-pocket-rc9",
+  "versionCode": 24,
+  "source": {
+    "localBaseCommit": "d8bb5cbf0b79f2521707f44873e496534fee6881",
+    "localUpdaterCommit": "0bfc7e45e2b900b2dfe0541f26af60d9ea061c56",
+    "localBuildConfigRepairCommit": "863fefb893fa7906bb70002a04ea87be9b710fcf",
+    "remoteHeadCommit": "9ef572ba9a19aa6c3c44ebfcd9be84af79bfa93f"
+  },
+  "qualification": {
+    "sourceTestFiles": "32/32 PASS",
+    "githubActionsRunId": 36972581948,
+    "githubActionsConclusion": "SUCCESS",
+    "ciApkBytes": 66412593,
+    "ciApkSha256": "405fd62f1c0eb723f1d07615e28e77b6838c3bde67a9793b5cce2166c418c6ce",
+    "artifactZipSha256": "d230de51d2410e1a201195828ffd43ce860e28fd76db97e7b4dfb18ad441f7b6"
+  },
+  "signedPackage": {
+    "path": "/sdcard/Download/LeeWay-Agent-Lee-0.9.9-pocket-rc9-UPDATE.apk",
+    "bytes": 66493742,
+    "sha256": "26f1b2413c68578d8262de33ee364933232fa6392544a37e93af2fba7148d604",
+    "signerCertificateSha256": "148b2dc7434819be54eb4261ef6ce6733df723c0a3d9d2d1be71b056b5806258",
+    "signerMatchesPriorLeeWaySigned090": true,
+    "signatureSchemeV3": true
+  },
+  "updater": {
+    "inAppButton": "UPDATE AGENT LEE",
+    "metadataHttpsOnly": true,
+    "sha256Required": true,
+    "androidOwnerConfirmationRequired": true,
+    "healthReportsVersionAfterInstall": true
+  },
+  "installation": {
+    "installerHandoffSent": true,
+    "verifiedInstalled": false,
+    "currentHealthStillOldShape": true
+  },
+  "blocker": {
+    "signedDistributionChannel": "NOT_AUTOMATED",
+    "reason": "Phone has no authenticated GitHub upload credential and connector cannot ingest a binary file from the remote phone filesystem.",
+    "safetyDecision": "Do not publish unsigned CI APK as one-tap update."
+  }
+}
