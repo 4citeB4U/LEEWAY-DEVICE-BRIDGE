@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0.0",
+  "evidenceId": "LEEWAY-MC-L1-APK-SIGNING-COMPATIBILITY-20261002",
+  "classification": "BLOCKED_INSTALL_PATH",
+  "authority": "Creator/Human Authority > LeeWay Standards",
+  "production": {
+    "workflowRunId": 36892635351,
+    "apkSha256": "8bef00828d473fe5eb4a6e214bdb3e724bf4b270c667bbd8ebd1e1167f6d056c",
+    "signerCertificateSha256": "1845ca54697728fd917e92df47dbb1536311fe3e0cd5652ca4ad968c18586031"
+  },
+  "experimentalShadow": {
+    "workflowRunId": 36968692060,
+    "sourceCommit": "ddea7d1dd4e8650708815be99f9f3d3735c9f599",
+    "apkSha256": "6c3b76042dd7f8fdceff52c50625f53895091c9dda199735731d756bf44fd6bc",
+    "signerCertificateSha256": "f8c57d8c75a99779e53d5494f241f4e75c6a8d939f32bed41ebfb05134f0588a"
+  },
+  "acceptance": {
+    "signerMatch": false,
+    "safeInPlaceUpdateProven": false
+  },
+  "decision": "DO_NOT_INSTALL_OVER_PRODUCTION",
+  "reason": "Android package updates require compatible signing identity. Forcing this path would require deleting/replacing production app state and violates the rollback/data-preservation requirement.",
+  "repairDirection": "Run L1 consciousness in the existing same-phone Termux/Formula layer and retain the signed production Device Bridge as sensor/actuator surface."
+}
