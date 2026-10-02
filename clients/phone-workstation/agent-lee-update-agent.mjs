@@ -57,12 +57,22 @@ const resolveUrl=(base,raw)=>new URL(raw,base).toString();
 const validSha=v=>/^[a-f0-9]{64}$/.test(String(v||'').toLowerCase());
 
 async function download(url,target){
-  const r=await fetch(url,{headers:{'cache-control':'no-cache','user-agent':'LeeWay-Agent-Update/1.0'}});
-  if(!r.ok)throw Error('APK_HTTP_'+r.status);
   const tmp=target+'.part';
-  const file=fs.createWriteStream(tmp,{mode:0o600});
-  for await(const chunk of r.body)file.write(chunk);
-  await new Promise((resolve,reject)=>{file.end(resolve);file.on('error',reject)});
+  fs.rmSync(tmp,{force:true});
+  const curl=spawnSync('curl',[
+    '-fL','--retry','3','--retry-delay','1',
+    '--connect-timeout','20','--max-time','300',
+    '-A','LeeWay-Agent-Update/1.0',
+    '-o',tmp,url
+  ],{encoding:'utf8'});
+  if(curl.status!==0){
+    fs.rmSync(tmp,{force:true});
+    throw Error('APK_DOWNLOAD_FAILED');
+  }
+  if(!fs.existsSync(tmp)||fs.statSync(tmp).size<1024){
+    fs.rmSync(tmp,{force:true});
+    throw Error('APK_DOWNLOAD_EMPTY');
+  }
   fs.renameSync(tmp,target);
 }
 function signApk(unsigned,signed){
