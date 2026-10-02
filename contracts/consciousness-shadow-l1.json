@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "schemaVersion": "0.1.0",
   "contractId": "device-bridge-consciousness-shadow-l1",
   "status": "EXPERIMENTAL_OBSERVE_ONLY",
