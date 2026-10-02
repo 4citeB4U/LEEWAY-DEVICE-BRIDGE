@@ -122,6 +122,20 @@ object RemoteCommandRouter {
                 .put("voice", voice).put("authority", "USER_AUTHORIZED_CREATOR_PROFILE")
                 .put("promptContract", "EXACT_PROFILE_LOOKUP_V1").put("canonicalFormulaState", "NOT_EXECUTED")
         }
+        val consciousnessMode = ConsciousnessRuntime.mode(context)
+        val consciousness = if (consciousnessMode == ConsciousnessRuntime.Mode.OFF) null
+            else ConsciousnessRuntime.observe(context, prompt)
+        val advisory = ConsciousnessRuntime.advisoryAnswer(context, prompt)
+        if (advisory != null) {
+            val response = advisory.optString("response")
+            val voice = if (speak) VoiceRuntime.speak(context, response)
+                else JSONObject().put("ok", true).put("spoken", false)
+            ReceiptStore.record(context, "agent.chat", if (voice.optBoolean("ok")) "PASS" else "FAIL",
+                "source=" + advisory.optString("authority") + " modelExecuted=false consciousness=ADVISORY")
+            return advisory.put("prompt", prompt).put("voice", voice)
+                .put("consciousness", consciousness ?: ConsciousnessRuntime.status(context))
+                .put("canonicalFormulaState", "NOT_EXECUTED")
+        }
         val generated = ModelRuntime.generateConversation(context, prompt, creatorContext)
         if (!generated.optBoolean("ok")) return generated
         val response = generated.optString("response")
@@ -134,6 +148,7 @@ object RemoteCommandRouter {
             put("modelId", generated.optString("modelId")); put("elapsedMs", generated.optLong("elapsedMs"))
             put("voice", voice); put("authority", "PHONE_LOCAL_AGENT_CHAT")
             put("promptContract", "SEPARATE_SYSTEM_AND_USER_V1")
+            if (consciousness != null) put("consciousness", consciousness)
             put("canonicalFormulaState", "NOT_EXECUTED")
         }
     }
