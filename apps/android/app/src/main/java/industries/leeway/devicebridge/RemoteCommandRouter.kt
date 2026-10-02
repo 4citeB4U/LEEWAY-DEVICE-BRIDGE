@@ -8,6 +8,7 @@ object RemoteCommandRouter {
     private val remoteQualified = setOf(
         "device.health", "device.info", "device.capabilities",
         "device.bluetooth.list-bonded", "device.network.discover", "device.receipts",
+        "consciousness.shadow.status", "consciousness.shadow.set",
         "device.screen.capture", "device.ui.snapshot", "device.ui.back", "device.ui.home", "device.ui.recents",
         "device.ui.tap", "device.ui.swipe", "device.ui.text",
         "device.apps.list", "device.apps.launch", "device.apps.install.status", "device.apps.install",
@@ -25,6 +26,7 @@ object RemoteCommandRouter {
         val text = arguments.optString("text").trim()
         val capabilityPrecondition = when (capability) {
             "model.inference", "agent.chat" -> prompt.isNotEmpty()
+            "consciousness.shadow.set" -> arguments.has("enabled")
             "voice.speak" -> text.isNotEmpty()
             "device.ui.tap" -> arguments.has("x") && arguments.has("y")
             "device.ui.swipe" -> arguments.has("x1") && arguments.has("y1") &&
@@ -55,6 +57,11 @@ object RemoteCommandRouter {
                 "device.bluetooth.list-bonded" -> BluetoothProvider.snapshot(context)
                 "device.network.discover" -> NetworkDiscoveryProvider.discover(context)
                 "device.receipts" -> JSONObject().put("receipts", ReceiptStore.list(context))
+                "consciousness.shadow.status" -> ConsciousnessShadowRuntime.status(context)
+                "consciousness.shadow.set" -> ConsciousnessShadowRuntime.setEnabled(
+                    context,
+                    arguments.getBoolean("enabled")
+                )
                 "device.screen.capture" -> DeviceOperatorAccessibilityService.captureScreen()
                 "device.ui.snapshot" -> DeviceOperatorAccessibilityService.snapshot()
                 "device.ui.back" -> DeviceOperatorAccessibilityService.global("back")
@@ -108,6 +115,10 @@ object RemoteCommandRouter {
     }
 
     private fun chat(context: Context, prompt: String, speak: Boolean, creatorContext: String): JSONObject {
+        val shadowTicket = ConsciousnessShadowRuntime.begin(context, prompt)
+        fun finish(value: JSONObject): JSONObject =
+            ConsciousnessShadowRuntime.finish(context, shadowTicket, value)
+
         if (CreatorIdentityReply.matches(prompt)) {
             val profile = runCatching {
                 context.assets.open("leeway-creator-profile.json").bufferedReader().use { JSONObject(it.readText()) }
@@ -117,10 +128,12 @@ object RemoteCommandRouter {
                 else JSONObject().put("ok", true).put("spoken", false)
             ReceiptStore.record(context, "agent.chat", if (voice.optBoolean("ok")) "PASS" else "FAIL",
                 "source=USER_AUTHORIZED_CREATOR_PROFILE modelExecuted=false speak=$speak")
-            return JSONObject().put("ok", true).put("prompt", prompt).put("response", response)
-                .put("modelExecuted", false).put("modelId", JSONObject.NULL).put("elapsedMs", 0)
-                .put("voice", voice).put("authority", "USER_AUTHORIZED_CREATOR_PROFILE")
-                .put("promptContract", "EXACT_PROFILE_LOOKUP_V1").put("canonicalFormulaState", "NOT_EXECUTED")
+            return finish(
+                JSONObject().put("ok", true).put("prompt", prompt).put("response", response)
+                    .put("modelExecuted", false).put("modelId", JSONObject.NULL).put("elapsedMs", 0)
+                    .put("voice", voice).put("authority", "USER_AUTHORIZED_CREATOR_PROFILE")
+                    .put("promptContract", "EXACT_PROFILE_LOOKUP_V1").put("canonicalFormulaState", "NOT_EXECUTED")
+            )
         }
 
         val behavior = AgentLeeBehaviorRuntime.evaluate(context, prompt)
@@ -130,7 +143,7 @@ object RemoteCommandRouter {
                 else JSONObject().put("ok", true).put("spoken", false)
             ReceiptStore.record(context, "agent.chat", if (voice.optBoolean("ok")) "PASS" else "FAIL",
                 "source=" + behavior.contract + " modelExecuted=false speak=" + speak)
-            return JSONObject().apply {
+            return finish(JSONObject().apply {
                 put("ok", true); put("prompt", prompt); put("response", response)
                 put("modelExecuted", false); put("modelId", JSONObject.NULL); put("elapsedMs", 0)
                 put("voice", voice); put("authority", "AGENT_LEE_DETERMINISTIC_BEHAVIOR")
@@ -138,19 +151,19 @@ object RemoteCommandRouter {
                 put("emotionState", behavior.emotions); put("register", behavior.register)
                 put("criticismStreak", behavior.criticismStreak)
                 put("canonicalFormulaState", "NOT_EXECUTED")
-            }
+            })
         }
 
         val combinedContext = listOf(creatorContext.trim(), behavior.promptContext)
             .filter { it.isNotBlank() }.joinToString(" | ")
         val generated = ModelRuntime.generateConversation(context, prompt, combinedContext)
-        if (!generated.optBoolean("ok")) return generated
+        if (!generated.optBoolean("ok")) return finish(generated)
         val response = generated.optString("response")
         val voice = if (speak) VoiceRuntime.speak(context, response)
             else JSONObject().put("ok", true).put("spoken", false)
         ReceiptStore.record(context, "agent.chat", if (voice.optBoolean("ok")) "PASS" else "FAIL",
             "model=" + generated.optString("modelId") + " register=" + behavior.register + " speak=" + speak)
-        return JSONObject().apply {
+        return finish(JSONObject().apply {
             put("ok", true); put("prompt", prompt); put("response", response)
             put("modelExecuted", true)
             put("modelId", generated.optString("modelId")); put("elapsedMs", generated.optLong("elapsedMs"))
@@ -159,7 +172,7 @@ object RemoteCommandRouter {
             put("emotionState", behavior.emotions); put("register", behavior.register)
             put("criticismStreak", behavior.criticismStreak)
             put("canonicalFormulaState", "NOT_EXECUTED")
-        }
+        })
     }
 
     private fun health(context: Context): JSONObject = JSONObject().apply {
