@@ -1,51 +1,13 @@
 {
   "schemaVersion": "1.0.0",
   "evidenceType": "LEEWAY_PHONE_WORKSTATION_REMOTE_EXECUTION",
-  "workflowRunId": "36969096991",
-  "workflowSha": "06514e7594e7a563a83307e05981b5254dfe58dd",
-  "observedAt": "2026-10-02T05:28:55.846Z",
+  "workflowRunId": "36969312145",
+  "workflowSha": "1b930cd1b3de7ae685b9cd8fbaef84bd38d166d4",
+  "observedAt": "2026-10-02T05:31:48.860Z",
   "pcRequired": false,
   "usbRequired": false,
   "result": {
-    "ok": true,
-    "id": "43b4a117-b5a3-41d1-ba5d-c13c727957ca",
-    "capability": "agent.chat",
-    "result": {
-      "type": "result",
-      "id": "43b4a117-b5a3-41d1-ba5d-c13c727957ca",
-      "ok": true,
-      "result": {
-        "ok": true,
-        "prompt": "Does six-bit binary directly represent all 70 LeeWay Q69 states from 0 through 69? Answer briefly and precisely.",
-        "response": "Nah. Six-bit binary gives exactly 64 basis patterns, 0 through 63. LeeWay states 64 through 69 use the extended QB64 representation; a canonical 16×6 Formula history may contain values 0 through 69, but those top six are not ordinary six-bit states.",
-        "modelExecuted": false,
-        "modelId": null,
-        "elapsedMs": 0,
-        "voice": {
-          "ok": true,
-          "spoken": false
-        },
-        "authority": "AGENT_LEE_DETERMINISTIC_BEHAVIOR",
-        "promptContract": "CANONICAL_Q69_SIX_BIT_TRUTH_V1",
-        "emotionState": {
-          "calm": 0.3387097120285034,
-          "confused": 0.09817841649055481,
-          "excited": 0.09817841649055481,
-          "frustrated": 0.17850622534751892,
-          "angry": 0,
-          "sad": 0,
-          "jolly": 0,
-          "curious": 0
-        },
-        "register": "hiphop_poetic",
-        "criticismStreak": 0,
-        "canonicalFormulaState": "NOT_EXECUTED"
-      },
-      "capability": "agent.chat"
-    },
-    "executionNode": "leeway-phone-workstation",
-    "transport": "VERCEL_QUEUE_DURABLE_V1",
-    "pcRequired": false,
-    "usbRequired": false
+    "ok": false,
+    "error": "CAPABILITY_NOT_WORKSTATION_QUALIFIED"
   }
 }
