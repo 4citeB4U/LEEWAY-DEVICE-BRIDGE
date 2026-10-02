@@ -1,3 +1,4 @@
+
 package industries.leeway.devicebridge
 
 import android.content.Context
@@ -112,6 +113,9 @@ object LocalBridgeServer {
         put("bindAddress", "127.0.0.1")
         put("port", PORT)
         put("agentAccessEnabled", LocalAuthority.agentAccessEnabled(context))
+        put("appVersionName", BuildConfig.VERSION_NAME)
+        put("appVersionCode", BuildConfig.VERSION_CODE)
+        put("updateMetadataUrl", AgentLeeUpdate.METADATA_URL)
         put("transport", "LOCAL_LOOPBACK")
         put("authority", "PHONE_LOCAL_RUNTIME")
     }

@@ -1,3 +1,4 @@
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -18,8 +19,8 @@ android {
         applicationId = "industries.leeway.devicebridge"
         minSdk = 29
         targetSdk = 35
-        versionCode = 23
-        versionName = "0.9.8-pocket-rc8"
+        versionCode = 24
+        versionName = "0.9.9-pocket-rc9"
     }
 }
 dependencies {

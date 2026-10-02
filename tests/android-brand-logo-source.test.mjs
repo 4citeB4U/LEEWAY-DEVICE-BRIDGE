@@ -1,3 +1,4 @@
+
 import fs from "node:fs";
 import crypto from "node:crypto";
 import assert from "node:assert/strict";
@@ -19,7 +20,7 @@ assert.match(manifest,/android:roundIcon="@drawable\/leeway_official_logo"/);
 assert.match(page,/href="\.\/leeway-official-logo\.png"/);
 assert.match(pwa,/\.\/icons\/leeway-official-logo-192\.png/);
 assert.match(pwa,/\.\/icons\/leeway-official-logo-512\.png/);
-assert.match(gradle,/versionName = "0\.9\.8-pocket-rc8"/);
-assert.match(gradle,/versionCode = 23/);
+assert.match(gradle,/versionName = "0\.9\.9-pocket-rc9"/);
+assert.match(gradle,/versionCode = 24/);
 
 console.log("PASS canonical LeeWay logo authority and Android 0.9.0 branding");
