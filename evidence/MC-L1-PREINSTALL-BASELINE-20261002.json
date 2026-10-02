@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "1.0.0",
+  "evidenceId": "LEEWAY-MC-L1-PREINSTALL-BASELINE-20261002",
+  "classification": "OBSERVED_LIVE_PHONE_BASELINE",
+  "authority": "Creator/Human Authority > LeeWay Standards",
+  "sourceClass": "REAL_PHONE_EXECUTION",
+  "transport": "VERCEL_QUEUE_DURABLE_V1",
+  "deviceId": "LDB-d33c4150-5959-419f-8b22-ed6c2f359549",
+  "pcRequired": false,
+  "usbRequired": false,
+  "health": {
+    "workflowRunId": 36968865887,
+    "observedAt": "2026-10-02T05:25:51.705Z",
+    "phoneRuntimeAuthority": "PHONE_LOCAL_RUNTIME",
+    "agentAccessEnabled": true,
+    "remoteConnected": true,
+    "modelId": "litert-community/SmolLM2-360M-Instruct",
+    "modelVerified": true,
+    "modelSha256": "8e2834da211b439751af968ed650febdde5a8cb8d88bc6c1a3059f049caa5c2e",
+    "modelBackend": "CPU",
+    "voiceState": "VOICE_UNAVAILABLE"
+  },
+  "cases": [
+    {
+      "id": "arithmetic",
+      "workflowRunId": 36968940762,
+      "observedAt": "2026-10-02T05:27:08.515Z",
+      "prompt": "What is 7 + 8? Answer with only the number.",
+      "response": "7 + 8 = 15",
+      "correct": true,
+      "modelExecuted": true,
+      "modelId": "litert-community/SmolLM2-360M-Instruct",
+      "elapsedMs": 19713,
+      "authority": "PHONE_LOCAL_AGENT_CHAT",
+      "promptContract": "AGENT_LEE_BEHAVIOR_RUNTIME_V1_PLUS_MODEL",
+      "canonicalFormulaState": "NOT_EXECUTED"
+    },
+    {
+      "id": "greeting",
+      "workflowRunId": 36969029535,
+      "observedAt": "2026-10-02T05:27:58.899Z",
+      "prompt": "Hello, Agent Lee.",
+      "response": "Yo, what it is, Creator? Mind clear, systems in view. What's the move?",
+      "modelExecuted": false,
+      "elapsedMs": 0,
+      "authority": "AGENT_LEE_DETERMINISTIC_BEHAVIOR",
+      "promptContract": "AGENT_LEE_GREETING_V1",
+      "canonicalFormulaState": "NOT_EXECUTED"
+    },
+    {
+      "id": "q69",
+      "workflowRunId": 36969096991,
+      "observedAt": "2026-10-02T05:28:55.846Z",
+      "prompt": "Does six-bit binary directly represent all 70 LeeWay Q69 states from 0 through 69? Answer briefly and precisely.",
+      "response": "Nah. Six-bit binary gives exactly 64 basis patterns, 0 through 63. LeeWay states 64 through 69 use the extended QB64 representation; a canonical 16×6 Formula history may contain values 0 through 69, but those top six are not ordinary six-bit states.",
+      "modelExecuted": false,
+      "elapsedMs": 0,
+      "authority": "AGENT_LEE_DETERMINISTIC_BEHAVIOR",
+      "promptContract": "CANONICAL_Q69_SIX_BIT_TRUTH_V1",
+      "canonicalFormulaState": "NOT_EXECUTED"
+    }
+  ],
+  "baselineConclusion": {
+    "ordinaryArithmeticCorrect": true,
+    "deterministicGreetingAvailable": true,
+    "deterministicQ69TruthAvailable": true,
+    "canonicalFormulaInChatLoop": false,
+    "shadowInstalled": false
+  },
+  "nextGate": "Install only the hash-pinned 0.9.9-mc-shadow-l1 experimental APK, verify shadow OFF reproduces baseline, then enable observe-only shadow."
+}
