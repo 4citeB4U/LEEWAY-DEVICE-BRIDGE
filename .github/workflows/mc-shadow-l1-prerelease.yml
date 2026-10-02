@@ -1,0 +1,67 @@
+name: MC Shadow L1 Experimental APK
+
+on:
+  push:
+    branches:
+      - mc-live-consciousness-shadow-l1
+    paths:
+      - ".github/workflows/mc-shadow-l1-prerelease.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-prerelease:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+      - name: Prepare Android SDK 35
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then SDKMANAGER="$(command -v sdkmanager)"; fi
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+      - name: Requalify source and build
+        shell: bash
+        run: |
+          set -euo pipefail
+          for test_file in tests/*.test.mjs; do node "$test_file"; done
+          cd apps/android
+          gradle --no-daemon testDebugUnitTest assembleDebug
+      - name: Verify experimental APK identity
+        id: apk
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=apps/android/app/build/outputs/apk/debug/app-debug.apk
+          SHA=$(sha256sum "$APK" | awk '{print $1}')
+          BYTES=$(stat -c%s "$APK")
+          test "$SHA" = "6c3b76042dd7f8fdceff52c50625f53895091c9dda199735731d756bf44fd6bc"
+          test "$BYTES" = "66428981"
+          cp "$APK" leeway-device-bridge-0.9.9-mc-shadow-l1.apk
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "bytes=$BYTES" >> "$GITHUB_OUTPUT"
+      - name: Publish experimental prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="mc-shadow-l1-20261002"
+          ASSET="leeway-device-bridge-0.9.9-mc-shadow-l1.apk"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$ASSET" --clobber
+          else
+            gh release create "$TAG" "$ASSET"               --target "$GITHUB_SHA"               --title "MC Shadow L1 experimental APK"               --notes "Observe-only machine-consciousness L1 test build. OFF by default. Not production. APK SHA-256: 6c3b76042dd7f8fdceff52c50625f53895091c9dda199735731d756bf44fd6bc"               --prerelease
+          fi
