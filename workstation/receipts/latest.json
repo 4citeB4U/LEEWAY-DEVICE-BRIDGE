@@ -1,13 +1,840 @@
 {
   "schemaVersion": "1.0.0",
   "evidenceType": "LEEWAY_PHONE_WORKSTATION_REMOTE_EXECUTION",
-  "workflowRunId": "36969312145",
-  "workflowSha": "1b930cd1b3de7ae685b9cd8fbaef84bd38d166d4",
-  "observedAt": "2026-10-02T05:31:48.860Z",
+  "workflowRunId": "36969462468",
+  "workflowSha": "e6993169734cd4d1d901a3b9f7292a4ad874b9cc",
+  "observedAt": "2026-10-02T05:33:44.316Z",
   "pcRequired": false,
   "usbRequired": false,
   "result": {
-    "ok": false,
-    "error": "CAPABILITY_NOT_WORKSTATION_QUALIFIED"
+    "ok": true,
+    "id": "b1ede401-61f7-4d1a-a123-fe50bec2d4e1",
+    "capability": "device.apps.list",
+    "result": {
+      "type": "result",
+      "id": "b1ede401-61f7-4d1a-a123-fe50bec2d4e1",
+      "ok": true,
+      "result": {
+        "ok": true,
+        "count": 162,
+        "apps": [
+          {
+            "packageName": "com.att.mobilesecurity",
+            "activityName": "com.att.mobilesecurity.compose.launcher.AppLauncherActivity",
+            "label": "ActiveArmor"
+          },
+          {
+            "packageName": "com.adpmobile.android",
+            "activityName": "com.adpmobile.android.auth.ui.AuthAppActivity",
+            "label": "ADPMobile"
+          },
+          {
+            "packageName": "industries.leeway.workstation",
+            "activityName": "industries.leeway.workstation.MainActivity",
+            "label": "Agent Lee Workstation"
+          },
+          {
+            "packageName": "org.chromium.webapk.aa2ef19b3dc2b0d2c_v2",
+            "activityName": "org.chromium.webapk.shell_apk.h2o.H2OOpaqueMainActivity",
+            "label": "AI Studio"
+          },
+          {
+            "packageName": "com.amazon.flex.rabbit",
+            "activityName": "com.amazon.rabbit.android.presentation.core.LaunchActivity",
+            "label": "Amazon Flex"
+          },
+          {
+            "packageName": "com.amazon.mShop.android.shopping",
+            "activityName": "com.amazon.mShop.home.HomeActivity",
+            "label": "Amazon Shopping"
+          },
+          {
+            "packageName": "org.chromium.webapk.a69639ec1ac1d137e_v2",
+            "activityName": "org.chromium.webapk.shell_apk.h2o.H2OOpaqueMainActivity",
+            "label": "App"
+          },
+          {
+            "packageName": "org.chromium.webapk.a21f8e029b041019f_v2",
+            "activityName": "org.chromium.webapk.shell_apk.h2o.H2OOpaqueMainActivity",
+            "label": "Arena | Benchmark & Compare the Best AI Models"
+          },
+          {
+            "packageName": "com.ignatiusDevStudio.ARMeter",
+            "activityName": "com.google.firebase.MessagingUnityPlayerActivity",
+            "label": "ARMeter"
+          },
+          {
+            "packageName": "com.att.myWireless",
+            "activityName": "com.att.myWireless.RNMainActivity",
+            "label": "AT&T"
+          },
+          {
+            "packageName": "com.att.personalcloud",
+            "activityName": "com.att.personalcloud.gui.activities.SplashLogoActivity",
+            "label": "AT&T Cloud"
+          },
+          {
+            "packageName": "com.azure.authenticator",
+            "activityName": "com.azure.authenticator.ui.LaunchActivity",
+            "label": "Authenticator"
+          },
+          {
+            "packageName": "oracle.idm.mobile.authenticator",
+            "activityName": "oracle.idm.mobile.authenticator.ui.SplashActivity",
+            "label": "Authenticator"
+          },
+          {
+            "packageName": "com.bitly.app",
+            "activityName": "com.bitly.app.activity.LandingActivity",
+            "label": "Bitly"
+          },
+          {
+            "packageName": "com.samsung.android.bixby.agent",
+            "activityName": "com.samsung.android.bixby.assistanthome.AssistantHomeLauncherActivity",
+            "label": "Bixby"
+          },
+          {
+            "packageName": "com.block.juggle",
+            "activityName": "org.cocos2dx.javascript.AppActivity.Default",
+            "label": "Block Blast!"
+          },
+          {
+            "packageName": "com.sec.android.app.sbrowser",
+            "activityName": "com.sec.android.app.sbrowser.SBrowserMainActivity",
+            "label": "Browser"
+          },
+          {
+            "packageName": "com.sec.android.app.popupcalculator",
+            "activityName": "com.sec.android.app.popupcalculator.Calculator",
+            "label": "Calculator"
+          },
+          {
+            "packageName": "com.samsung.android.calendar",
+            "activityName": "com.samsung.android.app.calendar.activity.MainActivity",
+            "label": "Calendar"
+          },
+          {
+            "packageName": "com.sec.android.app.camera",
+            "activityName": "com.sec.android.app.camera.Camera",
+            "label": "Camera"
+          },
+          {
+            "packageName": "com.konylabs.capitalone",
+            "activityName": "com.konylabs.capitalone.EnterpriseMobileBanking.LaunchActivity",
+            "label": "Capital One"
+          },
+          {
+            "packageName": "com.gtindependence.Caregiver",
+            "activityName": "com.gtindependence.Caregiver.MainActivity",
+            "label": "Caregiver"
+          },
+          {
+            "packageName": "mobile.fourkites.com.carrierLink",
+            "activityName": "mobile.fourkites.com.carrierLink.MainActivity",
+            "label": "CarrierLink"
+          },
+          {
+            "packageName": "com.squareup.cash",
+            "activityName": "com.squareup.cash.ui.MainActivity",
+            "label": "Cash App"
+          },
+          {
+            "packageName": "com.openai.chatgpt",
+            "activityName": "com.openai.chatgpt.MainActivity",
+            "label": "ChatGPT"
+          },
+          {
+            "packageName": "com.kingsofgames.chessuniverse",
+            "activityName": "com.google.firebase.MessagingUnityPlayerActivity",
+            "label": "Chess Universe"
+          },
+          {
+            "packageName": "com.onedebit.chime",
+            "activityName": "com.onedebit.chime.MainActivity",
+            "label": "Chime"
+          },
+          {
+            "packageName": "com.android.chrome",
+            "activityName": "com.google.android.apps.chrome.Main",
+            "label": "Chrome"
+          },
+          {
+            "packageName": "com.hy.chubory",
+            "activityName": "com.hy.p.activity.LauncherActivity",
+            "label": "CHUBORY GPS"
+          },
+          {
+            "packageName": "com.cinedash.lwp",
+            "activityName": "com.sotng.cinedash.start.StartActivity",
+            "label": "CineDash"
+          },
+          {
+            "packageName": "com.veil.drama.zia",
+            "activityName": "com.lpqt.cinemint.start.StartActivity",
+            "label": "CineMint"
+          },
+          {
+            "packageName": "com.sec.android.app.clockpackage",
+            "activityName": "com.sec.android.app.clockpackage.ClockPackage",
+            "label": "Clock"
+          },
+          {
+            "packageName": "com.samsung.android.app.contacts",
+            "activityName": "com.samsung.android.contacts.contactslist.PeopleActivity",
+            "label": "Contacts"
+          },
+          {
+            "packageName": "com.microsoft.office.officehubrow",
+            "activityName": "com.microsoft.office.officesuite.OfficeSuiteActivity",
+            "label": "Copilot"
+          },
+          {
+            "packageName": "com.alk.copilot.mapviewer",
+            "activityName": "com.alk.copilot.CopilotActivity",
+            "label": "CoPilot GPS"
+          },
+          {
+            "packageName": "com.samsung.android.app.sketchbook",
+            "activityName": "com.samsung.android.app.sketchbook.application.DrawingActivity",
+            "label": "Creative studio"
+          },
+          {
+            "packageName": "com.doordash.driverapp",
+            "activityName": "com.doordash.driverapp.ui.login.LauncherActivity",
+            "label": "Dasher"
+          },
+          {
+            "packageName": "com.att.dh",
+            "activityName": "com.mce.container.MainActivity",
+            "label": "Device Help"
+          },
+          {
+            "packageName": "com.google.android.apps.docs",
+            "activityName": "com.google.android.apps.docs.app.NewMainProxyActivity",
+            "label": "Drive"
+          },
+          {
+            "packageName": "com.netradyne.IDMS",
+            "activityName": "com.netradyne.IDMS.MainActivity",
+            "label": "Driveri"
+          },
+          {
+            "packageName": "com.duckduckgo.mobile.android",
+            "activityName": "com.duckduckgo.app.launch.Launcher",
+            "label": "DuckDuckGo"
+          },
+          {
+            "packageName": "org.chromium.webapk.a7e52e9a07e265b2e_v2",
+            "activityName": "org.chromium.webapk.shell_apk.h2o.H2OOpaqueMainActivity",
+            "label": "EAS"
+          },
+          {
+            "packageName": "com.microsoft.emmx",
+            "activityName": "com.microsoft.ruby.Main",
+            "label": "Edge"
+          },
+          {
+            "packageName": "com.emergentagent.app",
+            "activityName": "com.emergentagent.app.MainActivity",
+            "label": "Emergent"
+          },
+          {
+            "packageName": "host.exp.exponent",
+            "activityName": "host.exp.exponent.experience.HomeActivity",
+            "label": "Expo Go"
+          },
+          {
+            "packageName": "org.chromium.webapk.a431b185c6e0e5af6_v2",
+            "activityName": "org.chromium.webapk.shell_apk.h2o.H2OOpaqueMainActivity",
+            "label": "F-Droid"
+          },
+          {
+            "packageName": "com.facebook.katana",
+            "activityName": "com.facebook.katana.LoginActivity",
+            "label": "Facebook"
+          },
+          {
+            "packageName": "com.samsung.android.app.find",
+            "activityName": "com.samsung.android.app.find.MainActivity",
+            "label": "Find"
+          },
+          {
+            "packageName": "org.mozilla.firefox",
+            "activityName": "org.mozilla.firefox.App",
+            "label": "Firefox"
+          },
+          {
+            "packageName": "com.fixdapp.two",
+            "activityName": "com.fixdapp.android.mainactivity.MainActivity",
+            "label": "FIXD"
+          },
+          {
+            "packageName": "com.sec.android.gallery3d",
+            "activityName": "com.samsung.android.gallery.app.activity.GalleryActivity",
+            "label": "Gallery"
+          },
+          {
+            "packageName": "com.samsung.android.game.gamehome",
+            "activityName": "com.samsung.android.game.gamehome.app.MainActivity",
+            "label": "Gaming Hub"
+          },
+          {
+            "packageName": "com.google.android.apps.bard",
+            "activityName": "com.google.android.apps.bard.shellapp.BardEntryPointActivity",
+            "label": "Gemini"
+          },
+          {
+            "packageName": "org.chromium.webapk.aedba19a130e4abfb_v2",
+            "activityName": "org.chromium.webapk.shell_apk.h2o.H2OOpaqueMainActivity",
+            "label": "GitHub"
+          },
+          {
+            "packageName": "com.samsung.sree",
+            "activityName": "com.samsung.sree.ui.MainActivity",
+            "label": "Global Goals"
+          },
+          {
+            "packageName": "com.google.android.gm",
+            "activityName": "com.google.android.gm.ConversationListActivityGmail",
+            "label": "Gmail"
+          },
+          {
+            "packageName": "com.google.android.googlequicksearchbox",
+            "activityName": "com.google.android.googlequicksearchbox.SearchActivity",
+            "label": "Google"
+          },
+          {
+            "packageName": "com.google.android.videos",
+            "activityName": "com.google.android.videos.GoogleTvEntryPoint",
+            "label": "Google TV"
+          },
+          {
+            "packageName": "com.govauctions",
+            "activityName": "com.govauctions.MainActivity",
+            "label": "GovAuctions"
+          },
+          {
+            "packageName": "com.sec.android.app.shealth",
+            "activityName": "com.samsung.android.app.shealth.home.HomeMainActivity",
+            "label": "Health"
+          },
+          {
+            "packageName": "com.imgur.mobile",
+            "activityName": "com.imgur.mobile.Launcher",
+            "label": "Imgur"
+          },
+          {
+            "packageName": "com.indeed.android.jobsearch",
+            "activityName": "com.indeed.android.jobsearch.LaunchActivity",
+            "label": "Indeed Job Search"
+          },
+          {
+            "packageName": "com.instagram.android",
+            "activityName": "com.instagram.android.activity.MainTabActivity",
+            "label": "Instagram"
+          },
+          {
+            "packageName": "org.jitsi.meet",
+            "activityName": "org.jitsi.meet.MainActivity",
+            "label": "Jitsi Meet"
+          },
+          {
+            "packageName": "kling.ai.video.chat",
+            "activityName": "com.yxcorp.gifshow.kling.KLingHomeActivity",
+            "label": "KLINGAI"
+          },
+          {
+            "packageName": "com.lastminuteeld.mobile",
+            "activityName": "com.lastminuteeld.mobile.MainActivity",
+            "label": "LAST MINUTE ELD"
+          },
+          {
+            "packageName": "org.chromium.webapk.a99a27f3bf93785d4_v2",
+            "activityName": "org.chromium.webapk.shell_apk.h2o.H2OOpaqueMainActivity",
+            "label": "LeChat"
+          },
+          {
+            "packageName": "industries.leeway.readaloud",
+            "activityName": "industries.leeway.readaloud.MainActivity",
+            "label": "LeeWay Agent Lee Voice One"
+          },
+          {
+            "packageName": "org.chromium.webapk.a98aa76d537d1aa2f_v2",
+            "activityName": "org.chromium.webapk.shell_apk.h2o.H2OOpaqueMainActivity",
+            "label": "LeeWay CRM"
+          },
+          {
+            "packageName": "industries.leeway.devicebridge",
+            "activityName": "industries.leeway.devicebridge.MainActivity",
+            "label": "LeeWay Device Bridge"
+          },
+          {
+            "packageName": "industries.leeway.pocket",
+            "activityName": "industries.leeway.pocket.MainActivity",
+            "label": "LeeWay Pocket"
+          },
+          {
+            "packageName": "com.lgeha.nuts",
+            "activityName": "com.lgeha.nuts.MainActivity",
+            "label": "LG ThinQ"
+          },
+          {
+            "packageName": "com.life360.android.safetymapd",
+            "activityName": "com.life360.koko.LauncherNormal",
+            "label": "Life360"
+          },
+          {
+            "packageName": "com.linkedin.android",
+            "activityName": "com.linkedin.android.authenticator.LaunchActivityDefault",
+            "label": "LinkedIn"
+          },
+          {
+            "packageName": "org.chromium.webapk.a129d8e7789c5f9f5_v2",
+            "activityName": "org.chromium.webapk.shell_apk.h2o.H2OOpaqueMainActivity",
+            "label": "LiteLLM"
+          },
+          {
+            "packageName": "com.loves.finder",
+            "activityName": "com.loves.lovesconnect.splashScreen.LegalActivity",
+            "label": "Love's"
+          },
+          {
+            "packageName": "com.macropoint.application",
+            "activityName": "com.macropoint.application.MainActivity",
+            "label": "MacroPoint"
+          },
+          {
+            "packageName": "tech.butterfly.app",
+            "activityName": "tech.butterfly.app.MainActivity",
+            "label": "Manus"
+          },
+          {
+            "packageName": "com.google.android.apps.maps",
+            "activityName": "com.google.android.maps.MapsActivity",
+            "label": "Maps"
+          },
+          {
+            "packageName": "com.mcdonalds.app",
+            "activityName": "com.mcdonalds.mcdcoreapp.common.activity.SplashActivity",
+            "label": "McDonald's"
+          },
+          {
+            "packageName": "com.craftars.measuretools",
+            "activityName": "com.unity3d.player.UnityPlayerActivity",
+            "label": "Measure Tools"
+          },
+          {
+            "packageName": "com.google.android.apps.tachyon",
+            "activityName": "com.google.android.apps.tachyon.MainActivity",
+            "label": "Meet"
+          },
+          {
+            "packageName": "com.samsung.android.voc",
+            "activityName": "com.samsung.android.voc.LauncherActivity",
+            "label": "Members"
+          },
+          {
+            "packageName": "com.google.android.apps.messaging",
+            "activityName": "com.google.android.apps.messaging.ui.ConversationListActivity",
+            "label": "Messages"
+          },
+          {
+            "packageName": "com.mobiledatalabs.mileiq",
+            "activityName": "com.mobiledatalabs.mileiq.icon.main",
+            "label": "MileIQ"
+          },
+          {
+            "packageName": "com.mom.simulator",
+            "activityName": "com.unity3d.player.UnityPlayerActivity",
+            "label": "Mother Life Simulator"
+          },
+          {
+            "packageName": "com.mothersimulator3d2",
+            "activityName": "com.mothersimulator3d2.MyActivity",
+            "label": "Mother Simulator: Family life"
+          },
+          {
+            "packageName": "com.musivibe.player.allmusic",
+            "activityName": "com.musivibe.musi_vibe.MainActivity",
+            "label": "MusiVibe"
+          },
+          {
+            "packageName": "com.sec.android.app.myfiles",
+            "activityName": "com.sec.android.app.myfiles.ui.MainActivity",
+            "label": "My Files"
+          },
+          {
+            "packageName": "com.brighthouse.mybhn",
+            "activityName": "com.spectrum.convergedTech.MainActivity",
+            "label": "My Spectrum"
+          },
+          {
+            "packageName": "com.netflix.mediaclient",
+            "activityName": "com.netflix.mediaclient.ui.launch.UIWebViewActivity",
+            "label": "Netflix"
+          },
+          {
+            "packageName": "com.samsung.android.app.spage",
+            "activityName": "com.samsung.android.app.spage.main.LauncherActivity",
+            "label": "News"
+          },
+          {
+            "packageName": "com.particlenews.newsbreak",
+            "activityName": "com.particlemedia.ui.guide.UserGuideActivity",
+            "label": "NewsBreak"
+          },
+          {
+            "packageName": "org.chromium.webapk.a3cd9646171936ebb_v2",
+            "activityName": "org.chromium.webapk.shell_apk.h2o.H2OOpaqueMainActivity",
+            "label": "NinjaTech AI"
+          },
+          {
+            "packageName": "notes.notepad.checklist.calendar.todolist.notebook",
+            "activityName": "notes.notepad.checklist.calendar.todolist.notebook.page.welcome.WelcomeActivity",
+            "label": "Notein"
+          },
+          {
+            "packageName": "com.samsung.android.app.notes",
+            "activityName": "com.samsung.android.app.notes.memolist.MemoListActivity",
+            "label": "Notes"
+          },
+          {
+            "packageName": "com.superegodriversapp",
+            "activityName": "com.superegodriversapp.MainActivity",
+            "label": "On Truck Load Board"
+          },
+          {
+            "packageName": "com.microsoft.skydrive",
+            "activityName": "com.microsoft.skydrive.MainActivity",
+            "label": "OneDrive"
+          },
+          {
+            "packageName": "com.microsoft.office.outlook",
+            "activityName": "com.microsoft.office.outlook.MainActivity",
+            "label": "Outlook"
+          },
+          {
+            "packageName": "com.sec.penup",
+            "activityName": "com.sec.penup.ui.SplashActivity",
+            "label": "PENUP"
+          },
+          {
+            "packageName": "ai.perplexity.app.android",
+            "activityName": "ai.perplexity.app.android.ui.main.MainActivity",
+            "label": "Perplexity"
+          },
+          {
+            "packageName": "com.samsung.android.dialer",
+            "activityName": "com.samsung.android.dialer.DialtactsActivity",
+            "label": "Phone"
+          },
+          {
+            "packageName": "com.google.android.apps.photos",
+            "activityName": "com.google.android.apps.photos.home.HomeActivity",
+            "label": "Photos"
+          },
+          {
+            "packageName": "com.pinterest",
+            "activityName": "com.pinterest.activity.PinterestActivity",
+            "label": "Pinterest"
+          },
+          {
+            "packageName": "com.android.vending",
+            "activityName": "com.android.vending.AssetBrowserActivity",
+            "label": "Play Store"
+          },
+          {
+            "packageName": "com.plexapp.android",
+            "activityName": "tv.plex.app.MainActivity",
+            "label": "Plex"
+          },
+          {
+            "packageName": "com.mobile.tenstreet.driverpulse",
+            "activityName": "com.truckmap.MainActivity",
+            "label": "Pulse"
+          },
+          {
+            "packageName": "org.chromium.webapk.a95281b71c94d3f74_v2",
+            "activityName": "org.chromium.webapk.shell_apk.h2o.H2OOpaqueMainActivity",
+            "label": "Qwen Studio"
+          },
+          {
+            "packageName": "com.samsung.android.app.reminder",
+            "activityName": "com.samsung.android.app.reminder.ui.LaunchMainActivity",
+            "label": "Reminder"
+          },
+          {
+            "packageName": "com.google.chromeremotedesktop",
+            "activityName": "com.google.remoting.androidwrapper.MainActivity",
+            "label": "Remote Desktop"
+          },
+          {
+            "packageName": "com.roblox.client",
+            "activityName": "com.roblox.client.startup.ActivitySplash",
+            "label": "Roblox"
+          },
+          {
+            "packageName": "com.roku.remote",
+            "activityName": "com.roku.remote.ui.activities.BrowseContentActivity",
+            "label": "Roku"
+          },
+          {
+            "packageName": "com.samsung.android.samsungpass",
+            "activityName": "com.samsung.android.samsungpass.launcher.EntryLauncher",
+            "label": "Samsung Pass"
+          },
+          {
+            "packageName": "com.samsung.knox.securefolder",
+            "activityName": "com.samsung.knox.securefolder.presentation.switcher.view.SecureFolderShortcutActivity",
+            "label": "Secure Folder"
+          },
+          {
+            "packageName": "com.estmob.android.sendanywhere",
+            "activityName": "com.estmob.paprika4.activity.SplashActivity",
+            "label": "Send Anywhere"
+          },
+          {
+            "packageName": "com.android.settings",
+            "activityName": "com.android.settings.Settings",
+            "label": "Settings"
+          },
+          {
+            "packageName": "com.google.android.apps.docs.editors.sheets",
+            "activityName": "com.google.android.apps.docs.app.NewMainProxyActivity",
+            "label": "Sheets"
+          },
+          {
+            "packageName": "moe.shizuku.privileged.api",
+            "activityName": "moe.shizuku.manager.MainActivity",
+            "label": "Shizuku"
+          },
+          {
+            "packageName": "net.easyjoin.applauncher",
+            "activityName": "net.easyjoin.applauncher.activity.MainActivity",
+            "label": "SideApps"
+          },
+          {
+            "packageName": "com.roku.rokuhome",
+            "activityName": "com.hualai.home.StartActivity",
+            "label": "Smart Home"
+          },
+          {
+            "packageName": "com.sec.android.easyMover",
+            "activityName": "com.sec.android.easyMover.ui.launch.LauncherActivity",
+            "label": "Smart Switch"
+          },
+          {
+            "packageName": "com.samsung.android.oneconnect",
+            "activityName": "com.samsung.android.oneconnect.ui.SCMainActivity",
+            "label": "SmartThings"
+          },
+          {
+            "packageName": "com.tripledot.solitaire",
+            "activityName": "com.imagepicker.CustomUnityPlayerActivity",
+            "label": "Solitaire"
+          },
+          {
+            "packageName": "com.spotify.music",
+            "activityName": "com.spotify.music.MainActivity",
+            "label": "Spotify"
+          },
+          {
+            "packageName": "com.sec.android.app.samsungapps",
+            "activityName": "com.sec.android.app.samsungapps.SamsungAppsMainActivity",
+            "label": "Store"
+          },
+          {
+            "packageName": "com.subway.mobile.subwayapp03",
+            "activityName": "com.subway.mobile.subwayapp03.ui.SplashActivity",
+            "label": "SUBWAY®"
+          },
+          {
+            "packageName": "app.supanow.studio",
+            "activityName": "app.supanow.studio.MainActivity",
+            "label": "Supanow"
+          },
+          {
+            "packageName": "com.ig.supermarket.simulator",
+            "activityName": "com.unity3d.player.UnityPlayerActivity",
+            "label": "Supermarket Simulator"
+          },
+          {
+            "packageName": "com.tailscale.ipn",
+            "activityName": "com.tailscale.ipn.MainActivity",
+            "label": "Tailscale"
+          },
+          {
+            "packageName": "com.oe.photocollage",
+            "activityName": "com.oe.photocollage.SplashActivity",
+            "label": "TeaTV"
+          },
+          {
+            "packageName": "com.teddyeld.mobile",
+            "activityName": "com.teddyeld.mobile.MainActivity",
+            "label": "TEDDY ELD"
+          },
+          {
+            "packageName": "org.telegram.messenger.web",
+            "activityName": "org.telegram.messenger.DefaultIcon",
+            "label": "Telegram"
+          },
+          {
+            "packageName": "com.einnovation.temu",
+            "activityName": "com.baogong.splash.activity.MainFrameActivity",
+            "label": "Temu"
+          },
+          {
+            "packageName": "com.termux",
+            "activityName": "com.termux.app.TermuxActivity",
+            "label": "Termux"
+          },
+          {
+            "packageName": "com.samsung.android.app.tips",
+            "activityName": "com.samsung.android.app.tips.TipsMainActivity",
+            "label": "Tips"
+          },
+          {
+            "packageName": "teavideo.tvplayer.videoallformat",
+            "activityName": "teavideo.tvplayer.videoallformat.activity.SplashActivity",
+            "label": "TPlayer"
+          },
+          {
+            "packageName": "com.pegasustranstech.transflonowplus",
+            "activityName": "com.pegasustranstech.transflonowplus.v4.application.ui.launch.SplashActivity",
+            "label": "TRANSFLO"
+          },
+          {
+            "packageName": "com.sixdays.truckerpath",
+            "activityName": "com.sixdays.truckerpath.view.base.SplashActivity",
+            "label": "Trucker Path"
+          },
+          {
+            "packageName": "com.truckmap.truckmap",
+            "activityName": "com.truckmap.MainActivity",
+            "label": "TruckMap"
+          },
+          {
+            "packageName": "com.samsung.android.tvplus",
+            "activityName": "com.samsung.android.tvplus.MainActivity",
+            "label": "TV"
+          },
+          {
+            "packageName": "com.ubercab.driver",
+            "activityName": "com.ubercab.carbon.core.CarbonActivity",
+            "label": "Uber Driver"
+          },
+          {
+            "packageName": "org.chromium.webapk.a69c9030b93407b40_v2",
+            "activityName": "org.chromium.webapk.shell_apk.h2o.H2OOpaqueMainActivity",
+            "label": "usnewson"
+          },
+          {
+            "packageName": "com.pd.vehiclemasters",
+            "activityName": "by.saygames.SayKitActivity",
+            "label": "Vehicle Masters"
+          },
+          {
+            "packageName": "com.vidlife.andplayer",
+            "activityName": "com.vidlife.andplayer.ViliOpenAct",
+            "label": "VidLife"
+          },
+          {
+            "packageName": "com.vidlyplayer.allvideo",
+            "activityName": "com.vidlyplayer.allvideo.ui.launcher.LauncherActivity",
+            "label": "Vidly"
+          },
+          {
+            "packageName": "com.vimo.editfilm.play",
+            "activityName": "com.vimo.editfilm.play.VmoOpenActy",
+            "label": "Vimo"
+          },
+          {
+            "packageName": "com.samsung.vvm",
+            "activityName": "com.samsung.vvm.views.ui.mainview.VVMApplicationAlias",
+            "label": "Visual Voicemail"
+          },
+          {
+            "packageName": "com.google.android.apps.googlevoice",
+            "activityName": "com.google.android.apps.googlevoice.SplashActivity",
+            "label": "Voice"
+          },
+          {
+            "packageName": "com.sec.android.app.voicenote",
+            "activityName": "com.sec.android.app.voicenote.main.VNMainActivity",
+            "label": "Voice Recorder"
+          },
+          {
+            "packageName": "com.google.android.apps.walletnfcrel",
+            "activityName": "com.google.commerce.tapandpay.android.wallet.WalletActivity",
+            "label": "Wallet"
+          },
+          {
+            "packageName": "com.samsung.android.spay",
+            "activityName": "com.samsung.android.spay.ui.SpayMainActivity",
+            "label": "Wallet"
+          },
+          {
+            "packageName": "com.walmart.android",
+            "activityName": "com.walmart.glass.integration.splash.SplashActivity",
+            "label": "Walmart"
+          },
+          {
+            "packageName": "com.samsung.android.app.watchmanager",
+            "activityName": "com.samsung.android.app.watchmanager.setupwizard.SetupWizardWelcomeActivity",
+            "label": "Wearable"
+          },
+          {
+            "packageName": "com.aws.android",
+            "activityName": "com.aws.android.V1HomeActivityLauncher",
+            "label": "WeatherBug"
+          },
+          {
+            "packageName": "com.whatsapp",
+            "activityName": "com.whatsapp.Main",
+            "label": "WhatsApp"
+          },
+          {
+            "packageName": "nz.co.whiparound.app",
+            "activityName": "nz.co.whiparound.app.ui.SplashActivity",
+            "label": "Whip Around"
+          },
+          {
+            "packageName": "com.microsoft.office.word",
+            "activityName": "com.microsoft.office.apphost.LaunchActivity",
+            "label": "Word"
+          },
+          {
+            "packageName": "com.google.android.youtube",
+            "activityName": "com.google.android.youtube.app.honeycomb.Shell$HomeActivity",
+            "label": "YouTube"
+          },
+          {
+            "packageName": "com.arco.youware",
+            "activityName": "com.arco.youware.MainActivity",
+            "label": "YouWare"
+          },
+          {
+            "packageName": "com.google.android.apps.youtube.music",
+            "activityName": "com.google.android.apps.youtube.music.activities.MusicActivity",
+            "label": "YT Music"
+          },
+          {
+            "packageName": "org.chromium.webapk.ae7936d97a18ec13c_v2",
+            "activityName": "org.chromium.webapk.shell_apk.h2o.H2OOpaqueMainActivity",
+            "label": "Z"
+          },
+          {
+            "packageName": "us.zoom.videomeetings",
+            "activityName": "com.zipow.videobox.LauncherActivity",
+            "label": "Zoom"
+          }
+        ]
+      },
+      "capability": "device.apps.list"
+    },
+    "executionNode": "leeway-phone-workstation",
+    "transport": "VERCEL_QUEUE_DURABLE_V1",
+    "pcRequired": false,
+    "usbRequired": false
   }
 }
