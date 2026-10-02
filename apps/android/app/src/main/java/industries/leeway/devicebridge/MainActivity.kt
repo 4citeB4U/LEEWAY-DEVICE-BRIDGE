@@ -188,6 +188,22 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        val consciousnessStatus = Button(this).apply {
+            text = "CONSCIOUSNESS STATUS"
+            setOnClickListener {
+                output.text = ConsciousnessRuntime.status(this@MainActivity).toString(2)
+            }
+        }
+
+        val consciousnessMode = Button(this).apply {
+            text = "CONSCIOUSNESS MODE: " + ConsciousnessRuntime.mode(this@MainActivity).name
+            setOnClickListener {
+                val state = ConsciousnessRuntime.nextMode(this@MainActivity)
+                text = "CONSCIOUSNESS MODE: " + state.optString("mode")
+                output.text = state.toString(2)
+            }
+        }
+
         val modelDownload = Button(this).apply {
             text = "DOWNLOAD LOCAL MODEL"
             setOnClickListener {
@@ -281,10 +297,15 @@ class MainActivity : AppCompatActivity() {
                             if (heard.isBlank()) { output.text = "I did not hear a complete request."; return }
                             output.text = "You: " + heard + "\\n\\nAgent Lee is thinking..."
                             Thread {
-                                val result = ModelRuntime.generateConversation(this@MainActivity, heard)
+                                val mode = ConsciousnessRuntime.mode(this@MainActivity)
+                                if (mode != ConsciousnessRuntime.Mode.OFF) {
+                                    ConsciousnessRuntime.observe(this@MainActivity, heard)
+                                }
+                                val result = ConsciousnessRuntime.advisoryAnswer(this@MainActivity, heard)
+                                    ?: ModelRuntime.generateConversation(this@MainActivity, heard)
                                 val response = result.optString("response")
                                 val voice = if (result.optBoolean("ok") && response.isNotBlank()) VoiceRuntime.speak(this@MainActivity, response) else org.json.JSONObject().put("ok", false)
-                                ReceiptStore.record(this@MainActivity, "agent.voice.conversation", if (result.optBoolean("ok") && voice.optBoolean("ok")) "PASS" else "BLOCKED", "speech input -> model; voiceOk=" + voice.optBoolean("ok"))
+                                ReceiptStore.record(this@MainActivity, "agent.voice.conversation", if (result.optBoolean("ok") && voice.optBoolean("ok")) "PASS" else "BLOCKED", "speech input; consciousness=" + mode.name + " modelExecuted=" + result.optBoolean("modelExecuted", true) + " voiceOk=" + voice.optBoolean("ok"))
                                 runOnUiThread { output.text = "You: " + heard + "\\n\\nAgent Lee: " + (if (response.isBlank()) result.toString(2) else response) }
                             }.start()
                         }
@@ -476,7 +497,7 @@ class MainActivity : AppCompatActivity() {
             addView(pairingPanel)
             listOf(
                 discover, diagnostics, files, authorizeDeviceOperator, authorizeMediaOperator, receipts, authorizeBluetooth, bluetooth, networkDiscovery,
-                modelStatus, modelDownload, modelTest, speakTest, talkToLee, enableSideMic,
+                modelStatus, consciousnessStatus, consciousnessMode, modelDownload, modelTest, speakTest, talkToLee, enableSideMic,
                 authorizeWorkstationKeeper, enableSecondaryWorkstation, remoteEnable, remoteStatus, remoteDisable,
                 enable, startBridge, selfTest, showToken, stopBridge, stop
             ).forEach { addView(it) }
