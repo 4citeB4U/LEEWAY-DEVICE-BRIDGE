@@ -19,5 +19,5 @@ assert.match(router,/VoiceRuntime\.speak/);
 assert.match(activity,/OPEN AGENT LEE VOICE ONE/);
 assert.match(activity,/VoiceRuntime\.openVoiceFabric/);
 assert.match(manifest,/RECORD_AUDIO/);
-assert.match(gradle,/versionName = "0\.9\.8-pocket-rc8"/);
+assert.match(gradle,/versionName = "0\.10\.1-mc-g11-rc1"/);
 console.log("PASS Android Agent Lee Voice Fabric authority contract");
