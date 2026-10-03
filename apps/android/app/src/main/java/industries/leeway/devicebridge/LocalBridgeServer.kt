@@ -1,7 +1,9 @@
 package industries.leeway.devicebridge
 
 import android.content.Context
+import org.json.JSONArray
 import org.json.JSONObject
+import java.util.UUID
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.InetAddress
@@ -137,25 +139,34 @@ object LocalBridgeServer {
                     }
                 }.toMap()
             var authorization: String? = null
+            var contentLength = 0
             while (true) {
                 val line = reader.readLine() ?: break
                 if (line.isEmpty()) break
                 if (line.startsWith("Authorization:", ignoreCase = true)) {
                     authorization = line.substringAfter(":").trim()
                 }
+                if (line.startsWith("Content-Length:", ignoreCase = true)) {
+                    contentLength = line.substringAfter(":").trim().toIntOrNull()?.coerceIn(0, 1_048_576) ?: 0
+                }
             }
+            val requestBody = if (contentLength > 0) {
+                val chars = CharArray(contentLength)
+                var offset = 0
+                while (offset < contentLength) {
+                    val count = reader.read(chars, offset, contentLength - offset)
+                    if (count <= 0) break
+                    offset += count
+                }
+                String(chars, 0, offset)
+            } else ""
 
-            if (method != "GET") {
-                respond(client, 405, JSONObject().put("ok", false).put("error", "METHOD_NOT_ALLOWED"))
-                return
-            }
-
-            if (path == "/health") {
+            if (path == "/health" && method == "GET") {
                 respond(client, 200, status(context))
                 return
             }
 
-            if (path == "/owner-bootstrap") {
+            if (path == "/owner-bootstrap" && method == "GET") {
                 val body = consumeOwnerBootstrap(context, queryParams["nonce"])
                 respond(client, if (body.optBoolean("ok")) 200 else 401, body)
                 return
@@ -172,26 +183,221 @@ object LocalBridgeServer {
                 return
             }
 
-            val body = when (path) {
-                "/passport" -> BootstrapStore.loadPassport(context) ?: DevicePassport.capture(context)
-                "/capabilities" -> JSONObject().put(
-                    "capabilities",
-                    (BootstrapStore.loadPassport(context) ?: DevicePassport.capture(context))
-                        .optJSONArray("capabilityClaims")
-                )
-                "/receipts" -> JSONObject().put("receipts", ReceiptStore.list(context))
-                "/providers/bluetooth" -> BluetoothProvider.snapshot(context)
-                "/bridge" -> status(context)
-                else -> null
+            val body = when {
+                method == "GET" -> when (path) {
+                    "/passport" -> BootstrapStore.loadPassport(context) ?: DevicePassport.capture(context)
+                    "/capabilities" -> JSONObject().put(
+                        "capabilities",
+                        (BootstrapStore.loadPassport(context) ?: DevicePassport.capture(context))
+                            .optJSONArray("capabilityClaims")
+                    )
+                    "/receipts" -> JSONObject().put("receipts", ReceiptStore.list(context))
+                    "/providers/bluetooth" -> BluetoothProvider.snapshot(context)
+                    "/bridge" -> status(context)
+                    else -> null
+                }
+                method == "POST" && path.startsWith("/tools/") ->
+                    handleTool(context, path.removePrefix("/tools/"), requestBody)
+                else -> {
+                    respond(client, 405, JSONObject().put("ok", false).put("error", "METHOD_NOT_ALLOWED"))
+                    return
+                }
             }
 
             if (body == null) {
                 respond(client, 404, JSONObject().put("ok", false).put("error", "NOT_FOUND"))
             } else {
-                ReceiptStore.record(context, "device.bridge.read", "PASS", "GET $path")
-                respond(client, 200, body)
+                if (method == "GET") ReceiptStore.record(context, "device.bridge.read", "PASS", "GET $path")
+                val statusCode = if (body.optBoolean("ok", true)) 200 else 409
+                respond(client, statusCode, body)
             }
         }
+    }
+
+
+    private fun handleTool(context: Context, route: String, requestBody: String): JSONObject {
+        val envelope = try {
+            if (requestBody.isBlank()) JSONObject() else JSONObject(requestBody)
+        } catch (_: Exception) {
+            return JSONObject().put("ok", false).put("error", "INVALID_JSON_BODY")
+        }
+        val arguments = envelope.optJSONObject("arguments") ?: JSONObject()
+        val identity = DeviceIdentity.ensure(context)
+        val currentDeviceId = identity.optString("deviceId")
+
+        fun requireDevice(): JSONObject? {
+            val requested = arguments.optString("device_id").trim()
+            return if (requested.isBlank() || requested != currentDeviceId) {
+                JSONObject().put("ok", false).put("error", "DEVICE_ID_MISMATCH")
+            } else null
+        }
+
+        fun execute(capability: String, args: JSONObject = JSONObject()): JSONObject =
+            RemoteCommandRouter.execute(
+                context,
+                "tool-" + UUID.randomUUID().toString(),
+                capability,
+                args,
+                true
+            )
+
+        fun withReceipt(payload: JSONObject, capability: String): JSONObject {
+            val ok = payload.optBoolean("ok", false)
+            val receipt = ReceiptStore.record(
+                context,
+                capability,
+                if (ok) "PASS" else "FAIL",
+                "Tool Gateway route=$route"
+            )
+            payload.put("receipt_id", receipt.optString("receiptId"))
+            payload.put("receipt", receipt)
+            return payload
+        }
+
+        return when (route) {
+            "device.list" -> {
+                val passport = BootstrapStore.loadPassport(context) ?: DevicePassport.capture(context)
+                withReceipt(
+                    JSONObject()
+                        .put("ok", true)
+                        .put("devices", JSONArray().put(JSONObject()
+                            .put("device_id", currentDeviceId)
+                            .put("platform", passport.optString("platform", "android"))
+                            .put("model", passport.optString("model"))
+                            .put("authority", "PHONE_LOCAL_RUNTIME"))),
+                    "device.list"
+                )
+            }
+            "device.capabilities" -> {
+                requireDevice()?.let { return it }
+                val routed = execute("device.capabilities")
+                val passport = BootstrapStore.loadPassport(context) ?: DevicePassport.capture(context)
+                withReceipt(
+                    JSONObject()
+                        .put("ok", routed.optBoolean("ok"))
+                        .put("passport", passport)
+                        .put("router", routed),
+                    "device.capabilities"
+                )
+            }
+            "device.screen.observe" -> {
+                requireDevice()?.let { return it }
+                val routed = execute("device.ui.snapshot")
+                withReceipt(
+                    JSONObject()
+                        .put("ok", routed.optBoolean("ok"))
+                        .put("screen", routed.optJSONObject("result") ?: JSONObject())
+                        .put("router", routed),
+                    "device.screen.observe"
+                )
+            }
+            "device.app.open" -> {
+                requireDevice()?.let { return it }
+                val appId = arguments.optString("app_id").trim()
+                val routed = execute("device.apps.launch", JSONObject().put("packageName", appId))
+                withReceipt(
+                    JSONObject()
+                        .put("ok", routed.optBoolean("ok"))
+                        .put("executed", routed.optBoolean("ok"))
+                        .put("app_id", appId)
+                        .put("router", routed),
+                    "device.app.open"
+                )
+            }
+            "device.ui.control" -> {
+                requireDevice()?.let { return it }
+                val action = arguments.optJSONObject("action")
+                    ?: return JSONObject().put("ok", false).put("error", "ACTION_REQUIRED")
+                val expected = arguments.optJSONObject("expected_postcondition")
+                    ?: return JSONObject().put("ok", false).put("error", "EXPECTED_POSTCONDITION_REQUIRED")
+                val type = action.optString("type")
+                val target = action.optJSONObject("target") ?: JSONObject()
+                val routed = when (type) {
+                    "home" -> execute("device.ui.home")
+                    "back" -> execute("device.ui.back")
+                    "tap" -> {
+                        val point = resolveTargetPoint(target)
+                            ?: return JSONObject().put("ok", false).put("error", "TARGET_NOT_RESOLVED")
+                        execute("device.ui.tap", JSONObject().put("x", point.first).put("y", point.second))
+                    }
+                    "type_text" -> execute("device.ui.text", JSONObject().put("text", action.optString("text")))
+                    else -> return JSONObject()
+                        .put("ok", false)
+                        .put("error", "UI_ACTION_NOT_YET_MAPPED_TO_EXISTING_ANDROID_ROUTER")
+                        .put("action_type", type)
+                }
+                Thread.sleep(180)
+                val snapshot = DeviceOperatorAccessibilityService.snapshot()
+                val verified = routed.optBoolean("ok") && verifyPostcondition(snapshot, expected)
+                withReceipt(
+                    JSONObject()
+                        .put("ok", verified)
+                        .put("executed", routed.optBoolean("ok"))
+                        .put("postcondition_verified", verified)
+                        .put("screen", snapshot)
+                        .put("router", routed),
+                    "device.ui.control"
+                )
+            }
+            "device.files.read", "device.files.write" ->
+                JSONObject().put("ok", false)
+                    .put("error", "CAPABILITY_NOT_IMPLEMENTED_BY_CURRENT_CANONICAL_ANDROID_ROUTER")
+            else -> JSONObject().put("ok", false).put("error", "UNKNOWN_TOOL_ROUTE")
+        }
+    }
+
+    private fun resolveTargetPoint(target: JSONObject): Pair<Double, Double>? {
+        if (target.has("x") && target.has("y")) {
+            return target.optDouble("x") to target.optDouble("y")
+        }
+        val wanted = target.optString("text").trim()
+        if (wanted.isBlank()) return null
+        val snapshot = DeviceOperatorAccessibilityService.snapshot()
+        val tree = snapshot.optJSONObject("tree") ?: return null
+
+        fun find(node: JSONObject): Pair<Double, Double>? {
+            val text = node.optString("text")
+            val description = node.optString("contentDescription")
+            if (text == wanted || description == wanted) {
+                val bounds = node.optJSONObject("boundsInScreen")
+                if (bounds != null) {
+                    val x = (bounds.optDouble("left") + bounds.optDouble("right")) / 2.0
+                    val y = (bounds.optDouble("top") + bounds.optDouble("bottom")) / 2.0
+                    return x to y
+                }
+            }
+            val children = node.optJSONArray("children") ?: return null
+            for (i in 0 until children.length()) {
+                val child = children.optJSONObject(i) ?: continue
+                find(child)?.let { return it }
+            }
+            return null
+        }
+
+        return find(tree)
+    }
+
+    private fun verifyPostcondition(snapshot: JSONObject, expected: JSONObject): Boolean {
+        if (!snapshot.optBoolean("ok")) return false
+        val tree = snapshot.optJSONObject("tree") ?: return false
+
+        fun contains(node: JSONObject, wanted: String, field: String): Boolean {
+            if (node.optString(field) == wanted) return true
+            val children = node.optJSONArray("children") ?: return false
+            for (i in 0 until children.length()) {
+                val child = children.optJSONObject(i) ?: continue
+                if (contains(child, wanted, field)) return true
+            }
+            return false
+        }
+
+        expected.optString("package_name").takeIf { it.isNotBlank() }?.let {
+            if (!contains(tree, it, "packageName")) return false
+        }
+        expected.optString("screen_contains").takeIf { it.isNotBlank() }?.let {
+            if (!contains(tree, it, "text") && !contains(tree, it, "contentDescription")) return false
+        }
+        return expected.has("package_name") || expected.has("screen_contains")
     }
 
     private fun respond(socket: Socket, status: Int, body: JSONObject) {
