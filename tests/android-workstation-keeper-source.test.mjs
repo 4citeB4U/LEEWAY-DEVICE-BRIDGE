@@ -34,6 +34,6 @@ assert.match(bootstrap,/flock -n 9/);
 assert.match(bootstrap,/while true/);
 
 assert.match(gradle,/versionCode = 26/);
-assert.match(gradle,/versionName = "0\.9\.8-pocket-rc8"/);
+assert.match(gradle,/versionName = "0\.10\.1-mc-g11-rc1"/);
 
 console.log("PASS android-workstation-keeper-source");
