@@ -116,10 +116,10 @@ object ModelRuntime {
     fun generate(context: Context, prompt: String): JSONObject =
         generateBounded(context, prompt, 512, 90000L, 16384)
 
-    fun generateConversation(context: Context, prompt: String, creatorContext: String = ""): JSONObject =
-        generateBounded(context, prompt, 128, 45000L, 4096, ConversationPrompt.systemInstruction(creatorContext))
+    fun generateConversation(context: Context, prompt: String, creatorContext: String = "", onToken: ((String) -> Unit)? = null): JSONObject =
+        generateBounded(context, prompt, 128, 45000L, 4096, ConversationPrompt.systemInstruction(creatorContext), onToken)
 
-    private fun generateBounded(context: Context, prompt: String, maxOutputTokens: Int, timeoutMs: Long, maxPromptChars: Int, systemInstruction: String? = null): JSONObject {
+    private fun generateBounded(context: Context, prompt: String, maxOutputTokens: Int, timeoutMs: Long, maxPromptChars: Int, systemInstruction: String? = null, onToken: ((String) -> Unit)? = null): JSONObject {
         fun failed(error: String, elapsed: Long = 0L): JSONObject {
             ReceiptStore.record(context, "model.inference", "BLOCKED", "error=$error elapsedMs=$elapsed")
             return JSONObject().put("ok", false).put("error", error).put("elapsedMs", elapsed)
@@ -157,7 +157,9 @@ object ModelRuntime {
                         try {
                             withTimeout(timeoutMs) {
                                 conversation.sendMessageAsync(prompt, maxOutputToken = maxOutputTokens).collect { token ->
-                                    output.append(token)
+                                    val piece = token.toString()
+                                    output.append(piece)
+                                    onToken?.invoke(piece)
                                 }
                             }
                         } catch (timeout: TimeoutCancellationException) {

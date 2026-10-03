@@ -35,7 +35,9 @@ object PackageInstallBroker {
     }
 
     fun installFromUrl(context: Context, url: String, expectedSha256: String): JSONObject {
-        if (!url.startsWith("https://")) return blocked("HTTPS_REQUIRED")
+        val trustedTransport = url.startsWith("https://") ||
+            url.startsWith("http://127.0.0.1:") || url.startsWith("http://localhost:")
+        if (!trustedTransport) return blocked("TRUSTED_UPDATE_TRANSPORT_REQUIRED")
         val expected = expectedSha256.trim().lowercase()
         if (!expected.matches(Regex("^[a-f0-9]{64}$"))) return blocked("INVALID_SHA256")
 
