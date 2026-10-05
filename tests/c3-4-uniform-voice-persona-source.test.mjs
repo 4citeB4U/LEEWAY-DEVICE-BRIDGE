@@ -1,0 +1,17 @@
+import fs from"node:fs";import assert from"node:assert/strict";
+const b="apps/android/app/src/main";
+const voice=fs.readFileSync(b+"/java/industries/leeway/devicebridge/VoiceRuntime.kt","utf8");
+const behavior=fs.readFileSync(b+"/java/industries/leeway/devicebridge/AgentLeeBehaviorRuntime.kt","utf8");
+const identity=fs.readFileSync(b+"/java/industries/leeway/devicebridge/AgentLeeIdentityAuthority.kt","utf8");
+const authority=JSON.parse(fs.readFileSync(b+"/assets/agent-lee-entity-authority.v1.json","utf8"));
+const router=fs.readFileSync(b+"/java/industries/leeway/devicebridge/RemoteCommandRouter.kt","utf8");
+const main=fs.readFileSync(b+"/java/industries/leeway/devicebridge/MainActivity.kt","utf8");
+assert.equal(authority.authorityId,"agent-lee-entity-identity-authority");
+assert.equal(authority.source.blobSha,"89659393fc6314ebee8f8c197b657c20f83ad62a");
+assert.match(identity,/AGENT_LEE_ENTITY_AUTHORITY_V1/);
+assert.match(behavior,/AgentLeeIdentityAuthority\.identityReply\(context\)/);
+assert.match(voice,/agent-lee-voice-one/);assert.match(voice,/ANDROID_NATIVE_MEDIA_PLAYER/);
+assert.match(voice,/VOICE_ARTIFACT_HASH_MISMATCH/);assert.match(voice,/fallbackAllowed",false/);
+assert.match(router,/voice\.play-artifact/);assert.match(router,/voice\.stop/);
+assert.match(main,/C3_PLAY_VOICE_ARTIFACT/);
+console.log("PASS c3-4 uniform identity and bounded voice source");
