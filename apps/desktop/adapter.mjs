@@ -1,11 +1,12 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
+import { spawn } from 'node:child_process';
 
-// Bounded workspace files only. No shell execution, native UI or host-wide access.
+// Bounded workspace files and explicitly allowlisted process execution. Never invokes a shell.
 export class DesktopAdapter {
   constructor(root) { this.root = path.resolve(root); }
-  async discover() { await fs.access(this.root); return ['device.health', 'device.info', 'device.files.read', 'device.files.write']; }
+  async discover() { await fs.access(this.root); return ['device.health', 'device.info', 'device.files.read', 'device.files.write', 'device.process.execute']; }
   async safePath(relative, writing = false) {
     if (path.isAbsolute(relative) || relative.includes(':') || relative.includes('\0')) throw new Error('PATH_OUTSIDE_WORKSPACE');
     const parts = relative.replaceAll('\\', '/').split('/');
@@ -24,9 +25,61 @@ export class DesktopAdapter {
     }
     return current;
   }
+  async safeDirectory(relative) {
+    if (path.isAbsolute(relative) || relative.includes(':') || relative.includes('\0')) throw new Error('PATH_OUTSIDE_WORKSPACE');
+    const parts = relative === '.' ? [] : relative.replaceAll('\\', '/').split('/');
+    if (parts.some(p => !p || p === '.' || p === '..' || /[. ]$/.test(p) || /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\.|$)/i.test(p))) throw new Error('INVALID_PATH');
+    const root = await fs.realpath(this.root);
+    let current = root;
+    for (const part of parts) {
+      current = path.join(current, part);
+      const stat = await fs.lstat(current);
+      if (stat.isSymbolicLink()) throw new Error('LINK_NOT_ALLOWED');
+      if (!stat.isDirectory()) throw new Error('WORKING_DIRECTORY_REQUIRED');
+    }
+    const resolved = await fs.realpath(current);
+    if (resolved !== root && !resolved.startsWith(root + path.sep)) throw new Error('PATH_OUTSIDE_WORKSPACE');
+    return resolved;
+  }
+  async executeProcess(args) {
+    const cwd = await this.safeDirectory(args.cwd);
+    const executable = process.platform === 'win32' && args.executable === 'powershell' ? 'powershell.exe'
+      : process.platform === 'win32' && args.executable === 'npm' ? 'npm.cmd'
+      : process.platform === 'win32' && args.executable === 'git' ? 'git.exe'
+      : process.platform === 'win32' && args.executable === 'node' ? 'node.exe'
+      : args.executable;
+    return await new Promise((resolve, reject) => {
+      const child = spawn(executable, args.arguments, { cwd, shell: false, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+      const limit = 65536;
+      let stdout = Buffer.alloc(0), stderr = Buffer.alloc(0), settled = false;
+      const append = (prior, chunk) => {
+        const next = Buffer.concat([prior, chunk]);
+        if (next.length > limit) throw new Error('PROCESS_OUTPUT_TOO_LARGE');
+        return next;
+      };
+      let pendingError = null;
+      const fail = error => {
+        if (settled || pendingError) return;
+        pendingError = error;
+        child.kill();
+      };
+      child.stdout.on('data', chunk => { try { stdout = append(stdout, chunk); } catch (e) { fail(e); } });
+      child.stderr.on('data', chunk => { try { stderr = append(stderr, chunk); } catch (e) { fail(e); } });
+      child.on('error', () => fail(new Error('PROCESS_SPAWN_FAILED')));
+      const timer = setTimeout(() => fail(new Error('PROCESS_TIMEOUT')), args.timeoutMs);
+      child.on('close', (code, signal) => {
+        clearTimeout(timer);
+        if (settled) return;
+        settled = true;
+        if (pendingError) { reject(pendingError); return; }
+        resolve({ exitCode: Number.isInteger(code) ? code : null, signal: signal || null, stdout: stdout.toString('utf8'), stderr: stderr.toString('utf8') });
+      });
+    });
+  }
   async execute(capability, args) {
     if (capability === 'device.health') return { ok: true, platform: process.platform, adapter: 'bounded-workspace', uiControl: false };
     if (capability === 'device.info') return { platform: process.platform, architecture: os.arch(), node: process.version, uiControl: false };
+    if (capability === 'device.process.execute') return this.executeProcess(args);
     if (capability === 'device.files.read') {
       const handle = await fs.open(await this.safePath(args.path), 'r');
       try {
