@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leeway.local/contracts/fail-safe-policy.schema.json",
+  "title": "LeeWay Device Fail-Safe Policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "policyId","deviceClass","capability","triggerConditions",
+    "actionType","actionRef","postFailSafeReadbackRequired","status"
+  ],
+  "properties": {
+    "policyId":{"type":"string","minLength":1},
+    "deviceClass":{"type":"string","minLength":1},
+    "capability":{"type":"string","minLength":1},
+    "triggerConditions":{
+      "type":"array",
+      "minItems":1,
+      "items":{"enum":["DISPATCH_FAILURE","ACK_TIMEOUT","READBACK_TIMEOUT","READBACK_DIVERGENCE","PROVIDER_DEGRADED","AUTHORITY_REVOKED"]}
+    },
+    "actionType":{"enum":["HOLD","STOP","DEENERGIZE","RETURN_SAFE_STATE","RETRY_BOUNDED","OWNER_INTERVENTION_REQUIRED"]},
+    "actionRef":{"type":"string","minLength":1},
+    "postFailSafeReadbackRequired":{"type":"boolean"},
+    "status":{"enum":["CANDIDATE","CALIBRATED","AUTHORIZED","VERIFIED","BLOCKED"]},
+    "evidenceRefs":{"type":"array","items":{"type":"string","minLength":1}}
+  }
+}
