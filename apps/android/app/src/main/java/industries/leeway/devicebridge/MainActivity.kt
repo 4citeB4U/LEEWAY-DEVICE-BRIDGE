@@ -550,6 +550,14 @@ class MainActivity : AppCompatActivity() {
                         .show()
                 }
             }
+            "C3_PLAY_VOICE_ARTIFACT" -> {
+                val relative = intent?.getStringExtra("leeway_voice_relative_path").orEmpty()
+                val expected = intent?.getStringExtra("leeway_voice_sha256").orEmpty()
+                val pkg = intent?.getStringExtra("leeway_voice_package_id").orEmpty()
+                val result = VoiceRuntime.playArtifact(this, relative, expected, pkg)
+                output.text = result.toString(2)
+                ReceiptStore.record(this, "voice.c3.acceptance", if(result.optBoolean("ok")) "PASS" else "BLOCKED", result.optString("state", result.optString("error")))
+            }
             "TERMUX_BOOTSTRAP" -> {
                 val nonce = intent?.getStringExtra("leeway_nonce").orEmpty()
                 val bootstrap = LocalBridgeServer.armOwnerBootstrap(this, nonce)
