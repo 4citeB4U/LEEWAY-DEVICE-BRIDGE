@@ -17,7 +17,7 @@ test('process schema exposes only bounded executable identities', () => {
 
 test('desktop process execution stays inside workspace and never needs shell syntax', async t => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'leeway-process-'));
-  t.after(async () => { await new Promise(r => setTimeout(r, 100)); await fs.rm(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); });
+  t.after(async () => { await new Promise(r => setTimeout(r, 500)); try { await fs.rm(root, { recursive: true, force: true, maxRetries: 20, retryDelay: 250 }); } catch (e) { if (!['EBUSY','EPERM'].includes(e.code)) throw e; } });
   await fs.mkdir(path.join(root, 'child'));
   const adapter = new DesktopAdapter(root);
   assert.ok((await adapter.discover()).includes('device.process.execute'));
@@ -25,7 +25,7 @@ test('desktop process execution stays inside workspace and never needs shell syn
     executable: 'node', arguments: ['-e', 'process.stdout.write(process.cwd())'], cwd: 'child', timeoutMs: 5000,
   });
   assert.equal(ok.exitCode, 0);
-  assert.equal(path.resolve(ok.stdout), path.resolve(root, 'child'));
+  assert.equal(await fs.realpath(ok.stdout), await fs.realpath(path.join(root, 'child')));
   await assert.rejects(adapter.execute('device.process.execute', {
     executable: 'node', arguments: ['-e', 'process.stdout.write("bad")'], cwd: '..', timeoutMs: 5000,
   }), /PATH_OUTSIDE_WORKSPACE|INVALID_PATH/);
