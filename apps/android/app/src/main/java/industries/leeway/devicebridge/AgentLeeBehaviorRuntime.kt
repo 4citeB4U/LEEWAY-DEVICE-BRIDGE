@@ -43,7 +43,7 @@ internal object AgentLeeBehaviorRuntime {
         "curious" to if (curiosity.containsMatchIn(prompt)) 1f else 0f
     )
 
-    internal fun directReply(prompt: String, streak: Int): Pair<String, String>? {
+    internal fun directReply(context: Context, prompt: String, streak: Int): Pair<String, String>? {
         val normalized = prompt.trim().lowercase()
         val sixBitQuestion = normalized.contains("six-bit") &&
             normalized.contains("q69") &&
@@ -63,8 +63,7 @@ internal object AgentLeeBehaviorRuntime {
         }
 
         if (Regex("\\b(who are you|what are you|tell me about yourself)\\b", RegexOption.IGNORE_CASE).containsMatchIn(prompt)) {
-            return "Agent Lee. Sovereign operator, builder, strategist, and guardian inside the LeeWay ecosystem. Models help me reason; they don't define who I am." to
-                "AGENT_LEE_IDENTITY_V1"
+            return AgentLeeIdentityAuthority.identityReply(context)
         }
 
         if (criticism.containsMatchIn(prompt)) {
@@ -122,7 +121,7 @@ internal object AgentLeeBehaviorRuntime {
         }.apply()
 
         val register = selectRegister(signal, streak, prompt)
-        val direct = directReply(prompt, streak)
+        val direct = directReply(context, prompt, streak)
         val emotions = JSONObject().apply { values.forEach { (k, v) -> put(k, v.toDouble()) } }
         val top = values.entries.sortedByDescending { it.value }.take(3)
             .joinToString(",") { it.key + "=" + "%.2f".format(java.util.Locale.US, it.value) }
