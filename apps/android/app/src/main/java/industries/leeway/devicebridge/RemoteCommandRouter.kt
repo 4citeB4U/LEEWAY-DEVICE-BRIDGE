@@ -12,7 +12,7 @@ object RemoteCommandRouter {
         "device.ui.tap", "device.ui.swipe", "device.ui.text",
         "device.apps.list", "device.apps.launch", "device.apps.install.status", "device.apps.install",
         "device.media.scan", "device.media.delete.request",
-        "model.status", "model.install", "model.inference", "voice.status", "voice.speak", "agent.chat"
+        "model.status", "model.install", "model.inference", "voice.status", "voice.speak", "voice.play-artifact", "voice.stop", "agent.chat"
     )
 
     fun execute(context: Context, commandId: String, capability: String, arguments: JSONObject, firstSeen: Boolean, conversationRequest: Boolean = false): JSONObject {
@@ -26,6 +26,9 @@ object RemoteCommandRouter {
         val capabilityPrecondition = when (capability) {
             "model.inference", "agent.chat" -> prompt.isNotEmpty()
             "voice.speak" -> text.isNotEmpty()
+            "voice.play-artifact" -> arguments.optString("relativePath").matches(Regex("^voice/[A-Za-z0-9._-]{1,120}\\\\.wav$")) &&
+                arguments.optString("sha256").matches(Regex("^[A-Fa-f0-9]{64}$")) &&
+                arguments.optString("voicePackageId") == VoiceRuntime.VOICE_PACKAGE_ID
             "device.ui.tap" -> arguments.has("x") && arguments.has("y")
             "device.ui.swipe" -> arguments.has("x1") && arguments.has("y1") &&
                 arguments.has("x2") && arguments.has("y2")
@@ -91,6 +94,8 @@ object RemoteCommandRouter {
                 "model.inference" -> if (conversationRequest) ModelRuntime.generateConversation(context, prompt) else ModelRuntime.generate(context, prompt)
                 "voice.status" -> VoiceRuntime.initialize(context)
                 "voice.speak" -> VoiceRuntime.speak(context, text)
+                "voice.play-artifact" -> VoiceRuntime.playArtifact(context, arguments.getString("relativePath"), arguments.getString("sha256"), arguments.getString("voicePackageId"))
+                "voice.stop" -> VoiceRuntime.stop(context)
                 "agent.chat" -> chat(context, prompt, arguments.optBoolean("speak", true), arguments.optString("creatorContext"))
                 else -> JSONObject().put("error", "CAPABILITY_NOT_REMOTE_QUALIFIED")
             }
