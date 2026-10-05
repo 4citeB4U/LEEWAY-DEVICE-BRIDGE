@@ -9,7 +9,7 @@ const execFileAsync = promisify(execFile);
 // Bounded workspace files and explicitly allowlisted process execution. Never invokes a shell.
 export class DesktopAdapter {
   constructor(root) { this.root = path.resolve(root); this.jobs = new Map(); }
-  async discover() { await fs.access(this.root); return ['device.health','device.info','device.files.read','device.files.write','device.directories.list','device.directories.create','device.search.files','device.process.list','device.process.terminate','device.process.execute','device.job.start','device.job.status','device.job.stop']; }
+  async discover() { await fs.access(this.root); return ['device.screen.info','device.screen.capture','device.ui.click','device.ui.type','device.ui.key','device.health','device.info','device.files.read','device.files.write','device.directories.list','device.directories.create','device.search.files','device.process.list','device.process.terminate','device.process.execute','device.job.start','device.job.status','device.job.stop']; }
   async safePath(relative, writing = false) {
     if (path.isAbsolute(relative) || relative.includes(':') || relative.includes('\0')) throw new Error('PATH_OUTSIDE_WORKSPACE');
     const parts = relative.replaceAll('\\', '/').split('/');
@@ -128,7 +128,42 @@ export class DesktopAdapter {
     this.jobs.set(id,job); return {jobId:id,pid:job.pid,state:job.state};
   }
   jobView(id) { const j=this.jobs.get(id); if(!j)throw new Error('UNKNOWN_JOB'); return {jobId:j.id,pid:j.pid,state:j.state,exitCode:j.exitCode,startedAt:j.startedAt,stdout:j.stdout,stderr:j.stderr}; }
+  async windowsAutomation(script, args = []) {
+    if (process.platform !== 'win32') throw new Error('WINDOWS_UI_UNAVAILABLE');
+    const encoded = Buffer.from(script, 'utf16le').toString('base64');
+    const { stdout } = await execFileAsync('powershell.exe',['-NoProfile','-NonInteractive','-EncodedCommand',encoded,...args],{windowsHide:true,maxBuffer:8*1024*1024});
+    return stdout;
+  }
+  async screenInfo() {
+    const out=await this.windowsAutomation("Add-Type -AssemblyName System.Windows.Forms; $b=[System.Windows.Forms.SystemInformation]::VirtualScreen; [pscustomobject]@{x=$b.X;y=$b.Y;width=$b.Width;height=$b.Height}|ConvertTo-Json -Compress");
+    return JSON.parse(out);
+  }
+  async captureScreen() {
+    if(process.platform!=='win32')throw new Error('WINDOWS_UI_UNAVAILABLE');
+    const ps="Add-Type -AssemblyName System.Windows.Forms; Add-Type -AssemblyName System.Drawing; $b=[System.Windows.Forms.SystemInformation]::VirtualScreen; $bmp=New-Object System.Drawing.Bitmap($b.Width,$b.Height); $g=[System.Drawing.Graphics]::FromImage($bmp); try{$g.CopyFromScreen($b.X,$b.Y,0,0,$bmp.Size);$ms=New-Object IO.MemoryStream;$bmp.Save($ms,[Drawing.Imaging.ImageFormat]::Png);[Convert]::ToBase64String($ms.ToArray())}finally{$g.Dispose();$bmp.Dispose();if($ms){$ms.Dispose()}}";
+    const base64=(await this.windowsAutomation(ps)).trim(); if(base64.length>8*1024*1024)throw new Error('SCREENSHOT_TOO_LARGE'); return {mimeType:'image/png',base64};
+  }
+  async uiClick(args) {
+    const info=await this.screenInfo(); if(args.x<info.x||args.y<info.y||args.x>=info.x+info.width||args.y>=info.y+info.height)throw new Error('UI_COORDINATE_OUTSIDE_SCREEN');
+    const flag=args.button==='right'?'0x0008,0x0010':'0x0002,0x0004';
+    const ps="Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public static class LWUI { [DllImport(\"user32.dll\")] public static extern bool SetCursorPos(int X,int Y); [DllImport(\"user32.dll\")] public static extern void mouse_event(uint f,uint dx,uint dy,uint data,UIntPtr extra); }'; [LWUI]::SetCursorPos("+args.x+","+args.y+")|Out-Null; [LWUI]::mouse_event("+flag.split(',')[0]+",0,0,0,[UIntPtr]::Zero); [LWUI]::mouse_event("+flag.split(',')[1]+",0,0,0,[UIntPtr]::Zero)";
+    await this.windowsAutomation(ps); return {clicked:true,x:args.x,y:args.y,button:args.button};
+  }
+  async uiType(args) {
+    const payload=Buffer.from(args.text,'utf8').toString('base64');
+    const ps="$t=[Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('"+payload+"')); Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait(($t -replace '([+^%~(){}\\[\\]])','{$1}'))";
+    await this.windowsAutomation(ps); return {typed:true,characters:args.text.length};
+  }
+  async uiKey(args) {
+    const map={ENTER:'{ENTER}',ESC:'{ESC}',TAB:'{TAB}',UP:'{UP}',DOWN:'{DOWN}',LEFT:'{LEFT}',RIGHT:'{RIGHT}',HOME:'{HOME}',END:'{END}',PAGEUP:'{PGUP}',PAGEDOWN:'{PGDN}',BACKSPACE:'{BACKSPACE}',DELETE:'{DELETE}'};
+    await this.windowsAutomation("Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('"+map[args.key]+"')"); return {sent:true,key:args.key};
+  }
   async execute(capability, args) {
+    if (capability === 'device.screen.info') return this.screenInfo();
+    if (capability === 'device.screen.capture') return this.captureScreen();
+    if (capability === 'device.ui.click') return this.uiClick(args);
+    if (capability === 'device.ui.type') return this.uiType(args);
+    if (capability === 'device.ui.key') return this.uiKey(args);
     if (capability === 'device.health') return { ok: true, platform: process.platform, adapter: 'bounded-workspace', uiControl: false };
     if (capability === 'device.info') return { platform: process.platform, architecture: os.arch(), node: process.version, uiControl: false };
     if (capability === 'device.directories.list') return this.listDirectory(args);
