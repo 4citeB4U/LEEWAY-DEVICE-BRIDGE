@@ -28,8 +28,12 @@ export function canonicalEnvelopePayload(envelope = {}) {
 export async function validateCommandEnvelope({
   envelope,
   nowMs = Date.now(),
-  firstSeen = () => true,
-  verifyIntegrity
+  firstSeen,
+  verifyIntegrity,
+  argumentsValue,
+  hashArguments,
+  maxLifetimeMs,
+  maxClockSkewMs = 0
 } = {}) {
   if (!envelope || typeof envelope !== "object") throw new Error("COMMAND_ENVELOPE_REQUIRED");
   for (const key of REQUIRED) {
@@ -51,7 +55,18 @@ export async function validateCommandEnvelope({
     throw new Error("COMMAND_ENVELOPE_TIME_INVALID");
   }
   if (nowMs > expiresAt) throw new Error("COMMAND_ENVELOPE_EXPIRED");
+  if (!Number.isFinite(maxClockSkewMs) || maxClockSkewMs < 0) throw new Error("COMMAND_ENVELOPE_CLOCK_SKEW_POLICY_REQUIRED");
+  if (createdAt > nowMs + maxClockSkewMs) throw new Error("COMMAND_ENVELOPE_CREATED_IN_FUTURE");
+  if (!Number.isFinite(maxLifetimeMs) || maxLifetimeMs <= 0) throw new Error("COMMAND_ENVELOPE_MAX_LIFETIME_POLICY_REQUIRED");
+  if ((expiresAt - createdAt) > maxLifetimeMs) throw new Error("COMMAND_ENVELOPE_LIFETIME_EXCEEDED");
 
+  if (typeof hashArguments !== "function") throw new Error("COMMAND_ARGUMENT_HASHER_REQUIRED");
+  const computedArgumentsHash = await hashArguments(argumentsValue);
+  if (!computedArgumentsHash || computedArgumentsHash !== envelope.argumentsHash) {
+    throw new Error("COMMAND_ARGUMENTS_HASH_MISMATCH");
+  }
+
+  if (typeof firstSeen !== "function") throw new Error("COMMAND_ENVELOPE_REPLAY_STORE_REQUIRED");
   const replayKey = [envelope.commandId, envelope.nonce, envelope.sequence].join("::");
   if (!(await firstSeen(replayKey))) throw new Error("COMMAND_ENVELOPE_REPLAY_REJECTED");
 
