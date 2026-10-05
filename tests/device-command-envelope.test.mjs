@@ -2,6 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { validateCommandEnvelope } from "../verification/command-envelope.mjs";
 
+const argumentsValue = { requested:"test" };
+const hashArguments = async () => "a".repeat(64);
+const policy = { argumentsValue, hashArguments, maxLifetimeMs:60000, maxClockSkewMs:1000 };
+
 const base = {
   version: "1.0.0",
   commandId: "cmd-1",
@@ -28,6 +32,7 @@ test("valid envelope remains pre-dispatch", async () => {
   const result = await validateCommandEnvelope({
     envelope: base,
     nowMs: Date.parse("2026-10-05T21:00:30.000Z"),
+    ...policy,
     firstSeen: async () => true,
     verifyIntegrity: async () => true
   });
@@ -38,6 +43,7 @@ test("expired envelope is rejected", async () => {
   await assert.rejects(() => validateCommandEnvelope({
     envelope: base,
     nowMs: Date.parse("2026-10-05T21:02:00.000Z"),
+    ...policy,
     firstSeen: async () => true,
     verifyIntegrity: async () => true
   }), /COMMAND_ENVELOPE_EXPIRED/);
@@ -47,6 +53,7 @@ test("replayed envelope is rejected", async () => {
   await assert.rejects(() => validateCommandEnvelope({
     envelope: base,
     nowMs: Date.parse("2026-10-05T21:00:30.000Z"),
+    ...policy,
     firstSeen: async () => false,
     verifyIntegrity: async () => true
   }), /COMMAND_ENVELOPE_REPLAY_REJECTED/);
@@ -56,6 +63,7 @@ test("cryptographic verification is mandatory", async () => {
   await assert.rejects(() => validateCommandEnvelope({
     envelope: base,
     nowMs: Date.parse("2026-10-05T21:00:30.000Z"),
+    ...policy,
     firstSeen: async () => true
   }), /COMMAND_ENVELOPE_CRYPTO_VERIFIER_REQUIRED/);
 });
