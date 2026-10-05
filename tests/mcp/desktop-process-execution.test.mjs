@@ -17,7 +17,7 @@ test('process schema exposes only bounded executable identities', () => {
 
 test('desktop process execution stays inside workspace and never needs shell syntax', async t => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'leeway-process-'));
-  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  t.after(async () => { await new Promise(r => setTimeout(r, 100)); await fs.rm(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); });
   await fs.mkdir(path.join(root, 'child'));
   const adapter = new DesktopAdapter(root);
   assert.ok((await adapter.discover()).includes('device.process.execute'));
