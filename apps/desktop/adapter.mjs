@@ -26,10 +26,19 @@ export class DesktopAdapter {
     return current;
   }
   async safeDirectory(relative) {
-    if (relative === '.') return fs.realpath(this.root);
-    const resolved = await this.safePath(relative);
-    const stat = await fs.stat(resolved);
-    if (!stat.isDirectory()) throw new Error('WORKING_DIRECTORY_REQUIRED');
+    if (path.isAbsolute(relative) || relative.includes(':') || relative.includes('\0')) throw new Error('PATH_OUTSIDE_WORKSPACE');
+    const parts = relative === '.' ? [] : relative.replaceAll('\\', '/').split('/');
+    if (parts.some(p => !p || p === '.' || p === '..' || /[. ]$/.test(p) || /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\.|$)/i.test(p))) throw new Error('INVALID_PATH');
+    const root = await fs.realpath(this.root);
+    let current = root;
+    for (const part of parts) {
+      current = path.join(current, part);
+      const stat = await fs.lstat(current);
+      if (stat.isSymbolicLink()) throw new Error('LINK_NOT_ALLOWED');
+      if (!stat.isDirectory()) throw new Error('WORKING_DIRECTORY_REQUIRED');
+    }
+    const resolved = await fs.realpath(current);
+    if (resolved !== root && !resolved.startsWith(root + path.sep)) throw new Error('PATH_OUTSIDE_WORKSPACE');
     return resolved;
   }
   async executeProcess(args) {
