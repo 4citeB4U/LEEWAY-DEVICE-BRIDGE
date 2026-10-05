@@ -57,11 +57,11 @@ export class DesktopAdapter {
         if (next.length > limit) throw new Error('PROCESS_OUTPUT_TOO_LARGE');
         return next;
       };
+      let pendingError = null;
       const fail = error => {
-        if (settled) return;
-        settled = true;
+        if (settled || pendingError) return;
+        pendingError = error;
         child.kill();
-        reject(error);
       };
       child.stdout.on('data', chunk => { try { stdout = append(stdout, chunk); } catch (e) { fail(e); } });
       child.stderr.on('data', chunk => { try { stderr = append(stderr, chunk); } catch (e) { fail(e); } });
@@ -71,6 +71,7 @@ export class DesktopAdapter {
         clearTimeout(timer);
         if (settled) return;
         settled = true;
+        if (pendingError) { reject(pendingError); return; }
         resolve({ exitCode: Number.isInteger(code) ? code : null, signal: signal || null, stdout: stdout.toString('utf8'), stderr: stderr.toString('utf8') });
       });
     });
