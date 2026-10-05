@@ -1,12 +1,15 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { spawn } from 'node:child_process';
+import { spawn, execFile } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
+import { promisify } from 'node:util';
+const execFileAsync = promisify(execFile);
 
 // Bounded workspace files and explicitly allowlisted process execution. Never invokes a shell.
 export class DesktopAdapter {
-  constructor(root) { this.root = path.resolve(root); }
-  async discover() { await fs.access(this.root); return ['device.health', 'device.info', 'device.files.read', 'device.files.write', 'device.process.execute']; }
+  constructor(root) { this.root = path.resolve(root); this.jobs = new Map(); }
+  async discover() { await fs.access(this.root); return ['device.health','device.info','device.files.read','device.files.write','device.directories.list','device.directories.create','device.search.files','device.process.list','device.process.terminate','device.process.execute','device.job.start','device.job.status','device.job.stop']; }
   async safePath(relative, writing = false) {
     if (path.isAbsolute(relative) || relative.includes(':') || relative.includes('\0')) throw new Error('PATH_OUTSIDE_WORKSPACE');
     const parts = relative.replaceAll('\\', '/').split('/');
@@ -76,9 +79,66 @@ export class DesktopAdapter {
       });
     });
   }
+  executableName(name) {
+    return process.platform === 'win32' && name === 'powershell' ? 'powershell.exe'
+      : process.platform === 'win32' && name === 'npm' ? 'npm.cmd'
+      : process.platform === 'win32' && name === 'git' ? 'git.exe'
+      : process.platform === 'win32' && name === 'node' ? 'node.exe' : name;
+  }
+  async listDirectory(args) {
+    const dir = await this.safeDirectory(args.path);
+    const entries = await fs.readdir(dir,{withFileTypes:true});
+    return { entries: entries.slice(0,args.limit).map(e=>({name:e.name,type:e.isDirectory()?'directory':e.isFile()?'file':'other'})), truncated: entries.length>args.limit };
+  }
+  async createDirectory(args) {
+    const normalized=args.path.replaceAll('\\','/');
+    const i=normalized.lastIndexOf('/');
+    const parent=i<0?'.':normalized.slice(0,i);
+    const name=i<0?normalized:normalized.slice(i+1);
+    if(!name||name==='.'||name==='..') throw new Error('INVALID_PATH');
+    const base=await this.safeDirectory(parent||'.');
+    const target=path.join(base,name);
+    await fs.mkdir(target,{recursive:false});
+    return {created:true};
+  }
+  async searchFiles(args) {
+    const root=await this.safeDirectory(args.path), q=args.query.toLowerCase(), matches=[];
+    const walk=async dir=>{for(const e of await fs.readdir(dir,{withFileTypes:true})){if(matches.length>=args.limit)return;const full=path.join(dir,e.name);if(e.isSymbolicLink?.())continue;if(e.name.toLowerCase().includes(q))matches.push(path.relative(root,full)||e.name);if(e.isDirectory())await walk(full);}};
+    await walk(root); return {matches,truncated:matches.length>=args.limit};
+  }
+  async listProcesses(args) {
+    const command=process.platform==='win32'?'powershell.exe':'ps';
+    const argv=process.platform==='win32'?['-NoProfile','-Command','Get-Process | Select-Object -First '+args.limit+' Id,ProcessName | ConvertTo-Json -Compress']:['-eo','pid=,comm='];
+    const {stdout}=await execFileAsync(command,argv,{windowsHide:true,maxBuffer:65536});
+    return {platform:process.platform,output:stdout.slice(0,65536)};
+  }
+  async terminateProcess(args) {
+    const pid=args.pid;
+    if(pid===process.pid) throw new Error('SELF_TERMINATION_BLOCKED');
+    if(process.platform==='win32'){const {stdout}=await execFileAsync('powershell.exe',['-NoProfile','-Command',`$p=Get-Process -Id ${pid} -ErrorAction Stop; if($p.ProcessName -ne '${args.expectedCommand.replaceAll("'","''")}'){exit 9}; Stop-Process -Id ${pid} -Force`],{windowsHide:true});return {terminated:true,pid,output:stdout};}
+    const {stdout}=await execFileAsync('ps',['-p',String(pid),'-o','comm=']); if(path.basename(stdout.trim())!==args.expectedCommand)throw new Error('PROCESS_IDENTITY_MISMATCH'); process.kill(pid,'SIGTERM'); return {terminated:true,pid};
+  }
+  async startJob(args) {
+    const cwd=await this.safeDirectory(args.cwd), id=randomUUID(), child=spawn(this.executableName(args.executable),args.arguments,{cwd,shell:false,windowsHide:true,stdio:['ignore','pipe','pipe']});
+    const job={id,pid:child.pid,state:'RUNNING',stdout:'',stderr:'',exitCode:null,startedAt:new Date().toISOString(),timer:null,child};
+    const add=(k,b)=>{job[k]=(job[k]+b.toString('utf8')).slice(-65536);};
+    child.stdout.on('data',b=>add('stdout',b)); child.stderr.on('data',b=>add('stderr',b));
+    child.on('close',code=>{job.state='EXITED';job.exitCode=code;clearTimeout(job.timer);job.child=null;});
+    job.timer=setTimeout(()=>{if(job.child){job.state='TIMED_OUT';job.child.kill();}},args.timeoutMs);
+    this.jobs.set(id,job); return {jobId:id,pid:job.pid,state:job.state};
+  }
+  jobView(id) { const j=this.jobs.get(id); if(!j)throw new Error('UNKNOWN_JOB'); return {jobId:j.id,pid:j.pid,state:j.state,exitCode:j.exitCode,startedAt:j.startedAt,stdout:j.stdout,stderr:j.stderr}; }
   async execute(capability, args) {
     if (capability === 'device.health') return { ok: true, platform: process.platform, adapter: 'bounded-workspace', uiControl: false };
     if (capability === 'device.info') return { platform: process.platform, architecture: os.arch(), node: process.version, uiControl: false };
+    if (capability === 'device.directories.list') return this.listDirectory(args);
+    if (capability === 'device.directories.create') return this.createDirectory(args);
+    if (capability === 'device.search.files') return this.searchFiles(args);
+    if (capability === 'device.process.list') return this.listProcesses(args);
+    if (capability === 'device.process.terminate') return this.terminateProcess(args);
+    if (capability === 'device.job.start') return this.startJob(args);
+    if (capability === 'device.job.status') return this.jobView(args.jobId);
+    if (capability === 'device.job.stop') { const j=this.jobs.get(args.jobId); if(!j)throw new Error('UNKNOWN_JOB'); if(j.child){j.state='STOPPING';j.child.kill();} return this.jobView(args.jobId); }
     if (capability === 'device.process.execute') return this.executeProcess(args);
     if (capability === 'device.files.read') {
       const handle = await fs.open(await this.safePath(args.path), 'r');
