@@ -8,6 +8,12 @@ export const schemas = Object.freeze({
   'device.info': empty,
   'device.files.read': z.object({ path: z.string().min(1).max(1024) }).strict(),
   'device.files.write': z.object({ path: z.string().min(1).max(1024), text: z.string().max(65536) }).strict(),
+  'device.process.execute': z.object({
+    executable: z.enum(['node', 'npm', 'git', 'powershell']),
+    arguments: z.array(z.string().max(2048)).max(64).default([]),
+    cwd: z.string().min(1).max(1024).default('.'),
+    timeoutMs: z.number().int().min(100).max(120000).default(30000),
+  }).strict(),
   'device.screen.capture': empty,
   'device.ui.snapshot': empty,
   'device.ui.back': empty,
