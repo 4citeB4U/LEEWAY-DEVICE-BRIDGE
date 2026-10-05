@@ -1,9 +1,9 @@
 {
   "versionName": "0.9.8-pocket-rc8",
   "versionCode": 23,
-  "sha256": "538fea74592a9b7e35f6e1741d9bfaa0464b493972f81c50a97072150e4b0676",
+  "sha256": "2709f6a36d920dcc9753535b1d62590472fea5119c357c11e5c747773dbe2516",
   "sizeBytes": 66428981,
   "downloadUrl": "./leeway-device-bridge-android-latest-debug.apk",
-  "sourceRunId": "37248584835",
-  "sourceCommit": "e097f15d8bf4382c32dc2efdf487018652d5c8d0"
+  "sourceRunId": "37254205504",
+  "sourceCommit": "4f5a9e5ddd943a2ac391b59f50d4b6d6daa026dd"
 }
