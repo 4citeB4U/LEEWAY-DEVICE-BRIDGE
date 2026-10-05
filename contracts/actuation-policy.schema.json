@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leeway.local/contracts/actuation-policy.schema.json",
+  "title": "LeeWay Device Actuation Policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "policyId","deviceClass","capability","authorityTier","humanConfirmation",
+    "timeoutPolicyRef","readbackPolicyRef","failSafePolicyRef","formulaRequired",
+    "veritasRequired","receiptRequired","status"
+  ],
+  "properties": {
+    "policyId":{"type":"string","minLength":1},
+    "deviceClass":{"type":"string","minLength":1},
+    "capability":{"type":"string","minLength":1},
+    "authorityTier":{"enum":["READ","OPERATE","MUTATE","ADMIN"]},
+    "humanConfirmation":{"enum":["NEVER","ON_PAIRING","ON_FIRST_USE","EACH_ACTUATION","POLICY_BOUND"]},
+    "timeoutPolicyRef":{"type":"string","minLength":1},
+    "readbackPolicyRef":{"type":"string","minLength":1},
+    "failSafePolicyRef":{"type":"string","minLength":1},
+    "formulaRequired":{"type":"boolean"},
+    "veritasRequired":{"const":true},
+    "receiptRequired":{"const":true},
+    "safetyClass":{"enum":["LOW","MODERATE","HIGH","CRITICAL"]},
+    "status":{"enum":["CANDIDATE","CALIBRATED","AUTHORIZED","VERIFIED","BLOCKED","REVOKED"]},
+    "evidenceRefs":{"type":"array","items":{"type":"string","minLength":1}}
+  }
+}
