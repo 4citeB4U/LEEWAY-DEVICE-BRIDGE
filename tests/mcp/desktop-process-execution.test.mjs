@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { DesktopAdapter } from '../apps/desktop/adapter.mjs';
-import { schemas } from '../packages/protocol/index.mjs';
+import { DesktopAdapter } from '../../apps/desktop/adapter.mjs';
+import { schemas } from '../../packages/protocol/index.mjs';
 
 test('process schema exposes only bounded executable identities', () => {
   for (const executable of ['node','npm','git','powershell']) {
