@@ -18,8 +18,8 @@ android {
         applicationId = "industries.leeway.devicebridge"
         minSdk = 29
         targetSdk = 35
-        versionCode = 23
-        versionName = "0.9.8-pocket-rc8"
+        versionCode = 25
+        versionName = "0.9.10-c3-4"
     }
 }
 dependencies {
