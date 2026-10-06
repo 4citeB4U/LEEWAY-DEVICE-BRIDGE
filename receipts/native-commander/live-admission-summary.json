@@ -1,0 +1,79 @@
+{
+  "receiptType": "LEEWAY_NATIVE_COMMANDER_LIVE_ADMISSION_SUMMARY",
+  "status": "PASS",
+  "owner": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "provider": "LEEWAY_NATIVE_HOST_COMMANDER",
+  "sourceCommit": "4087dae37e81db0629033a0256b232dd9c0914d1",
+  "admissionReceiptSha256": "cc496af5831c17030720acd309464fdd781d47e1c5788eac86a9e044b0561789",
+  "independentVerificationSha256": "619a18e3bd3a1aeff6fa083c924e448cf712df1969d1dc6d3ad344811efe8967",
+  "admission": {
+    "receiptType": "LEEWAY_NATIVE_COMMANDER_LIVE_ADMISSION",
+    "status": "PASS",
+    "owner": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+    "provider": "LEEWAY_NATIVE_HOST_COMMANDER",
+    "sourceCommit": "4087dae37e81db0629033a0256b232dd9c0914d1",
+    "sourceSha256": "A4CCEE4B1D7C6894075DD279431C96968C9E03FECD086F51D80B3D77D4AB46C0",
+    "policySha256": "091B09323077F09B3168F2D9401D632542313CE0B8BE04D218C5FA69FB0C6649",
+    "oldPid": 40056,
+    "firstNewPid": 41368,
+    "restartPid": 26612,
+    "singleLoopbackListener": true,
+    "existingLoaderUnchanged": true,
+    "sourceHashNativeReadback": "PASS",
+    "restartNativeReadback": "PASS",
+    "workspaceBindingPreserved": true,
+    "bodyBindingPreserved": true,
+    "oldBindingSha256": "F1A4A357BC7AA62ABB5FB988E43129FD4C15DFB51E8FDE344143B893146036C7",
+    "newBindingSha256": "57D334AE44FCAF3AE58F48B954260BEF717B8D9CCB7712506B0FED3FA7AB1EE6",
+    "rollbackBackup": "binding-before.json",
+    "portability": "FIXED_PATH_FREE_CORE_WITH_AUTHORIZED_LOCAL_RESOURCE_BINDING",
+    "remoteExposure": false,
+    "independentChatFailover": "NOT_PROVEN",
+    "receiptAuthenticity": "UNSIGNED_CONTENT_INTEGRITY_ONLY",
+    "formulaExecution": "NOT_EXECUTED",
+    "learningLedger": "NOT_UPDATED",
+    "mainMerge": "NOT_PERFORMED",
+    "at": "2026-10-06T04:01:52.9436684Z"
+  },
+  "independentChecks": {
+    "receiptPass": true,
+    "sourcePin": true,
+    "policyPin": true,
+    "sourceCommit": true,
+    "bindingHash": true,
+    "loaderUnchanged": true,
+    "threeNativeEnvelopes": true,
+    "envelopeIntegrity": true,
+    "oldBindingRetained": true
+  },
+  "nativeEnvelopes": [
+    {
+      "file": "admitted-source-hash.native.json",
+      "rawSha256": "6948cef6d6ee24f3d1e5964298552ea599b52386037ac021bb5d803a2e6164e0",
+      "integrity": true,
+      "provider": "LEEWAY_NATIVE_HOST_COMMANDER",
+      "receiptHash": "85262f8df59c98bd4daeaf2e405fb725b387d22ece456534fa773f0e42e63acc"
+    },
+    {
+      "file": "host-info.native.json",
+      "rawSha256": "a51441349b5223bf1514d7f70c9acd616c4ce31d519ecc9e287b6021d6a2e5ce",
+      "integrity": true,
+      "provider": "LEEWAY_NATIVE_HOST_COMMANDER",
+      "receiptHash": "9fa3af4e8156e3071595c4e3809b77da15b2dead6356c4871fde982b2be5818d"
+    },
+    {
+      "file": "restart-source-hash.native.json",
+      "rawSha256": "55e990b98d35291067b10a36e5d0bb1bccd485931e7476f57e9877f636220447",
+      "integrity": true,
+      "provider": "LEEWAY_NATIVE_HOST_COMMANDER",
+      "receiptHash": "672e3f646bab2b8f4c82739210374e63b1c771dc61ca78b99cdb01cdcd1d9766"
+    }
+  ],
+  "scope": "EXISTING_LOOPBACK_BOOT_BINDING_ADMITTED_NO_PUBLIC_EXPOSURE",
+  "coldBootTest": "NOT_PERFORMED",
+  "restartReplay": "PASS",
+  "existingUserApplicationsChanged": false,
+  "rollback": "EXACT_PRIOR_BINDING_RETAINED_ON_HOST",
+  "rollbackExecuted": false,
+  "at": "2026-10-06T04:19:28.4470544Z"
+}
