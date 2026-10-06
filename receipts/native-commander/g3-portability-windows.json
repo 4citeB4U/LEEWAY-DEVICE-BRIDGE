@@ -1,0 +1,85 @@
+{
+  "receiptType": "NATIVE_COMMANDER_WINDOWS_QUALIFICATION_SUMMARY",
+  "sourceReceiptSha256": "a10c5823757e7433c4c10904fa2c8811b3e3840ecd26564664371393ac649865",
+  "qualification": {
+    "receiptType": "LEEWAY_NATIVE_COMMANDER_PORTABILITY_QUALIFICATION",
+    "status": "PASS",
+    "owner": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+    "provider": "LEEWAY_NATIVE_HOST_COMMANDER",
+    "baseCommit": "42d785b76aa4f2dade27544188b8ab424d5abb81",
+    "branch": "phase7/native-commander-portability",
+    "sourceStable": true,
+    "sourceBefore": {
+      "providers/desktop-commander/native-host/server.mjs": "a4ccee4b1d7c6894075dd279431c96968c9e03fecd086f51d80b3d77d4ab46c0",
+      "providers/desktop-commander/native-host/command-policy.mjs": "091b09323077f09b3168f2d9401d632542313ce0b8be04d218c5fa69fb0c6649",
+      "tests/native-commander-portability.test.mjs": "da9a0f8c8856c45d09dbfd1b6cba6d933a8021f46eb64fee0fe567168e4c4eb6",
+      "scripts/Invoke-NativeCommanderPortabilityGate.ps1": "b3d465a4801ac58f0537c513f3ee1c9da7c4a5e5f2f0e2be0338d5ffd38c0538"
+    },
+    "sourceAfter": {
+      "providers/desktop-commander/native-host/server.mjs": "a4ccee4b1d7c6894075dd279431c96968c9e03fecd086f51d80b3d77d4ab46c0",
+      "providers/desktop-commander/native-host/command-policy.mjs": "091b09323077f09b3168f2d9401d632542313ce0b8be04d218c5fa69fb0c6649",
+      "tests/native-commander-portability.test.mjs": "da9a0f8c8856c45d09dbfd1b6cba6d933a8021f46eb64fee0fe567168e4c4eb6",
+      "scripts/Invoke-NativeCommanderPortabilityGate.ps1": "b3d465a4801ac58f0537c513f3ee1c9da7c4a5e5f2f0e2be0338d5ffd38c0538"
+    },
+    "results": [
+      {
+        "logSha256": "f6ae68bbbcb06cb2fe47255c284027d984c4f18717b8ba5f8feb2ad2e40447cd",
+        "cycle": 1,
+        "exitCode": 0,
+        "log": "cycle-1.tap",
+        "counts": {
+          "tests": 30,
+          "pass": 30,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        },
+        "accepted": true
+      },
+      {
+        "logSha256": "039cddbd2fc5da090169c7414c64bd7392a950ea34d744867d97d74fe8fd0b00",
+        "cycle": 2,
+        "exitCode": 0,
+        "log": "cycle-2.tap",
+        "counts": {
+          "tests": 30,
+          "pass": 30,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        },
+        "accepted": true
+      }
+    ],
+    "runtime": {
+      "platform": "win32",
+      "architecture": "x64",
+      "node": "v24.15.0"
+    },
+    "scope": "ISOLATED_REAL_LOOPBACK_PROVIDER",
+    "workspaceFreeStartup": "TESTED",
+    "logicalResourceRelocation": "TESTED",
+    "liveDeployment": "NOT_PERFORMED",
+    "remotePairing": "NOT_QUALIFIED",
+    "independentChatFailover": "NOT_PROVEN",
+    "otherPlatforms": "REQUIRE_SEPARATE_EXECUTION_EVIDENCE",
+    "formulaExecution": "NOT_EXECUTED",
+    "learningLedger": "NOT_UPDATED",
+    "signatureState": "UNSIGNED_HASH_INTEGRITY_ONLY",
+    "at": "2026-10-06T03:32:06.747065Z"
+  },
+  "lineage": {
+    "liveSourceModified": false,
+    "purpose": "Repair exact bound provider in isolation; not another provider identity",
+    "policySha256": "091B09323077F09B3168F2D9401D632542313CE0B8BE04D218C5FA69FB0C6649",
+    "serverSha256": "AACD3FEE1626A25EC2A7ADEBA38B4797B8297428933F6096E07A8FFC53F53D79",
+    "liveBindingModified": false,
+    "sourceIdentity": "PINNED_LIVE_UNCOMMITTED_SOURCE",
+    "at": "2026-10-06T03:21:50.0931656Z",
+    "owner": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+    "sourceBaseCommit": "42d785b76aa4f2dade27544188b8ab424d5abb81"
+  },
+  "claim": "WINDOWS_NATIVE_EXECUTION_ONLY; LIVE_BINDING_NOT_CHANGED"
+}
