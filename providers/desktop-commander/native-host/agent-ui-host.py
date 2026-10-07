@@ -37,7 +37,9 @@ class MonitorInfo(ctypes.Structure):
 user32.GetMonitorInfoW.argtypes=[wintypes.HANDLE,ctypes.POINTER(MonitorInfo)]
 class Margins(ctypes.Structure):
  _fields_=[(name,ctypes.c_int) for name in ('left','right','top','bottom')]
-ctypes.windll.dwmapi.DwmExtendFrameIntoClientArea.argtypes=[wintypes.HWND,ctypes.POINTER(Margins)]
+# Keep our pointer type local; pywebview uses a different MARGINS type for shadows.
+native_dwmapi=ctypes.WinDLL('dwmapi',use_last_error=True)
+native_dwmapi.DwmExtendFrameIntoClientArea.argtypes=[wintypes.HWND,ctypes.POINTER(Margins)]
 @contextmanager
 def physical_desktop():
  prior=user32.SetThreadDpiAwarenessContext(ctypes.c_void_p(-4))
@@ -86,7 +88,7 @@ def configure_composition(target,topmost=False):
   # DWM composition preserves WebView alpha and real input. A color key makes the input plane disappear.
   form.BackColor=Color.Black;form.webview.DefaultBackgroundColor=Color.Transparent
   handle=wintypes.HWND(form.Handle.ToInt64());margins=Margins(-1,-1,-1,-1)
-  result=ctypes.windll.dwmapi.DwmExtendFrameIntoClientArea(handle,ctypes.byref(margins))
+  result=native_dwmapi.DwmExtendFrameIntoClientArea(handle,ctypes.byref(margins))
   if result!=0:raise OSError('NATIVE_DESKTOP_COMPOSITION_FAILED:'+str(result))
   user32.SetWindowLongW(handle,-20,user32.GetWindowLongW(handle,-20)&~0x08000000)
   form.Invalidate();form.webview.Invalidate()
