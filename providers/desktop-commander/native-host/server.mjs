@@ -40,7 +40,7 @@ function requestIdentity(args){
  if(typeof args.requestId!=='string'||!BROWSER_IDS.test(args.requestId))throw Error('BROWSER_REQUEST_ID_REQUIRED');
  if(typeof args.outcomeId!=='string'||!BROWSER_IDS.test(args.outcomeId))throw Error('BROWSER_OUTCOME_ID_REQUIRED');
 }
-function pinnedFile(file,expected){
+function pinnedFile(file,expected,returnBytes=false){
  if(typeof file!=='string'||!path.isAbsolute(file)||/[\x00-\x1f\x7f]/.test(file)||typeof expected!=='string'||!/^[a-f0-9]{64}$/i.test(expected))throw Error('COMMANDER_BROWSER_DEPENDENCY_BINDING_INVALID');
  const before=fs.lstatSync(file);
  if(!before.isFile()||before.isSymbolicLink()||before.size>64*1024*1024)throw Error('COMMANDER_BROWSER_REGULAR_FILE_REQUIRED');
@@ -49,17 +49,28 @@ function pinnedFile(file,expected){
   const opened=fs.fstatSync(fd),bytes=fs.readFileSync(fd),after=fs.fstatSync(fd),current=fs.lstatSync(file);
   if(opened.dev!==before.dev||opened.ino!==before.ino||after.size!==opened.size||after.mtimeMs!==opened.mtimeMs||current.dev!==opened.dev||current.ino!==opened.ino||current.mtimeMs!==opened.mtimeMs)throw Error('COMMANDER_BROWSER_DEPENDENCY_CHANGED');
   if(crypto.createHash('sha256').update(bytes).digest('hex')!==expected.toLowerCase())throw Error('COMMANDER_BROWSER_DEPENDENCY_HASH_MISMATCH');
-  return fs.realpathSync(file);
+  const resolved=fs.realpathSync(file);return returnBytes?{file:resolved,bytes}:resolved;
  }finally{fs.closeSync(fd);}
 }
 const browserConfigured=!!process.env.LEEWAY_HOST_COMMANDER_BROWSER_JSON;
 let visibleBrowser=createVisibleBrowserController();
 if(browserConfigured){
  const binding=JSON.parse(process.env.LEEWAY_HOST_COMMANDER_BROWSER_JSON);
- exactKeys(binding,['browserExecutable','browserSha256','playwrightModulePath','dependencyFiles','searchEngine','timeoutMs','maxSessions'],'COMMANDER_BROWSER_BINDING_INVALID');
- if(!Array.isArray(binding.dependencyFiles)||binding.dependencyFiles.length<1||binding.dependencyFiles.length>4096)throw Error('COMMANDER_BROWSER_DEPENDENCY_BINDING_INVALID');
+ exactKeys(binding,['browserExecutable','browserSha256','playwrightModulePath','dependencyFiles','dependencyManifestPath','dependencyManifestSha256','searchEngine','timeoutMs','maxSessions'],'COMMANDER_BROWSER_BINDING_INVALID');
+ const inlineDependencies=Object.hasOwn(binding,'dependencyFiles');
+ const manifestDependencies=Object.hasOwn(binding,'dependencyManifestPath')||Object.hasOwn(binding,'dependencyManifestSha256');
+ if(inlineDependencies===manifestDependencies)throw Error('COMMANDER_BROWSER_DEPENDENCY_FORM_INVALID');
+ let dependencyFiles=binding.dependencyFiles;
+ if(manifestDependencies){
+  const verifiedManifest=pinnedFile(binding.dependencyManifestPath,binding.dependencyManifestSha256,true);
+  const manifest=JSON.parse(verifiedManifest.bytes.toString('utf8').replace(/^\uFEFF/,''));
+  exactKeys(manifest,['schemaVersion','files'],'COMMANDER_BROWSER_DEPENDENCY_MANIFEST_INVALID');
+  if(manifest.schemaVersion!=='leeway.browser-dependencies.v1')throw Error('COMMANDER_BROWSER_DEPENDENCY_MANIFEST_INVALID');
+  dependencyFiles=manifest.files;
+ }
+ if(!Array.isArray(dependencyFiles)||dependencyFiles.length<1||dependencyFiles.length>4096)throw Error('COMMANDER_BROWSER_DEPENDENCY_BINDING_INVALID');
  const pinned=new Map();
- for(const dependency of binding.dependencyFiles){
+ for(const dependency of dependencyFiles){
   exactKeys(dependency,['path','sha256'],'COMMANDER_BROWSER_DEPENDENCY_BINDING_INVALID');
   const file=pinnedFile(dependency.path,dependency.sha256);
   const key=process.platform==='win32'?file.toLowerCase():file;

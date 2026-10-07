@@ -194,12 +194,27 @@ test('untrusted web origin still cannot invoke browser actions', async t => {
   assert.equal(result.httpStatus, 403); assert.equal(result.body.error, 'LOCAL_NATIVE_CALLER_REQUIRED');
   assert.equal((await s.health()).visibleBrowser.activeSessions, 0);
 });
+function manifestBinding(binding, root, {badHash = false, keepInline = false, badSchema = false} = {}) {
+  const file = path.join(root, 'browser-dependencies.json');
+  fs.writeFileSync(file, JSON.stringify({schemaVersion: badSchema ? 'unknown.v1' : 'leeway.browser-dependencies.v1', files: binding.dependencyFiles}));
+  binding.dependencyManifestPath = file; binding.dependencyManifestSha256 = badHash ? '0'.repeat(64) : sha(fs.readFileSync(file));
+  if (!keepInline) delete binding.dependencyFiles;
+}
+test('a pinned dependency manifest supports actual HTTP dispatch without a large environment value', async t => {
+  const s = await server(t, {mutateBinding: manifestBinding});
+  assert.equal((await s.health()).visibleBrowser.state, 'BOUND_NOT_EXECUTED');
+  const opened = await s.execute('leeway.app.open', {app: 'chrome', requestId: 'manifest-request', outcomeId: 'open-1'});
+  assert.equal(opened.httpStatus, 200); assert.equal(opened.body.result.visible, true); validReceipt(opened.body);
+});
 for (const [name, mutateBinding, error] of [
   ['dependency hash mismatch', b => { b.dependencyFiles[0].sha256 = '0'.repeat(64); }, 'COMMANDER_BROWSER_DEPENDENCY_HASH_MISMATCH'],
   ['unlisted entry module', b => { b.dependencyFiles = [{path: b.browserExecutable, sha256: b.browserSha256}]; }, 'COMMANDER_BROWSER_ENTRY_NOT_PINNED'],
   ['duplicate dependency entry', b => { b.dependencyFiles.push({...b.dependencyFiles[0]}); }, 'COMMANDER_BROWSER_DUPLICATE_DEPENDENCY'],
   ['executable hash mismatch', b => { b.browserSha256 = '0'.repeat(64); }, 'COMMANDER_BROWSER_DEPENDENCY_HASH_MISMATCH'],
   ['unknown config property', b => { b.profile = 'existing-user-profile'; }, 'COMMANDER_BROWSER_BINDING_INVALID'],
+  ['dependency manifest hash mismatch', (b, root) => manifestBinding(b, root, {badHash: true}), 'COMMANDER_BROWSER_DEPENDENCY_HASH_MISMATCH'],
+  ['both dependency forms', (b, root) => manifestBinding(b, root, {keepInline: true}), 'COMMANDER_BROWSER_DEPENDENCY_FORM_INVALID'],
+  ['dependency manifest schema mismatch', (b, root) => manifestBinding(b, root, {badSchema: true}), 'COMMANDER_BROWSER_DEPENDENCY_MANIFEST_INVALID'],
 ]) {
   test(`${name} stops startup before the trusted dependency import`, async t => {
     const marker = path.join(os.tmpdir(), 'leeway-import-marker-' + crypto.randomUUID());
