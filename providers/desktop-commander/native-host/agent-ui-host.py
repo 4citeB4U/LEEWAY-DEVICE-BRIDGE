@@ -77,32 +77,90 @@ def place_physical(target,rect):
 def popup_geometry(width=1040,height=760):
  area=monitor_work(window);w=min(width,max(320,int(area['width']*.88)));h=min(height,max(300,int(area['height']*.88)))
  return fit_rect({'x':area['x']+(area['width']-w)//2,'y':area['y']+(area['height']-h)//2,'width':w,'height':h},area)
-def configure_composition(target,topmost=False):
- from System import Action
- from System.Drawing import Color
- from System.Windows.Forms import ControlStyles
- from webview.platforms.winforms import BrowserView
- form=BrowserView.instances[target.uid]
+def configure_composition(target,topmost=False,on_complete=None):
+ observation={'state':'NATIVE_COMPOSITION_QUEUED','surfaceTitle':target.title,'windowUid':target.uid,'observedAt':time.time(),'stage':'FORM_LOOKUP','scope':'NATIVE_CONFIGURATION_READBACK_NOT_DESKTOP_ALPHA_PROOF'}
+ def report():
+  observation['observedAt']=time.time()
+  with composition_lock:composition_observations[target.title]=dict(observation)
+ def finish():
+  report()
+  if on_complete:
+   try:on_complete(dict(observation))
+   except Exception as error:
+    observation['completionError']={'type':type(error).__name__,'message':str(error)};report()
  def update():
-  form.TopMost=topmost;form.SetStyle(ControlStyles.SupportsTransparentBackColor,True)
-  # DWM composition preserves WebView alpha and real input. A color key makes the input plane disappear.
-  form.BackColor=Color.Black;form.webview.DefaultBackgroundColor=Color.Transparent
-  handle=wintypes.HWND(form.Handle.ToInt64());margins=Margins(-1,-1,-1,-1)
-  result=native_dwmapi.DwmExtendFrameIntoClientArea(handle,ctypes.byref(margins))
-  if result!=0:raise OSError('NATIVE_DESKTOP_COMPOSITION_FAILED:'+str(result))
-  user32.SetWindowLongW(handle,-20,user32.GetWindowLongW(handle,-20)&~0x08000000)
-  form.Invalidate();form.webview.Invalidate()
- if form.InvokeRequired:form.BeginInvoke(Action(update))
- else:update()
+  try:
+   observation['stage']='FORM_STYLE';form.TopMost=topmost;form.SetStyle(ControlStyles.SupportsTransparentBackColor,True)
+   # DWM composition preserves WebView alpha and real input. A color key makes the input plane disappear.
+   observation['stage']='BACKGROUND';form.BackColor=Color.Black;form.webview.DefaultBackgroundColor=Color.Transparent
+   handle=wintypes.HWND(form.Handle.ToInt64());margins=Margins(-1,-1,-1,-1)
+   observation['stage']='DWM_FRAME';result=native_dwmapi.DwmExtendFrameIntoClientArea(handle,ctypes.byref(margins));observation['dwmHresult']=int(result)
+   if result!=0:raise OSError('NATIVE_DESKTOP_COMPOSITION_FAILED:'+str(result))
+   observation['stage']='INPUT_AND_INVALIDATE';user32.SetWindowLongW(handle,-20,user32.GetWindowLongW(handle,-20)&~0x08000000)
+   form.Invalidate();form.webview.Invalidate()
+   observation.update(stage='READBACK',nativeHandle=int(form.Handle.ToInt64()),formBorderStyle=str(form.FormBorderStyle),formBackgroundArgb=int(form.BackColor.ToArgb()),formBackgroundAlpha=int(form.BackColor.A),webViewDefaultBackgroundArgb=int(form.webview.DefaultBackgroundColor.ToArgb()),webViewDefaultBackgroundAlpha=int(form.webview.DefaultBackgroundColor.A),webViewControlBackgroundArgb=int(form.webview.BackColor.ToArgb()),webViewControlBackgroundAlpha=int(form.webview.BackColor.A),topmost=bool(form.TopMost),windowVisible=bool(form.Visible))
+   observation['state']='NATIVE_COMPOSITION_APPLIED'
+  except Exception as error:observation.update(state='NATIVE_COMPOSITION_FAILED',error={'type':type(error).__name__,'message':str(error)})
+  finish()
+ try:
+  from System import Action
+  from System.Drawing import Color
+  from System.Windows.Forms import ControlStyles
+  from webview.platforms.winforms import BrowserView
+  form=BrowserView.instances[target.uid];report()
+  if form.InvokeRequired:form.BeginInvoke(Action(update))
+  else:update()
+ except Exception as error:
+  observation.update(state='NATIVE_COMPOSITION_FAILED',error={'type':type(error).__name__,'message':str(error)});finish()
+def show_loaded_popup(target,detail):
+ observation={'state':'NATIVE_SURFACE_SHOW_QUEUED','surfaceTitle':target.title,'windowUid':target.uid,'observedAt':time.time(),'requestedHidden':bool(target.hidden),'requestedTransparent':bool(target.transparent),'scope':'OWNED_POST_LOAD_WINDOW_VISIBILITY'}
+ def report():
+  observation['observedAt']=time.time()
+  with composition_lock:surface_observations[target.title]=dict(observation)
+ def show():
+  try:
+   if form.IsDisposed or form.webview.CoreWebView2 is None:raise RuntimeError('NATIVE_SURFACE_CORE_NOT_READY')
+   observation['beforeVisible']=bool(form.Visible)
+   # Use the same owner operation that restores an already-created menu surface.
+   target.show();target.restore()
+   observation.update(nativeHandle=int(form.Handle.ToInt64()),webViewCoreReady=True,afterVisible=bool(form.Visible),nativeVisible=bool(user32.IsWindowVisible(native_handle(target))),geometry=physical_rect(target))
+   if not observation['afterVisible'] or not observation['nativeVisible']:raise RuntimeError('NATIVE_SURFACE_SHOW_NOT_OBSERVED')
+   observation['state']='NATIVE_SURFACE_VISIBLE'
+  except Exception as error:observation.update(state='NATIVE_SURFACE_SHOW_FAILED',error={'type':type(error).__name__,'message':str(error)})
+  report()
+  state='SURFACE_WINDOW_READY' if observation['state']=='NATIVE_SURFACE_VISIBLE' else 'SURFACE_WINDOW_SETUP_FAILED'
+  receipt(state,{**detail,'nativeVisibility':dict(observation)})
+ try:
+  from System import Action
+  from webview.platforms.winforms import BrowserView
+  form=BrowserView.instances[target.uid];report()
+  if form.InvokeRequired:form.BeginInvoke(Action(show))
+  else:show()
+ except Exception as error:
+  observation.update(state='NATIVE_SURFACE_SHOW_FAILED',error={'type':type(error).__name__,'message':str(error)});report()
+  receipt('SURFACE_WINDOW_SETUP_FAILED',{**detail,'nativeVisibility':dict(observation)})
 def prepare_popup(target,geometry,transparent=False):
+ ready_lock=threading.Lock();setup_started=False
  def ready():
+  nonlocal setup_started
+  with ready_lock:
+   if setup_started:return
+   setup_started=True
   try:
    actual=place_physical(target,geometry)
-   if transparent:configure_composition(target)
-   receipt('SURFACE_WINDOW_READY',{'surfaceTitle':target.title,'surfaceGeometry':actual,'coordinateSpace':'PHYSICAL_DESKTOP_PIXELS','transparentSurface':transparent})
+   detail={'surfaceTitle':target.title,'surfaceGeometry':actual,'coordinateSpace':'PHYSICAL_DESKTOP_PIXELS','transparentSurface':transparent}
+   if transparent:
+    def completed(observation):
+     if observation['state']=='NATIVE_COMPOSITION_APPLIED':show_loaded_popup(target,{**detail,'composition':observation})
+     else:receipt('SURFACE_WINDOW_SETUP_FAILED',{**detail,'composition':observation})
+    configure_composition(target,on_complete=completed)
+   else:show_loaded_popup(target,detail)
   except Exception as error:receipt('SURFACE_WINDOW_SETUP_FAILED',{'error':str(error),'surfaceTitle':target.title})
  target.events.loaded+=ready
  if transparent:target.events.resized+=lambda *args:configure_composition(target)
+ # Runtime child creation can finish loading before its caller registers this hook.
+ # The once guard handles a concurrent event without placing the window twice.
+ if target.events.loaded.is_set():ready()
 kernel32.CreateMutexW.restype=ctypes.c_void_p
 kernel32.CreateEventW.restype=ctypes.c_void_p
 wake_name='Local\\LeeWayAgentLeeWake_'+hashlib.sha256(str(binding_path).casefold().encode()).hexdigest()[:24]
@@ -124,11 +182,15 @@ if state_path.exists():
  except Exception:pass
 initial=fit_rect(initial,monitor_work(point=initial))
 window=None;recognizer=None;native_handlers=[];panel=False;expanded=False;normal=dict(initial);drag=None;closed=threading.Event();gate=threading.RLock();write_lock=threading.Lock();native_ready=False;input_plane=None;input_handlers=[];last_ui_state={};last_mouse=[];last_evidence_error=None;last_page_observed=0.0;visibility_observation={};page_probe={"task":None,"queued":False,"at":0.0,"error":None};page_probe_lock=threading.Lock()
+composition_observations={};surface_observations={};composition_lock=threading.Lock()
 def receipt(status,extra=None):
  global last_evidence_error
  value={'schemaVersion':'leeway.native-floating-host.v1','observedAt':time.time(),'status':status,'pid':os.getpid(),'provider':'LEEWAY_DEVICE_BRIDGE_NATIVE_UI','url':url,'screen':work,'topmostRequested':True,'transparentRequested':True,'framelessRequested':True,'nativeHitPlane':input_plane is not None,'panelOpen':panel,'expandedByOwner':expanded,'fixedPhysicalPathsInSource':False,'formulaExecution':'NOT_EXECUTED'}
  if window and native_ready:
   rect=physical_rect(window);value['geometry']={**rect,'coordinateSpace':'PHYSICAL_DESKTOP_PIXELS','screenAreaRatio':rect['width']*rect['height']/(work['width']*work['height'])}
+ with composition_lock:
+  value['nativeComposition']={name:dict(value) for name,value in composition_observations.items()}
+  value['nativeSurfaces']={name:dict(value) for name,value in surface_observations.items()}
  value['ownPage']=last_ui_state;value['ownMouse']=last_mouse[-8:]
  value['pageObservationAgeSeconds']=None if not last_page_observed else max(0,time.time()-last_page_observed)
  value['pageProbeError']=page_probe.get('error');value['visibilityObservation']=dict(visibility_observation)
