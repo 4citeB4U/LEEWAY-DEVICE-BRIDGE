@@ -8,7 +8,7 @@ WHY: Browser app mode cannot be the transparent, topmost desktop companion.
 HOW: Installed pywebview/WebView2, bounded geometry API, one process lock, native speech recognition.
 LICENSE: MIT
 """
-import argparse,ctypes,hashlib,json,math,os,pathlib,threading,time,urllib.request,urllib.parse
+import argparse,ctypes,hashlib,json,math,os,pathlib,threading,time,urllib.request,urllib.parse,uuid
 from ctypes import wintypes
 from contextlib import contextmanager
 import webview
@@ -25,7 +25,10 @@ user32=ctypes.windll.user32;kernel32=ctypes.windll.kernel32
 user32.SetThreadDpiAwarenessContext.argtypes=[ctypes.c_void_p]
 user32.SetThreadDpiAwarenessContext.restype=ctypes.c_void_p
 user32.GetWindowRect.argtypes=[wintypes.HWND,ctypes.POINTER(wintypes.RECT)]
-user32.GetCursorPos.argtypes=[ctypes.POINTER(wintypes.POINT)]
+user32.GetPhysicalCursorPos.argtypes=[ctypes.POINTER(wintypes.POINT)]
+user32.GetPhysicalCursorPos.restype=wintypes.BOOL
+user32.GetClientRect.argtypes=[wintypes.HWND,ctypes.POINTER(wintypes.RECT)]
+user32.ClientToScreen.argtypes=[wintypes.HWND,ctypes.POINTER(wintypes.POINT)]
 user32.SetWindowPos.argtypes=[wintypes.HWND,wintypes.HWND,ctypes.c_int,ctypes.c_int,ctypes.c_int,ctypes.c_int,wintypes.UINT]
 user32.MonitorFromWindow.argtypes=[wintypes.HWND,wintypes.DWORD]
 user32.MonitorFromWindow.restype=wintypes.HANDLE
@@ -40,11 +43,22 @@ class Margins(ctypes.Structure):
 # Keep our pointer type local; pywebview uses a different MARGINS type for shadows.
 native_dwmapi=ctypes.WinDLL('dwmapi',use_last_error=True)
 native_dwmapi.DwmExtendFrameIntoClientArea.argtypes=[wintypes.HWND,ctypes.POINTER(Margins)]
+class DwmBlurBehind(ctypes.Structure):
+ _fields_=[('dwFlags',ctypes.c_uint32),('fEnable',ctypes.c_int32),('hRgnBlur',wintypes.HANDLE),('fTransitionOnMaximized',ctypes.c_int32)]
+native_dwmapi.DwmEnableBlurBehindWindow.argtypes=[wintypes.HWND,ctypes.POINTER(DwmBlurBehind)]
+native_dwmapi.DwmEnableBlurBehindWindow.restype=ctypes.c_int32
+native_gdi32=ctypes.WinDLL('gdi32',use_last_error=True)
+native_gdi32.CreateRectRgn.argtypes=[ctypes.c_int]*4
+native_gdi32.CreateRectRgn.restype=wintypes.HANDLE
+native_gdi32.DeleteObject.argtypes=[wintypes.HANDLE]
+native_gdi32.DeleteObject.restype=wintypes.BOOL
 @contextmanager
 def physical_desktop():
  prior=user32.SetThreadDpiAwarenessContext(ctypes.c_void_p(-4))
+ if not prior:raise OSError('NATIVE_DPI_CONTEXT_UNAVAILABLE')
  try:yield
- finally:user32.SetThreadDpiAwarenessContext(ctypes.c_void_p(prior))
+ finally:
+  if not user32.SetThreadDpiAwarenessContext(ctypes.c_void_p(prior)):raise OSError('NATIVE_DPI_CONTEXT_RESTORE_FAILED')
 def native_handle(target):
  from webview.platforms.winforms import BrowserView
  return wintypes.HWND(BrowserView.instances[target.uid].Handle.ToInt64())
@@ -56,8 +70,33 @@ def physical_rect(target):
 def cursor_point():
  with physical_desktop():
   point=wintypes.POINT()
-  if not user32.GetCursorPos(ctypes.byref(point)):raise OSError('NATIVE_CURSOR_UNAVAILABLE')
+  if not user32.GetPhysicalCursorPos(ctypes.byref(point)):raise OSError('NATIVE_CURSOR_UNAVAILABLE')
   return {'x':point.x,'y':point.y}
+def physical_client_rect(target):
+ with physical_desktop():
+  handle=native_handle(target);r=wintypes.RECT();origin=wintypes.POINT(0,0)
+  if not user32.GetClientRect(handle,ctypes.byref(r)) or not user32.ClientToScreen(handle,ctypes.byref(origin)):raise OSError('NATIVE_CLIENT_RECT_UNAVAILABLE')
+  if r.right<=r.left or r.bottom<=r.top:raise OSError('NATIVE_CLIENT_RECT_EMPTY')
+  return {'x':origin.x,'y':origin.y,'width':r.right-r.left,'height':r.bottom-r.top}
+DRAG_MAX_SECONDS=120.0
+DRAG_EVENT_MAX_MILLIS=1000.0
+last_drag_start_millis=-1.0
+def fresh_drag_stamp(value,earliest=None):
+ if isinstance(value,bool) or not isinstance(value,(int,float)) or not math.isfinite(value):return False
+ now=time.time()*1000.0
+ return -5.0<=now-value<=DRAG_EVENT_MAX_MILLIS and (earliest is None or value>=earliest)
+def drag_matches(value):
+ if drag is None:return False
+ return (isinstance(value,str) and value==drag['id']) or (drag['legacy'] and value==0)
+def drag_anchor(value):
+ if not isinstance(value,dict) or set(value)!={'xRatio','yRatio','atMillis'}:raise ValueError('DRAG_ANCHOR_INVALID')
+ x=value['xRatio'];y=value['yRatio'];stamp=value['atMillis']
+ if any(isinstance(n,bool) or not isinstance(n,(int,float)) or not math.isfinite(n) or not 0<=n<=1 for n in (x,y)):raise ValueError('DRAG_ANCHOR_INVALID')
+ if not fresh_drag_stamp(stamp) or stamp<=last_drag_start_millis:raise ValueError('DRAG_START_STALE')
+ area=physical_client_rect(window)
+ # DOM fractions map the actual client area, including negative monitor origins.
+ # This captures pointer-down before bridge latency; no assumed DPI multiplier.
+ return {'x':area['x']+round(x*area['width']),'y':area['y']+round(y*area['height'])},stamp
 def monitor_work(target=None,point=None):
  with physical_desktop():
   if target is not None:monitor=user32.MonitorFromWindow(native_handle(target),2)
@@ -77,6 +116,26 @@ def place_physical(target,rect):
 def popup_geometry(width=1040,height=760):
  area=monitor_work(window);w=min(width,max(320,int(area['width']*.88)));h=min(height,max(300,int(area['height']*.88)))
  return fit_rect({'x':area['x']+(area['width']-w)//2,'y':area['y']+(area['height']-h)//2,'width':w,'height':h},area)
+def apply_native_alpha(handle,frameless,observation):
+ if frameless:
+  observation['compositionMethod']='DWM_EXTENDED_FRAME'
+  margins=Margins(-1,-1,-1,-1)
+  result=native_dwmapi.DwmExtendFrameIntoClientArea(handle,ctypes.byref(margins))
+  observation['dwmHresult']=int(result)
+ else:
+  # Keep normal window controls. An off-client region enables per-pixel alpha
+  # without extending the opaque frame theme across the client (SDL/GLFW/Qt).
+  observation['compositionMethod']='DWM_ALPHA_OFF_CLIENT_REGION'
+  region=native_gdi32.CreateRectRgn(-1,-1,0,0)
+  if not region:raise OSError('NATIVE_ALPHA_REGION_CREATION_FAILED')
+  try:
+   config=DwmBlurBehind(3,1,region,0) # DWM_BB_ENABLE | DWM_BB_BLURREGION
+   result=native_dwmapi.DwmEnableBlurBehindWindow(handle,ctypes.byref(config))
+   observation['dwmHresult']=int(result)
+  finally:
+   observation['alphaRegionReleased']=bool(native_gdi32.DeleteObject(region))
+   if not observation['alphaRegionReleased']:raise OSError('NATIVE_ALPHA_REGION_RELEASE_FAILED')
+ if result!=0:raise OSError('NATIVE_DESKTOP_COMPOSITION_FAILED:'+str(result))
 def configure_composition(target,topmost=False,on_complete=None):
  observation={'state':'NATIVE_COMPOSITION_QUEUED','surfaceTitle':target.title,'windowUid':target.uid,'observedAt':time.time(),'stage':'FORM_LOOKUP','scope':'NATIVE_CONFIGURATION_READBACK_NOT_DESKTOP_ALPHA_PROOF'}
  def report():
@@ -93,9 +152,9 @@ def configure_composition(target,topmost=False,on_complete=None):
    observation['stage']='FORM_STYLE';form.TopMost=topmost;form.SetStyle(ControlStyles.SupportsTransparentBackColor,True)
    # DWM composition preserves WebView alpha and real input. A color key makes the input plane disappear.
    observation['stage']='BACKGROUND';form.BackColor=Color.Black;form.webview.DefaultBackgroundColor=Color.Transparent
-   handle=wintypes.HWND(form.Handle.ToInt64());margins=Margins(-1,-1,-1,-1)
-   observation['stage']='DWM_FRAME';result=native_dwmapi.DwmExtendFrameIntoClientArea(handle,ctypes.byref(margins));observation['dwmHresult']=int(result)
-   if result!=0:raise OSError('NATIVE_DESKTOP_COMPOSITION_FAILED:'+str(result))
+   handle=wintypes.HWND(form.Handle.ToInt64())
+   observation['stage']='DWM_FRAME' if target.frameless else 'DWM_FRAMED_ALPHA'
+   apply_native_alpha(handle,bool(target.frameless),observation)
    observation['stage']='INPUT_AND_INVALIDATE';user32.SetWindowLongW(handle,-20,user32.GetWindowLongW(handle,-20)&~0x08000000)
    form.Invalidate();form.webview.Invalidate()
    observation.update(stage='READBACK',nativeHandle=int(form.Handle.ToInt64()),formBorderStyle=str(form.FormBorderStyle),formBackgroundArgb=int(form.BackColor.ToArgb()),formBackgroundAlpha=int(form.BackColor.A),webViewDefaultBackgroundArgb=int(form.webview.DefaultBackgroundColor.ToArgb()),webViewDefaultBackgroundAlpha=int(form.webview.DefaultBackgroundColor.A),webViewControlBackgroundArgb=int(form.webview.BackColor.ToArgb()),webViewControlBackgroundAlpha=int(form.webview.BackColor.A),topmost=bool(form.TopMost),windowVisible=bool(form.Visible))
@@ -242,20 +301,39 @@ def save():
   data={**physical_rect(window),'coordinateSpace':'PHYSICAL_DESKTOP_PIXELS'};temp=state_path.with_suffix('.tmp');temp.write_text(json.dumps(data));os.replace(temp,state_path)
 class HostApi:
  def geometry(self,action,value=0,second=0):
-  global panel,expanded,normal,drag
+  global panel,expanded,normal,drag,last_drag_start_millis
   with gate:
-   rect=physical_rect(window)
-   if action=='drag-start':
+   rect=physical_rect(window);result_state='NATIVE_GEOMETRY_APPLIED'
+   if action in ('drag-start','drag-start-at'):
     if panel or expanded or not (user32.GetAsyncKeyState(0x01)&0x8000):return {'state':'DRAG_REQUIRES_OWNER_POINTER'}
-    drag={'cursor':cursor_point(),'rect':rect,'at':time.monotonic()}
+    if action=='drag-start-at':anchor,stamp=drag_anchor(value)
+    else:anchor=cursor_point();stamp=time.time()*1000.0
+    drag={'id':uuid.uuid4().hex,'cursor':anchor,'rect':rect,'at':time.monotonic(),'stamp':stamp,'legacy':action=='drag-start'}
+    last_drag_start_millis=stamp;result_state='DRAG_ACTIVE'
    elif action=='drag-move':
-    if drag is None:return {'state':'DRAG_NOT_ACTIVE'}
-    if panel or not (user32.GetAsyncKeyState(0x01)&0x8000) or time.monotonic()-drag['at']>120:
+    if not drag_matches(value):return {'state':'DRAG_NOT_ACTIVE_OR_STALE'}
+    if panel or expanded or time.monotonic()-drag['at']>DRAG_MAX_SECONDS:
      drag=None;return {'state':'DRAG_ENDED'}
-    point=cursor_point();base=drag['rect'];rect=place_physical(window,{**base,'x':base['x']+point['x']-drag['cursor']['x'],'y':base['y']+point['y']-drag['cursor']['y']})
-   elif action=='drag-end':
-    if drag is not None:
-     rect=place_physical(window,fit_rect(rect,monitor_work(window)));drag=None;save()
+    # A queued move can arrive after physical release. Preserve the owned gesture
+    # until its correlated release/cancel arrives; do not discard its endpoint.
+    if not (user32.GetAsyncKeyState(0x01)&0x8000):return {'state':'DRAG_AWAITING_RELEASE'}
+    point=cursor_point();base=drag['rect'];rect=place_physical(window,{**base,'x':base['x']+point['x']-drag['cursor']['x'],'y':base['y']+point['y']-drag['cursor']['y']});result_state='DRAG_MOVED'
+   elif action=='drag-release':
+    if not drag_matches(value) or drag['legacy']:return {'state':'DRAG_NOT_ACTIVE_OR_STALE'}
+    active=drag;drag=None
+    if panel or expanded or time.monotonic()-active['at']>DRAG_MAX_SECONDS or not fresh_drag_stamp(second,active['stamp']):result_state='DRAG_RELEASE_EXPIRED'
+    elif user32.GetAsyncKeyState(0x01)&0x8000:result_state='DRAG_OWNER_POINTER_STILL_DOWN'
+    else:
+     # Settle once from a fresh physical cursor observation, even when the last
+     # pointermove was queued at pointerup. The stamp bounds late delivery to 1s.
+     point=cursor_point();base=active['rect'];desired={**base,'x':base['x']+point['x']-active['cursor']['x'],'y':base['y']+point['y']-active['cursor']['y']}
+     rect=place_physical(window,fit_rect(desired,monitor_work(point=point)));result_state='DRAG_SETTLED'
+   elif action in ('drag-cancel','drag-end'):
+    if not drag_matches(value):return {'state':'DRAG_NOT_ACTIVE_OR_STALE'}
+    # Modern cancellation never samples a later cursor or moves a newer gesture.
+    # Preserve legacy drag-end's existing work-area clamp, without final sampling.
+    if action=='drag-end' and drag['legacy']:rect=place_physical(window,fit_rect(rect,monitor_work(window)))
+    drag=None;result_state='DRAG_CANCELLED'
    elif action=='move':
     dx=float(value);dy=float(second)
     if not math.isfinite(dx+dy) or abs(dx)>300 or abs(dy)>300:raise ValueError('MOVE_DELTA_INVALID')
@@ -279,8 +357,8 @@ class HostApi:
      if not expanded:rect=place_physical(window,fit_rect(normal,monitor_work(point=normal)))
    elif action=='status':pass
    else:raise ValueError('HOST_GEOMETRY_ACTION_NOT_ALLOWED')
-   if action not in ('status','drag-start','drag-move'):style_native();save()
-   receipt('NATIVE_HOST_RUNNING');return {**physical_rect(window),'coordinateSpace':'PHYSICAL_DESKTOP_PIXELS','maxCompact':max_compact,'panel':panel,'expanded':expanded}
+   if action not in ('status','drag-start','drag-start-at','drag-move'):style_native();save()
+   receipt('NATIVE_HOST_RUNNING');return {'state':result_state,'dragId':drag['id'] if drag else None,**physical_rect(window),'coordinateSpace':'PHYSICAL_DESKTOP_PIXELS','maxCompact':max_compact,'panel':panel,'expanded':expanded}
  def listen(self,enabled=True):
   global recognizer,native_handlers
   if not enabled:
