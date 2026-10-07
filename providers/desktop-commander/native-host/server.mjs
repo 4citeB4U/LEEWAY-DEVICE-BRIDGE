@@ -2,10 +2,10 @@
 LEEWAY_HEADER - DO NOT REMOVE
 REGION: LEEWAY.DEVICES.DESKTOP_COMMANDER
 TAG: LEEWAY.RUNTIME.HOST_COMMANDER.NATIVE_V0
-5WH: WHAT=Portability repair of the existing bound native Commander, retaining provider/HTTP identity;
-WHY=Startup and host diagnostics must not require a drive, workspace path, named device or external Commander;
+5WH: WHAT=Existing native Commander with portability and owned visible Chrome/search, retaining provider/HTTP identity;
+WHY=Host work must not require a fixed path or device; browser completion needs actual target and native window evidence;
 WHO=LeeWay Device Bridge / Tool Gateway; WHERE=providers/desktop-commander/native-host/server.mjs;
-WHEN=2026-10-06; HOW=Optional runtime resource binding -> existing command policy -> native APIs -> evidence.
+WHEN=2026-10-07; HOW=Pinned runtime bindings -> existing command policy / typed browser actions -> native APIs -> evidence.
 AUTHORIZED_ROLES: Target-local trusted controller; remote pairing is not provided by loopback HTTP.
 LICENSE: MIT
 */
@@ -15,7 +15,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import crypto from 'node:crypto';
 import path from 'node:path';
+import {pathToFileURL} from 'node:url';
 import {nativeCommandPlan,confinedPath} from './command-policy.mjs';
+import {createVisibleBrowserController,observeWindowsBrowserProcess} from './visible-browser.mjs';
 
 const PORT=Number(process.env.LEEWAY_HOST_COMMANDER_PORT??0);
 if(!Number.isInteger(PORT)||PORT<0||PORT>65535)throw Error('COMMANDER_PORT_BINDING_INVALID');
@@ -30,6 +32,55 @@ const MAX_BYTES=64*1024*1024,MAX_OUTPUT=4*1024*1024;
 const TIMEOUT=Number(process.env.LEEWAY_HOST_COMMANDER_TIMEOUT_MS??30000);
 if(!Number.isInteger(TIMEOUT)||TIMEOUT<100||TIMEOUT>120000)throw Error('COMMANDER_TIMEOUT_BINDING_INVALID');
 const hash=value=>crypto.createHash('sha256').update(JSON.stringify(value)).digest('hex');
+const BROWSER_IDS=/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/;
+function exactKeys(value,keys,reason='COMMANDER_BROWSER_ARGUMENTS_INVALID'){
+ if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).some(k=>!keys.includes(k)))throw Error(reason);
+}
+function requestIdentity(args){
+ if(typeof args.requestId!=='string'||!BROWSER_IDS.test(args.requestId))throw Error('BROWSER_REQUEST_ID_REQUIRED');
+ if(typeof args.outcomeId!=='string'||!BROWSER_IDS.test(args.outcomeId))throw Error('BROWSER_OUTCOME_ID_REQUIRED');
+}
+function pinnedFile(file,expected){
+ if(typeof file!=='string'||!path.isAbsolute(file)||/[\x00-\x1f\x7f]/.test(file)||typeof expected!=='string'||!/^[a-f0-9]{64}$/i.test(expected))throw Error('COMMANDER_BROWSER_DEPENDENCY_BINDING_INVALID');
+ const before=fs.lstatSync(file);
+ if(!before.isFile()||before.isSymbolicLink()||before.size>64*1024*1024)throw Error('COMMANDER_BROWSER_REGULAR_FILE_REQUIRED');
+ const fd=fs.openSync(file,fs.constants.O_RDONLY|(fs.constants.O_NOFOLLOW??0));
+ try{
+  const opened=fs.fstatSync(fd),bytes=fs.readFileSync(fd),after=fs.fstatSync(fd),current=fs.lstatSync(file);
+  if(opened.dev!==before.dev||opened.ino!==before.ino||after.size!==opened.size||after.mtimeMs!==opened.mtimeMs||current.dev!==opened.dev||current.ino!==opened.ino||current.mtimeMs!==opened.mtimeMs)throw Error('COMMANDER_BROWSER_DEPENDENCY_CHANGED');
+  if(crypto.createHash('sha256').update(bytes).digest('hex')!==expected.toLowerCase())throw Error('COMMANDER_BROWSER_DEPENDENCY_HASH_MISMATCH');
+  return fs.realpathSync(file);
+ }finally{fs.closeSync(fd);}
+}
+const browserConfigured=!!process.env.LEEWAY_HOST_COMMANDER_BROWSER_JSON;
+let visibleBrowser=createVisibleBrowserController();
+if(browserConfigured){
+ const binding=JSON.parse(process.env.LEEWAY_HOST_COMMANDER_BROWSER_JSON);
+ exactKeys(binding,['browserExecutable','browserSha256','playwrightModulePath','dependencyFiles','searchEngine','timeoutMs','maxSessions'],'COMMANDER_BROWSER_BINDING_INVALID');
+ if(!Array.isArray(binding.dependencyFiles)||binding.dependencyFiles.length<1||binding.dependencyFiles.length>4096)throw Error('COMMANDER_BROWSER_DEPENDENCY_BINDING_INVALID');
+ const pinned=new Map();
+ for(const dependency of binding.dependencyFiles){
+  exactKeys(dependency,['path','sha256'],'COMMANDER_BROWSER_DEPENDENCY_BINDING_INVALID');
+  const file=pinnedFile(dependency.path,dependency.sha256);
+  const key=process.platform==='win32'?file.toLowerCase():file;
+  if(pinned.has(key))throw Error('COMMANDER_BROWSER_DUPLICATE_DEPENDENCY');
+  pinned.set(key,{file,sha256:dependency.sha256.toLowerCase()});
+ }
+ if(typeof binding.playwrightModulePath!=='string'||!path.isAbsolute(binding.playwrightModulePath)||!/\.(mjs|cjs|js)$/.test(binding.playwrightModulePath))throw Error('COMMANDER_BROWSER_MODULE_BINDING_INVALID');
+ const modulePath=fs.realpathSync(binding.playwrightModulePath),moduleKey=process.platform==='win32'?modulePath.toLowerCase():modulePath;
+ const modulePin=pinned.get(moduleKey);
+ if(!modulePin)throw Error('COMMANDER_BROWSER_ENTRY_NOT_PINNED');
+ // Recheck the actual entry and executable immediately before loading the trusted dependency.
+ pinnedFile(binding.playwrightModulePath,modulePin.sha256);
+ pinnedFile(binding.browserExecutable,binding.browserSha256);
+ const imported=await import(pathToFileURL(modulePath).href);
+ const chromium=imported.chromium??imported.default?.chromium;
+ if(!chromium||typeof chromium.launch!=='function')throw Error('COMMANDER_BROWSER_ENGINE_EXPORT_INVALID');
+ visibleBrowser=createVisibleBrowserController({chromium,browserExecutable:binding.browserExecutable,
+  browserSha256:binding.browserSha256,inspectNativeWindow:observeWindowsBrowserProcess,
+  searchEngine:binding.searchEngine??'google',timeoutMs:binding.timeoutMs??25000,maxSessions:binding.maxSessions??4});
+ if(visibleBrowser.describe().state!=='BOUND_NOT_EXECUTED')throw Error(visibleBrowser.describe().state);
+}
 const APPS=Object.create(null);
 if(process.env.LEEWAY_HOST_COMMANDER_APPS_JSON){
  const values=JSON.parse(process.env.LEEWAY_HOST_COMMANDER_APPS_JSON);
@@ -43,7 +94,8 @@ if(process.env.LEEWAY_HOST_COMMANDER_APPS_JSON){
 const CAPABILITIES=Object.freeze({
  'leeway.files.list':'READ','leeway.files.read':'READ','leeway.files.hash':'READ',
  'leeway.process.inspect':'READ','leeway.service.inspect':'READ','leeway.display.inspect':'READ','leeway.host.info':'READ',
- 'leeway.app.open':'OPERATE','leeway.terminal.execute':'OPERATE'
+ 'leeway.app.open':'OPERATE','leeway.terminal.execute':'OPERATE',
+ 'leeway.browser.search':'OPERATE','leeway.browser.inspect':'READ'
 });
 function requireScope(args={}){
  if(args.scope!==undefined&&args.scope!=='workspace')throw Error('COMMANDER_SCOPE_NOT_BOUND');
@@ -83,7 +135,8 @@ function run(cmd,args=[],cwd){return new Promise((resolve,reject)=>{
 });}
 function qualified(cap){
  if(cap.startsWith('leeway.files.')||cap==='leeway.terminal.execute')return ROOT?'RUNTIME_SCOPE_BOUND':'SCOPE_UNBOUND';
- if(cap==='leeway.app.open')return Object.keys(APPS).length?'HOST_APP_BINDINGS_PRESENT':'APP_BINDINGS_UNBOUND';
+ if(cap==='leeway.app.open')return browserConfigured?'VISIBLE_CHROME_BOUND_NOT_EXECUTED':Object.keys(APPS).length?'HOST_APP_BINDINGS_PRESENT':'APP_BINDINGS_UNBOUND';
+ if(cap==='leeway.browser.search'||cap==='leeway.browser.inspect')return visibleBrowser.describe().state;
  if(['leeway.process.inspect','leeway.service.inspect','leeway.display.inspect'].includes(cap))return process.platform==='win32'?'WINDOWS_ADAPTER_PRESENT_NOT_HEALTH_PROBED':'PLATFORM_ADAPTER_NOT_QUALIFIED';
  return 'PORTABLE_NATIVE';
 }
@@ -112,10 +165,27 @@ async function execute(cap,args={}){
   };
   const value=await run('powershell.exe',['-NoProfile','-Command',commands[cap]]);result=cap==='leeway.display.inspect'?JSON.parse(value):value;
  }else if(cap==='leeway.app.open'){
-  const id=args.app;if(typeof id!=='string'||!Object.hasOwn(APPS,id))throw Error('APP_NOT_ALLOWLISTED');
-  const selected=APPS[id];const child=spawn(selected.executable,[...selected.args],{detached:true,stdio:'ignore',shell:false,windowsHide:true});
-  await new Promise((resolve,reject)=>{child.once('spawn',resolve);child.once('error',reject)});child.unref();
-  result={opened:id,pid:child.pid,executionState:'SPAWN_ACKNOWLEDGED_NOT_UI_VERIFIED'};
+  exactKeys(args,['app','requestId','outcomeId','newWindow']);
+  const id=args.app;
+  if(id==='chrome'&&browserConfigured){
+   requestIdentity(args);pre.requestId=args.requestId;pre.outcomeId=args.outcomeId;
+   result=await visibleBrowser.openChrome({requestId:args.requestId,outcomeId:args.outcomeId,...(args.newWindow===undefined?{}:{newWindow:args.newWindow})});
+  }else{
+   if(typeof id!=='string'||!Object.hasOwn(APPS,id))throw Error('APP_NOT_ALLOWLISTED');
+   if(args.requestId!==undefined||args.outcomeId!==undefined)requestIdentity(args);
+   if(args.newWindow!==undefined&&args.newWindow!==false)throw Error('APP_NEW_WINDOW_NOT_SUPPORTED');
+   const selected=APPS[id];const child=spawn(selected.executable,[...selected.args],{detached:true,stdio:'ignore',shell:false,windowsHide:true});
+   await new Promise((resolve,reject)=>{child.once('spawn',resolve);child.once('error',reject)});child.unref();
+   result={opened:id,pid:child.pid,executionState:'SPAWN_ACKNOWLEDGED_NOT_UI_VERIFIED'};
+  }
+ }else if(cap==='leeway.browser.search'){
+  exactKeys(args,['query','sessionId','requestId','outcomeId']);requestIdentity(args);
+  pre.requestId=args.requestId;pre.outcomeId=args.outcomeId;
+  result=await visibleBrowser.search(args);
+ }else if(cap==='leeway.browser.inspect'){
+  exactKeys(args,['sessionId','expectedQuery','requestId','outcomeId']);requestIdentity(args);
+  pre.requestId=args.requestId;pre.outcomeId=args.outcomeId;
+  result=await visibleBrowser.inspect(args);
  }else if(cap==='leeway.terminal.execute'){
   requireScope(args);if(args.profile!=='governed-readonly')throw Error('TERMINAL_PROFILE_NOT_ALLOWED');
   const plan=nativeCommandPlan({command:args.command,root:ROOT,cwd:args.cwd||ROOT,humanConfirmed:args.humanConfirmed});result=await run(plan.exe,plan.args,plan.cwd);
@@ -128,7 +198,7 @@ const server=http.createServer(async(req,res)=>{try{
  const port=server.address()?.port;
  if(req.headers.origin||!['127.0.0.1:'+port,'localhost:'+port].includes(req.headers.host))return json(res,403,{error:'LOCAL_NATIVE_CALLER_REQUIRED'});
  const u=new URL(req.url,'http://127.0.0.1');
- if(req.method==='GET'&&u.pathname==='/health')return json(res,200,{status:'PASS',healthScope:'LISTENER_AND_PROVIDER_IDENTITY_NOT_ALL_CAPABILITIES',provider:'LEEWAY_NATIVE_HOST_COMMANDER',root:ROOT,bodyId:BODY,deviceAuthority:'4citeB4U/LEEWAY-DEVICE-BRIDGE',transport:'LOOPBACK_ONLY',remotePairingQualified:false,logicalScopes:ROOT?['workspace']:[],capabilities:CAPABILITIES,capabilityStates:Object.fromEntries(Object.keys(CAPABILITIES).map(c=>[c,qualified(c)])),portability:{fixedRootRequired:false,fixedDeviceRequired:false,hostInformationBackend:'node:os',platform:process.platform}});
+ if(req.method==='GET'&&u.pathname==='/health')return json(res,200,{status:'PASS',healthScope:'LISTENER_AND_PROVIDER_IDENTITY_NOT_ALL_CAPABILITIES',provider:'LEEWAY_NATIVE_HOST_COMMANDER',root:ROOT,bodyId:BODY,deviceAuthority:'4citeB4U/LEEWAY-DEVICE-BRIDGE',transport:'LOOPBACK_ONLY',remotePairingQualified:false,logicalScopes:ROOT?['workspace']:[],capabilities:CAPABILITIES,capabilityStates:Object.fromEntries(Object.keys(CAPABILITIES).map(c=>[c,qualified(c)])),visibleBrowser:visibleBrowser.describe(),portability:{fixedRootRequired:false,fixedDeviceRequired:false,hostInformationBackend:'node:os',platform:process.platform}});
  if(req.method==='POST'&&u.pathname==='/execute'){
   if(!String(req.headers['content-type']||'').toLowerCase().startsWith('application/json'))return json(res,415,{error:'JSON_REQUIRED'});
   let chunks=[],size=0;for await(const chunk of req){size+=chunk.length;if(size>65536)return json(res,413,{error:'REQUEST_TOO_LARGE'});chunks.push(chunk);}
