@@ -8,6 +8,7 @@ HOW: TLS + per-body bearer token + loopback-only upstream + bounded request/resp
 LICENSE: MIT
 */
 import https from 'node:https';import fs from 'node:fs';import crypto from 'node:crypto';
+import {handlePairedModelInventory} from './phone-model-inventory.mjs';
 const port=Number(process.env.LEEWAY_PHONE_GATEWAY_PORT||8892),carrier='http://127.0.0.1:8890';
 const state=process.env.LOCALAPPDATA+'\\\\LeeWay\\\\RuntimePairing',token=fs.readFileSync(state+'\\\\phone-fold6.token','utf8').trim(),pairedBody=fs.readFileSync(state+'\\\\phone-fold6.device-id','utf8').trim();
 const options={key:fs.readFileSync(state+'\\runtime-gateway.key'),cert:fs.readFileSync(state+'\\runtime-gateway.crt'),minVersion:'TLSv1.2'};
@@ -33,6 +34,7 @@ async function studioRequest(req,res){
 }
 https.createServer(options,async(req,res)=>{try{
  if(req.method==='POST'&&req.url==='/voice-studio/request')return await studioRequest(req,res);
+ if(req.method==='POST'&&req.url==='/models/inventory')return await handlePairedModelInventory({req,res,authorized,pairedBody,carrier,send});
  if(req.method==='GET'&&req.url==='/health')return send(res,200,{identity:'LEEWAY_PAIRED_PHONE_RUNTIME_GATEWAY',transportOnly:true,voiceAuthority:'LEEWAY_VOICE_FABRIC',conversationAuthority:'LEEWAY_MACHINE_CONSCIOUSNESS',usbRequired:false});
  if(req.method!=='POST'||req.url!=='/turn')return send(res,404,{error:'NOT_FOUND'});if(!authorized(req))return send(res,403,{error:'PAIRING_AUTHORITY_REQUIRED'});
  let raw='';for await(const c of req){raw+=c;if(raw.length>8192)throw new Error('REQUEST_TOO_LARGE')}const d=JSON.parse(raw||'{}');if(d.bodyId!==pairedBody||typeof d.text!=='string'||!d.text.trim()||d.text.length>1500)return send(res,400,{error:'INVALID_TURN'});
