@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "1.0.0",
+  "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "targetTree": [
+    "android.adapter",
+    "windows.adapter",
+    "linux.adapter",
+    "bluetooth.adapter",
+    "wifi-lan.adapter",
+    "matter.adapter",
+    "mqtt.adapter",
+    "tesla.adapter",
+    "camera.adapter",
+    "drone.adapter",
+    "robot.adapter",
+    "appliance.adapter",
+    "desktop-commander.adapter"
+  ],
+  "coverage": {
+    "android.adapter": {
+      "path": "providers/android/index.mjs",
+      "nativePath": "apps/android",
+      "state": "PARTIAL_NATIVE_IMPLEMENTATION"
+    },
+    "windows.adapter": {
+      "path": "providers/windows/index.mjs",
+      "state": "WRAPPER_IMPLEMENTED_NATIVE_QUALIFICATION_PENDING"
+    },
+    "linux.adapter": {
+      "path": "providers/linux/index.mjs",
+      "state": "WRAPPER_IMPLEMENTED_NATIVE_QUALIFICATION_PENDING"
+    },
+    "bluetooth.adapter": {
+      "path": "providers/bluetooth/index.mjs",
+      "nativePath": "apps/android/app/src/main/java/industries/leeway/devicebridge/BluetoothProvider.kt",
+      "state": "BONDED_DISCOVERY_PHYSICAL_VERIFIED_ACTIVE_SCAN_PHYSICAL_PENDING"
+    },
+    "wifi-lan.adapter": {
+      "path": "providers/wifi-lan/index.mjs",
+      "nativePath": "apps/android/app/src/main/java/industries/leeway/devicebridge/NetworkDiscoveryProvider.kt",
+      "state": "PHYSICAL_DISCOVERY_VERIFIED"
+    },
+    "matter.adapter": {
+      "path": "providers/matter-thread/index.mjs",
+      "state": "WRAPPER_IMPLEMENTED_PROVIDER_NOT_CONFIGURED"
+    },
+    "mqtt.adapter": {
+      "path": "providers/mqtt/index.mjs",
+      "state": "WRAPPER_IMPLEMENTED_PROVIDER_NOT_CONFIGURED"
+    },
+    "tesla.adapter": {
+      "path": "providers/tesla/index.mjs",
+      "state": "WRAPPER_IMPLEMENTED_LIVE_PROVIDER_NOT_CONFIGURED"
+    },
+    "camera.adapter": {
+      "path": "providers/camera/index.mjs",
+      "state": "WRAPPER_IMPLEMENTED_CANONICAL_PHYSICAL_QUALIFICATION_PENDING"
+    },
+    "drone.adapter": {
+      "path": "providers/drone/index.mjs",
+      "state": "WRAPPER_IMPLEMENTED_PHYSICAL_QUALIFICATION_PENDING"
+    },
+    "robot.adapter": {
+      "path": "providers/robot/index.mjs",
+      "state": "WRAPPER_IMPLEMENTED_PHYSICAL_QUALIFICATION_PENDING"
+    },
+    "appliance.adapter": {
+      "path": "providers/appliance/index.mjs",
+      "state": "WRAPPER_IMPLEMENTED_BINDING_QUALIFICATION_PENDING"
+    },
+    "desktop-commander.adapter": {
+      "path": "providers/desktop-commander/index.mjs",
+      "state": "WRAPPER_IMPLEMENTED_EXISTING_REMOTE_WORKSTATION_EVIDENCE_PRESENT"
+    }
+  },
+  "hardRule": "Adapter presence does not promote native or physical verification state."
+}

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leeway.local/contracts/readback-policy.schema.json",
+  "title": "LeeWay Device Readback Policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "policyId","deviceClass","capability","sourceType","freshnessMaxMs",
+    "comparisonMode","independentOfDispatchCache","status"
+  ],
+  "properties": {
+    "policyId":{"type":"string","minLength":1},
+    "deviceClass":{"type":"string","minLength":1},
+    "capability":{"type":"string","minLength":1},
+    "sourceType":{"enum":["DEVICE_STATE","SENSOR","REGISTER","BUS_RESPONSE","PROVIDER_STATE","EXTERNAL_SENSOR"]},
+    "sourceRef":{"type":["string","null"]},
+    "freshnessMaxMs":{"type":"integer","minimum":1},
+    "comparisonMode":{"enum":["EXACT","TOLERANCE","PREDICATE","MULTI_SENSOR_CONSENSUS"]},
+    "tolerance":{"type":["number","null"]},
+    "independentOfDispatchCache":{"const":true},
+    "status":{"enum":["CANDIDATE","CALIBRATED","AUTHORIZED","VERIFIED","BLOCKED"]},
+    "evidenceRefs":{"type":"array","items":{"type":"string","minLength":1}}
+  }
+}
