@@ -418,6 +418,36 @@ class HostApi:
    except Exception as error:receipt('CANONICAL_VOICE_STUDIO_OPEN_FAILED',{'error':str(error)})
   threading.Thread(target=create_voice,daemon=True,name='LeeWayVoiceStudioCreate').start()
   return {'state':'CANONICAL_VOICE_STUDIO_OPEN_QUEUED','selectionSynchronization':'SEPARATE_ACCEPTANCE_REQUIRED'}
+
+ def open_vision(self):
+  record=binding['nativeAgentUi'].get('vision')
+  if not record:raise RuntimeError('CANONICAL_VISION_NOT_BOUND')
+  if record.get('sourceRepository')!='4citeB4U/Leeway-Agent-Lee-Vision':raise RuntimeError('VISION_GITHUB_SOURCE_NOT_AUTHORIZED')
+  source_commit=str(record.get('sourceCommit',''))
+  if len(source_commit)!=40 or any(c not in '0123456789abcdefABCDEF' for c in source_commit):raise RuntimeError('VISION_SOURCE_COMMIT_NOT_PINNED')
+  approved_url='https://leeway-agent-lee-vision.vercel.app/'
+  if record.get('url')!=approved_url:raise RuntimeError('VISION_DISTRIBUTION_NOT_ALLOWLISTED')
+  expected=str(record.get('sha256',''))
+  if len(expected)!=64 or any(c not in '0123456789abcdefABCDEF' for c in expected):raise RuntimeError('VISION_ARTIFACT_HASH_NOT_PINNED')
+  with urllib.request.urlopen(approved_url,timeout=12) as response:
+   parsed=urllib.parse.urlsplit(response.geturl())
+   if parsed.scheme!='https' or parsed.hostname!='leeway-agent-lee-vision.vercel.app':raise RuntimeError('VISION_REDIRECT_NOT_ALLOWLISTED')
+   payload=response.read(8388609)
+  if len(payload)>8388608 or hashlib.sha256(payload).hexdigest().lower()!=expected.lower():raise RuntimeError('VISION_DISTRIBUTION_HASH_MISMATCH')
+  existing=surface_windows.get('vision')
+  if existing is not None and existing in webview.windows:
+   threading.Thread(target=lambda:(existing.show(),existing.restore()),daemon=True,name='LeeWayVisionRestore').start()
+   return {'state':'CANONICAL_VISION_UI_RESTORE_QUEUED','sourceSha256':expected}
+  def create_vision():
+   try:
+    target=popup_geometry()
+    surface_windows['vision']=webview.create_window('Agent Lee - Vision',approved_url,width=960,height=700,resizable=True,on_top=False,focus=True,text_select=True,js_api=None)
+    prepare_popup(surface_windows['vision'],target)
+    receipt('CANONICAL_VISION_UI_OPENED',{'visionSha256':expected,'sourceRepository':record['sourceRepository'],'sourceCommit':source_commit,'nativeBridgeExposed':False,'cameraStreamVerified':False})
+   except Exception as error:receipt('CANONICAL_VISION_UI_OPEN_FAILED',{'error':str(error)})
+  threading.Thread(target=create_vision,daemon=True,name='LeeWayVisionCreate').start()
+  return {'state':'CANONICAL_VISION_UI_OPEN_QUEUED','sourceSha256':expected,'cameraStreamState':'NOT_VERIFIED'}
+
  def open_surface(self,relative):
   global surface_windows
   allowed={
