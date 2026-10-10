@@ -1,0 +1,19 @@
+name: Agent Lee Vision hosted candidate
+on:
+  push:
+    branches: [feature/agent-lee-vision-hosted-20261010]
+    paths: [docs/vision/**, tests/agent-lee-vision-pages.test.mjs, .github/workflows/agent-lee-vision-pages.yml]
+  pull_request:
+    paths: [docs/vision/**, tests/agent-lee-vision-pages.test.mjs, .github/workflows/agent-lee-vision-pages.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser-client-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/agent-lee-vision-pages.test.mjs
