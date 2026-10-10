@@ -1049,7 +1049,7 @@ function updateIndicators(){
  el('padProfileText').textContent=(deviceSelfName().name.toUpperCase())+' · '+profile().toUpperCase();
  el('padReady').textContent=count+' LIVE / '+catalog.length+' EXPOSED';
  el('padOpticalState').textContent=P.task.scan?(P.backendReady?'OPENCV READY':P.detector?'BROWSER FACE API':'ENGINE NEEDED'):'STANDBY';
- el('padBackend').textContent=P.backendReady?'OPENCV LOCAL':P.detector?'BROWSER FACE API':'TRACKING ENGINE OFF';
+ el('padBackend').textContent=P.backendReady?'OPENCV FACE/TRACK READY':P.detector?'BROWSER FACE API':shown&&P.pixelMetrics?('LOCAL PIXEL VISION: motion '+(P.pixelMetrics.motionPct===null?'calibrating':P.pixelMetrics.motionPct+'%')+' / light '+P.pixelMetrics.brightnessPct+'% · FACE MODEL OFF'):'FACE TRACKER OFF · CAMERA SEPARATE';
  el('padLinkName').textContent=`${P.detected.length} LOCAL · ${peerByRole.size} PAIRED PHONE LENSES`;
  el('padVideoProof').textContent=shown?`DECODED VIDEO VERIFIED · ${video.videoWidth}×${video.videoHeight} · ${sourceDisplay(P.slots[P.selected]||catalog.find(s=>s.key===pairing.activeKey))}`:P.progress?'WAITING FOR PERMISSION / DECODED FRAMES':(P.lastError||'NO DECODED VIDEO — START LOCAL CAMERA');
  el('padPrimaryStart').textContent=shown?'● LIVE — SELECT CAMERA':'▶ START LOCAL CAMERA';
@@ -1353,6 +1353,7 @@ function detailObservation(){
  'Live distinct browser tracks: '+realCount(),
  'Local OpenCV API: '+(s.backendReady?'READY':'UNAVAILABLE'),
  'Local frame analyses: '+s.framesAnalyzed,
+ 'Local pixel observations (no LLM): '+(P.pixelMetrics?JSON.stringify(P.pixelMetrics):'NONE / NO LIVE DECODED FRAMES'),
  'Faces: '+(s.faces===null?'NOT VERIFIED':s.faces),
  'Objects: semantic classifier NOT INSTALLED',
  'Optical cues: '+(P.lastCue.length?P.lastCue.join(', '):'none observed'),
@@ -1363,14 +1364,35 @@ function detailObservation(){
  if(obs?.scene)lines.push('Observed scene metrics: '+JSON.stringify(obs.scene));
  el('padDiagnostics').textContent=lines.join('\n');
 }
+/* LeeWay Vision Runtime pixel-difference adaptation: real camera pixels only, no guessed object/depth/thermal output. */
+P.pixelMetrics=null;P.previousPixelData=null;P.pixelSourceKey=null;P.pixelSampleCount=0;
 function frameAnalysis(t){
- if(!P.task.catalog||!liveStream(P.streams.get(P.selected))||video.readyState<2||t-P.lastCueSample<1200)return;
- P.lastCueSample=t;try{
- fctx.drawImage(video,0,0,144,90);const {data}=fctx.getImageData(0,0,144,90);let green=0,bright=0;
- for(let i=0;i<data.length;i+=16){const r=data[i],g=data[i+1],b=data[i+2];if(g>r*1.25&&g>b*1.17&&g>60)green++;if((r+g+b)>675)bright++}
- const n=data.length/16;P.lastCue=[];if(green/n>.045)P.lastCue.push('green-dominant region candidate');if(bright/n>.035)P.lastCue.push('bright-region candidate');
- // These are color statistics, not verified plant/lamp/object detections.
- }catch{P.lastCue=['pixel sampling unavailable']}
+ if(!camFrameReady() || video.readyState<2 || t-P.lastCueSample<850){
+  if(!camFrameReady()){P.pixelMetrics=null;P.previousPixelData=null;P.pixelSourceKey=null;}
+  return;
+ }
+ P.lastCueSample=t;
+ try{
+  fctx.drawImage(video,0,0,144,90);
+  const {data}=fctx.getImageData(0,0,144,90);
+  const source=pairing.activeKey || (video.srcObject?.getVideoTracks?.()[0]?.id||'local');
+  if(P.pixelSourceKey!==source){P.previousPixelData=null;P.pixelSourceKey=source;}
+  let green=0,bright=0,sum=0,delta=0,samples=0;
+  const previous=P.previousPixelData;
+  for(let i=0;i<data.length;i+=16){
+   const r=data[i],g=data[i+1],b=data[i+2];
+   sum+=r+g+b;
+   if(previous){delta+=Math.abs(r-previous[i])+Math.abs(g-previous[i+1])+Math.abs(b-previous[i+2]);}
+   if(g>r*1.25&&g>b*1.17&&g>60)green++;
+   if(r+g+b>675)bright++;
+   samples++;
+  }
+  P.previousPixelData=new Uint8ClampedArray(data);
+  P.pixelMetrics={brightnessPct:Math.round(100*sum/(samples*3*255)),motionPct:previous?Math.round(100*delta/(samples*3*255)):null,sampledFrames:++P.pixelSampleCount};
+  P.lastCue=[];
+  if(P.task.catalog){if(green/samples>.045)P.lastCue.push('green-dominant pixel region');if(bright/samples>.035)P.lastCue.push('bright pixel region');}
+  // Pixel motion and brightness are observations, not detected objects, depth, face IDs or temperature.
+ }catch(e){P.pixelMetrics=null;P.lastCue=['camera pixel analysis blocked: '+(e?.name||'unavailable')];}
 }
 async function nativeDetect(t){
  const s=api.status();if(!P.task.face||s.backendReady||!P.detector||P.nativeBusy||t-P.lastNativeDetect<720||video.readyState<2||s.activeSource!=='local')return;
@@ -1492,7 +1514,7 @@ function bind(){
  el('closeWall').onclick=()=>pane('controls');
  P.task.scan=!!api.status().tracking;updateAppearance();bindWifi();el('optCameraSelect').onchange=e=>{if(e.target.value==='auto')startWithFallback();else soloSource(e.target.value)};updateIndicators();discover(false);
 }
-window.AgentLeeOpticalPad={status:()=>({mode:P.shape,pane:P.pane,profile:profile(),cameraDeviceCount:P.detected.length,realStreams:realCount(),remotePhoneLenses:peerByRole.size,sourceNames:catalog.map(s=>sourceDisplay(s)),selectedSlot:P.selected,selectedSource:pairing.activeKey||null,wifiStatus:pairing.status,wifiIce:pairing.pc?.iceConnectionState||'NONE',wifiConnection:pairing.pc?.connectionState||'NONE',wifiSignaling:pairing.pc?.signalingState||'NONE',phoneLocalTracks:pairing.localPhoneStreams.map(x=>getVideoTrack(x)?.readyState||'missing'),liveCamera:camFrameReady(),videoReady:video.readyState>=2&&video.videoWidth>0,videoSize:[video.videoWidth,video.videoHeight],lastError:P.lastError,backendReady:api.status().backendReady,trackingFrames:api.status().framesAnalyzed,semanticObjectsAvailable:false,llmUsed:false,visual:'original-organic-or-octahedral-ocular'}),selectShape,discover,selectSlot:solo,selectSource:soloSource,openPane:pane,openWifiPanel:()=>{el('optWifiDetails').open=true},pairingState:()=>({status:pairing.status,role:pairing.side,remoteLenses:[...peerByRole.keys()]})};
+window.AgentLeeOpticalPad={status:()=>({mode:P.shape,pane:P.pane,profile:profile(),cameraDeviceCount:P.detected.length,realStreams:realCount(),remotePhoneLenses:peerByRole.size,sourceNames:catalog.map(s=>sourceDisplay(s)),selectedSlot:P.selected,selectedSource:pairing.activeKey||null,wifiStatus:pairing.status,wifiIce:pairing.pc?.iceConnectionState||'NONE',wifiConnection:pairing.pc?.connectionState||'NONE',wifiSignaling:pairing.pc?.signalingState||'NONE',phoneLocalTracks:pairing.localPhoneStreams.map(x=>getVideoTrack(x)?.readyState||'missing'),liveCamera:camFrameReady(),videoReady:video.readyState>=2&&video.videoWidth>0,videoSize:[video.videoWidth,video.videoHeight],lastError:P.lastError,backendReady:api.status().backendReady,trackingFrames:api.status().framesAnalyzed,pixelMetrics:P.pixelMetrics,semanticObjectsAvailable:false,llmUsed:false,visual:'original-organic-or-octahedral-ocular'}),selectShape,discover,selectSlot:solo,selectSource:soloSource,openPane:pane,openWifiPanel:()=>{el('optWifiDetails').open=true},pairingState:()=>({status:pairing.status,role:pairing.side,remoteLenses:[...peerByRole.keys()]})};
 // No getUserMedia call on page load. No fake connected device. No speculative biometric enrollment.
 try{bind();}catch(e){console.error('Optical Pad startup failed:',e);el('padMessage').textContent='Interface error: '+e.message;}
 requestAnimationFrame(render);

@@ -48,3 +48,5 @@ References:
 - https://github.com/4citeB4U/Leeway-Runtime-Fabric/blob/main/src/core/LeewayVisionRuntime.ts
 - https://github.com/4citeB4U/LeeWay-Edge-RTC/blob/main/src/rtc/store.ts
 - https://github.com/4citeB4U/LeeWay-Edge-RTC/blob/main/src/components/VisionPerceptionLab.tsx
+## 2026-10-10 source adaptation added after browser proof
+The published candidate now samples decoded local camera pixels at a bounded interval and calculates actual brightness and temporal pixel motion, adapted from LeewayVisionRuntime.ts. It distinguishes a live camera from missing face/model analysis. It does NOT claim semantic object recognition, depth, temperature, or facial identification. On Windows headless Chrome, an original isolated HTTP smoke produced 27 advancing video frames in 1.5 seconds while the separate face-tracking service was unavailable.

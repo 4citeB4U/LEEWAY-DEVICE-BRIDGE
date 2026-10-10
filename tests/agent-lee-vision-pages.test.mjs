@@ -30,3 +30,9 @@ test("source record rejects historical mock detectors as physical truth",()=>{
   assert.match(doc,/NOT YET VERIFIED/);
   assert.match(doc,/NOT imported as real detection/);
 });
+test("non-LLM pixel monitor reads actual frames, not inferred objects",()=>{
+  assert.match(html,/P\.pixelMetrics/);
+  assert.match(html,/fctx\.drawImage\(video/);
+  assert.match(html,/Math\.abs\(r-previous\[i\]\)/);
+  assert.match(html,/FACE MODEL OFF/);
+});
