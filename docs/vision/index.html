@@ -400,6 +400,7 @@ body[data-opt-theme='white'] .opt-dock {border-color:#d0ebff;box-shadow:0 0 19px
 .opt-wifi input,.opt-wifi textarea{width:100%;max-width:100%;color:#d5faff;background:#03141f;border:1px solid #31849d;border-radius:5px;padding:7px;font:11px ui-monospace,monospace;resize:vertical}
 .opt-wifi>button{margin:4px 9px}
 </style>
+<link rel="stylesheet" href="./floating-widget.css">
 </head>
 <body data-profile="desktop" class="pad-open">
 <main class="stage" aria-label="Agent Lee live organic camera vision">
@@ -736,8 +737,10 @@ async function enroll(){if(state.activeSource!=='local'||!state.stream||!state.b
 async function erase(){if(!state.backendReady||!confirm('Delete ALL local face vector enrollments now?'))return;try{const r=await fetch('/api/delete-enrollment',{method:'POST',headers:{'Content-Type':'text/plain','X-Vision-Token':state.token},body:'DELETE ALL LOCAL ENROLLMENTS'});const data=await r.json();if(!r.ok)throw Error(data.error||'Deletion failed');updateStatus('Local face enrollments deleted.')}catch(e){updateStatus('Delete failed: '+e.message)}}
 function resetPosition(){state.moveX=state.moveY=0;els.widget.style.setProperty('--x','0px');els.widget.style.setProperty('--y','0px')}
 function clampVisionPosition(x,y){
- // Keep the optical center visible even when the image is bigger than the device viewport.
- const limitX=Math.max(0,innerWidth*.38),limitY=Math.max(0,innerHeight*.36);
+ // Resizable eye remains fully on screen; original center/drag model is retained.
+ const r=els.widget.getBoundingClientRect();
+ const limitX=Math.max(0,(innerWidth-r.width)/2-6);
+ const limitY=Math.max(0,(innerHeight-r.height)/2-6);
  return [Math.min(limitX,Math.max(-limitX,x)),Math.min(limitY,Math.max(-limitY,y))];
 }
 function bindDrag(){
@@ -1597,5 +1600,6 @@ requestAnimationFrame(render);
  reset:()=>{const c=$('centerButton');c?.click();resetPanels()}};
 })();
 </script>
+<script src="./floating-widget.js"></script>
 </body>
 </html>
