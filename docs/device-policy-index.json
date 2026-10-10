@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0.0",
+  "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "purpose": "Machine-readable index for the governed device lifecycle, contracts and policy boundaries.",
+  "contracts": {
+    "device": "contracts/device.schema.json",
+    "capability": "contracts/capability.schema.json",
+    "provider": "contracts/provider.schema.json",
+    "pairing": "contracts/pairing.schema.json",
+    "session": "contracts/session.schema.json",
+    "command": "contracts/command.schema.json",
+    "commandEnvelope": "contracts/device-command-envelope.schema.json",
+    "receipt": "contracts/receipt.schema.json",
+    "lifecycle": "contracts/device-lifecycle.schema.json",
+    "actuationPolicy": "contracts/actuation-policy.schema.json",
+    "readbackPolicy": "contracts/readback-policy.schema.json",
+    "failSafePolicy": "contracts/fail-safe-policy.schema.json",
+    "calibrationPolicy": "contracts/calibration-policy.schema.json",
+    "providerQualification": "contracts/provider-qualification.schema.json",
+    "promotionPolicy": "contracts/promotion-policy.schema.json"
+  },
+  "policies": {
+    "lifecycle": "policies/DEVICE-CAPABILITY-LIFECYCLE.md",
+    "safety": "policies/SAFETY-CLASSIFICATION.md",
+    "receiptVeritas": "policies/RECEIPT-AND-VERITAS.md",
+    "providerRouting": "policies/PROVIDER-ROUTING.md"
+  },
+  "formulaAuthority": "4citeB4U/Leeway-formula-live",
+  "formulaDomainAdapter": "contracts/domain-adapters/device-actuation-v0.md",
+  "executionAuthority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "skillProjectionAuthority": "4citeB4U/LeeWay-Agent-Skills",
+  "interactionTransportAuthority": "4citeB4U/Leeway-live",
+  "voiceAuthority": "4citeB4U/LeeWay-Voice-Fabric",
+  "hardRules": [
+    "discovery does not imply pairing",
+    "pairing does not imply authorization",
+    "authorization does not imply Formula admission",
+    "dispatch does not imply ACK",
+    "ACK does not imply read-back convergence",
+    "read-back convergence does not imply canonical promotion without Veritas and receipt",
+    "provider availability does not imply provider qualification",
+    "source implementation does not imply live execution",
+    "first success is not completion"
+  ]
+}
