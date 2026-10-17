@@ -1,0 +1,3 @@
+html.apple-pwa [data-android-only] {
+  display: none;
+}

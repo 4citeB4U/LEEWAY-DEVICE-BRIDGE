@@ -2,6 +2,10 @@ import {discoverDevice} from "./device-discovery.js";
 import {createApplePwaDiagnostics, runBrowserComputeProbe} from "./apple-pwa-diagnostics.js";
 
 const $=s=>document.querySelector(s);
+const isAppleMobile=()=>/iPad|iPhone|iPod/.test(navigator.userAgent)||(
+  navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1
+);
+if(isAppleMobile())document.documentElement.classList.add("apple-pwa");
 function esc(v){return String(v??"UNKNOWN").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));}
 function renderFacts(profile){
   $("#facts").innerHTML=Object.entries(profile).filter(([k])=>!["schemaVersion","capturedAt","userAgent"].includes(k)).map(([k,f])=>`<div class="fact"><small>${esc(k)}</small><b>${esc(typeof f.value==="object"?JSON.stringify(f.value):f.value)}</b><span class="evidence">${esc(f.evidence)}</span></div>`).join("");
@@ -120,9 +124,6 @@ let deferredInstallPrompt=null;
 const pwaState=message=>{const el=$("#pwaState");if(el)el.textContent=message;};
 const pwaOut=message=>{const el=$("#pwaOutput");if(el)el.textContent=message;};
 const isStandalone=()=>window.matchMedia?.("(display-mode: standalone)")?.matches||window.navigator.standalone===true;
-const isAppleMobile=()=>/iPad|iPhone|iPod/.test(navigator.userAgent)||(
-  navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1
-);
 const showAppleInstallHelp=()=>{
   const help=$("#appleInstallSteps");
   if(help){help.open=true;help.scrollIntoView({behavior:"smooth",block:"center"});}
