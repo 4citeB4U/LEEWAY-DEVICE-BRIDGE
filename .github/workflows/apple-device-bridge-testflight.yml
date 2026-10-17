@@ -1,0 +1,137 @@
+name: Apple Device Bridge TestFlight Delivery
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: "TestFlight marketing version, for example 0.1.0"
+        required: true
+        type: string
+      build_number:
+        description: "Unique positive integer build number"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: leeway-device-bridge-testflight
+  cancel-in-progress: false
+
+jobs:
+  archive-and-upload:
+    name: Archive and upload LeeWay Device Bridge iOS
+    runs-on: macos-latest
+    timeout-minutes: 45
+    environment: apple-testflight
+    env:
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_DISTRIBUTION_CERTIFICATE_BASE64: ${{ secrets.APPLE_DISTRIBUTION_CERTIFICATE_BASE64 }}
+      APPLE_DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DISTRIBUTION_CERTIFICATE_PASSWORD }}
+      APPLE_PROVISIONING_PROFILE_BASE64: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }}
+      KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+      APPSTORE_CONNECT_ISSUER_ID: ${{ secrets.APPSTORE_CONNECT_ISSUER_ID }}
+      APPSTORE_CONNECT_KEY_ID: ${{ secrets.APPSTORE_CONNECT_KEY_ID }}
+      APPSTORE_CONNECT_PRIVATE_KEY_BASE64: ${{ secrets.APPSTORE_CONNECT_PRIVATE_KEY_BASE64 }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify delivery prerequisites
+        run: |
+          set -euo pipefail
+          test "${{ inputs.release_version }}" != ""
+          [[ "${{ inputs.build_number }}" =~ ^[1-9][0-9]*$ ]]
+          for variable in APPLE_TEAM_ID APPLE_DISTRIBUTION_CERTIFICATE_BASE64 \
+            APPLE_DISTRIBUTION_CERTIFICATE_PASSWORD APPLE_PROVISIONING_PROFILE_BASE64 \
+            KEYCHAIN_PASSWORD APPSTORE_CONNECT_ISSUER_ID APPSTORE_CONNECT_KEY_ID \
+            APPSTORE_CONNECT_PRIVATE_KEY_BASE64; do
+            if [ -z "${!variable:-}" ]; then
+              echo "::error title=Missing protected secret::$variable is required for TestFlight delivery."
+              exit 1
+            fi
+          done
+
+      - name: Generate the Device Bridge Xcode project
+        run: |
+          set -euo pipefail
+          brew install xcodegen
+          cd apps/apple
+          xcodegen generate --spec project.yml
+
+      - name: Install temporary signing material
+        run: |
+          set -euo pipefail
+          CERTIFICATE_PATH="$RUNNER_TEMP/distribution.p12"
+          PROFILE_PATH="$RUNNER_TEMP/distribution.mobileprovision"
+          KEYCHAIN_PATH="$RUNNER_TEMP/leeway-signing.keychain-db"
+          printf '%s' "$APPLE_DISTRIBUTION_CERTIFICATE_BASE64" | base64 -D > "$CERTIFICATE_PATH"
+          printf '%s' "$APPLE_PROVISIONING_PROFILE_BASE64" | base64 -D > "$PROFILE_PATH"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERTIFICATE_PATH" -P "$APPLE_DISTRIBUTION_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          PROFILE_UUID="$(/usr/libexec/PlistBuddy -c 'Print :UUID' /dev/stdin <<< "$(security cms -D -i "$PROFILE_PATH")")"
+          cp "$PROFILE_PATH" "$HOME/Library/MobileDevice/Provisioning Profiles/$PROFILE_UUID.mobileprovision"
+          echo "PROFILE_UUID=$PROFILE_UUID" >> "$GITHUB_ENV"
+          echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
+
+      - name: Archive the signed LeeWay Device Bridge application
+        run: |
+          set -o pipefail
+          ARCHIVE_PATH="$RUNNER_TEMP/LeeWayDeviceBridge.xcarchive"
+          cd apps/apple
+          xcodebuild archive -project LeeWayDeviceBridgeApple.xcodeproj -scheme LeeWayDeviceBridgeApple \
+            -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' \
+            -archivePath "$ARCHIVE_PATH" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY='Apple Distribution' \
+            PROVISIONING_PROFILE="$PROFILE_UUID" \
+            MARKETING_VERSION="${{ inputs.release_version }}" \
+            CURRENT_PROJECT_VERSION="${{ inputs.build_number }}" 2>&1 | tee "$RUNNER_TEMP/xcodebuild-archive.log"
+          echo "ARCHIVE_PATH=$ARCHIVE_PATH" >> "$GITHUB_ENV"
+
+      - name: Export an App Store package
+        run: |
+          set -euo pipefail
+          EXPORT_PATH="$RUNNER_TEMP/export"
+          EXPORT_OPTIONS="$RUNNER_TEMP/ExportOptions.plist"
+          cat > "$EXPORT_OPTIONS" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>teamID</key><string>$APPLE_TEAM_ID</string>
+            <key>provisioningProfiles</key><dict>
+              <key>industries.leeway.devicebridge</key><string>$PROFILE_UUID</string>
+            </dict>
+          </dict></plist>
+          PLIST
+          xcodebuild -exportArchive -archivePath "$ARCHIVE_PATH" -exportOptionsPlist "$EXPORT_OPTIONS" -exportPath "$EXPORT_PATH"
+          test -f "$EXPORT_PATH/LeeWayDeviceBridge.ipa"
+          echo "IPA_PATH=$EXPORT_PATH/LeeWayDeviceBridge.ipa" >> "$GITHUB_ENV"
+
+      - name: Upload to App Store Connect for TestFlight
+        run: |
+          set -euo pipefail
+          API_KEY_DIR="$HOME/.appstoreconnect/private_keys"
+          mkdir -p "$API_KEY_DIR"
+          printf '%s' "$APPSTORE_CONNECT_PRIVATE_KEY_BASE64" | base64 -D > "$API_KEY_DIR/AuthKey_${APPSTORE_CONNECT_KEY_ID}.p8"
+          xcrun altool --upload-app --type ios --file "$IPA_PATH" \
+            --apiKey "$APPSTORE_CONNECT_KEY_ID" --apiIssuer "$APPSTORE_CONNECT_ISSUER_ID"
+
+      - name: Preserve delivery evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: leeway-device-bridge-testflight-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/xcodebuild-archive.log
+          if-no-files-found: warn
+          retention-days: 30

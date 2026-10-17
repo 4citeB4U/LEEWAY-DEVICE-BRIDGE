@@ -24,6 +24,8 @@ The canonical repository workflow `.github/workflows/apple-device-bridge-qualifi
 
 Before TestFlight delivery, configure the LeeWay Apple developer team, a Device Bridge App Store Connect record, certificate/provisioning credentials in protected GitHub secrets, and a dedicated signing workflow. The unsigned qualification workflow intentionally has no Apple credentials and cannot publish an app.
 
+The manual protected delivery workflow and exact secret contract are documented in [APPLE-TESTFLIGHT-SETUP.md](APPLE-TESTFLIGHT-SETUP.md). It stays within this Device Bridge repository and delivers only the Device Bridge iOS target.
+
 ## Acceptance order
 
 1. GitHub macOS runner compiles the Device Bridge iOS source.
