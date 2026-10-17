@@ -1,6 +1,5 @@
 import {discoverDevice} from "./device-discovery.js";
 import {createApplePwaDiagnostics, runBrowserComputeProbe} from "./apple-pwa-diagnostics.js";
-import {initializeAppleAgentWorkstation} from "./apple-agent-workstation.js";
 
 const $=s=>document.querySelector(s);
 const isAppleMobile=()=>/iPad|iPhone|iPod/.test(navigator.userAgent)||(
@@ -75,7 +74,6 @@ function beginAppleQualification(){
 }
 $("#refreshAppleDiagnostics")?.addEventListener("click",refreshAppleDiagnostics);
 $("#beginAppleQualification")?.addEventListener("click",beginAppleQualification);
-$("#openAppleWorkstation")?.addEventListener("click",beginAppleQualification);
 $("#runBrowserCompute")?.addEventListener("click",async()=>{
   appleState("COMPUTE RUNNING");
   appleOut("Running deterministic browser WebGPU compute and readback. Native Metal, Formula, Veritas, and receipt state remain separate.");
@@ -97,7 +95,6 @@ $("#discoverBtn").addEventListener("click",async()=>{
   renderPackage(manifest,pkg);
 });
 showPublishedAndroidPackage();
-initializeAppleAgentWorkstation();
 
 
 let deferredInstallPrompt=null;

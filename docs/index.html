@@ -48,12 +48,12 @@
       <div><p class="kicker">LEEWAY WORKSTATION LAUNCHERS</p><h2>Choose the device lane</h2></div>
       <span class="badge">TWO LANES</span>
     </div>
-    <p class="muted">Apple and Android use separate workstation paths. Choose the button that matches the device you are using.</p>
+    <p class="muted">Both device lanes open the same real LeeWay cloud development workplane: the canonical Device Bridge repository in GitHub Codespaces. It provides the editor, terminal, Git, Node, GitHub CLI, and Docker development environment. The installed PWA remains the Apple front door for Diagnostics and device-aware browser work.</p>
     <div class="panel-head">
-      <button class="action" id="openAppleWorkstation">OPEN APPLE PWA WORKSTATION</button>
+      <a class="action" id="openAppleWorkstation" href="https://github.com/codespaces/new?hide_repo_select=true&amp;repo=1380304068" target="_blank" rel="noopener">OPEN APPLE CLOUD WORKSTATION</a>
       <a class="action" id="openAndroidRemoteWorkstation" href="https://github.com/codespaces/new?hide_repo_select=true&repo=1380304068" target="_blank" rel="noopener">OPEN ANDROID REMOTE WORKSTATION</a>
     </div>
-    <p class="package-meta"><strong>Apple:</strong> opens the LeeWay Digital Brain and Diagnostics in this installed iPhone app. <strong>Android:</strong> opens the separate LeeWay cloud workstation for the Android phone lane. Opening the Android lane does not install or alter anything on this iPhone.</p>
+    <p class="package-meta"><strong>Apple:</strong> opens the real cloud development workstation in Safari from this iPhone. <strong>Android:</strong> opens that same development workplane from Android. Code committed from either workplane is available to Agent Lee through the canonical repository; neither button installs or alters this iPhone.</p>
   </section>
 
   <section class="panel" id="downloadSecondaryWorkstation" data-android-only>
@@ -98,22 +98,6 @@
     </div>
     <pre id="appleBrainOutput" class="profile">No Apple browser observation has been collected in this session.</pre>
     <p class="package-meta"><strong>Native Metal:</strong> requires the separately installed LeeWay Device Bridge IPA and a physical-device Metal receipt. <strong>Formula:</strong> remains NOT EXECUTED until the canonical Formula Fabric actually evaluates an authorized request. <a href="./APPLE-PWA-DEVICE-BRIDGE.md">Apple PWA contract</a></p>
-  </section>
-
-  <section class="panel" id="agentLeeWorkstation">
-    <div class="panel-head"><div><p class="kicker">APPLE AGENT LEE WORKSTATION</p><h2>Pair an authorized LeeWay runtime</h2></div><span id="agentLeeState" class="badge">NOT PAIRED</span></div>
-    <p class="muted">This iPhone PWA is the Apple workstation surface. It can send a conversation request only after an owner-paired LeeWay runtime advertises <code>agent.chat</code>. The relay carries the message; it does not grant authority or create a Formula, Veritas, or native-Metal result.</p>
-    <label>LeeWay runtime Device ID <input id="deviceIdInput" autocomplete="off" autocapitalize="none" placeholder="device id"></label>
-    <label>Owner pairing token <input id="pairingTokenInput" type="password" autocomplete="off" autocapitalize="none" placeholder="pairing token"></label>
-    <div class="panel-head apple-actions"><button id="pairRuntimeBtn">PAIR AUTHORIZED RUNTIME</button><button id="remoteHealthBtn" disabled>CHECK RUNTIME HEALTH</button><button id="clearPairingBtn">CLEAR RUNTIME PAIRING</button></div>
-    <p class="package-meta">The pairing token stays only in this PWA page memory. It is cleared when you clear the pairing or close the app, and is never written to localStorage, a receipt, or the chat output.</p>
-    <pre id="agentLeeOutput" class="profile">Enter the owner-provided Device ID and pairing token, then pair this Apple workstation.</pre>
-    <div id="agentLeeConsole" hidden>
-      <label for="agentLeePrompt">Message for Agent Lee <textarea id="agentLeePrompt" rows="5" maxlength="12000" autocapitalize="sentences" placeholder="Write the task for the paired LeeWay runtime."></textarea></label>
-      <div class="panel-head apple-actions"><button id="sendAgentLeeBtn">SEND TO AGENT LEE</button></div>
-      <pre id="agentLeeConversation" class="profile">No Agent Lee request has been sent from this Apple workstation.</pre>
-    </div>
-    <p class="package-meta"><a href="./APPLE-PWA-WORKSTATION.md">Apple workstation contract and evidence boundary</a></p>
   </section>
 
   <section class="panel">

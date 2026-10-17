@@ -24,9 +24,10 @@ try{
   // PRIMARY: device-neutral workstation/PWA
   await waitFor('',[
     'LeeWay Device-Neutral Workstation',
-    'Install LeeWay Device-Neutral Workstation',
-    'INSTALL LEEWAY WORKSTATION',
-    'Native Android capability packages are optional extensions'
+    'OPEN APPLE CLOUD WORKSTATION',
+    'OPEN ANDROID REMOTE WORKSTATION',
+    'GitHub Codespaces',
+    'editor, terminal, Git, Node, GitHub CLI, and Docker development environment'
   ]);
   await waitFor('manifest.webmanifest',[
     'LeeWay Device-Neutral Workstation',

@@ -1,40 +1,39 @@
-# Apple PWA Agent Lee Workstation
+# Apple PWA workstation route
 
-## Purpose
+## Real development workplane
 
-The installed Safari PWA is the LeeWay workstation surface for iPhone and iPad. It provides a device-aware user interface, browser diagnostics, browser WebGPU measurement where Safari exposes it, and an owner-paired route to an already authorized LeeWay runtime.
+The installed LeeWay Safari PWA is the Apple front door for device-aware Diagnostics and browser-safe work. Its **Open Apple Cloud Workstation** button opens the canonical `4citeB4U/LEEWAY-DEVICE-BRIDGE` repository in GitHub Codespaces.
 
-This is implemented in the canonical Device Bridge Pages app. It is not a second Apple project and it does not replace the Android or Windows runtime.
+Codespaces is the actual Apple-accessible development workstation. The repository’s `.devcontainer/devcontainer.json` provisions:
 
-## Runtime path
+- VS Code in the browser
+- Linux terminal
+- Node 22
+- Git and GitHub CLI
+- Docker in Docker
+- PowerShell and ESLint extensions
 
-1. The owner opens the installed LeeWay PWA on the Apple device.
-2. The owner enters the Device ID and pairing token for an existing LeeWay runtime.
-3. The PWA opens the TLS relay and requests `device.capabilities`.
-4. The PWA enables Agent Lee chat only when that runtime actually advertises `agent.chat`.
-5. A user-authored request is sent as `agent.chat` with `speak: false` and `creatorContext: "apple-pwa"`.
-6. The PWA displays the actual returned model, authority, Formula, Veritas, and receipt fields without promoting missing fields to a pass.
+The Android launcher uses the same repository and devcontainer. This creates one shared source workplane instead of a separate Apple-only project. Agent Lee works against the canonical repository through its authorized workstation checkout; commits and pulls synchronize the work between the cloud workstation and Agent Lee’s worktree.
 
-The relay at `wss://agent-lee-x.vercel.app/api/device-relay` is transport only. It does not grant runtime capability, authorize a task, execute Formula, or verify a receipt.
+## Use from iPhone
+
+1. Open the LeeWay PWA from the iPhone Home Screen.
+2. Tap **Open Apple Cloud Workstation**.
+3. Sign in to GitHub in Safari if GitHub asks.
+4. Create or resume the Codespace for `4citeB4U/LEEWAY-DEVICE-BRIDGE`.
+5. Use the browser editor and terminal for development, then commit and push work to the repository.
+
+The Codespace creation screen is a GitHub service. It may show account-specific machine, quota, or billing choices. The PWA does not store GitHub credentials or create a Codespace silently.
 
 ## Apple boundary
 
-| Capability | State in the Safari PWA |
+| Capability | Route |
 | --- | --- |
-| Installed Home Screen interface | Implemented |
-| Browser diagnostics | Implemented |
-| Browser WebGPU probe and readback | Implemented when Safari exposes WebGPU |
-| Agent Lee request UI | Implemented; requires owner pairing and advertised capability |
-| Runtime model execution | Reported only when the paired runtime returns it |
-| Canonical Formula | `NOT_EXECUTED` unless an actual runtime response proves otherwise |
-| Veritas | `NOT_EXECUTED` unless an actual runtime response proves otherwise |
-| Native Apple Metal | Not available to Safari PWA; requires a separately qualified native adapter |
-| Filesystem, shell, deployment, repository write | Not exposed by this static PWA |
+| Daily LeeWay entry and browser diagnostics | Installed Safari PWA |
+| Browser WebGPU probe and readback | Installed Safari PWA when Safari exposes WebGPU |
+| Editor, terminal, Git, Node, GitHub CLI, Docker | GitHub Codespaces through the Apple launcher |
+| Shared Agent Lee source workplane | Canonical Device Bridge repository and Git history |
+| Direct native Apple Metal | Separately qualified native iOS adapter |
+| Canonical Formula, Veritas, and receipts | Only when an authorized runtime actually executes and returns evidence |
 
-## Credential handling
-
-The Device ID and owner pairing token are entered in the PWA. The token remains in JavaScript page memory only after pairing, is removed from the visible input, and is discarded by **Clear Runtime Pairing** or when the app closes. The PWA does not write the token to localStorage, service-worker cache, browser diagnostics, or conversation output. Displayed remote evidence redacts fields whose names identify secrets or credentials.
-
-## Evidence status
-
-The Apple PWA has a physical iPhone browser observation and a measured WebGPU readback evidence record. This workstation console is source-qualified until an owner pairs a runtime and records the runtime’s own result. A successful browser WebGPU result does not prove Agent Lee model execution, direct Metal execution, canonical Formula evaluation, Veritas verification, or a receipt.
+The static PWA does not contain a shell or fabricate remote-runtime authority. Browser WebGPU evidence is separate from direct Metal and model execution.
