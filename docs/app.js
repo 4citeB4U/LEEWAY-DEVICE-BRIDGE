@@ -64,7 +64,12 @@ function refreshAppleDiagnostics(){
   appleOut(diagnostics);
   return diagnostics;
 }
+function beginAppleQualification(){
+  refreshAppleDiagnostics();
+  $("#appleBrowserAdapter")?.scrollIntoView({behavior:"smooth",block:"start"});
+}
 $("#refreshAppleDiagnostics")?.addEventListener("click",refreshAppleDiagnostics);
+$("#beginAppleQualification")?.addEventListener("click",beginAppleQualification);
 $("#runBrowserCompute")?.addEventListener("click",async()=>{
   appleState("COMPUTE RUNNING");
   appleOut("Running deterministic browser WebGPU compute and readback. Native Metal, Formula, Veritas, and receipt state remain separate.");

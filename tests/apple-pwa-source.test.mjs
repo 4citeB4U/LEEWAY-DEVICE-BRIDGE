@@ -22,12 +22,15 @@ const source = readFileSync(new URL("../docs/apple-pwa-diagnostics.js", import.m
 const app = readFileSync(new URL("../docs/app.js", import.meta.url), "utf8");
 assert.match(page, /APPLE BROWSER ADAPTER/);
 assert.match(page, /APPLE IPHONE \/ IPAD/);
+assert.match(page, /NEXT STEP FOR THIS IPHONE/);
+assert.match(page, /CHECK THIS IPHONE NOW/);
 assert.match(page, /SHOW APPLE INSTALL STATUS/);
 assert.match(page, /There is no Apple file, APK, IPA, or Android download/);
 assert.match(page, /launch LeeWay by tapping the new Home Screen icon/);
 assert.match(page, /RUN BROWSER COMPUTE PROBE/);
 assert.match(app, /Safari does not let a web page open Apple's Add to Home Screen control/);
 assert.match(app, /LEEWAY APP INSTALLED — SHOW STATUS/);
+assert.match(app, /function beginAppleQualification/);
 assert.match(source, /nativeMetalState: "NOT_OBSERVED"/);
 assert.match(source, /formulaState: "NOT_EXECUTED"/);
 assert.match(source, /receiptState: "NOT_CREATED"/);
