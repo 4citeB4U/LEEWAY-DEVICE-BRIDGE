@@ -54,14 +54,13 @@ PASS pages bootstrap contract
 
 The PWA has no JavaScript API for `MTLDevice`, Metal command queues, or native model execution. A browser WebGPU readback pass may show that Safari exposed a browser compute device. It is not direct Metal proof and must not be presented as a LeeWay GPU-provider or model-inference receipt.
 
-## Outstanding acceptance gates
+## Outstanding physical acceptance gates
 
-1. Publish this reviewed source to the GitHub Pages branch.
-2. Open the published HTTPS site in Safari on the physical iPhone and use **Add to Home Screen**.
-3. Open the installed application and retain the local observation snapshot as device evidence.
-4. Run the browser compute probe only if Safari exposes WebGPU, preserving its measured result.
-5. Qualify native Metal separately through the independently owned `apps/apple` adapter.
-6. Integrate a request-specific Formula authorization, canonical Veritas result, and authentic receipt only after their authorities provide a supported interface.
+1. Open the published HTTPS site in Safari on the physical iPhone and use **Add to Home Screen**.
+2. Open the installed application and retain the local observation snapshot as device evidence.
+3. Run the browser compute probe only if Safari exposes WebGPU, preserving its measured result.
+4. Qualify native Metal separately through the independently owned `apps/apple` adapter.
+5. Integrate a request-specific Formula authorization, canonical Veritas result, and authentic receipt only after their authorities provide a supported interface.
 
 ## Claim boundary
 
