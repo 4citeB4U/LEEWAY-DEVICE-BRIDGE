@@ -7,7 +7,9 @@ import org.json.JSONObject
 object RemoteCommandRouter {
     private val remoteQualified = setOf(
         "device.health", "device.info", "device.capabilities",
-        "device.bluetooth.list-bonded", "device.network.discover", "device.receipts",
+        "device.bluetooth.list-bonded", "device.bluetooth.scan.start",
+        "device.bluetooth.scan.results", "device.bluetooth.scan.stop",
+        "device.network.discover", "device.receipts",
         "device.screen.capture", "device.ui.snapshot", "device.ui.back", "device.ui.home", "device.ui.recents",
         "device.ui.tap", "device.ui.swipe", "device.ui.text",
         "device.apps.list", "device.apps.launch", "device.apps.install.status", "device.apps.install",
@@ -26,6 +28,7 @@ object RemoteCommandRouter {
         val capabilityPrecondition = when (capability) {
             "model.inference", "agent.chat" -> prompt.isNotEmpty()
             "voice.speak" -> text.isNotEmpty()
+            "device.bluetooth.scan.start" -> arguments.optLong("durationMs", 5_000L) in 1_000L..15_000L
             "device.ui.tap" -> arguments.has("x") && arguments.has("y")
             "device.ui.swipe" -> arguments.has("x1") && arguments.has("y1") &&
                 arguments.has("x2") && arguments.has("y2")
@@ -53,6 +56,12 @@ object RemoteCommandRouter {
                 "device.info" -> DevicePassport.capture(context)
                 "device.capabilities" -> capabilities(context)
                 "device.bluetooth.list-bonded" -> BluetoothProvider.snapshot(context)
+                "device.bluetooth.scan.start" -> BluetoothProvider.startNearbyScan(
+                    context,
+                    arguments.optLong("durationMs", 5_000L)
+                )
+                "device.bluetooth.scan.results" -> BluetoothProvider.nearbyResults()
+                "device.bluetooth.scan.stop" -> BluetoothProvider.stopNearbyScan(context)
                 "device.network.discover" -> NetworkDiscoveryProvider.discover(context)
                 "device.receipts" -> JSONObject().put("receipts", ReceiptStore.list(context))
                 "device.screen.capture" -> DeviceOperatorAccessibilityService.captureScreen()

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "0.1.0",
+  "schemaVersion": "0.2.0",
   "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
   "relayRole": "TRANSPORT_ONLY",
   "relayUrl": "wss://agent-lee-x.vercel.app/api/device-relay",
@@ -18,6 +18,9 @@
     "device.info",
     "device.capabilities",
     "device.bluetooth.list-bonded",
+    "device.bluetooth.scan.start",
+    "device.bluetooth.scan.results",
+    "device.bluetooth.scan.stop",
     "device.network.discover",
     "device.receipts",
     "model.status",
@@ -29,10 +32,12 @@
   "truthBoundary": {
     "relaySourceBuild": "PASS",
     "durableQueueRuntime": "PASS_SEND_THEN_RECEIVE",
+    "bluetoothActiveScanSource": "IMPLEMENTED_UNVERIFIED_PHYSICAL",
     "physicalFoldDurableReconnect": "PENDING_OWNER_RECONNECT_AND_TERMUX_E2E"
   },
   "formulaGate": "LW-F8_REQUIRED_QA69_EXECUTE_QA0_HOLD",
   "replayProtection": "COMMAND_ID_FIRST_SEEN_REQUIRED",
+  "commandEnvelope": "contracts/device-command-envelope.schema.json",
   "ownerStop": "DISABLES_AGENT_AUTHORITY_AND_REMOTE_RELAY",
   "deliveryMode": "VERCEL_QUEUE_DURABLE_V1",
   "volatileRoomState": false
