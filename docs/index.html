@@ -15,31 +15,31 @@
   <header>
     <p class="eyebrow">LEEWAY DEVICE BRIDGE</p>
     <h1>LeeWay Device-Neutral Workstation.</h1>
-    <p class="lede">Install the same LeeWay workstation shell from the browser on supported devices. Native Android capability packages are optional extensions, not the base workstation.</p>
+    <p class="lede">Install the LeeWay workstation directly from Safari on iPhone or iPad. The Android APK below is only for Android phones.</p>
   </header>
 
-  <section class="panel" id="downloadSecondaryWorkstation">
-
+  <section class="panel" id="appleIphoneInstall">
     <div class="panel-head">
-      <div><p class="kicker">OPTIONAL NATIVE ANDROID EXTENSION</p><h2>Android Native Capability Package 0.8.5</h2></div>
-      <span class="badge">VERIFIED BUILD</span>
-    </div>
-    <p class="muted">Optional Android extension for privileged phone-local capabilities that a browser cannot expose. The base workstation no longer depends on this APK.</p>
-    <a class="action" href="./downloads/leeway-device-bridge-android-latest-debug.apk" download>DOWNLOAD OPTIONAL ANDROID NATIVE EXTENSION 0.8.5</a>
-    <p class="package-meta">After Android finishes installing, open LeeWay Device Bridge and tap <strong>ENABLE SECONDARY WORKSTATION</strong>. That one control enables local authority, starts the local bridge, and starts the always-on remote relay.</p>
-  </section>
-
-  <section class="panel" id="deviceNeutralInstall">
-    <div class="panel-head">
-      <div><p class="kicker">PRIMARY INSTALL</p><h2>Install LeeWay Device-Neutral Workstation</h2></div>
+      <div><p class="kicker">APPLE IPHONE / IPAD</p><h2>Install LeeWay from Safari</h2></div>
       <span id="pwaState" class="badge">CHECKING</span>
     </div>
-    <p class="muted">This is the canonical workstation package. It runs from the same GitHub Pages origin across supported browsers and does not require APK sideloading.</p>
+    <p class="muted"><strong>This is the Apple LeeWay installation.</strong> There is no Apple file, APK, IPA, or Android download for this route.</p>
+    <ol class="package-meta"><li>Open this LeeWay page in <strong>Safari</strong> on the iPhone.</li><li>Tap <strong>Share</strong> (the square with the upward arrow).</li><li>Tap <strong>Add to Home Screen</strong>, then tap <strong>Add</strong>.</li></ol>
     <div class="panel-head">
-      <button class="action" id="installPwaBtn">INSTALL LEEWAY WORKSTATION</button>
-      <button id="launchPwaBtn">LAUNCH / REFRESH WORKSTATION</button>
+      <button class="action" id="installPwaBtn">INSTALL ON APPLE HOME SCREEN</button>
+      <button id="launchPwaBtn">REFRESH LEEWAY APP</button>
     </div>
-    <pre id="pwaOutput" class="profile">Checking browser install capability…</pre>
+    <pre id="pwaOutput" class="profile">Checking Apple Safari installation state…</pre>
+  </section>
+
+  <section class="panel" id="downloadSecondaryWorkstation">
+    <div class="panel-head">
+      <div><p class="kicker">ANDROID ONLY</p><h2>Android Native Capability Package 0.8.5</h2></div>
+      <span class="badge">VERIFIED BUILD</span>
+    </div>
+    <p class="muted">Only select this download when using an Android phone. It is not for Apple iPhone or iPad.</p>
+    <a class="action" href="./downloads/leeway-device-bridge-android-latest-debug.apk" download>DOWNLOAD ANDROID NATIVE EXTENSION 0.8.5</a>
+    <p class="package-meta">After Android finishes installing, open LeeWay Device Bridge and tap <strong>ENABLE SECONDARY WORKSTATION</strong>. That one control enables local authority, starts the local bridge, and starts the always-on remote relay.</p>
   </section>
 
   <section class="status-grid" aria-label="Bootstrap status">

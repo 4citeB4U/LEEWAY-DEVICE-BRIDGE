@@ -115,12 +115,20 @@ let deferredInstallPrompt=null;
 const pwaState=message=>{const el=$("#pwaState");if(el)el.textContent=message;};
 const pwaOut=message=>{const el=$("#pwaOutput");if(el)el.textContent=message;};
 const isStandalone=()=>window.matchMedia?.("(display-mode: standalone)")?.matches||window.navigator.standalone===true;
+const isAppleMobile=()=>/iPad|iPhone|iPod/.test(navigator.userAgent)||(
+  navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1
+);
 
 function refreshPwaInstallState(){
   if(isStandalone()){
     pwaState("INSTALLED");
-    pwaOut("LeeWay Device-Neutral Workstation is running as an installed app.");
-    const btn=$("#installPwaBtn");if(btn){btn.disabled=true;btn.textContent="LEEWAY WORKSTATION INSTALLED";}
+    pwaOut("LeeWay is running as an installed Home Screen app.");
+    const btn=$("#installPwaBtn");if(btn){btn.disabled=true;btn.textContent="LEEWAY APP INSTALLED";}
+    return;
+  }
+  if(isAppleMobile()){
+    pwaState("SAFARI: ADD TO HOME");
+    pwaOut("Apple iPhone installation: tap Safari Share, choose Add to Home Screen, then tap Add. Do not download the Android APK.");
     return;
   }
   if(deferredInstallPrompt){
@@ -145,7 +153,7 @@ $("#installPwaBtn")?.addEventListener("click",async()=>{
   if(isStandalone()){refreshPwaInstallState();return;}
   if(!deferredInstallPrompt){
     pwaState("USE BROWSER INSTALL");
-    pwaOut("Open the browser menu and choose Install app or Add to Home screen. This installs the device-neutral workstation without sideloading an APK.");
+    pwaOut("Open the browser menu and choose Install app or Add to Home screen. This installs the LeeWay workstation without sideloading an APK.");
     return;
   }
   deferredInstallPrompt.prompt();
