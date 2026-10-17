@@ -21,6 +21,12 @@ No Apple Developer Program membership was purchased. No App ID, certificate, pro
 
 The implementation and protected TestFlight delivery workflow remain staged in this repository. The workflow cannot produce an installable build until the Apple Developer Program membership is active and the account-specific signing and App Store Connect materials are configured.
 
+## Follow-up verification
+
+After the owner authorized the Apple Developer Program charge, the account page was checked again. It still displayed the invitation to join the program, which verifies that membership was not activated and no checkout charge was completed.
+
+During this check, an Apple Developer Contact Us confirmation page was observed. Its case identifier is intentionally excluded from this repository. This record does not attribute that contact action to any party and does not treat it as enrollment, payment, membership, or delivery evidence.
+
 ## Next owner action
 
 Complete Apple’s identity form directly in the browser or Apple Developer app. At the checkout screen, the account holder should review the displayed yearly amount and terms before authorizing the purchase. After membership activation, resume the Device Bridge setup with the App ID, App Store Connect record, signing materials, and GitHub environment secrets.
