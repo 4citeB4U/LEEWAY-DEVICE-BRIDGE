@@ -118,17 +118,29 @@ const isStandalone=()=>window.matchMedia?.("(display-mode: standalone)")?.matche
 const isAppleMobile=()=>/iPad|iPhone|iPod/.test(navigator.userAgent)||(
   navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1
 );
+const showAppleInstallHelp=()=>{
+  const help=$("#appleInstallSteps");
+  if(help){help.open=true;help.scrollIntoView({behavior:"smooth",block:"center"});}
+  if(isStandalone()){
+    pwaState("INSTALLED");
+    pwaOut("LeeWay is already installed. Launch and use it from the LeeWay Home Screen icon. There is no additional Apple download.");
+    return;
+  }
+  pwaState("SAFARI: ADD TO HOME");
+  pwaOut("Safari does not let a web page open Apple's Add to Home Screen control. Tap Safari Share, choose Add to Home Screen, then tap Add. Do not download the Android APK.");
+};
 
 function refreshPwaInstallState(){
   if(isStandalone()){
     pwaState("INSTALLED");
-    pwaOut("LeeWay is running as an installed Home Screen app.");
-    const btn=$("#installPwaBtn");if(btn){btn.disabled=true;btn.textContent="LEEWAY APP INSTALLED";}
+    pwaOut("LeeWay is running as an installed Home Screen app. There is no additional Apple download.");
+    const btn=$("#installPwaBtn");if(btn){btn.disabled=false;btn.textContent="LEEWAY APP INSTALLED — SHOW STATUS";}
     return;
   }
   if(isAppleMobile()){
     pwaState("SAFARI: ADD TO HOME");
     pwaOut("Apple iPhone installation: tap Safari Share, choose Add to Home Screen, then tap Add. Do not download the Android APK.");
+    const btn=$("#installPwaBtn");if(btn)btn.textContent="SHOW APPLE INSTALL STEPS";
     return;
   }
   if(deferredInstallPrompt){
@@ -150,7 +162,7 @@ addEventListener("appinstalled",()=>{
   refreshPwaInstallState();
 });
 $("#installPwaBtn")?.addEventListener("click",async()=>{
-  if(isStandalone()){refreshPwaInstallState();return;}
+  if(isAppleMobile()||isStandalone()){showAppleInstallHelp();return;}
   if(!deferredInstallPrompt){
     pwaState("USE BROWSER INSTALL");
     pwaOut("Open the browser menu and choose Install app or Add to Home screen. This installs the LeeWay workstation without sideloading an APK.");
