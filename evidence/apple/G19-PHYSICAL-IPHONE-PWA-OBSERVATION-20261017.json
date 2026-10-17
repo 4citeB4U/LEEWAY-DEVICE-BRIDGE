@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "leeway.apple-pwa.physical-observation.v1",
+  "recordedAt": "2026-10-17",
+  "source": "owner-provided observation from the installed LeeWay iPhone PWA",
+  "observation": {
+    "observationId": "5bc47001-ccf2-450f-b27f-ffe56d009874",
+    "observedAt": "2026-10-17T17:36:32.192Z",
+    "adapter": "leeway.device.bridge.pwa",
+    "adapterState": "BROWSER_SURFACE_ACTIVE",
+    "digitalBrainProjection": "LOCAL_OBSERVATION_ONLY",
+    "runtime": {
+      "platform": "iPhone Safari PWA",
+      "standalone": true,
+      "online": true,
+      "secureContext": true,
+      "serviceWorkerControlled": true
+    },
+    "browserCompute": {
+      "state": "NOT_RUN"
+    },
+    "nativeMetal": {
+      "state": "NOT_OBSERVED"
+    },
+    "formula": {
+      "canonicalState": "NOT_EXECUTED"
+    },
+    "veritas": {
+      "state": "NOT_EXECUTED"
+    },
+    "receipt": {
+      "state": "NOT_CREATED"
+    }
+  },
+  "claimBoundary": "This is a physical iPhone PWA environment observation. It does not establish browser compute, native Metal execution, model inference, Formula authorization, Veritas validation, or receipt issuance.",
+  "nextGate": "Owner runs the optional browser compute probe and provides its measured result."
+}
