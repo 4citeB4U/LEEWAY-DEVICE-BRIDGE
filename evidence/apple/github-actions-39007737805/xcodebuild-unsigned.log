@@ -1,0 +1,380 @@
+Command line invocation:
+    /Applications/Xcode_26.6.app/Contents/Developer/usr/bin/xcodebuild -project LeeWayDeviceBridgeApple.xcodeproj -scheme LeeWayDeviceBridgeApple -configuration Debug -sdk iphoneos -destination generic/platform=iOS CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+
+Build settings from command line:
+    CODE_SIGNING_ALLOWED = NO
+    CODE_SIGNING_REQUIRED = NO
+    SDKROOT = iphoneos26.5
+
+2026-10-17 05:51:22.102 xcodebuild[7018:23606] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (1 target)
+    Target 'LeeWayDeviceBridgeApple' in project 'LeeWayDeviceBridgeApple' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+Build description signature: f035490c68574d9b99157e77fa803e6e
+Build description path: /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/XCBuildData/f035490c68574d9b99157e77fa803e6e.xcbuilddata
+CreateBuildDirectory /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple/LeeWayDeviceBridgeApple.xcodeproj
+    builtin-create-build-directory /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products
+
+ClangStatCache /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk /Users/runner/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphoneos26.5-23F81a-688ef53f1462e2c8f657fdc38a81448fee66e23052a0157c865c76b268046726.sdkstatcache
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple/LeeWayDeviceBridgeApple.xcodeproj
+    /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk -o /Users/runner/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphoneos26.5-23F81a-688ef53f1462e2c8f657fdc38a81448fee66e23052a0157c865c76b268046726.sdkstatcache
+
+CreateBuildDirectory /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple/LeeWayDeviceBridgeApple.xcodeproj
+    builtin-create-build-directory /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex
+
+CreateBuildDirectory /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple/LeeWayDeviceBridgeApple.xcodeproj
+    builtin-create-build-directory /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos
+
+WriteAuxiliaryFile /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple-986f32b93ec72b1a8d31905a0020dc7d-VFS-iphoneos/all-product-headers.yaml
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple/LeeWayDeviceBridgeApple.xcodeproj
+    write-file /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple-986f32b93ec72b1a8d31905a0020dc7d-VFS-iphoneos/all-product-headers.yaml
+
+CreateBuildDirectory /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple/LeeWayDeviceBridgeApple.xcodeproj
+    builtin-create-build-directory /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+
+CreateBuildDirectory /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/ExplicitPrecompiledModules
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple/LeeWayDeviceBridgeApple.xcodeproj
+    builtin-create-build-directory /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/ExplicitPrecompiledModules
+
+CreateBuildDirectory /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphoneos
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple/LeeWayDeviceBridgeApple.xcodeproj
+    builtin-create-build-directory /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphoneos
+
+WriteAuxiliaryFile /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/empty-LeeWayDeviceBridge.plist (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    write-file /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/empty-LeeWayDeviceBridge.plist
+
+WriteAuxiliaryFile /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridgeApple_const_extract_protocols.json (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    write-file /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridgeApple_const_extract_protocols.json
+
+WriteAuxiliaryFile /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridgeApple-OutputFileMap.json (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    write-file /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridgeApple-OutputFileMap.json
+
+WriteAuxiliaryFile /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge.SwiftFileList (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    write-file /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge.SwiftFileList
+
+WriteAuxiliaryFile /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge.SwiftConstValuesFileList (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    write-file /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge.LinkFileList (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    write-file /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge.LinkFileList
+
+WriteAuxiliaryFile /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge.hmap (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    write-file /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge.hmap
+
+WriteAuxiliaryFile /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge.DependencyStaticMetadataFileList (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    write-file /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge.DependencyStaticMetadataFileList
+
+WriteAuxiliaryFile /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge.DependencyMetadataFileList (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    write-file /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge.DependencyMetadataFileList
+
+WriteAuxiliaryFile /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-project-headers.hmap (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    write-file /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-project-headers.hmap
+
+WriteAuxiliaryFile /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-own-target-headers.hmap (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    write-file /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-own-target-headers.hmap
+
+WriteAuxiliaryFile /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-generated-files.hmap (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    write-file /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-generated-files.hmap
+
+WriteAuxiliaryFile /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-all-target-headers.hmap (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    write-file /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-all-target-headers.hmap
+
+WriteAuxiliaryFile /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-all-non-framework-target-headers.hmap (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    write-file /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-all-non-framework-target-headers.hmap
+
+WriteAuxiliaryFile /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-DebugDylibPath-normal-arm64.txt (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    write-file /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-DebugDylibPath-normal-arm64.txt
+
+WriteAuxiliaryFile /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-DebugDylibInstallName-normal-arm64.txt (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    write-file /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-DebugDylibInstallName-normal-arm64.txt
+
+MkDir /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    /bin/mkdir -p /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app
+
+Ld /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app/__preview.dylib normal (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios17.0 -dynamiclib -isysroot /Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk -O0 -L/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos -F/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos -install_name @rpath/LeeWayDeviceBridge.debug.dylib -Xlinker -dead_strip -rdynamic -Xlinker -no_deduplicate -Xlinker -dependency_info -Xlinker /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge_dependency_info.dat -o /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app/__preview.dylib
+
+ProcessInfoPlistFile /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app/Info.plist /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/empty-LeeWayDeviceBridge.plist (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    builtin-infoPlistUtility /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/empty-LeeWayDeviceBridge.plist -producttype com.apple.product-type.application -genpkginfo /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app/PkgInfo -expandbuildsettings -format binary -platform iphoneos -requiredArchitecture arm64 -o /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app/Info.plist
+
+CompileMetalFile /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple/Sources/LeeWayDeviceBridgeProbe.metal (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    /var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.6.109.0.FPZm0x/Metal.xctoolchain/usr/bin/metal -c -target air64-apple-ios17.0 -gline-tables-only -frecord-sources -I/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/include -F/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos -isysroot /Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk -fmetal-math-mode\=fast -fmetal-math-fp32-functions\=fast -serialize-diagnostics /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Metal/LeeWayDeviceBridgeProbe.dia -o /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Metal/LeeWayDeviceBridgeProbe.air -index-store-path /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Index.noindex/DataStore -MMD -MT dependencies -MF /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Metal/LeeWayDeviceBridgeProbe.dat /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple/Sources/LeeWayDeviceBridgeProbe.metal
+
+SwiftDriver LeeWayDeviceBridgeApple normal arm64 com.apple.xcode.tools.swift.compiler (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    builtin-SwiftDriver -- /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name LeeWayDeviceBridge -Onone @/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk -target arm64-apple-ios17.0 -g -module-cache-path /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos -F /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos -c -j3 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/runner/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphoneos26.5-23F81a-688ef53f1462e2c8f657fdc38a81448fee66e23052a0157c865c76b268046726.sdkstatcache -output-file-map /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridgeApple-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridgeApple_const_extract_protocols.json -Xcc -iquote -Xcc /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-generated-files.hmap -Xcc -I/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-own-target-headers.hmap -Xcc -I/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-all-target-headers.hmap -Xcc -iquote -Xcc /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-project-headers.hmap -Xcc -I/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/include -Xcc -I/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/DerivedSources-normal/arm64 -Xcc -I/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/DerivedSources/arm64 -Xcc -I/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge-Swift.h -working-directory /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple -experimental-emit-module-separately -disable-cmo
+
+MetalLink /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app/default.metallib (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    /var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.6.109.0.FPZm0x/Metal.xctoolchain/usr/bin/metal -target air64-apple-ios17.0 -frecord-sources -o /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app/default.metallib /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Metal/LeeWayDeviceBridgeProbe.air
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_AvailabilityInternal-CBJDFQ1IIKMOFNYMAKGVABJ16.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_Builtin_stdbool-7HKE3946L0FQGRJAEF5D9ZMC1.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_Builtin_float-AP52G6GGMGHQ2830CY0TN6684.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_Builtin_stddef-BRAYWWKN6PXHUH1T1L1DHJFEW.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/SwiftShims-7YS88B5LKI4GBI5ALXOMJ95AY.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_Builtin_stdarg-CWYDF8QKWQUBXGG9S9PXYYWLK.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/ptrcheck-PNOWKHNEF2CZ9MP0BDUDJHX5.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/ptrauth-40CJJ8VBUJ9ZYM2AKTIHSZDOD.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/DeveloperToolsSupport-2QH6MZO6R3LK7KXKZXY815EAU.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_SwiftConcurrencyShims-A58DXTWHWLCH4YTXC44FW6CTW.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_DarwinFoundation1-5GAJWTBIF8YODDBA6GL0OG24V.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_DarwinFoundation2-7EFPX1929QSTI5XLPRLQT8R6O.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_Builtin_limits-A18P4OYMNWLBOZ37G34GYHSI7.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/sys_types-8TNMP2BUDLCWIM2M27ZU1H8BA.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_Builtin_stdint-8BTSNO4N8FWLQUSY3KML9OU7W.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_Builtin_tgmath-94F185DVS245ZBONNMK4B3842.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_Builtin_stdatomic-1USFTH8FW563V5CYX1FCWGE79.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_Builtin_intrinsics-1TKO3HQEJTE55W1HKAI2Y2OCF.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_DarwinFoundation3-83ESO99R2A7LXLWSWUC7GDGP9.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/_Builtin_inttypes-BHSM4UMVLG1HLBDYAY9XFD8O3.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Darwin-EI3AAQ5Y5CZJE7R38NGKI2VM3.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/simd-C1UOP55Q4SVWPW2FMC4TMICR3.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/MachO-AB692NDQZC7FL48HXE46BQJ3W.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/ObjectiveC-59V0E6D254X5NBC3G280K65AR.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/os_object-D5PGHFWHYE0EF0BZI1OR0W7MI.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/os_workgroup-EOGY46AM4F4BD2NVOLS6NV5Z9.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Dispatch-3BJD15Y89WL323ZC3EEGXEZQU.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Spatial-DXYCLY3CL1JSNZKICD4I1LU7A.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/CoreFoundation-2IKGN5ASN61TCDEL8BC436S0G.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/XPC-DG08BLDT09FX29LSIBWUDB20X.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/os-21V0FRP23P25ZC3PS27EGVD9E.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/CFNetwork-EL1PZ97MBWALIOU35LQCTVR64.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/CoreGraphics-EW008HWKZ8QHH60UTBY4UC19P.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Security-86MA75B27FKRDM4VH346ILSS7.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/CoreText-B0379YX3V20OTHKTA0N6FA0LW.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/ImageIO-F2D97MMF1HKI1NG2B8SIIQVIW.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Foundation-3DGVRS9BUZ1TRRXHFJVZ4DYY5.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/CoreData-36AJC9MTP19HH12XAYPKEPZW6.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/FileProvider-7W4CVFT9MNVCZCBRZ1C1FQ2GL.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Symbols-AJF4T3U5JAJLDHIYP66HRZ3JW.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/OSLog-DG6MTH9D0WEGCVWMGEI2SK0GP.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/UIUtilities-6EG5K33647FWZ7848QB65GCBI.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/UniformTypeIdentifiers-66R0JQ60PCY0J4MXYUWJUAY4A.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/DataDetection-BFEQYWMFJJSXWWDAJAOK01ZZ2.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/UserNotifications-AZ6FVHOLCQI5LM9OKFBC95G5Y.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Accessibility-7EZ815PS2NB9AZGFSAB6N3IAX.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/IOSurface-ABOS1W9RN1A10PPB8KEV2VVZ9.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/CoreTransferable-9ZB75TAOLROYQF5Q3XM65YNIR.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Metal-31QRIZ41N78FAW2D6EHDM1C2Z.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/OpenGLES-9G25XUDFFJ6GJ719H7HSKVLRV.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/CoreVideo-CTF6ZOENE49C6HBSYPZ9ORPZD.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/CoreImage-BSOO06IUVJBEY4WPJY4QEOF3U.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/QuartzCore-BL947B6MS7UBPQR74E3ZF9UGH.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/SwiftUICore-AJ6TPWJZJTIOFCMNP46QUET4S.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/UIKit-8GWBKD688N00HXH70S82BPCI2.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/SwiftUI-34DMJA1UJFZZD26GDOCAQKAO8.pcm
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ LeeWayDeviceBridge (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+
+EmitSwiftModule normal arm64 (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    
+
+SwiftCompile normal arm64 Compiling\ FormulaAuthorizedModelRuntime.swift,\ LeeWayDeviceBridgeAppleApp.swift /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple/Sources/FormulaAuthorizedModelRuntime.swift /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple/Sources/LeeWayDeviceBridgeAppleApp.swift (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+SwiftCompile normal arm64 /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple/Sources/FormulaAuthorizedModelRuntime.swift (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    
+
+SwiftCompile normal arm64 /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple/Sources/LeeWayDeviceBridgeAppleApp.swift (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    
+
+SwiftCompile normal arm64 Compiling\ MetalDeviceProbe.swift /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple/Sources/MetalDeviceProbe.swift (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+
+SwiftCompile normal arm64 /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple/Sources/MetalDeviceProbe.swift (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    
+
+SwiftCompile normal arm64 Compiling\ AppleBridgeEvidence.swift,\ AppleDeviceBridgeView.swift /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple/Sources/AppleBridgeEvidence.swift /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple/Sources/AppleDeviceBridgeView.swift (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+
+SwiftCompile normal arm64 /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple/Sources/AppleBridgeEvidence.swift (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    
+
+SwiftCompile normal arm64 /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple/Sources/AppleDeviceBridgeView.swift (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    
+
+SwiftDriverJobDiscovery normal arm64 Emitting module for LeeWayDeviceBridge (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+
+SwiftDriver\ Compilation\ Requirements LeeWayDeviceBridgeApple normal arm64 com.apple.xcode.tools.swift.compiler (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name LeeWayDeviceBridge -Onone @/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk -target arm64-apple-ios17.0 -g -module-cache-path /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos -F /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos -c -j3 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/runner/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphoneos26.5-23F81a-688ef53f1462e2c8f657fdc38a81448fee66e23052a0157c865c76b268046726.sdkstatcache -output-file-map /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridgeApple-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridgeApple_const_extract_protocols.json -Xcc -iquote -Xcc /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-generated-files.hmap -Xcc -I/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-own-target-headers.hmap -Xcc -I/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-all-target-headers.hmap -Xcc -iquote -Xcc /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-project-headers.hmap -Xcc -I/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/include -Xcc -I/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/DerivedSources-normal/arm64 -Xcc -I/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/DerivedSources/arm64 -Xcc -I/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge-Swift.h -working-directory /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple -experimental-emit-module-separately -disable-cmo
+
+SwiftDriverJobDiscovery normal arm64 Compiling MetalDeviceProbe.swift (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+
+SwiftMergeGeneratedHeaders /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/DerivedSources/LeeWayDeviceBridge-Swift.h /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge-Swift.h (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    builtin-swiftHeaderTool -arch arm64 /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge-Swift.h -o /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/DerivedSources/LeeWayDeviceBridge-Swift.h
+
+Copy /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.swiftmodule/arm64-apple-ios.swiftmodule /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge.swiftmodule (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge.swiftmodule /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.swiftmodule/arm64-apple-ios.swiftmodule
+
+Copy /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.swiftmodule/arm64-apple-ios.swiftdoc /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge.swiftdoc (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge.swiftdoc /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.swiftmodule/arm64-apple-ios.swiftdoc
+
+Copy /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.swiftmodule/arm64-apple-ios.abi.json /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge.abi.json (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge.abi.json /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.swiftmodule/arm64-apple-ios.abi.json
+
+Copy /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.swiftmodule/Project/arm64-apple-ios.swiftsourceinfo /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge.swiftsourceinfo (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge.swiftsourceinfo /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.swiftmodule/Project/arm64-apple-ios.swiftsourceinfo
+
+SwiftDriverJobDiscovery normal arm64 Compiling AppleBridgeEvidence.swift, AppleDeviceBridgeView.swift (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+
+SwiftDriverJobDiscovery normal arm64 Compiling FormulaAuthorizedModelRuntime.swift, LeeWayDeviceBridgeAppleApp.swift (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+
+SwiftDriver\ Compilation LeeWayDeviceBridgeApple normal arm64 com.apple.xcode.tools.swift.compiler (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    builtin-Swift-Compilation -- /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name LeeWayDeviceBridge -Onone @/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk -target arm64-apple-ios17.0 -g -module-cache-path /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos -F /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos -c -j3 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/runner/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphoneos26.5-23F81a-688ef53f1462e2c8f657fdc38a81448fee66e23052a0157c865c76b268046726.sdkstatcache -output-file-map /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridgeApple-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/runner/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridgeApple_const_extract_protocols.json -Xcc -iquote -Xcc /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-generated-files.hmap -Xcc -I/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-own-target-headers.hmap -Xcc -I/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-all-target-headers.hmap -Xcc -iquote -Xcc /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-project-headers.hmap -Xcc -I/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/include -Xcc -I/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/DerivedSources-normal/arm64 -Xcc -I/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/DerivedSources/arm64 -Xcc -I/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge-Swift.h -working-directory /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple -experimental-emit-module-separately -disable-cmo
+
+Ld /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app/LeeWayDeviceBridge.debug.dylib normal (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios17.0 -dynamiclib -isysroot /Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk -O0 -L/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphoneos -L/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos -F/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphoneos -F/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos -filelist /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge.LinkFileList -install_name @rpath/LeeWayDeviceBridge.debug.dylib -Xlinker -rpath -Xlinker /usr/lib/swift -Xlinker -rpath -Xlinker @executable_path/Frameworks -Xlinker -dead_strip -Xlinker -object_path_lto -Xlinker /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge_lto.o -rdynamic -Xlinker -no_deduplicate -Xlinker -dependency_info -Xlinker /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge_dependency_info.dat -fobjc-link-runtime -L/Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge.swiftmodule @/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge-linker-args.resp -Xlinker -alias -Xlinker _main -Xlinker ___debug_main_executable_dylib_entry_point -o /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app/LeeWayDeviceBridge.debug.dylib
+
+ConstructStubExecutorLinkFileList /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-ExecutorLinkFileList-normal-arm64.txt (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    construct-stub-executor-link-file-list /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app/LeeWayDeviceBridge.debug.dylib /Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/libPreviewsJITStubExecutor_no_swift_entry_point.a /Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/libPreviewsJITStubExecutor.a --output /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-ExecutorLinkFileList-normal-arm64.txt
+note: Using stub executor library with Swift entry point. (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+
+Ld /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app/LeeWayDeviceBridge normal (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios17.0 -isysroot /Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk -O0 -L/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos -F/Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos -Xlinker -rpath -Xlinker @executable_path -Xlinker -rpath -Xlinker @executable_path/Frameworks -rdynamic -Xlinker -no_deduplicate -e ___debug_blank_executor_main -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __debug_dylib -Xlinker /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-DebugDylibPath-normal-arm64.txt -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __debug_instlnm -Xlinker /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-DebugDylibInstallName-normal-arm64.txt -Xlinker -filelist -Xlinker /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge-ExecutorLinkFileList-normal-arm64.txt /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app/LeeWayDeviceBridge.debug.dylib -o /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app/LeeWayDeviceBridge
+
+ExtractAppIntentsMetadata (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.6.109.0.FPZm0x/Metal.xctoolchain --module-name LeeWayDeviceBridge --sdk-root /Applications/Xcode_26.6.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.5.sdk --xcode-version 17F113 --platform-family iOS --deployment-target 17.0 --bundle-identifier industries.leeway.devicebridge --output /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app --target-triple arm64-apple-ios17.0 --binary-file /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app/LeeWayDeviceBridge --dependency-file /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge_dependency_info.dat --stringsdata-file /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge.SwiftFileList --metadata-file-list /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge.DependencyMetadataFileList --static-metadata-file-list /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge.DependencyStaticMetadataFileList --swift-const-vals-list /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/Objects-normal/arm64/LeeWayDeviceBridge.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
+2026-10-17 05:51:38.719 appintentsmetadataprocessor[7685:25867] Starting appintentsmetadataprocessor export
+2026-10-17 05:51:38.733 appintentsmetadataprocessor[7685:25867] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+
+CopySwiftLibs /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    builtin-swiftStdLibTool --copy --verbose --scan-executable /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app/LeeWayDeviceBridge.debug.dylib --scan-folder /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app/Frameworks --scan-folder /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app/PlugIns --scan-folder /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app/SystemExtensions --scan-folder /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app/Extensions --platform iphoneos --toolchain /var/run/com.apple.security.cryptexd/mnt/com.apple.MobileAsset.MetalToolchain-v17.6.109.0.FPZm0x/Metal.xctoolchain --toolchain /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app/Frameworks --strip-bitcode --strip-bitcode-tool /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os --back-deploy-swift-span
+Ignoring --strip-bitcode because --sign was not passed
+
+AppIntentsSSUTraining (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    /Applications/Xcode_26.6.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsnltrainingprocessor --infoplist-path /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app/Info.plist --temp-dir-path /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/ssu --bundle-id industries.leeway.devicebridge --product-path /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app --extracted-metadata-path /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app/Metadata.appintents --metadata-file-list /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Intermediates.noindex/LeeWayDeviceBridgeApple.build/Debug-iphoneos/LeeWayDeviceBridgeApple.build/LeeWayDeviceBridge.DependencyMetadataFileList --source-file /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app/Info.plist --archive-ssu-assets
+2026-10-17 05:51:38.799 appintentsnltrainingprocessor[7718:25947] Parsing options for appintentsnltrainingprocessor
+2026-10-17 05:51:38.800 appintentsnltrainingprocessor[7718:25947] Starting AppIntents SSU YAML Generation
+2026-10-17 05:51:38.805 appintentsnltrainingprocessor[7718:25947] No AppShortcuts found - Skipping.
+
+RegisterExecutionPolicyException /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    builtin-RegisterExecutionPolicyException /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app
+
+Validate /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    builtin-validationUtility /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app -shallow-bundle -infoplist-subpath Info.plist
+
+Touch /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app (in target 'LeeWayDeviceBridgeApple' from project 'LeeWayDeviceBridgeApple')
+    cd /Users/runner/work/LEEWAY-DEVICE-BRIDGE/LEEWAY-DEVICE-BRIDGE/apps/apple
+    /usr/bin/touch -c /Users/runner/Library/Developer/Xcode/DerivedData/LeeWayDeviceBridgeApple-gqnxwffgifeakehdsiujhiqvrnyt/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app
+
+** BUILD SUCCEEDED **
+
