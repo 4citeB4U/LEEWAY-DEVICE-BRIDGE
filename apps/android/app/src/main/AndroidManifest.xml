@@ -30,13 +30,9 @@
         android:label="LeeWay Device Bridge"
         android:icon="@drawable/leeway_official_logo"
         android:roundIcon="@drawable/leeway_official_logo"
-        android:allowBackup="false">
-        <activity android:name=".MainActivity" android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-        </activity>
+        android:allowBackup="false"
+        android:networkSecurityConfig="@xml/leeway_network_security">
+        <activity android:name=".MainActivity" android:exported="true"/>
         <service android:name=".PocketCommandService" android:exported="true" android:permission="industries.leeway.devicebridge.POCKET_COMMAND" />
         <activity android:name=".PocketBridgeActivity" android:exported="true" android:excludeFromRecents="true" android:theme="@style/Theme.LeewayDeviceBridge.Pocket"/>
         <service

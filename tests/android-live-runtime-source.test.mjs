@@ -29,6 +29,6 @@ assert.match(activity,/STOP AGENT ACCESS/);
 assert.match(activity,/SHOW PAIRING TOKEN/);
 assert.match(activity,/LocalBridgeServer\.start/);
 assert.match(manifest,/android\.permission\.INTERNET/);
-assert.match(gradle,/versionName = "0\.9\.8-pocket-rc8"/);
+assert.match(gradle,/versionName = "0\.10\.0-agent-update-rc1"/);
 
 console.log("PASS android live runtime source contract");
