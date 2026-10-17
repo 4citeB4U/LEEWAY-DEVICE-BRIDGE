@@ -2,7 +2,7 @@
   "id": "./",
   "name": "LeeWay Device-Neutral Workstation",
   "short_name": "LeeWay Workstation",
-  "description": "Device-neutral LeeWay workstation shell for discovery, workplane access, cloud development and optional native capability adapters.",
+  "description": "Device-neutral LeeWay workstation shell for discovery, diagnostics, browser-safe Apple development, and optional native capability adapters.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

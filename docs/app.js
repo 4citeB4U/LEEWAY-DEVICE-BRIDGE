@@ -1,4 +1,5 @@
 import {discoverDevice} from "./device-discovery.js";
+import {createApplePwaDiagnostics, runBrowserComputeProbe} from "./apple-pwa-diagnostics.js";
 
 const $=s=>document.querySelector(s);
 function esc(v){return String(v??"UNKNOWN").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));}
@@ -54,6 +55,24 @@ function buildBootstrap(profile,pkg){
 if("serviceWorker" in navigator){
   navigator.serviceWorker.register("./sw.js").catch(()=>{});
 }
+
+const appleState=message=>{const el=$("#applePwaState");if(el)el.textContent=message;};
+const appleOut=value=>{const el=$("#appleBrainOutput");if(el)el.textContent=typeof value==="string"?value:JSON.stringify(value,null,2);};
+function refreshAppleDiagnostics(){
+  const diagnostics=createApplePwaDiagnostics();
+  appleState("BROWSER OBSERVED");
+  appleOut(diagnostics);
+  return diagnostics;
+}
+$("#refreshAppleDiagnostics")?.addEventListener("click",refreshAppleDiagnostics);
+$("#runBrowserCompute")?.addEventListener("click",async()=>{
+  appleState("COMPUTE RUNNING");
+  appleOut("Running deterministic browser WebGPU compute and readback. Native Metal, Formula, Veritas, and receipt state remain separate.");
+  const result=await runBrowserComputeProbe();
+  appleState(result.state);
+  appleOut({...createApplePwaDiagnostics(),browserCompute:result});
+});
+refreshAppleDiagnostics();
 $("#discoverBtn").addEventListener("click",async()=>{
   $("#discoveryState").textContent="RUNNING";
   const profile=await discoverDevice();

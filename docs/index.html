@@ -65,6 +65,17 @@
     <pre id="profileOutput" class="profile">Run discovery to create a profile.</pre>
   </section>
 
+  <section class="panel" id="appleBrowserAdapter">
+    <div class="panel-head"><div><p class="kicker">APPLE BROWSER ADAPTER</p><h2>Digital Brain &amp; Diagnostics</h2></div><span id="applePwaState" class="badge">NOT OBSERVED</span></div>
+    <p class="muted">This installed PWA is the LeeWay iPhone front door. It records browser-observable state and may run an optional WebGPU readback probe. Safari browser compute is never presented as direct Apple Metal execution.</p>
+    <div class="panel-head apple-actions">
+      <button id="refreshAppleDiagnostics">REFRESH DIAGNOSTICS</button>
+      <button id="runBrowserCompute">RUN BROWSER COMPUTE PROBE</button>
+    </div>
+    <pre id="appleBrainOutput" class="profile">No Apple browser observation has been collected in this session.</pre>
+    <p class="package-meta"><strong>Native Metal:</strong> requires the separately installed LeeWay Device Bridge IPA and a physical-device Metal receipt. <strong>Formula:</strong> remains NOT EXECUTED until the canonical Formula Fabric actually evaluates an authorized request. <a href="./APPLE-PWA-DEVICE-BRIDGE.md">Apple PWA contract</a></p>
+  </section>
+
   <section class="panel">
     <div class="panel-head"><div><p class="kicker">STEP 03</p><h2>Native phone runtime</h2></div></div>
     <div id="packageCard" class="package-card">

@@ -1,9 +1,10 @@
-const CACHE = "leeway-device-bridge-v3";
+const CACHE = "leeway-device-bridge-v4";
 const ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
+  "./apple-pwa-diagnostics.js",
   "./icons/leeway-official-logo-512.png",
   "./icons/leeway-official-logo-192.png",
   "./brand/leeway-official-logo.png",
@@ -14,7 +15,8 @@ const ASSETS = [
   "./provider-registry.json",
   "./UNIVERSAL-DEVICE-HARNESS.md",
   "./PHONE-RUNTIME-CONTRACT.md",
-  "./secondary-workstation-node.json"
+  "./secondary-workstation-node.json",
+  "./APPLE-PWA-DEVICE-BRIDGE.md"
 ];
 
 self.addEventListener("install", event => {
