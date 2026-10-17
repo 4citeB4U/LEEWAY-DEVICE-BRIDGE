@@ -38,6 +38,36 @@ For the current iOS generation, SideStore’s installation instructions require 
 
 LeeWay must not copy, modify, or bundle SideStore into `LEEWAY-DEVICE-BRIDGE`. Its AGPL-3.0 license requires a separate license review before any derivative distribution. The approved architecture is narrower: LeeWay builds an independently owned IPA; the owner uses an unmodified SideStore release as an external installation and seven-day-refresh transport. Formula, runtime, verification, receipts, model execution, and device identity remain LeeWay-owned concerns.
 
+## Alternative comparison for the physical iPhone
+
+| Alternative | Current suitability | Decision | Evidence boundary |
+| --- | --- | --- | --- |
+| Safari installed web application | Works without native signing or paid membership; can remain the always-available LeeWay front door. | **Primary immediate route** | Web adapter only. Browser compute must be measured and cannot claim native Metal. |
+| SideStore direct IPA | Windows-capable initial setup and direct native-app installation; can refresh without a computer after setup. Its own FAQ identifies free-account limits of three active apps and ten App IDs per week, and labels the project public beta. | **Native qualification route** | Requires owner-approved Apple-account sign-in, LocalDevVPN, device trust, Developer Mode, restart, and an actual compatibility test on iOS 27.0.1. |
+| Sideloadly direct IPA | Windows-capable USB and Wi-Fi installer with a desktop refresh daemon. Its FAQ states that free-account apps last seven days and supports three active apps. | **Fallback only** | Closed external installer; depends on a reachable Windows host or USB for refresh. It should not be embedded in LeeWay or used as an authority. |
+| LiveContainer | It can avoid the three-app count by launching guest apps inside one host application. Its documentation says guest entitlements are not applied, guest containers are not isolated from one another, app extensions and remote push are unsupported, and it is AGPL-3.0. | **Rejected for Device Bridge** | Those limitations undermine the native Device Bridge’s direct-app identity, entitlement, data-isolation, and evidence model. It may be useful for unrelated disposable apps, not this provider. |
+| TrollStore | The official project supports iOS 14.0 beta 2 through 16.6.1, 16.7 RC, and 17.0, and says 17.0.1 and later will never be supported without another CoreTrust flaw. The observed phone is on iOS 27.0.1. | **Unavailable and rejected** | An exploit path is neither available on this device nor an acceptable foundation for a governed production adapter. |
+| Free Xcode Personal Team | Apple permits testing on the owner’s own device using Xcode. | **Not immediate** | Requires a physical Mac with Xcode and does not supply TestFlight or general distribution. |
+| Apple fee waiver | Available only to eligible legal nonprofits, accredited educational institutions, and government entities. | **Conditional later route** | Apple must approve; no eligibility or waiver is claimed. |
+
+## Selected architecture
+
+Use two independent delivery lanes instead of making all LeeWay capability depend on one sideloading tool:
+
+```text
+Safari PWA on iPhone
+  └─ permanent, no-fee LeeWay front door
+       └─ Formula request / Diagnostics / evidence UI
+
+Direct LeeWay Device Bridge IPA via SideStore
+  └─ optional native-device qualification lane
+       └─ public Metal probe / native adapter evidence
+```
+
+The PWA carries the durable user experience. SideStore is confined to the optional native laboratory where a direct iOS app is necessary. If SideStore fails or expires, the PWA remains usable; if browser compute is unavailable, it must report that condition rather than borrow a native-Metal claim.
+
+This design avoids MLC Chat dependence and avoids granting SideStore authority over Formula, inference, verification, or LeeWay identity.
+
 ## Potential membership exception
 
 Apple offers a fee waiver to eligible legal nonprofit organizations, accredited educational institutions, and government entities. Individuals and sole proprietors are excluded. Eligibility and approval are Apple’s decision; no waiver is claimed here.
@@ -63,6 +93,10 @@ Build the Safari installed web application inside `LEEWAY-DEVICE-BRIDGE` now. Ke
 - SideStore source: <https://github.com/SideStore/SideStore>
 - SideStore prerequisites: <https://docs.sidestore.io/docs/installation/prerequisites>
 - SideStore installation: <https://docs.sidestore.io/docs/installation/install>
+- SideStore FAQ and limits: <https://docs.sidestore.io/docs/faq>
+- LiveContainer source and limitations: <https://github.com/LiveContainer/LiveContainer>
+- TrollStore supported-version boundary: <https://github.com/opa334/TrollStore>
+- Sideloadly FAQ: <https://sideloadly.io/faq>
 
 ## Claim boundary
 
