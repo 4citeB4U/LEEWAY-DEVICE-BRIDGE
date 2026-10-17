@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b0f14">
+  <title>Refresh LeeWay on iPhone</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<main class="shell">
+  <header>
+    <p class="eyebrow">LEEWAY DEVICE BRIDGE</p>
+    <h1>Refresh the LeeWay app.</h1>
+    <p class="lede">Use this page only when the Home Screen app shows old buttons or an old layout.</p>
+  </header>
+
+  <section class="panel">
+    <div class="panel-head"><div><p class="kicker">PWA CACHE RECOVERY</p><h2>Get the current LeeWay screen</h2></div><span class="badge">SAFE RECOVERY</span></div>
+    <p class="muted">This removes only cached LeeWay web files and its service-worker registration. It does not remove the LeeWay Home Screen icon or the local browser profile stored by LeeWay.</p>
+    <button class="action" id="refreshLeeWay">REFRESH LEEWAY NOW</button>
+    <pre id="status" class="profile">Ready to refresh this LeeWay PWA.</pre>
+  </section>
+</main>
+<script type="module">
+  const status = document.querySelector("#status");
+  document.querySelector("#refreshLeeWay").addEventListener("click", async () => {
+    status.textContent = "Removing old LeeWay cached web files…";
+    try {
+      if ("serviceWorker" in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map(registration => registration.unregister()));
+      }
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map(cacheName => caches.delete(cacheName)));
+      status.textContent = "Current LeeWay files will load now…";
+      location.replace(`./?recovered=${Date.now()}`);
+    } catch (error) {
+      status.textContent = `LeeWay refresh could not finish: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  });
+</script>
+</body>
+</html>

@@ -20,6 +20,7 @@ assert.equal(browserDiagnosticStates.passed, "BROWSER_WEBGPU_READBACK_PASSED");
 const page = readFileSync(new URL("../docs/index.html", import.meta.url), "utf8");
 const source = readFileSync(new URL("../docs/apple-pwa-diagnostics.js", import.meta.url), "utf8");
 const app = readFileSync(new URL("../docs/app.js", import.meta.url), "utf8");
+const recovery = readFileSync(new URL("../docs/refresh.html", import.meta.url), "utf8");
 assert.match(page, /APPLE BROWSER ADAPTER/);
 assert.match(page, /APPLE IPHONE \/ IPAD/);
 assert.match(page, /NEXT STEP FOR THIS IPHONE/);
@@ -33,6 +34,9 @@ assert.match(app, /Safari does not let a web page open Apple's Add to Home Scree
 assert.match(app, /LEEWAY APP INSTALLED — SHOW STATUS/);
 assert.match(app, /function beginAppleQualification/);
 assert.match(app, /document\.documentElement\.classList\.add\("apple-pwa"\)/);
+assert.match(recovery, /REFRESH LEEWAY NOW/);
+assert.match(recovery, /serviceWorker\.getRegistrations/);
+assert.match(recovery, /caches\.delete/);
 assert.match(source, /nativeMetalState: "NOT_OBSERVED"/);
 assert.match(source, /formulaState: "NOT_EXECUTED"/);
 assert.match(source, /receiptState: "NOT_CREATED"/);

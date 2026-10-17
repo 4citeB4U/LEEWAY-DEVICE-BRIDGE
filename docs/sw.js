@@ -2,6 +2,7 @@ const CACHE = "leeway-device-bridge-v6";
 const ASSETS = [
   "./",
   "./index.html",
+  "./refresh.html",
   "./styles.css",
   "./apple-pwa.css",
   "./app.js",
