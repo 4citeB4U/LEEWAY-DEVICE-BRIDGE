@@ -1,5 +1,6 @@
 import {discoverDevice} from "./device-discovery.js";
 import {createApplePwaDiagnostics, runBrowserComputeProbe} from "./apple-pwa-diagnostics.js";
+import {initializeAppleAgentWorkstation} from "./apple-agent-workstation.js";
 
 const $=s=>document.querySelector(s);
 const isAppleMobile=()=>/iPad|iPhone|iPod/.test(navigator.userAgent)||(
@@ -96,29 +97,7 @@ $("#discoverBtn").addEventListener("click",async()=>{
   renderPackage(manifest,pkg);
 });
 showPublishedAndroidPackage();
-
-const relayUrl="wss://agent-lee-x.vercel.app/api/device-relay";
-const qualState=message=>{const el=$("#remoteQualState");if(el)el.textContent=message;};
-const qualOut=value=>{const el=$("#remoteQualOutput");if(el)el.textContent=typeof value==="string"?value:JSON.stringify(value,null,2);};
-$("#clearPairingBtn")?.addEventListener("click",()=>{$("#deviceIdInput").value="";$("#pairingTokenInput").value="";qualState("CLEARED");qualOut("Credentials cleared from this page.");});
-$("#remoteHealthBtn")?.addEventListener("click",async()=>{
-  const deviceId=$("#deviceIdInput").value.trim(),token=$("#pairingTokenInput").value.trim();
-  if(!deviceId||!token){qualState("INPUT REQUIRED");qualOut("Enter the Device ID and owner pairing token shown by the installed phone runtime.");return;}
-  qualState("CONNECTING");qualOut("Connecting to LeeWay relay...");
-  let settled=false;
-  const ws=new WebSocket(relayUrl);
-  const timer=setTimeout(()=>{if(!settled){settled=true;qualState("TIMEOUT");qualOut("No verified phone response before timeout.");try{ws.close();}catch{}}},20000);
-  ws.onopen=()=>ws.send(JSON.stringify({type:"hello",role:"client",deviceId,token}));
-  ws.onerror=()=>{if(!settled){settled=true;clearTimeout(timer);qualState("ERROR");qualOut("Relay connection error.");}};
-  ws.onmessage=e=>{
-    let m;try{m=JSON.parse(e.data);}catch{return;}
-    if(m.type==="hello-ack"){qualState("PAIRED");const id="health-"+Date.now();ws.send(JSON.stringify({type:"command",id,capability:"device.health",arguments:{}}));qualOut({paired:true,deviceId,command:id});return;}
-    if(["result","command-result","receipt","response"].includes(m.type)){
-      if(!settled){settled=true;clearTimeout(timer);qualState("REMOTE RECEIPT RETURNED");qualOut(m);try{ws.close();}catch{}}
-    }
-    if(m.type==="error"&&!settled){settled=true;clearTimeout(timer);qualState("FAILED");qualOut(m);try{ws.close();}catch{}}
-  };
-});
+initializeAppleAgentWorkstation();
 
 
 let deferredInstallPrompt=null;
