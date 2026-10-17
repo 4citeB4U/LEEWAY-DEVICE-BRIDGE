@@ -76,7 +76,7 @@
       "adapterId": "leeway.operator.ios",
       "platform": "ios",
       "version": "0.1.0",
-      "implementationStatus": "PROPOSED",
+      "implementationStatus": "PARTIAL",
       "authorityBoundary": "Apple sandbox and entitlement model. Cross-app arbitrary UI control is not claimed. Use App Intents, Shortcuts, document/photo pickers, ScreenCaptureKit where authorized, and managed-device APIs only when legitimately provisioned.",
       "nativeMechanisms": [
         "App Intents",
@@ -111,8 +111,8 @@
           "requiresHumanConsent": true
         }
       },
-      "evidenceState": "PROPOSED",
-      "implementationPath": null,
+      "evidenceState": "UNVERIFIED",
+      "implementationPath": "apps/apple",
       "documentation": "docs/DEVICE-OPERATOR.md"
     },
     {

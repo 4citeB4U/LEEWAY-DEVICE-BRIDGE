@@ -1,0 +1,66 @@
+name: Apple Device Bridge Qualification
+
+on:
+  push:
+    paths:
+      - "apps/apple/**"
+      - "operator/adapter-registry.json"
+      - "docs/APPLE-DEVICE-BRIDGE-ADAPTER.md"
+      - ".github/workflows/apple-device-bridge-qualification.yml"
+  pull_request:
+    paths:
+      - "apps/apple/**"
+      - "operator/adapter-registry.json"
+      - "docs/APPLE-DEVICE-BRIDGE-ADAPTER.md"
+      - ".github/workflows/apple-device-bridge-qualification.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualify-ios-adapter:
+    name: Build unsigned iOS Device Bridge adapter
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Record Apple build toolchain
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-path
+
+      - name: Enforce the independent runtime boundary
+        run: |
+          set -euo pipefail
+          if rg --line-number --ignore-case 'mlc|llama\.cpp|executorch|mlx' apps/apple/Sources; then
+            echo 'A third-party runtime reference entered the iOS Device Bridge source boundary.' >&2
+            exit 1
+          fi
+
+      - name: Generate the Xcode project
+        run: |
+          set -euo pipefail
+          brew install xcodegen
+          cd apps/apple
+          xcodegen generate --spec project.yml
+
+      - name: Build unsigned iPhone source
+        run: |
+          set -o pipefail
+          cd apps/apple
+          : > xcodebuild-unsigned.log
+          xcodebuild -project LeeWayDeviceBridgeApple.xcodeproj -scheme LeeWayDeviceBridgeApple \
+            -configuration Debug -sdk iphoneos -destination 'generic/platform=iOS' \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build 2>&1 | tee xcodebuild-unsigned.log
+
+      - name: Preserve qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: leeway-device-bridge-apple-unsigned-${{ github.run_id }}
+          path: apps/apple/xcodebuild-unsigned.log
+          if-no-files-found: error
+          retention-days: 30
