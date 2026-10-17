@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "leeway.apple-pwa.webgpu-readback-observation.v1",
+  "recordedAt": "2026-10-17",
+  "source": "owner-provided output from the installed LeeWay iPhone PWA",
+  "observation": {
+    "observationId": "2e15ffca-3a85-43b5-bc3c-fc3bfb7e1c2f",
+    "observedAt": "2026-10-17T17:42:02.577Z",
+    "adapter": "leeway.device.bridge.pwa",
+    "adapterState": "BROWSER_SURFACE_ACTIVE",
+    "runtime": {
+      "platform": "iPhone Safari PWA",
+      "standalone": true,
+      "online": true,
+      "secureContext": true,
+      "serviceWorkerControlled": true
+    },
+    "browserCompute": {
+      "state": "BROWSER_WEBGPU_READBACK_PASSED",
+      "transformation": "y = 3x + 1",
+      "input": [3, 8, 21, 34, 55, 89, 144, 233],
+      "expected": [10, 25, 64, 103, 166, 268, 433, 700],
+      "actual": [10, 25, 64, 103, 166, 268, 433, 700],
+      "independentCheck": {
+        "expectedMatchesTransformation": true,
+        "actualMatchesExpected": true,
+        "verifiedValueCount": 8
+      },
+      "adapterMetadata": {
+        "state": "BROWSER_ADAPTER_INFO_OBSERVED",
+        "vendor": "apple",
+        "architecture": "apple",
+        "description": "apple"
+      }
+    },
+    "nativeMetal": {
+      "state": "NOT_OBSERVED"
+    },
+    "formula": {
+      "canonicalState": "NOT_EXECUTED"
+    },
+    "veritas": {
+      "state": "NOT_EXECUTED"
+    },
+    "receipt": {
+      "state": "NOT_CREATED"
+    }
+  },
+  "claimBoundary": "This establishes a browser WebGPU workload and readback result from the physical iPhone PWA. It does not identify a precise Apple GPU model, establish direct native Metal execution, or create a Formula, Veritas, or canonical receipt result."
+}
