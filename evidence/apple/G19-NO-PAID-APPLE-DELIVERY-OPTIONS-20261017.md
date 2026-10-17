@@ -30,6 +30,14 @@ AltStore documents a community route that uses a regular Apple account for sidel
 
 The project may later produce an unsigned IPA artifact for owner-controlled sideload testing, but that is not implemented or qualified in this checkpoint.
 
+### SideStore assessment
+
+SideStore is a viable candidate for the owner-controlled sideload route. Its repository identifies it as an AGPL-3.0 licensed AltStore fork that resigns apps with a personal development certificate and refreshes the ordinary seven-day development period. Its current documentation supports an initial install from Windows and requires an Apple Account, a trusted USB-connected iPhone, Wi-Fi, LocalDevVPN, iTunes or Apple Devices, and the `iloader` installer.
+
+For the current iOS generation, SideStore’s installation instructions require the owner to trust the developer app, enable Developer Mode, accept a restart, and then connect LocalDevVPN before using SideStore. The VPN must be active to install, update, or refresh apps. These are device-security and account-signing decisions for the owner to make on the device; they have not been performed.
+
+LeeWay must not copy, modify, or bundle SideStore into `LEEWAY-DEVICE-BRIDGE`. Its AGPL-3.0 license requires a separate license review before any derivative distribution. The approved architecture is narrower: LeeWay builds an independently owned IPA; the owner uses an unmodified SideStore release as an external installation and seven-day-refresh transport. Formula, runtime, verification, receipts, model execution, and device identity remain LeeWay-owned concerns.
+
 ## Potential membership exception
 
 Apple offers a fee waiver to eligible legal nonprofit organizations, accredited educational institutions, and government entities. Individuals and sole proprietors are excluded. Eligibility and approval are Apple’s decision; no waiver is claimed here.
@@ -52,6 +60,9 @@ Build the Safari installed web application inside `LEEWAY-DEVICE-BRIDGE` now. Ke
 - Apple Program enrollment and fee-waiver information: <https://developer.apple.com/help/account/membership/program-enrollment/>
 - Apple Safari web-application metadata: <https://developer.apple.com/library/archive/documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html>
 - AltStore documentation: <https://github.com/altstoreio/FAQ/blob/main/altstore-world/your-altstore.md>
+- SideStore source: <https://github.com/SideStore/SideStore>
+- SideStore prerequisites: <https://docs.sidestore.io/docs/installation/prerequisites>
+- SideStore installation: <https://docs.sidestore.io/docs/installation/install>
 
 ## Claim boundary
 
