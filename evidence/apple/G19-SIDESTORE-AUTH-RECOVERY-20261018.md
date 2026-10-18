@@ -105,6 +105,22 @@ A local, read-only probe confirmed the Windows prerequisites presently running:
 
 **Next selected route:** choose **StikStore (Windows)** in iLoader, use **Reset Anisette State**, and make one login attempt. This selection is based on an actual successful endpoint response from this computer, not merely the provider name.
 
+## Authentication recovery outcome
+
+The physical iLoader screen subsequently showed a successful recovery through **Jkcoxson (Windows)**:
+
+| Check | Result | State |
+| --- | --- | --- |
+| iLoader account | Logged in | OBSERVED |
+| Active iPhone | Leonard's iPhone, USB, selected | OBSERVED |
+| Anisette provider | Jkcoxson (Windows) | OBSERVED |
+| Windows reachability | TCP 443 to `ani.jkcoxson.com` succeeded | VERIFIED — transport only |
+| Apple Devices stack | Required Windows processes running | OBSERVED |
+| SideStore stable install | Not yet attempted in this authenticated state | PENDING |
+| Certificate/provisioning inspection | Not yet observed in this authenticated state | PENDING |
+
+This supersedes the planned StikStore fallback: Jkcoxson (Windows) authenticated successfully and should remain selected. Authentication is not installation proof. Before any stable SideStore reinstall, inspect iLoader's **Certificates** panel without resetting or revoking anything, because the prior `0xE8008018` error was an installation-stage signing-identity rejection.
+
 ### Tier 3 — reinstall only after the two repairs fail
 
 Reinstalling SideStore can affect applications SideStore manages. Do not begin this tier until Tier 1 and Tier 2 results are captured. The LeeWay Device Bridge should not be deleted merely to resolve a SideStore sign-in error.
