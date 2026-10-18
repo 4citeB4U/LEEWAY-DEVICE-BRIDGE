@@ -38,7 +38,7 @@ IPA SHA-256:     9457b8bd283f038546fb506bccd5b1d1f121892bc25addc7cc77e7ca90bb532
 
 ## Remaining physical and authority gates
 
-The physical iPhone 11 passed the previous native Metal probe from the earlier package. It has not yet installed this receipt-enabled IPA, so the new export control and its local receipt have not been observed on-device.
+The physical iPhone 11 initially passed the native Metal probe from the earlier package. The receipt-enabled IPA was subsequently installed and observed on-device: the native receipt section displays `PASS`, `PENDING_EXTERNAL_VERIFICATION`, both hash prefixes, and the export control. See [the physical receipt observation](G19-IPHONE11-LOCAL-METAL-RECEIPT-OBSERVED-20261018.md). The complete exported JSON is still required before its hashes can be independently recomputed.
 
 The following remain separate and unexecuted:
 
