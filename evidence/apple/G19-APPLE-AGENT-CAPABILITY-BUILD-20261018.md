@@ -47,3 +47,12 @@ The App Intent is a native Apple entry point for a LeeWay Device Bridge action. 
 2. Launch it once, then verify that **Run LeeWay Metal Probe** appears in Shortcuts and produces a fresh local receipt.
 3. Test the Phone and Mail handoffs only with an owner-chosen destination and record the result as a system handoff, not as a completed call or delivered email.
 4. Establish an authorized external receipt verifier before changing the current pending verification state.
+
+## Contributor handoff
+
+The bounded Apple lane was handed to the canonical C3 mission and contributor rendezvous after the build completed:
+
+- [Runtime Fabric C3 issue #21 handoff](https://github.com/4citeB4U/Leeway-Runtime-Fabric/issues/21#issuecomment-6253958138)
+- [LeeWay Contributor Coordination Hub #22 cross-link](https://github.com/4citeB4U/LeeWay-Agent-Skills/issues/22#issuecomment-6253958376)
+
+The handoff records source refs, changed paths, the local and hosted test evidence, the physical iPhone receipt boundary, rollback, and the next physical qualification action. It does not advance C3, Veritas, or Learning Ledger status.
