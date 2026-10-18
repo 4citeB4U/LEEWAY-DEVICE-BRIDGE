@@ -52,6 +52,21 @@ Only if Tier 1 repeats the same failure:
 
 This is SideStore's documented pairing recovery order. It temporarily removes the pairing transport until iLoader replaces it, so it is deliberately after the cache-only repair.
 
+**Tier 2 result:** **FAILED** — after SideStore pairing reset and iLoader replacement, SideStore still did not allow Apple Account sign-in. This excludes the current pairing record as the repair that resolves `-80045`.
+
+## Installer findings
+
+The owner subsequently reported these iLoader installation results while attempting to reinstall SideStore:
+
+| Code | Meaning | Repair relevance |
+| --- | --- | --- |
+| `0xE8008018` | The identity used to sign the executable is no longer valid. | The iPhone rejected the signing identity iLoader used for the attempted SideStore install. This is a certificate / provisioning identity boundary. |
+| `0xE8008023` | An error occurred while communicating with the device agent. | The device-side installation communication also failed; it does not establish a damaged LeeWay IPA. |
+
+iLoader 2.3.10 is installed and running on Windows, and Apple Devices services are running. The native iLoader window was not exposed to the authorized Windows control surface for inspection, so no unseen certificate or installer control was changed.
+
+The next repair must inspect iLoader's **Certificates** state and re-establish a valid signing identity before another SideStore reinstall. A certificate reset can affect every app signed under that development identity; it requires owner-visible confirmation at the iLoader action.
+
 ### Tier 3 — reinstall only after the two repairs fail
 
 Reinstalling SideStore can affect applications SideStore manages. Do not begin this tier until Tier 1 and Tier 2 results are captured. The LeeWay Device Bridge should not be deleted merely to resolve a SideStore sign-in error.
@@ -70,7 +85,9 @@ Reinstalling SideStore can affect applications SideStore manages. Do not begin t
 - [SideStore common issues](https://docs.sidestore.io/docs/troubleshooting/common-issues) directs users to change the Anisette server, reset `adi.pb`, restart, repair pairing, and reinstall only later.
 - [SideStore error codes](https://docs.sidestore.io/docs/troubleshooting/error-codes) documents the pairing-recovery sequence and lists **Macley** as a later Anisette choice.
 - [SideStore custom Anisette servers](https://docs.sidestore.io/docs/advanced/anisette) describes Anisette as SideStore authentication infrastructure; this does not grant it Formula, Runtime Fabric, Veritas, or LeeWay identity authority.
+- The [iLoader SideStore install guide](https://github.com/SideStore/SideStore-Docs/blob/main/docs/installation/install.mdx) identifies iLoader's stable installer as the supported computer-side setup path.
+- The [iOS deployment error mapping](https://github.com/ios-control/ios-deploy/blob/master/src/ios-deploy/errors.h) maps `0xE8008018` to an invalid signing identity and `0xE8008023` to device-agent communication.
 
 ## Evidence state
 
-**TIER 1 FAILED; TIER 2 PENDING.** No Formula evaluation, canonical Veritas decision, Runtime Fabric action, or Learning Ledger update occurred in this recovery record.
+**TIER 1 FAILED; TIER 2 FAILED; INSTALLER IDENTITY REPAIR PENDING.** No Formula evaluation, canonical Veritas decision, Runtime Fabric action, or Learning Ledger update occurred in this recovery record.
