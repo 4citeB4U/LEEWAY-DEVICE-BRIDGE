@@ -166,7 +166,7 @@ iLoader and SideStore each hold their own Anisette/authentication session. The i
 
 ## Root-cause correction — SideStore 0.6.4 is upstream sign-in broken
 
-The physical iPhone reported **SideStore 0.6.4**. SideStore's own 0.6.4 release page warns: sign-in is broken on 0.6.4 and earlier. The official `0.7.0-alpha` release identifies Apple server-side changes as the cause and provides its direct repair.
+The physical iPhone reported **SideStore 0.6.4**. SideStore's own 0.6.4 release page warns: sign-in is broken on 0.6.4 and earlier. The official `0.7.0-alpha` release identifies Apple server-side changes behind a **503** condition and provides a repair for that condition.
 
 | Check | Result | State |
 | --- | --- | --- |
@@ -177,9 +177,11 @@ The physical iPhone reported **SideStore 0.6.4**. SideStore's own 0.6.4 release 
 | Official repair artifact | SideStore `0.7.0-alpha` IPA | VERIFIED source identity |
 | Local IPA SHA-256 | `e334f86e6ceeab2e0d886c07611246533f474bb18838cf13ebc09ed1f0d622b5` | VERIFIED match to publisher digest |
 
-The verified repair file is `C:\Users\Leona\Downloads\SideStore-0.7.0-alpha.ipa`. It must be imported through the already-authenticated iLoader session, with the existing certificate and pairing file preserved. The owner must then observe the replacement version and make one normal sign-in attempt. Full protocol: [Apple SideStore 0.7.0 repair](../../docs/APPLE-SIDESTORE-0.7.0-REPAIR.md).
+The verified repair file was imported through the already-authenticated iLoader session with the existing certificate and pairing file preserved. iLoader's direct device inventory subsequently reported `CFBundleShortVersionString: 0.7.0-20260911.328+6032424a` for the installed SideStore bundle. This is direct evidence that the phone is running the repaired 0.7 build rather than 0.6.4.
 
-This correction supersedes the earlier phone-side cache/provider retry. The underlying iLoader and LeeWay Device Bridge installation remain intact; they are not implicated in the known SideStore 0.6.4 defect.
+The `-80045` Apple Account sign-in error still occurred on the 0.7 build. An open upstream SideStore issue reports the same reproducible pattern: iLoader authentication succeeds, 0.7.0-alpha installs, and SideStore then fails Apple Account sign-in with `-80045`. The earlier conclusion that upgrading to 0.7 would resolve this error was too broad; that build addresses 503, not every current Apple Account rejection.
+
+**Current repair boundary:** SideStore's phone-side account client is blocked upstream. Repeated attempts, SideJIT changes, pairing resets, and certificate revocation are not justified repairs. LeeWay native delivery instead uses the already verified iLoader USB route: [Apple direct iLoader delivery](../../docs/APPLE-DIRECT-ILOADER-DELIVERY.md).
 
 ### Tier 3 — reinstall only after the two repairs fail
 
@@ -206,4 +208,4 @@ Reinstalling SideStore can affect applications SideStore manages. Do not begin t
 
 ## Evidence state
 
-**VERSION REPAIR READY; PHONE-SIDE INSTALL AND SIGN-IN PENDING.** No Formula evaluation, canonical Veritas decision, Runtime Fabric action, or Learning Ledger update occurred in this recovery record.
+**SIDESTORE 0.7 INSTALLED; UPSTREAM `-80045` BLOCKED. LEEWAY DIRECT ILOADER DELIVERY READY.** No Formula evaluation, canonical Veritas decision, Runtime Fabric action, or Learning Ledger update occurred in this recovery record.

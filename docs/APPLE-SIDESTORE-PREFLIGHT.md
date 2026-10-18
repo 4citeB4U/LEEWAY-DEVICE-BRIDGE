@@ -4,7 +4,7 @@ Use this check before installing or updating the native LeeWay Device Bridge IPA
 
 ## Required state
 
-1. **Version gate:** do not attempt phone-side sign-in with SideStore **0.6.4 or earlier**. SideStore upstream marks those versions as sign-in broken. Use the controlled repair in [SideStore 0.7.0 sign-in repair](./APPLE-SIDESTORE-0.7.0-REPAIR.md).
+1. **Version gate:** do not attempt phone-side sign-in with SideStore **0.6.4 or earlier**. SideStore upstream marks those versions as sign-in broken. The observed 0.7.0-alpha upgrade can repair the former 503 condition but does not yet repair the current `-80045` blocker. Read [SideStore version-gate status](./APPLE-SIDESTORE-0.7.0-REPAIR.md).
 2. **iLoader account:** the panel says **LOGGED IN AS**.
 3. **Physical device:** the intended iPhone is selected and connected by USB.
 4. **Anisette route:** use a built-in provider that completed account authentication on this Windows computer. The current observed working selection is **Jkcoxson (Windows)**.
@@ -28,7 +28,7 @@ Use this check before installing or updating the native LeeWay Device Bridge IPA
 2. If iLoader authenticates but the install reports `0xE8008018`, inspect the certificate state before any reset or revocation. That code is an install-stage identity rejection, distinct from an Anisette outage.
 3. Reinstall SideStore only after the provider, device connection, and certificate state have been examined.
 4. If iLoader installs successfully but SideStore reports version 0.6.4 or earlier, stop. That version has an upstream sign-in defect; install the approved 0.7.0 repair artifact before changing SideJIT, certificates, or iPhone Anisette settings.
-5. If the repaired SideStore build still fails, capture its exact version and error before investigating its own Anisette provider and `adi.pb` cache.
+5. If SideStore 0.7.0-alpha still fails with `-80045`, stop retrying and use [Apple direct iLoader delivery](./APPLE-DIRECT-ILOADER-DELIVERY.md) for LeeWay packages. Capture the exact SideStore version and error for later upstream verification.
 
 ## Boundaries
 

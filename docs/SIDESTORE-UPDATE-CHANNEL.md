@@ -1,6 +1,6 @@
 # LeeWay Apple SideStore update channel
 
-## What updates automatically
+## What updates automatically when SideStore is healthy
 
 The LeeWay PWA is served from GitHub Pages. Its browser shell updates from GitHub when Safari retrieves the updated site and service worker.
 
@@ -10,7 +10,11 @@ Native Apple code is delivered differently. Each successful **Apple Device Bridg
 - `LEEWAY-APPLE-PACKAGE-MANIFEST.json`
 - `sidestore-source.json`
 
-The SideStore source reports the IPA’s actual bundle version, build number, SHA-256 manifest, date, and size. GitHub is the build and package authority; SideStore is the owner-controlled iPhone signer and installer.
+The SideStore source reports the IPA’s actual bundle version, build number, SHA-256 manifest, date, and size. GitHub is the build and package authority; SideStore is the owner-controlled iPhone signer and installer **only after its separate phone-side Apple Account sign-in works**.
+
+## Current iPhone fallback
+
+This iPhone currently has a SideStore `-80045` sign-in blocker after the official 0.7.0-alpha upgrade. Use [Apple direct iLoader delivery](./APPLE-DIRECT-ILOADER-DELIVERY.md) to install LeeWay packages through the verified Windows USB route. The GitHub release remains the package authority; iLoader signs and installs it.
 
 ## One-time phone setup
 
