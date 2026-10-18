@@ -14,6 +14,7 @@
 | Source revision | `231db31095fdef31c5066bf37e6757a92f2de4cf` | VERIFIED from manifest |
 | IPA digest | `833d88a1fb13248b326e39ac26b7c8fd02535202056d2824a47d413575eab007` | VERIFIED against downloaded IPA |
 | Local proof copy | `C:\Users\Leona\Downloads\LeeWay-Apple-Proof-20261018\LeeWayDeviceBridge-unsigned.ipa` | OBSERVED |
+| iLoader-ready copy | `C:\Users\Leona\Downloads\LeeWayDeviceBridge-0.1.27-build27.ipa` | VERIFIED copied and rehashed |
 
 ## Build and publication evidence
 
@@ -31,7 +32,7 @@ The following is the only uncompleted physical action. It deliberately uses the 
 1. Connect and unlock the iPhone over USB.
 2. In iLoader, confirm the account remains logged in and the intended iPhone is selected.
 3. Select **Import IPA**.
-4. Choose `C:\Users\Leona\Downloads\LeeWay-Apple-Proof-20261018\LeeWayDeviceBridge-unsigned.ipa`.
+4. Choose `C:\Users\Leona\Downloads\LeeWayDeviceBridge-0.1.27-build27.ipa`.
 5. Wait for iLoader to report that signing and installation completed.
 6. On the iPhone, open **LeeWay Device Bridge** and run **Device Bridge Metal Probe** once.
 7. Capture the post-install iLoader result and the app’s Metal observation/receipt screen.
