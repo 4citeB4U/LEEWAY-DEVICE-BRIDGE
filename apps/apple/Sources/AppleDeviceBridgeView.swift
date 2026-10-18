@@ -18,6 +18,12 @@ final class AppleBridgeStore: ObservableObject {
 
 struct AppleDeviceBridgeView: View {
     @StateObject private var store = AppleBridgeStore()
+    @Environment(\.openURL) private var openURL
+    @State private var phoneNumber = ""
+    @State private var emailRecipient = ""
+    @State private var emailSubject = "LeeWay Device Bridge"
+    @State private var emailBody = ""
+    @State private var handoffState = "No system handoff requested."
 
     var body: some View {
         NavigationStack {
@@ -45,6 +51,51 @@ struct AppleDeviceBridgeView: View {
                     } else {
                         LabeledContent("State", value: "NOT_CREATED")
                         Text("A receipt is issued only after this app observes a Metal probe result. External verification remains separate.")
+                    }
+                }
+                Section("Agent Lee system entry points") {
+                    LabeledContent("LeeWay actions", value: "Siri and Shortcuts")
+                    Text("The installed app exposes its Metal probe as a LeeWay App Intent. A shortcut may start the LeeWay action; it does not grant control of other apps.")
+                }
+                Section("Owner-visible communications") {
+                    TextField("Phone number", text: $phoneNumber)
+                        .keyboardType(.phonePad)
+                    Button("Hand off to Phone") {
+                        guard let url = AppleSystemHandoff.phoneURL(for: phoneNumber) else {
+                            handoffState = "Enter a phone number before requesting a Phone handoff."
+                            return
+                        }
+                        openURL(url)
+                        handoffState = "Phone handoff requested. Complete or cancel the call in Apple’s Phone interface."
+                    }
+
+                    TextField("Email recipient", text: $emailRecipient)
+                        .textInputAutocapitalization(.never)
+                        .keyboardType(.emailAddress)
+                    TextField("Subject", text: $emailSubject)
+                    TextField("Message", text: $emailBody, axis: .vertical)
+                        .lineLimit(3...6)
+                    Button("Hand off to Mail") {
+                        guard let url = AppleSystemHandoff.emailURL(
+                            recipient: emailRecipient,
+                            subject: emailSubject,
+                            body: emailBody
+                        ) else {
+                            handoffState = "Enter an email recipient before requesting a Mail handoff."
+                            return
+                        }
+                        openURL(url)
+                        handoffState = "Mail handoff requested. Review and send or cancel in Apple’s mail interface."
+                    }
+                    Text(handoffState)
+                }
+                Section("Apple capability boundary") {
+                    ForEach(AppleCapabilityCatalog.iOS) { capability in
+                        VStack(alignment: .leading, spacing: 4) {
+                            LabeledContent(capability.id, value: capability.state.rawValue)
+                            Text(capability.detail)
+                                .font(.footnote)
+                        }
                     }
                 }
                 Section {
