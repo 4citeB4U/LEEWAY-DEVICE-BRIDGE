@@ -16,4 +16,4 @@ No physical device, Apple account, certificate, profile, pairing record, package
 
 ## Acceptance performed
 
-The fixture test proves deterministic classification for iOS/iLoader, Android package installer, profile mismatch, unknown target, and non-executing lifecycle methods. It does not prove an installation on a physical device.
+The fixture test proves deterministic classification for iOS/iLoader, Android package installer, Windows, macOS, Linux, profile mismatch, unknown target, and non-executing lifecycle methods. It does not prove an installation on a physical device.

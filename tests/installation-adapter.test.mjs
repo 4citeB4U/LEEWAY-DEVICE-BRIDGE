@@ -36,6 +36,22 @@ const apk = { type: "apk", expectedSha256: digest, actualSha256: digest };
 assert.equal(planInstallation({ target: androidTarget, package: apk }).state, "OWNER_AUTHORIZATION_REQUIRED");
 assert.equal(planInstallation({ target: androidTarget, package: apk, ownerApproved: true }).route, "ANDROID_PACKAGE_INSTALLER_HANDOFF");
 
+for (const [platform, packageType, route] of [
+  ["windows", "msix-or-exe", "WINDOWS_NATIVE_INSTALLER"],
+  ["macos", "dmg-or-pkg", "MACOS_NATIVE_INSTALLER"],
+  ["linux", "native-package", "LINUX_NATIVE_PACKAGE_MANAGER"]
+]) {
+  const target = {
+    platform,
+    transport: { ready: true },
+    installerProviders: [{ id: `${platform}-native-installer`, health: "HEALTHY", authorized: true }]
+  };
+  const packageDescriptor = { type: packageType, expectedSha256: digest, actualSha256: digest };
+  const plan = planInstallation({ target, package: packageDescriptor, ownerApproved: true });
+  assert.equal(plan.state, "DRY_RUN_READY");
+  assert.equal(plan.route, route);
+}
+
 assert.equal(planInstallation({ target: { platform: "unknown" }, package: ipa }).state, "UNSUPPORTED_TARGET");
 assert.equal(probeInstallationTarget(appleTarget).state, "INSTALLER_PROVIDER_OBSERVED");
 assert.equal(executeInstallation().state, "EXECUTION_NOT_IMPLEMENTED");
