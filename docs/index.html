@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0b0f14">
-  <title>LeeWay Device-Neutral Workstation</title>
+  <title>LeeWay Device Bridge</title>
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" href="./leeway-official-logo.png">
   <link rel="apple-touch-icon" href="./leeway-official-logo.png">
@@ -13,146 +13,68 @@
 </head>
 <body>
 <main class="shell">
-  <header>
+  <header class="hero">
     <p class="eyebrow">LEEWAY DEVICE BRIDGE</p>
-    <h1>LeeWay Device-Neutral Workstation.</h1>
-    <p class="lede">Install the LeeWay workstation directly from Safari on iPhone or iPad. The Android APK below is only for Android phones.</p>
+    <h1>One bridge. Four device lanes.</h1>
+    <p class="lede">Choose your platform, open its workstation, and use only the package or diagnostics that belong to that platform.</p>
   </header>
 
-  <section class="panel" id="appleIphoneInstall">
-    <div class="panel-head">
-      <div><p class="kicker">APPLE IPHONE / IPAD</p><h2>Install and launch LeeWay from Safari</h2></div>
-      <span id="pwaState" class="badge">CHECKING</span>
-    </div>
-    <p class="muted"><strong>This is the Apple LeeWay PWA installation.</strong> It does not download an APK or install native code. If the LeeWay icon is already on your Home Screen, installation is complete: tap that icon to launch LeeWay.</p>
-    <details id="appleInstallSteps" class="package-meta" open><summary>Apple Safari install and launch steps</summary><ol><li>Open this LeeWay page in <strong>Safari</strong> on the iPhone.</li><li>Tap <strong>Share</strong> (the square with the upward arrow).</li><li>Tap <strong>Add to Home Screen</strong>, then tap <strong>Add</strong>.</li><li>After the icon appears, launch LeeWay by tapping the new Home Screen icon.</li></ol></details>
-    <div class="panel-head">
-      <button class="action" id="installPwaBtn">SHOW APPLE INSTALL STATUS</button>
-      <button id="launchPwaBtn">REFRESH THIS LEEWAY APP</button>
-    </div>
-    <pre id="pwaOutput" class="profile">Checking Apple Safari installation and launch state…</pre>
+  <nav class="lane-nav" aria-label="Platform lanes">
+    <a href="#appleLane">Apple</a><a href="#androidLane">Android</a><a href="#windowsLane">Windows</a><a href="#linuxLane">Linux</a>
+  </nav>
+
+  <section class="platform-grid" aria-label="LeeWay platform lanes">
+    <article class="platform-card apple-card" id="appleLane">
+      <p class="kicker">APPLE · IPHONE / IPAD / MAC</p><h2>Apple workspace and native Metal</h2>
+      <p>Use the Home Screen app as the daily LeeWay front door. Use the native IPA only when direct Metal service is required.</p>
+      <div class="card-actions"><a class="action" href="https://github.com/codespaces/new?hide_repo_select=true&amp;repo=1380304068" target="_blank" rel="noopener">OPEN APPLE WORKSTATION</a><a class="action secondary" href="https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/tag/apple-latest" target="_blank" rel="noopener">OPEN APPLE PACKAGE</a></div>
+      <div class="card-links"><a href="#appleRuntime">Apple controls</a><a href="./APPLE-DIRECT-ILOADER-DELIVERY.md">Direct iLoader update</a><a href="./ILOADER-PERSISTENCE.md">iLoader saved setup</a></div>
+    </article>
+    <article class="platform-card" id="androidLane">
+      <p class="kicker">ANDROID · PHONE / TABLET</p><h2>Android workspace and native bridge</h2>
+      <p>Use the verified Android extension for the Android native lane. The workstation is the same LeeWay development workplane.</p>
+      <div class="card-actions"><a class="action" id="openAndroidWorkstation" href="https://github.com/codespaces/new?hide_repo_select=true&amp;repo=1380304068" target="_blank" rel="noopener">OPEN ANDROID WORKSTATION</a><a class="action secondary" href="./downloads/leeway-device-bridge-android-latest-debug.apk" download>DOWNLOAD ANDROID EXTENSION</a></div>
+      <div class="card-links"><a href="#androidRuntime">Android controls</a><a href="./secondary-workstation-node.json">Workstation contract</a></div>
+    </article>
+    <article class="platform-card" id="windowsLane">
+      <p class="kicker">WINDOWS · DESKTOP / LAPTOP</p><h2>Windows development lane</h2>
+      <p>Open the LeeWay workspace for source, Git, diagnostics, and device-package work. A separate Windows native adapter remains platform-qualified only when its own evidence exists.</p>
+      <div class="card-actions"><a class="action" href="https://github.com/codespaces/new?hide_repo_select=true&amp;repo=1380304068" target="_blank" rel="noopener">OPEN WINDOWS WORKSTATION</a></div>
+      <p class="lane-state">Native Device Bridge: <strong>NOT QUALIFIED IN THIS SCREEN</strong></p>
+    </article>
+    <article class="platform-card" id="linuxLane">
+      <p class="kicker">LINUX · DESKTOP / SERVER</p><h2>Linux development lane</h2>
+      <p>Open the LeeWay workspace for Linux-capable development tools. A Linux native Device Bridge adapter will appear only after it has its own package and physical qualification evidence.</p>
+      <div class="card-actions"><a class="action" href="https://github.com/codespaces/new?hide_repo_select=true&amp;repo=1380304068" target="_blank" rel="noopener">OPEN LINUX WORKSTATION</a></div>
+      <p class="lane-state">Native Device Bridge: <strong>PLANNED · NOT YET QUALIFIED</strong></p>
+    </article>
   </section>
 
-  <section class="panel" id="appleFirstLaunch">
-    <div class="panel-head">
-      <div><p class="kicker">NEXT STEP FOR THIS IPHONE</p><h2>Check LeeWay on this device</h2></div>
-      <span class="badge">READY</span>
-    </div>
-    <p class="muted">Now that the LeeWay icon is on the Home Screen, collect the first browser observation for the Digital Brain and Diagnostics. This checks only what Safari exposes; it does not claim native Metal, model inference, Formula authorization, or a receipt.</p>
-    <button class="action" id="beginAppleQualification">CHECK THIS IPHONE NOW</button>
-    <p class="package-meta">After the observation appears, you may choose <strong>RUN BROWSER COMPUTE PROBE</strong> to measure browser WebGPU readback when Safari exposes it.</p>
-  </section>
-
-  <section class="panel" id="appleNativePackage">
-    <div class="panel-head">
-      <div><p class="kicker">LEEWAY APPLE NATIVE PACKAGE</p><h2>Direct Metal service delivery</h2></div>
-      <span class="badge">QUALIFIED IPA</span>
-    </div>
-    <p class="muted">The PWA is your Apple front door. This separate LeeWay Device Bridge IPA contains the native Metal adapter. It has passed macOS source compilation, standard IPA-layout packaging, and manifest-digest verification. It remains unsigned until SideStore signs it for this iPhone.</p>
-    <div class="panel-head">
-      <a class="action" id="openAppleNativePackage" href="https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/tag/apple-latest" target="_blank" rel="noopener">OPEN LATEST NATIVE PACKAGE</a>
-      <a class="action" id="addAppleSideStoreChannel" href="sidestore://source?url=https%3A%2F%2Fgithub.com%2F4citeB4U%2FLEEWAY-DEVICE-BRIDGE%2Freleases%2Fdownload%2Fapple-latest%2Fsidestore-source.json">ADD LEEWAY UPDATE CHANNEL</a>
-      <a class="action" href="./APPLE-SIDESTORE-PREFLIGHT.md">APPLE SIDELOAD PREFLIGHT</a>
-      <a class="action" href="./APPLE-SIDESTORE-0.7.0-REPAIR.md">SIDESTORE SIGN-IN REPAIR</a>
-      <a class="action" href="./APPLE-DIRECT-ILOADER-DELIVERY.md">DIRECT ILOADER UPDATE</a>
-      <a class="action" href="./APPLE-NATIVE-DELIVERY-PROTOCOL.md">APPLE DELIVERY PROTOCOL</a>
-    </div>
-    <p class="package-meta">Add the LeeWay update channel to SideStore once after SideStore can sign in. The current SideStore <code>-80045</code> issue is an upstream phone-side blocker, so use <strong>DIRECT ILOADER UPDATE</strong> for LeeWay packages now. iLoader signs the IPA over USB; GitHub remains the package authority. This LeeWay URL belongs in SideStore's app-source flow only; never enter it in an Anisette Server setting.</p>
-    <details class="package-meta"><summary>Before you install or update through SideStore</summary><ol><li>If SideStore displays version <strong>0.6.4 or earlier</strong>, do not try SideJIT or cache resets. Use <strong>SIDESTORE SIGN-IN REPAIR</strong> first.</li><li>If the repaired SideStore version still returns <strong>-80045</strong>, stop retrying and select <strong>DIRECT ILOADER UPDATE</strong> for the LeeWay package.</li><li>In iLoader, confirm the Apple Account says <strong>LOGGED IN AS</strong> and the iPhone is selected over USB.</li><li>Use a built-in provider that has successfully authenticated on this computer. Do not paste the LeeWay update URL into Anisette settings.</li><li>Open <strong>Certificates</strong>. Preserve the existing iOS Development certificate unless iLoader has authenticated and specifically reports an install-stage signing-identity error.</li></ol><p>LeeWay records this preflight and keeps its update catalog separate from SideStore authentication. iLoader remains the owner-controlled Apple signer.</p></details>
-  </section>
-
-  <section class="panel" id="workstationLaunchers">
-    <div class="panel-head">
-      <div><p class="kicker">LEEWAY WORKSTATION LAUNCHERS</p><h2>Choose the device lane</h2></div>
-      <span class="badge">TWO LANES</span>
-    </div>
-    <p class="muted">Both device lanes open the same real LeeWay cloud development workplane: the canonical Device Bridge repository in GitHub Codespaces. It provides the editor, terminal, Git, Node, GitHub CLI, and Docker development environment. The installed PWA remains the Apple front door for Diagnostics and device-aware browser work.</p>
-    <div class="panel-head">
-      <a class="action" id="openAppleWorkstation" href="https://github.com/codespaces/new?hide_repo_select=true&amp;repo=1380304068" target="_blank" rel="noopener">OPEN APPLE CLOUD WORKSTATION</a>
-      <a class="action" id="openAndroidRemoteWorkstation" href="https://github.com/codespaces/new?hide_repo_select=true&repo=1380304068" target="_blank" rel="noopener">OPEN ANDROID REMOTE WORKSTATION</a>
-    </div>
-    <p class="package-meta"><strong>Apple:</strong> opens the real cloud development workstation in Safari from this iPhone. <strong>Android:</strong> opens that same development workplane from Android. Code committed from either workplane is available to Agent Lee through the canonical repository; neither button installs or alters this iPhone.</p>
-  </section>
-
-  <section class="panel" id="downloadSecondaryWorkstation" data-android-only>
-    <div class="panel-head">
-      <div><p class="kicker">ANDROID ONLY</p><h2>Android Native Capability Package 0.8.5</h2></div>
-      <span class="badge">VERIFIED BUILD</span>
-    </div>
-    <p class="muted">Only select this download when using an Android phone. It is not for Apple iPhone or iPad.</p>
-    <a class="action" href="./downloads/leeway-device-bridge-android-latest-debug.apk" download>DOWNLOAD ANDROID NATIVE EXTENSION 0.8.5</a>
-    <p class="package-meta">After Android finishes installing, open LeeWay Device Bridge and tap <strong>ENABLE SECONDARY WORKSTATION</strong>. That one control enables local authority, starts the local bridge, and starts the always-on remote relay.</p>
-  </section>
-
-  <section class="status-grid" aria-label="Bootstrap status">
-    <article><span>PAGES</span><strong id="pagesState">LIVE</strong></article>
-    <article><span>DISCOVERY</span><strong id="discoveryState">READY</strong></article>
-    <article><span>PACKAGE</span><strong id="packageState">PENDING</strong></article>
-  </section>
-
-  <section class="panel compact">
-    <h2>LLM entrypoint</h2>
-    <p class="muted">Any authorized model can begin from the same public machine-readable contract.</p>
-    <p><a href="./llm-entrypoint.json">llm-entrypoint.json</a> · <a href="./provider-registry.json">provider-registry.json</a> · <a href="./runtime-contract.json">runtime-contract.json</a></p>
-  </section>
-
-  <section class="panel" data-android-only>
-    <div class="panel-head"><div><p class="kicker">STEP 01</p><h2>Browser discovery</h2></div><button id="discoverBtn">Inspect this device</button></div>
-    <p class="muted">Only information the browser legitimately exposes is inspected. Unknown facts remain unknown until native verification.</p>
-    <div id="facts" class="facts"><p class="empty">No discovery run yet.</p></div>
-  </section>
-
-  <section class="panel">
-    <div class="panel-head"><div><p class="kicker">STEP 02</p><h2>Device bootstrap profile</h2></div><span id="confidenceBadge" class="badge">NOT BUILT</span></div>
-    <pre id="profileOutput" class="profile">Run discovery to create a profile.</pre>
+  <section class="panel" id="appleRuntime">
+    <div class="panel-head"><div><p class="kicker">APPLE CONTROLS</p><h2>Use LeeWay on this Apple device</h2></div><span id="pwaState" class="badge">CHECKING</span></div>
+    <ol class="plain-steps"><li><strong>Daily LeeWay:</strong> launch the LeeWay icon from the iPhone Home Screen.</li><li><strong>Apple workstation:</strong> use <strong>OPEN APPLE WORKSTATION</strong> above when you need the editor, terminal, Git, or GitHub.</li><li><strong>Native Metal app:</strong> use <strong>OPEN APPLE PACKAGE</strong>, then import the IPA through iLoader while SideStore sign-in remains unavailable.</li></ol>
+    <div class="card-actions"><button class="action" id="installPwaBtn">SHOW APPLE APP STATUS</button><button class="action secondary" id="launchPwaBtn">REFRESH LEEWAY</button><button class="action secondary" id="beginAppleQualification">CHECK APPLE BROWSER</button></div>
+    <p id="pwaOutput" class="status-copy">Checking Apple Home Screen installation…</p>
+    <div class="native-callout"><strong>Native Metal delivery:</strong> iLoader is the active Apple package installer. Keep <strong>Save Credentials</strong> checked, preserve the existing certificate and pairing record, and use <a href="./ILOADER-PERSISTENCE.md">the saved-setup guide</a>. SideStore remains a separate upstream sign-in issue.</div>
   </section>
 
   <section class="panel" id="appleBrowserAdapter">
-    <div class="panel-head"><div><p class="kicker">APPLE BROWSER ADAPTER</p><h2>Digital Brain &amp; Diagnostics</h2></div><span id="applePwaState" class="badge">NOT OBSERVED</span></div>
-    <p class="muted">This installed PWA is the LeeWay iPhone front door. It records browser-observable state and may run an optional WebGPU readback probe. Safari browser compute is never presented as direct Apple Metal execution.</p>
-    <div class="panel-head apple-actions">
-      <button id="refreshAppleDiagnostics">REFRESH DIAGNOSTICS</button>
-      <button id="runBrowserCompute">RUN BROWSER COMPUTE PROBE</button>
-    </div>
-    <pre id="appleBrainOutput" class="profile">No Apple browser observation has been collected in this session.</pre>
-    <p class="package-meta"><strong>Native Metal:</strong> requires the separately installed LeeWay Device Bridge IPA and a physical-device Metal receipt. <strong>Formula:</strong> remains NOT EXECUTED until the canonical Formula Fabric actually evaluates an authorized request. <a href="./APPLE-PWA-DEVICE-BRIDGE.md">Apple PWA contract</a></p>
+    <div class="panel-head"><div><p class="kicker">APPLE DIAGNOSTICS</p><h2>Browser observation</h2></div><span id="applePwaState" class="badge">NOT RUN</span></div>
+    <p id="appleDiagnosticsSummary" class="status-copy">Run a browser check when you need current Safari evidence. Browser evidence is separate from native Metal evidence.</p>
+    <div class="card-actions"><button class="action" id="refreshAppleDiagnostics">CHECK APPLE BROWSER</button><button class="action secondary" id="runBrowserCompute">RUN BROWSER COMPUTE</button></div>
+    <details class="evidence-details"><summary>View technical browser evidence</summary><pre id="appleBrainOutput" class="profile">No Apple browser observation has been collected in this session.</pre></details>
+    <p class="package-meta">Safari compute may use WebGPU when exposed. Only the separately installed LeeWay Device Bridge IPA may report direct Metal evidence.</p>
   </section>
 
-  <section class="panel">
-    <div class="panel-head"><div><p class="kicker">STEP 03</p><h2>Native phone runtime</h2></div></div>
-    <div id="packageCard" class="package-card">
-      <p class="empty">A compatible verified package route will appear after discovery.</p>
-    </div>
+  <section class="panel" id="androidRuntime">
+    <div class="panel-head"><div><p class="kicker">ANDROID CONTROLS</p><h2>Android native bridge</h2></div><span id="packageState" class="badge">CHECKING</span></div>
+    <div id="packageCard" class="package-card"><p class="empty">Checking the published Android package route…</p></div>
+    <details class="evidence-details"><summary>Android browser discovery and technical evidence</summary><div class="card-actions"><button class="action secondary" id="discoverBtn">INSPECT THIS BROWSER</button></div><div id="facts" class="facts"><p class="empty">No discovery run yet.</p></div><pre id="profileOutput" class="profile">Run browser discovery to create a technical profile.</pre></details>
   </section>
 
-
-  <section class="panel" id="secondaryWorkstation" data-android-only>
-    <div class="panel-head"><div><p class="kicker">STEP 04</p><h2>Secondary Workstation Mode</h2></div><span id="workstationState" class="badge">NOT QUALIFIED</span></div>
-    <p class="muted">Turn this phone into the persistent LeeWay secondary workstation. Android remains the phone runtime; browser/cloud development supplies containerized Linux tooling when desktop-class development is required.</p>
-    <ol class="workstation-steps">
-      <li><strong>Download and install LeeWay Secondary Workstation 0.8.5</strong> using the button above.</li>
-      <li>Open LeeWay Device Bridge and tap <strong>ENABLE SECONDARY WORKSTATION</strong>.</li>
-      <li>Keep the LeeWay Remote Bridge foreground notification enabled. The runtime already maintains a 20-second transport ping plus automatic reconnect.</li>
-      <li>The no-copy owner bootstrap is the preferred pairing path. Manual token copy is fallback only.</li>
-      <li>After the relay is live, run <code>device.health</code> to promote the phone from pending to verified.</li>
-      <li>Open the cloud development workspace when container/Linux development is needed.</li>
-    </ol>
-    <div class="panel-head">
-      <a class="action" id="codespacesBtn" href="https://github.com/codespaces/new?hide_repo_select=true&repo=1380304068" target="_blank" rel="noopener">Open Phone Cloud Workstation</a>
-      <a class="action" href="./secondary-workstation-node.json">Workstation node contract</a>
-    </div>
-    <pre id="workstationProfile" class="profile">Node: leeway-phone-workstation
-State: PENDING_REMOTE_QUALIFICATION
-Required proof: paired remote device.health + receipt without USB</pre>
-  </section>
-
-
-  <section class="panel compact">
-    <h2>Truth boundary</h2>
-    <p><b>Observed</b> means the browser exposed it. <b>Inferred</b> means a standards-based interpretation was made. <b>Native verification required</b> means the Pages surface refuses to guess. Docker is not a production dependency.</p>
-  </section>
-
-  <footer>LeeWay Standards · Pages publishes · phone executes · available ≠ authorized · observed ≠ verified</footer>
+  <section class="panel compact"><div class="panel-head"><div><p class="kicker">TECHNICAL INTERFACES</p><h2>Evidence and machine-readable contracts</h2></div><span class="badge">ON DEMAND</span></div><p class="muted">These records support engineering work. They are intentionally kept out of the daily platform controls.</p><p><a href="./llm-entrypoint.json">LLM entrypoint</a> · <a href="./provider-registry.json">Provider registry</a> · <a href="./runtime-contract.json">Runtime contract</a> · <a href="./DEVICE-OPERATOR.md">Platform architecture</a></p></section>
+  <section class="status-grid" aria-label="System state"><article><span>PAGES</span><strong id="pagesState">LIVE</strong></article><article><span>DISCOVERY</span><strong id="discoveryState">READY</strong></article><article><span>APPLE PACKAGE</span><strong>QUALIFIED</strong></article></section>
+  <footer>LeeWay Standards · platform-specific execution requires platform-specific evidence · observed ≠ verified</footer>
 </main>
 <script type="module" src="./app.js"></script>
 </body>

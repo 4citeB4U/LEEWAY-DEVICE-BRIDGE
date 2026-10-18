@@ -22,12 +22,11 @@ function renderPackage(manifest,pkg){
     return;
   }
   $("#packageState").textContent=pkg.status;
-  const measured=pkg.sizeBytes==null?"NOT MEASURED":`${pkg.sizeBytes} bytes`;
-  const formula=pkg.formulaQualification?.status||"UNVERIFIED";
+  const measured=pkg.sizeBytes==null?"Not measured":`${pkg.sizeBytes} bytes`;
   const action=pkg.downloadUrl
     ? `<a class="action" href="${esc(pkg.downloadUrl)}" download>Download & update LeeWay Device Bridge ${esc(pkg.versionName||"")}</a>`
     : `<button id="handoffBtn" class="action">Package build required</button>`;
-  $("#packageCard").innerHTML=`<h3>${esc(pkg.label)}</h3><p class="package-meta">Current release: ${esc(pkg.versionName||"UNKNOWN")}<br>Source: GitHub Pages<br>Runtime: phone-local<br>Docker required: no<br>Status: ${esc(pkg.status)}<br>Measured size: ${esc(measured)}<br>SHA-256: ${esc(pkg.sha256||"UNVERIFIED")}<br>Formula qualification: ${esc(formula)}<br>Package target ceiling: ${esc(manifest.targetBootstrapPackageMaxBytes)} bytes</p>${action}<p class="package-meta"><strong>Safe update:</strong> install the current verified package over the existing app. If Android reports a signature/package conflict, <strong>do not uninstall the existing app</strong>; that preserves its model/data for controlled migration.<br><br><strong>After installing the current verified package:</strong> open the app and tap <strong>ENABLE ALWAYS-ON REMOTE BRIDGE</strong> once. After that, the phone maintains its outbound connection and reconnects after restart; USB/PC are not part of the runtime path.</p><p class="package-meta"><a href="./llm-entrypoint.json">LLM entrypoint</a> · <a href="./provider-registry.json">provider registry</a> · <a href="./remote-relay.json">remote relay contract</a></p>`;
+  $("#packageCard").innerHTML=`<h3>${esc(pkg.label)}</h3><p class="package-meta">Release: ${esc(pkg.versionName||"Unknown")} · Status: ${esc(pkg.status)}<br>Published from GitHub Pages · SHA-256: ${esc(pkg.sha256||"Not published")}</p>${action}<p class="package-meta"><strong>Update:</strong> install the published Android package over the current one. If Android reports a signature conflict, stop and use the platform’s controlled migration path; do not erase app data.</p>`;
 }
 
 async function showPublishedAndroidPackage(){
@@ -62,9 +61,11 @@ if("serviceWorker" in navigator){
 
 const appleState=message=>{const el=$("#applePwaState");if(el)el.textContent=message;};
 const appleOut=value=>{const el=$("#appleBrainOutput");if(el)el.textContent=typeof value==="string"?value:JSON.stringify(value,null,2);};
+const appleSummary=message=>{const el=$("#appleDiagnosticsSummary");if(el)el.textContent=message;};
 function refreshAppleDiagnostics(){
   const diagnostics=createApplePwaDiagnostics();
   appleState("BROWSER OBSERVED");
+  appleSummary("Safari browser details were recorded locally. This does not claim native Metal, Formula, Veritas, or a receipt.");
   appleOut(diagnostics);
   return diagnostics;
 }
@@ -76,18 +77,24 @@ $("#refreshAppleDiagnostics")?.addEventListener("click",refreshAppleDiagnostics)
 $("#beginAppleQualification")?.addEventListener("click",beginAppleQualification);
 $("#runBrowserCompute")?.addEventListener("click",async()=>{
   appleState("COMPUTE RUNNING");
+  appleSummary("Running the browser compute check. It will remain browser evidence even if readback passes.");
   appleOut("Running deterministic browser WebGPU compute and readback. Native Metal, Formula, Veritas, and receipt state remain separate.");
   const result=await runBrowserComputeProbe();
   appleState(result.state);
+  appleSummary(result.state==="BROWSER_WEBGPU_READBACK_PASSED"
+    ? "Browser compute readback passed. This is Apple browser evidence, not native Metal or model-inference evidence."
+    : "Browser compute did not complete. Open technical browser evidence only if you need the diagnostic record.");
   appleOut({...createApplePwaDiagnostics(),browserCompute:result});
 });
-refreshAppleDiagnostics();
+appleState("NOT RUN");
+appleSummary("Run a browser check when you need current Safari evidence. Browser evidence is separate from native Metal evidence.");
 $("#discoverBtn").addEventListener("click",async()=>{
   $("#discoveryState").textContent="RUNNING";
   const profile=await discoverDevice();
   renderFacts(profile);
   $("#discoveryState").textContent="OBSERVED";
-  $("#confidenceBadge").textContent=profile.exactModel.value?"MODEL OBSERVED":"NATIVE VERIFY REQUIRED";
+  const confidenceBadge=$("#confidenceBadge");
+  if(confidenceBadge)confidenceBadge.textContent=profile.exactModel.value?"MODEL OBSERVED":"NATIVE VERIFY REQUIRED";
   const {manifest,pkg}=await resolvePackage(profile);
   const bootstrap=buildBootstrap(profile,pkg);
   localStorage.setItem("leeway.device.bootstrap",JSON.stringify(bootstrap));
