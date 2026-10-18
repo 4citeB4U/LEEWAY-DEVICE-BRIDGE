@@ -73,7 +73,7 @@ struct AppleDeviceBridgeReceipt: Identifiable, Codable, Sendable {
     }
 
     var exportText: String {
-        guard let data = canonicalData(for: self),
+        guard let data = Self.canonicalData(for: self),
               let text = String(data: data, encoding: .utf8) else {
             return "{\"receiptId\":\"\(receiptId.uuidString)\",\"exportState\":\"FAILED\"}"
         }
