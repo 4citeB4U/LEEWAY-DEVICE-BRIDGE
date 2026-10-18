@@ -46,6 +46,6 @@ The new receipt section and its two distinct hashes establish that the receipt-e
 
 ## Boundaries and next gate
 
-The photographs show prefixes only. They do not provide the complete JSON payload needed to recompute the evidence and receipt hashes. They also do not establish a signature, canonical Device Bridge verification, Formula authorization, Runtime Fabric consumption, Veritas acceptance, model inference, or Learning Ledger admission.
+The photographs show prefixes only. The complete exported JSON was subsequently received and its evidence and receipt hashes were independently recomputed. See [the local receipt integrity verification](G19-IPHONE11-LOCAL-RECEIPT-INTEGRITY-20261018.md). That replay does not establish a signature, canonical Device Bridge verification, Formula authorization, Runtime Fabric consumption, Veritas acceptance, model inference, or Learning Ledger admission.
 
-**Next action:** use **Export local receipt** on the iPhone and attach the complete JSON file or paste its complete text. The host can then independently recompute the two hashes against the documented local receipt format. That integrity check remains a local check until an authorized external verifier accepts the receipt.
+**Next action:** submit the immutable exported receipt to the authorized Device Bridge/Veritas verifier when its endpoint and trusted issuer are available. The completed local integrity replay remains local until that external authority records acceptance.
