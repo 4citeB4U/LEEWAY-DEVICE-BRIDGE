@@ -14,13 +14,13 @@
 
 ## Repair
 
-The canonical devcontainer now declares `ghcr.io/devcontainers/features/sshd:1`. After this change reaches the Codespace and the container rebuilds, the authorized workstation can use `gh codespace ssh` to inspect and work in the same environment that the iPhone opens through the LeeWay PWA.
+The canonical devcontainer now declares `ghcr.io/devcontainers/features/sshd:1`. GitHub's rebuild documentation establishes that rebuilds use the devcontainer file already saved in the Codespace. Therefore the existing workspace must first run `git pull origin main`, then rebuild, before the authorized workstation can use `gh codespace ssh` to inspect and work in the same environment that the iPhone opens through the LeeWay PWA.
 
 ## Acceptance gate
 
 The attachment is qualified only after:
 
-1. GitHub completes the Codespace rebuild using the revised devcontainer.
+1. The existing Codespace pulls the revised `main` branch, and GitHub completes the rebuild using that revised devcontainer.
 2. `gh codespace ssh -c supreme-umbrella-pjj9jvv6qxr5fv7q` succeeds.
 3. The terminal confirms the canonical repository, branch, and clean or explicitly reported working state.
 

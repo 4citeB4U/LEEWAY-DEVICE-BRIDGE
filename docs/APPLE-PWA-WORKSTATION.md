@@ -41,4 +41,4 @@ The static PWA does not contain a shell or fabricate remote-runtime authority. B
 
 ## Authorized Agent Lee attachment
 
-The Codespace is also an authenticated shared workplane when the controlling workstation has the GitHub `codespace` scope. The devcontainer includes the standard `sshd` feature so the authorized workstation can use `gh codespace ssh` after the Codespace rebuilds on this configuration. The attachment is limited to the existing Codespace and canonical repository; it does not grant iPhone-native process control or native Metal access.
+The Codespace is also an authenticated shared workplane when the controlling workstation has the GitHub `codespace` scope. The devcontainer includes the standard `sshd` feature so the authorized workstation can use `gh codespace ssh` after the Codespace first pulls the revised `main` branch and then rebuilds on this configuration. GitHub rebuilds the devcontainer file already saved in the Codespace, so a rebuild alone does not fetch a newer repository configuration. The attachment is limited to the existing Codespace and canonical repository; it does not grant iPhone-native process control or native Metal access.
