@@ -11,6 +11,7 @@ Codespaces is the actual Apple-accessible development workstation. The repositor
 - Node 22
 - Git and GitHub CLI
 - Docker in Docker
+- SSH server for an authorized Agent Lee workstation attachment
 - PowerShell and ESLint extensions
 
 The Android launcher uses the same repository and devcontainer. This creates one shared source workplane instead of a separate Apple-only project. Agent Lee works against the canonical repository through its authorized workstation checkout; commits and pulls synchronize the work between the cloud workstation and Agent Lee’s worktree.
@@ -37,3 +38,7 @@ The Codespace creation screen is a GitHub service. It may show account-specific 
 | Canonical Formula, Veritas, and receipts | Only when an authorized runtime actually executes and returns evidence |
 
 The static PWA does not contain a shell or fabricate remote-runtime authority. Browser WebGPU evidence is separate from direct Metal and model execution.
+
+## Authorized Agent Lee attachment
+
+The Codespace is also an authenticated shared workplane when the controlling workstation has the GitHub `codespace` scope. The devcontainer includes the standard `sshd` feature so the authorized workstation can use `gh codespace ssh` after the Codespace rebuilds on this configuration. The attachment is limited to the existing Codespace and canonical repository; it does not grant iPhone-native process control or native Metal access.
