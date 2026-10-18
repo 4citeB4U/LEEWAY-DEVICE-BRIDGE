@@ -151,6 +151,19 @@ The next iPhone-only completion step is to open SideStore and refresh SideStore 
 
 **Current result:** iLoader authentication and stable SideStore installation are **PASSED**. Phone-side SideStore refresh is **PENDING**.
 
+## Phone-side authentication separation
+
+After the stable installation passed, SideStore on the iPhone still returned the prior Apple Account sign-in failure. This reveals a distinct contract boundary:
+
+| Surface | State |
+| --- | --- |
+| iLoader on Windows | Logged in; stable SideStore install completed |
+| SideStore on iPhone | Apple Account sign-in still failed | 
+
+iLoader and SideStore each hold their own Anisette/authentication session. The iLoader session does not automatically create a phone-side SideStore session. The PWA preflight now names this as a mandatory independent gate, preventing the earlier unsupported inference that a successful installer login proves SideStore account readiness.
+
+**Next repair:** in SideStore on the iPhone, select **Jkcoxson (Windows)** from its own built-in Anisette list, reset `adi.pb`, force-close SideStore, reopen it, and make one normal sign-in attempt. Do not alter the iLoader certificate or reinstall SideStore again during this phone-session repair.
+
 ### Tier 3 — reinstall only after the two repairs fail
 
 Reinstalling SideStore can affect applications SideStore manages. Do not begin this tier until Tier 1 and Tier 2 results are captured. The LeeWay Device Bridge should not be deleted merely to resolve a SideStore sign-in error.

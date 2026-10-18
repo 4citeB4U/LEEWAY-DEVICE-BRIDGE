@@ -1,4 +1,4 @@
-const CACHE = "leeway-device-bridge-v12";
+const CACHE = "leeway-device-bridge-v13";
 const ASSETS = [
   "./",
   "./index.html",
