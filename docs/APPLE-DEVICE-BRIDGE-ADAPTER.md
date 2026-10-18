@@ -31,5 +31,5 @@ The manual protected delivery workflow and exact secret contract are documented 
 1. GitHub macOS runner compiles the Device Bridge iOS source.
 2. A signed LeeWay Device Bridge archive reaches TestFlight through Apple-authorized distribution.
 3. The physical iPhone completes the Metal probe with zero readback mismatches.
-4. Device Bridge records the observation through its receipt boundary.
+4. Device Bridge creates and exports a hash-bound local observation receipt with external verification still pending.
 5. Formula authorization, a Device Bridge-owned local model runtime, and Veritas independently qualify an actual inference.

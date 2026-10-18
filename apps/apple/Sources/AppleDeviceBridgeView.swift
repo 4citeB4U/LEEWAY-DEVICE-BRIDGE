@@ -5,9 +5,14 @@ final class AppleBridgeStore: ObservableObject {
     @Published private(set) var evidence = AppleBridgeEvidence.unverified(
         detail: "No Metal command has been submitted by this Device Bridge adapter."
     )
+    @Published private(set) var receipt = AppleReceiptStore.latest()
 
     func runProbe() {
         evidence = MetalDeviceProbe.run()
+        if let issuedReceipt = AppleDeviceBridgeReceipt.issue(from: evidence) {
+            AppleReceiptStore.append(issuedReceipt)
+            receipt = issuedReceipt
+        }
     }
 }
 
@@ -27,6 +32,20 @@ struct AppleDeviceBridgeView: View {
                     LabeledContent("Lanes", value: "\(store.evidence.laneCount)")
                     LabeledContent("Mismatches", value: store.evidence.mismatchCount.map(String.init) ?? "Not measured")
                     Text(store.evidence.detail)
+                }
+                Section("Device Bridge receipt") {
+                    if let receipt = store.receipt {
+                        LabeledContent("Local result", value: receipt.result.rawValue)
+                        LabeledContent("Verification", value: receipt.verificationState.rawValue)
+                        LabeledContent("Evidence hash", value: String(receipt.evidenceHash.prefix(16)) + "…")
+                        LabeledContent("Receipt hash", value: String(receipt.receiptHash.prefix(16)) + "…")
+                        ShareLink(item: receipt.exportText) {
+                            Label("Export local receipt", systemImage: "square.and.arrow.up")
+                        }
+                    } else {
+                        LabeledContent("State", value: "NOT_CREATED")
+                        Text("A receipt is issued only after this app observes a Metal probe result. External verification remains separate.")
+                    }
                 }
                 Section {
                     Button("Run Device Bridge Metal Probe") { store.runProbe() }
