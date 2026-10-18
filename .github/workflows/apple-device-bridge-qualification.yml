@@ -72,7 +72,7 @@ jobs:
             cd "$IPA_ROOT"
             /usr/bin/zip -qry "$IPA_PATH" Payload
           )
-          unzip -Z1 "$IPA_PATH" | rg '^Payload/LeeWayDeviceBridge\.app/'
+          unzip -Z1 "$IPA_PATH" | /usr/bin/grep -E '^Payload/LeeWayDeviceBridge\.app/'
           test -s "$IPA_PATH"
 
       - name: Preserve qualification evidence

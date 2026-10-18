@@ -21,3 +21,7 @@ The Apple qualification workflow now packages the successfully built app in a st
 2. SideStore accepts, signs, and installs the artifact on the physical iPhone.
 3. The installed LeeWay Device Bridge app reports a native Metal observation with zero mismatches.
 4. Independent receipt verification determines whether that local observation is admissible to the verified telemetry lane.
+
+## Repair record
+
+The first packaging qualification, GitHub Actions run `39143217756`, compiled the unsigned iPhone source successfully and created the IPA staging layout. Its final layout assertion failed because `rg` is not present on the GitHub-hosted macOS runner. The workflow now uses the runner's built-in `/usr/bin/grep` for that assertion. No iOS source, Metal kernel, signing material, or device state changed during this repair.
