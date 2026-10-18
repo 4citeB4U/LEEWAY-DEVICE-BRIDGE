@@ -67,6 +67,23 @@ iLoader 2.3.10 is installed and running on Windows, and Apple Devices services a
 
 The next repair must inspect iLoader's **Certificates** state and re-establish a valid signing identity before another SideStore reinstall. A certificate reset can affect every app signed under that development identity; it requires owner-visible confirmation at the iLoader action.
 
+## Root-cause correction — Anisette service outage
+
+The physical iLoader login screen then provided the primary failure record:
+
+| Field | Observed value |
+| --- | --- |
+| iLoader version | 2.3.10 |
+| Active device | Leonard's iPhone, iOS 27.0.1 |
+| Login failure | `HTTP status server error (502 Bad Gateway)` |
+| Failing endpoint | `https://new.ani.sidestore.io/v3/get_headers` |
+
+This 502 occurs before iLoader can obtain the headers required to begin Apple Account authentication. It is an external Anisette-service outage or availability failure. It does **not** demonstrate a bad Apple Account password, faulty iTunes installation, damaged LeeWay IPA, or a certificate state that should be reset now.
+
+**Corrected next repair:** dismiss the error, change iLoader from the failing **SideStore (New)** server to the built-in **SideStore** server (`https://ani.sidestore.io`), choose **Reset Anisette State**, then make one normal login attempt. If that server also returns a service error, change to another built-in endpoint such as **SideStore (.app)**; do not use an arbitrary custom URL.
+
+The earlier certificate inspection remains a later, conditional repair only if iLoader successfully authenticates and then again reports `0xE8008018` during the actual stable SideStore installation.
+
 ### Tier 3 — reinstall only after the two repairs fail
 
 Reinstalling SideStore can affect applications SideStore manages. Do not begin this tier until Tier 1 and Tier 2 results are captured. The LeeWay Device Bridge should not be deleted merely to resolve a SideStore sign-in error.
@@ -87,7 +104,9 @@ Reinstalling SideStore can affect applications SideStore manages. Do not begin t
 - [SideStore custom Anisette servers](https://docs.sidestore.io/docs/advanced/anisette) describes Anisette as SideStore authentication infrastructure; this does not grant it Formula, Runtime Fabric, Veritas, or LeeWay identity authority.
 - The [iLoader SideStore install guide](https://github.com/SideStore/SideStore-Docs/blob/main/docs/installation/install.mdx) identifies iLoader's stable installer as the supported computer-side setup path.
 - The [iOS deployment error mapping](https://github.com/ios-control/ios-deploy/blob/master/src/ios-deploy/errors.h) maps `0xE8008018` to an invalid signing identity and `0xE8008023` to device-agent communication.
+- The official [SideStore Anisette server list](https://github.com/SideStore/anisette-servers/blob/main/servers.json) lists both the failed **SideStore (New)** endpoint and the built-in **SideStore** / **SideStore (.app)** alternatives.
+- The [SideStore sign-in troubleshooting guide](https://docs.sidestore.io/docs/troubleshooting) identifies temporary Anisette server downtime and switching servers as the first repair.
 
 ## Evidence state
 
-**TIER 1 FAILED; TIER 2 FAILED; INSTALLER IDENTITY REPAIR PENDING.** No Formula evaluation, canonical Veritas decision, Runtime Fabric action, or Learning Ledger update occurred in this recovery record.
+**TIER 1 FAILED; TIER 2 FAILED; ANISSETTE ROUTE REPAIR PENDING.** No Formula evaluation, canonical Veritas decision, Runtime Fabric action, or Learning Ledger update occurred in this recovery record.
