@@ -90,6 +90,21 @@ iLoader's physical provider list includes **Jkcoxson (Windows)** and **StikStore
 
 The same provider list also displayed a custom value pointing at LeeWay's `sidestore-source.json`. That URL is the LeeWay native-app update catalog; it is not an Anisette endpoint and must not be selected as a custom Anisette server. The PWA and update-channel documentation now state that boundary explicitly.
 
+## Windows host-readiness probe
+
+A local, read-only probe confirmed the Windows prerequisites presently running:
+
+| Check | Result | Evidence state |
+| --- | --- | --- |
+| iLoader | `iloader.exe` running | OBSERVED |
+| Apple Devices | Apple Devices, Apple Mobile Device Helper, Launcher, and Process running | OBSERVED |
+| Current iLoader account state | Not logged in; the visible login failure occurs before Apple authentication | OBSERVED |
+| Failed SideStore (New) path | iLoader UI reported `502 Bad Gateway` for its `get_headers` request | OBSERVED |
+| StikStore endpoint | `https://ani.stikstore.app` returned HTTP 200 from this Windows host | OBSERVED |
+| Jkcoxson endpoint root | Returned HTTP 404 to a read-only root probe; this does not prove its v3 API unusable | OBSERVED |
+
+**Next selected route:** choose **StikStore (Windows)** in iLoader, use **Reset Anisette State**, and make one login attempt. This selection is based on an actual successful endpoint response from this computer, not merely the provider name.
+
 ### Tier 3 — reinstall only after the two repairs fail
 
 Reinstalling SideStore can affect applications SideStore manages. Do not begin this tier until Tier 1 and Tier 2 results are captured. The LeeWay Device Bridge should not be deleted merely to resolve a SideStore sign-in error.
