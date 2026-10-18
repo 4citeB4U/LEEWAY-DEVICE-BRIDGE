@@ -25,3 +25,16 @@ The Apple qualification workflow now packages the successfully built app in a st
 ## Repair record
 
 The first packaging qualification, GitHub Actions run `39143217756`, compiled the unsigned iPhone source successfully and created the IPA staging layout. Its final layout assertion failed because `rg` is not present on the GitHub-hosted macOS runner. The workflow now uses the runner's built-in `/usr/bin/grep` for that assertion. No iOS source, Metal kernel, signing material, or device state changed during this repair.
+
+## Verified artifact result
+
+GitHub Actions run `39143362972` passed on commit `bbe5d78`. It completed all required stages:
+
+1. Recorded the macOS Apple build toolchain.
+2. Rejected forbidden third-party runtime references from the iOS source boundary.
+3. Generated the Xcode project.
+4. Built the unsigned iPhone source.
+5. Packaged and asserted the standard `Payload/LeeWayDeviceBridge.app/` IPA layout.
+6. Preserved `LeeWayDeviceBridge-unsigned.ipa` and the unsigned Xcode build log in the run artifact `leeway-device-bridge-apple-unsigned-39143362972`.
+
+**Result:** PASS — the native LeeWay Device Bridge IPA delivery artifact is available for owner-controlled SideStore signing and physical iPhone qualification.
