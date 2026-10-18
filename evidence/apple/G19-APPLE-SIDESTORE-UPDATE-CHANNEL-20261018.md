@@ -52,3 +52,8 @@ The generated SideStore source names the same bundle identifier, declares versio
 The owner must add the source to SideStore once and use SideStore’s update control for the installed app. The first source-managed update and later automatic background refresh/update discovery have not yet been observed on the physical iPhone.
 
 This delivery result does not qualify native Metal execution, Formula, Veritas, local model inference, a system call/email, or Learning Ledger admission.
+
+## Contributor handoff
+
+- [Runtime Fabric C3 issue #21 update-channel handoff](https://github.com/4citeB4U/Leeway-Runtime-Fabric/issues/21#issuecomment-6254085259)
+- [LeeWay Contributor Coordination Hub #22 cross-link](https://github.com/4citeB4U/LeeWay-Agent-Skills/issues/22#issuecomment-6254085435)
