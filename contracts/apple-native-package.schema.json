@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leeway.industries/contracts/apple-native-package.schema.json",
+  "title": "LeeWay Apple Native Package",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "packageId",
+    "platform",
+    "adapterId",
+    "bundleIdentifier",
+    "artifact",
+    "components",
+    "evidenceGates",
+    "sourceRevision"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "packageId": { "type": "string", "minLength": 1 },
+    "platform": { "enum": ["ios", "ipados"] },
+    "adapterId": { "type": "string", "minLength": 1 },
+    "bundleIdentifier": { "type": "string", "pattern": "^[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+$" },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["format", "fileName", "sha256", "signingState"],
+      "properties": {
+        "format": { "const": "ipa" },
+        "fileName": { "type": ["string", "null"] },
+        "sha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+        "signingState": { "enum": ["UNSIGNED_OWNER_CONTROLLED_SIGNING_REQUIRED", "APPLE_SIGNED"] }
+      }
+    },
+    "components": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["deviceBridge", "nativeMetalService", "agentLeeRuntime", "formula", "veritas", "receipt"],
+      "properties": {
+        "deviceBridge": { "enum": ["INCLUDED", "NOT_INCLUDED"] },
+        "nativeMetalService": { "enum": ["INCLUDED", "NOT_INCLUDED"] },
+        "agentLeeRuntime": { "enum": ["INCLUDED", "RUNTIME_NOT_INSTALLED"] },
+        "formula": { "enum": ["EXTERNAL_AUTHORITY_REQUIRED", "INCLUDED"] },
+        "veritas": { "enum": ["EXTERNAL_AUTHORITY_REQUIRED", "INCLUDED"] },
+        "receipt": { "enum": ["EXTERNAL_AUTHORITY_REQUIRED", "INCLUDED"] }
+      }
+    },
+    "evidenceGates": {
+      "type": "array",
+      "minItems": 5,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "sourceRevision": { "type": ["string", "null"] }
+  }
+}

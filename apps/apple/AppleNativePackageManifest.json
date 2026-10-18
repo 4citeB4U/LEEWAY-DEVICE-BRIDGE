@@ -1,0 +1,30 @@
+{
+  "$schema": "../../contracts/apple-native-package.schema.json",
+  "schemaVersion": "1.0.0",
+  "packageId": "leeway.device.bridge.apple",
+  "platform": "ios",
+  "adapterId": "leeway.operator.ios",
+  "bundleIdentifier": "industries.leeway.devicebridge",
+  "artifact": {
+    "format": "ipa",
+    "fileName": null,
+    "sha256": null,
+    "signingState": "UNSIGNED_OWNER_CONTROLLED_SIGNING_REQUIRED"
+  },
+  "components": {
+    "deviceBridge": "INCLUDED",
+    "nativeMetalService": "INCLUDED",
+    "agentLeeRuntime": "RUNTIME_NOT_INSTALLED",
+    "formula": "EXTERNAL_AUTHORITY_REQUIRED",
+    "veritas": "EXTERNAL_AUTHORITY_REQUIRED",
+    "receipt": "EXTERNAL_AUTHORITY_REQUIRED"
+  },
+  "evidenceGates": [
+    "MACOS_SOURCE_BUILD",
+    "IPA_LAYOUT_AND_DIGEST",
+    "OWNER_CONTROLLED_SIGNING_AND_INSTALL",
+    "PHYSICAL_METAL_READBACK",
+    "INDEPENDENT_RECEIPT_VERIFICATION"
+  ],
+  "sourceRevision": null
+}
