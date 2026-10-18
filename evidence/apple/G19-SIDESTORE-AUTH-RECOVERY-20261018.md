@@ -121,6 +121,22 @@ The physical iLoader screen subsequently showed a successful recovery through **
 
 This supersedes the planned StikStore fallback: Jkcoxson (Windows) authenticated successfully and should remain selected. Authentication is not installation proof. Before any stable SideStore reinstall, inspect iLoader's **Certificates** panel without resetting or revoking anything, because the prior `0xE8008018` error was an installation-stage signing-identity rejection.
 
+## Certificate observation
+
+iLoader's Certificates panel shows one existing **iOS Development** certificate associated with iLoader. No revoke, reset, delete, creation, or reinstall action occurred. The visible certificate presence proves that iLoader can enumerate a development identity; it does not independently prove that iOS will accept the next signed SideStore installation. The certificate serial and machine identifier are intentionally omitted from repository evidence.
+
+### Preventive LeeWay change
+
+The Apple PWA now links to an **Apple SideStore Preflight** page. The guide and PWA enforce the operating order in user-visible instructions:
+
+1. account logged in;
+2. iPhone selected by USB;
+3. proven built-in Anisette provider;
+4. certificate inspected and preserved;
+5. then, and only then, SideStore Stable installation.
+
+It also explicitly blocks the prior category error: LeeWay's `sidestore-source.json` is an app-update catalog and must never be entered as an Anisette endpoint. This prevents configuration confusion; it cannot override Apple validation or external Anisette outages.
+
 ### Tier 3 — reinstall only after the two repairs fail
 
 Reinstalling SideStore can affect applications SideStore manages. Do not begin this tier until Tier 1 and Tier 2 results are captured. The LeeWay Device Bridge should not be deleted merely to resolve a SideStore sign-in error.
