@@ -10,7 +10,7 @@ object RemoteCommandRouter {
         "device.bluetooth.list-bonded", "device.network.discover", "device.receipts",
         "device.screen.capture", "device.ui.snapshot", "device.ui.back", "device.ui.home", "device.ui.recents",
         "device.ui.tap", "device.ui.swipe", "device.ui.text",
-        "device.apps.list", "device.apps.launch", "device.apps.install.status", "device.apps.install",
+        "device.apps.list", "device.apps.launch", "device.apps.install.status", "device.apps.install.plan", "device.apps.install",
         "device.media.scan", "device.media.delete.request",
         "model.status", "model.install", "model.inference", "voice.status", "voice.speak", "agent.chat"
     )
@@ -75,6 +75,9 @@ object RemoteCommandRouter {
                 "device.apps.list" -> AppOperator.listLaunchable(context)
                 "device.apps.launch" -> AppOperator.launch(context, arguments.getString("packageName"))
                 "device.apps.install.status" -> PackageInstallBroker.status(context)
+                "device.apps.install.plan" -> AndroidProvisioningCompatibility.evaluate(
+                    DevicePassport.capture(context), null, null
+                ).put("installerCapability", PackageInstallBroker.status(context))
                 "device.apps.install" -> PackageInstallBroker.installFromUrl(
                     context,
                     arguments.getString("url"),
