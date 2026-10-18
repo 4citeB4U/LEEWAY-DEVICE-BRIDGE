@@ -25,3 +25,20 @@ The attachment is qualified only after:
 3. The terminal confirms the canonical repository, branch, and clean or explicitly reported working state.
 
 This evidence does not claim native iOS execution, direct Metal access, Formula evaluation, Veritas approval, or a receipt.
+
+## Acceptance result
+
+The replacement Codespace `ubiquitous-spork-v66w6445jvv6crxr` became available on 2026-10-18 after provisioning from `main`. The authorized workstation then entered it successfully with `gh codespace ssh`.
+
+Observed from the shared container:
+
+- Repository: `/workspaces/LEEWAY-DEVICE-BRIDGE`
+- Branch: `main...origin/main`
+- Commit: `6599e49 Document Codespaces rebuild source requirement`
+- Devcontainer: `ghcr.io/devcontainers/features/sshd:1` present
+- Node: `v22.16.0`
+- Git: `2.49.0`
+- GitHub CLI: `2.102.0`
+- Docker: `29.9.1`
+
+**Result:** PASS — the controlling workstation can now work inside the same canonical Codespace opened from the LeeWay Apple PWA.
