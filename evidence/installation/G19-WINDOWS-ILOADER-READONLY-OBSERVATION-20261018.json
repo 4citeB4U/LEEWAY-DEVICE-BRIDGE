@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0.0",
+  "recordedAt": "2026-10-18",
+  "adapter": "leeway.installation.windows-iloader-observer",
+  "mode": "READ_ONLY",
+  "observations": {
+    "iloaderLocalStatePresent": true,
+    "selectedServerRecordPresent": true,
+    "accountRecordPresent": true,
+    "appleUsbPresent": true,
+    "iloaderProcessPresent": true,
+    "appleMobileDeviceServiceRunning": false,
+    "credentialStore": "NOT_INSPECTED",
+    "certificate": "NOT_OBSERVED",
+    "provisioning": "NOT_OBSERVED"
+  },
+  "package": {
+    "type": "ipa",
+    "sha256": "833d88a1fb13248b326e39ac26b7c8fd02535202056d2824a47d413575eab007"
+  },
+  "planResult": {
+    "state": "APPLE_ACCOUNT_AUTH_NOT_OBSERVED",
+    "executable": false,
+    "reason": "The observer intentionally does not read credential stores, certificates, provisioning profiles, or Apple account state."
+  },
+  "claimBoundary": "This demonstrates only a read-only Windows/iLoader local-state and USB-transport observation. It does not demonstrate an authorized account, signing identity, valid certificate, installed package, launch, Metal execution, Formula evaluation, Veritas approval, or receipt."
+}

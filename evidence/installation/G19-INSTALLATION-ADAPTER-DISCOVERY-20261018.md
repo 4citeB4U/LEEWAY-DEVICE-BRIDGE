@@ -10,6 +10,10 @@
 
 Added `operator/installation-adapter.mjs` and a deterministic fixture test. The module accepts only caller-supplied observations and produces one of these non-mutating results: unsupported target, missing package integrity, transport failure, missing provider, Apple preflight finding, owner approval required, or dry-run ready.
 
+Added `operator/windows-iloader-observer.mjs` and `npm run observe:iloader`. The observer returns a redacted, read-only Windows host observation and leaves Apple-account, signing, certificate, profile, device-in-profile, and entitlement facts as `NOT_OBSERVED` until a supported source is qualified.
+
+The first local observation is preserved in `G19-WINDOWS-ILOADER-READONLY-OBSERVATION-20261018.json`. It observed local iLoader state, the selected-server record, an account record, USB Apple-device presence, and an active iLoader process. Its plan result is `APPLE_ACCOUNT_AUTH_NOT_OBSERVED`, therefore it did not authorize installation.
+
 ## Safety boundary
 
 No physical device, Apple account, certificate, profile, pairing record, package, installer, or operating-system setting was read or changed by this increment. `executeInstallation`, verification, and rollback are explicit stubs to prevent the dry-run planner from being mistaken for an installer.

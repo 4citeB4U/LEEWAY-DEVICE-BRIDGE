@@ -6,6 +6,8 @@
   "scripts": {
     "test:mcp": "node --test tests/mcp/*.test.mjs",
     "test:installation-adapter": "node --test tests/installation-adapter.test.mjs",
+    "test:iloader-observer": "node --test tests/windows-iloader-observer.test.mjs",
+    "observe:iloader": "node scripts/observe-windows-iloader.mjs",
     "mcp": "node apps/desktop/mcp-server.mjs"
   },
   "engines": { "node": ">=22" }

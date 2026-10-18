@@ -14,6 +14,12 @@ The Installation Adapter selects an observed, authorized platform installer for 
 
 `executeInstallation`, `verifyInstallation`, and `rollbackInstallation` deliberately return `NOT_IMPLEMENTED`. They do not start installers or change device state.
 
+## Windows iLoader observation
+
+`npm run observe:iloader` runs the read-only Windows observer. It reports only booleans and state labels: iLoader local-state presence, selected-server record presence, account-record presence, USB Apple-device presence, iLoader process presence, and Apple Mobile Device Service state. It does not return, log, or inspect credential values, pairing material, certificate keys, profile contents, Anisette headers, or iLoader logs.
+
+USB Apple-device presence is the iLoader transport fact. Apple Mobile Device Service is diagnostic information only because iLoader may use its own mobile-device stack.
+
 ## Existing routes it recognizes
 
 | Target | Observed provider required | Dry-run route |

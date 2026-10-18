@@ -83,12 +83,13 @@ export function classifyApplePreflight({ package: packageDescriptor, target = {}
   const provider = providerFor(target, target.platform ?? "ios");
   if (!boolean(target.transport?.ready)) return { state: "TRANSPORT_NOT_READY", ready: false };
   if (!provider || provider.health !== "HEALTHY") return { state: "ANISETTE_PROVIDER_UNAVAILABLE", ready: false };
-  if (!boolean(provider.accountAuthorized)) return { state: "APPLE_ACCOUNT_AUTH_FAILED", ready: false };
-  if (!boolean(provider.signingIdentityPresent)) return { state: "SIGNING_IDENTITY_MISSING", ready: false };
+  if (provider.accountAuthorized !== true) return { state: provider.accountAuthorized === false ? "APPLE_ACCOUNT_AUTH_FAILED" : "APPLE_ACCOUNT_AUTH_NOT_OBSERVED", ready: false };
+  if (provider.signingIdentityPresent !== true) return { state: provider.signingIdentityPresent === false ? "SIGNING_IDENTITY_MISSING" : "SIGNING_IDENTITY_NOT_OBSERVED", ready: false };
   if (provider.certificateState === "EXPIRED") return { state: "CERT_EXPIRED", ready: false };
-  if (!boolean(provider.profileMatchesBundle)) return { state: "PROFILE_MISMATCH", ready: false };
-  if (!boolean(provider.deviceInProfile)) return { state: "DEVICE_NOT_IN_PROFILE", ready: false };
-  if (!boolean(provider.entitlementsCompatible)) return { state: "ENTITLEMENT_MISMATCH", ready: false };
+  if (provider.certificateState !== "VALID") return { state: "CERTIFICATE_NOT_OBSERVED", ready: false };
+  if (provider.profileMatchesBundle !== true) return { state: provider.profileMatchesBundle === false ? "PROFILE_MISMATCH" : "PROFILE_NOT_OBSERVED", ready: false };
+  if (provider.deviceInProfile !== true) return { state: provider.deviceInProfile === false ? "DEVICE_NOT_IN_PROFILE" : "DEVICE_PROFILE_MEMBERSHIP_NOT_OBSERVED", ready: false };
+  if (provider.entitlementsCompatible !== true) return { state: provider.entitlementsCompatible === false ? "ENTITLEMENT_MISMATCH" : "ENTITLEMENTS_NOT_OBSERVED", ready: false };
   return { state: "READY_TO_INSTALL", ready: true, route: "APPLE_ILOADER_USB", sha256: integrity.sha256 };
 }
 
@@ -112,13 +113,16 @@ export function planInstallation({ target = {}, package: packageDescriptor, owne
   }
 
   const provider = providerFor(target, platform);
-  if (!provider || provider.health !== "HEALTHY" || !boolean(provider.authorized)) {
+  if (!provider || provider.health !== "HEALTHY") {
     return { state: "INSTALLER_PROVIDER_UNAVAILABLE", executable: false, adapterId: adapter.adapterId };
   }
 
   if (APPLE_PLATFORMS.has(platform)) {
     const apple = classifyApplePreflight({ package: packageDescriptor, target });
     if (!apple.ready) return { ...apple, executable: false, adapterId: adapter.adapterId };
+  }
+  if (!boolean(provider.authorized)) {
+    return { state: "INSTALLER_PROVIDER_NOT_AUTHORIZED", executable: false, adapterId: adapter.adapterId };
   }
 
   if (!ownerApproved) return { ...APPROVAL_REQUIRED, adapterId: adapter.adapterId, route: routeId(platform), sha256: integrity.sha256 };
