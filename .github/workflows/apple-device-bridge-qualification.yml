@@ -56,11 +56,32 @@ jobs:
             -configuration Debug -sdk iphoneos -destination 'generic/platform=iOS' \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build 2>&1 | tee xcodebuild-unsigned.log
 
+      - name: Package unsigned sideload artifact
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find "$HOME/Library/Developer/Xcode/DerivedData" -type d -path '*/Build/Products/Debug-iphoneos/LeeWayDeviceBridge.app' -print -quit)"
+          test -n "$APP_PATH"
+          test -d "$APP_PATH"
+          plutil -lint "$APP_PATH/Info.plist"
+          IPA_ROOT="$RUNNER_TEMP/leeway-device-bridge-ipa"
+          IPA_PATH="$RUNNER_TEMP/LeeWayDeviceBridge-unsigned.ipa"
+          rm -rf "$IPA_ROOT" "$IPA_PATH"
+          mkdir -p "$IPA_ROOT/Payload"
+          ditto "$APP_PATH" "$IPA_ROOT/Payload/LeeWayDeviceBridge.app"
+          (
+            cd "$IPA_ROOT"
+            /usr/bin/zip -qry "$IPA_PATH" Payload
+          )
+          unzip -Z1 "$IPA_PATH" | rg '^Payload/LeeWayDeviceBridge\.app/'
+          test -s "$IPA_PATH"
+
       - name: Preserve qualification evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: leeway-device-bridge-apple-unsigned-${{ github.run_id }}
-          path: apps/apple/xcodebuild-unsigned.log
+          path: |
+            apps/apple/xcodebuild-unsigned.log
+            ${{ runner.temp }}/LeeWayDeviceBridge-unsigned.ipa
           if-no-files-found: error
           retention-days: 30
