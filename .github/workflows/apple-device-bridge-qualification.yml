@@ -64,10 +64,10 @@ jobs:
           test -d "$APP_PATH"
           plutil -lint "$APP_PATH/Info.plist"
           PACKAGE_ROOT="$RUNNER_TEMP/leeway-device-bridge-apple-package"
-          IPA_ROOT="$PACKAGE_ROOT/ipa-root"
+          IPA_ROOT="$RUNNER_TEMP/leeway-device-bridge-ipa-root"
           IPA_PATH="$PACKAGE_ROOT/LeeWayDeviceBridge-unsigned.ipa"
           MANIFEST_PATH="$PACKAGE_ROOT/LEEWAY-APPLE-PACKAGE-MANIFEST.json"
-          rm -rf "$PACKAGE_ROOT"
+          rm -rf "$PACKAGE_ROOT" "$IPA_ROOT"
           mkdir -p "$IPA_ROOT/Payload"
           ditto "$APP_PATH" "$IPA_ROOT/Payload/LeeWayDeviceBridge.app"
           (
