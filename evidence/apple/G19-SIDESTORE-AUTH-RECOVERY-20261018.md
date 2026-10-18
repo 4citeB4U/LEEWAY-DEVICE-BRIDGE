@@ -137,6 +137,20 @@ The Apple PWA now links to an **Apple SideStore Preflight** page. The guide and 
 
 It also explicitly blocks the prior category error: LeeWay's `sidestore-source.json` is an app-update catalog and must never be entered as an Anisette endpoint. This prevents configuration confusion; it cannot override Apple validation or external Anisette outages.
 
+## Stable SideStore installation outcome
+
+iLoader then completed a clean **SideStore (Stable)** installation with three passing steps:
+
+| Stage | Result | State |
+| --- | --- | --- |
+| Download SideStore | Complete | OBSERVED |
+| Sign and install SideStore | Complete | OBSERVED |
+| Place pairing file | Complete | OBSERVED |
+
+The next iPhone-only completion step is to open SideStore and refresh SideStore from **My Apps** while Wi-Fi and LocalDevVPN are connected. That refresh must be observed separately. It will prove SideStore's own signing cycle is functional; it does not itself update the LeeWay app, execute LeeWay Metal, authorize Formula, or create a LeeWay receipt.
+
+**Current result:** iLoader authentication and stable SideStore installation are **PASSED**. Phone-side SideStore refresh is **PENDING**.
+
 ### Tier 3 — reinstall only after the two repairs fail
 
 Reinstalling SideStore can affect applications SideStore manages. Do not begin this tier until Tier 1 and Tier 2 results are captured. The LeeWay Device Bridge should not be deleted merely to resolve a SideStore sign-in error.
