@@ -158,7 +158,7 @@ After the stable installation passed, SideStore on the iPhone still returned the
 | Surface | State |
 | --- | --- |
 | iLoader on Windows | Logged in; stable SideStore install completed |
-| SideStore on iPhone | Apple Account sign-in still failed | 
+| SideStore on iPhone | Apple Account sign-in still failed |
 
 iLoader and SideStore each hold their own Anisette/authentication session. The iLoader session does not automatically create a phone-side SideStore session. The PWA preflight now names this as a mandatory independent gate, preventing the earlier unsupported inference that a successful installer login proves SideStore account readiness.
 
