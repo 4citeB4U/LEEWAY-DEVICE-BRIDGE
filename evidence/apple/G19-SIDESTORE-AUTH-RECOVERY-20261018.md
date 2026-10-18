@@ -84,6 +84,12 @@ This 502 occurs before iLoader can obtain the headers required to begin Apple Ac
 
 The earlier certificate inspection remains a later, conditional repair only if iLoader successfully authenticates and then again reports `0xE8008018` during the actual stable SideStore installation.
 
+### Windows provider selection observed
+
+iLoader's physical provider list includes **Jkcoxson (Windows)** and **StikStore (Windows)**, as well as Mac-labelled providers. Because this repair is on Windows, the selected first alternate is **Jkcoxson (Windows)**. **StikStore (Windows)** is the next built-in fallback if that provider fails.
+
+The same provider list also displayed a custom value pointing at LeeWay's `sidestore-source.json`. That URL is the LeeWay native-app update catalog; it is not an Anisette endpoint and must not be selected as a custom Anisette server. The PWA and update-channel documentation now state that boundary explicitly.
+
 ### Tier 3 — reinstall only after the two repairs fail
 
 Reinstalling SideStore can affect applications SideStore manages. Do not begin this tier until Tier 1 and Tier 2 results are captured. The LeeWay Device Bridge should not be deleted merely to resolve a SideStore sign-in error.

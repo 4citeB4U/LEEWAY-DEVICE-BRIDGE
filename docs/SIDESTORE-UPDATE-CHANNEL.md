@@ -19,6 +19,8 @@ The SideStore source reports the IPA’s actual bundle version, build number, SH
 3. Add the source once. The app should appear as **LeeWay Device Bridge**.
 4. Use SideStore’s update control when it reports a newer LeeWay version. Do not delete the installed app first; that preserves its local app data when SideStore can update the same bundle identifier.
 
+> **Do not enter `sidestore-source.json` in an Anisette Server field.** It is a LeeWay app-update catalog, not an Apple-account authentication service. Anisette settings must use only the built-in SideStore/iLoader providers or an intentionally deployed Anisette endpoint.
+
 ## Boundaries
 
 - SideStore may refresh the free development signing period in the background when its VPN and background conditions permit. Its refresh is separate from application-code updates. [SideStore FAQ](https://docs.sidestore.io/docs/faq)
