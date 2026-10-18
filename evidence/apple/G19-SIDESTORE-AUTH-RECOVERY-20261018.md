@@ -37,6 +37,8 @@ Perform one tier, then reopen SideStore and retry the normal sign-in. Stop as so
 
 This follows SideStore's documented sequence to change the Anisette server, reset `adi.pb`, and then sign out/sign in. The current LeeWay app is not deleted in this tier.
 
+**Tier 1 result:** **FAILED** — after the built-in Anisette/cache repair, SideStore still did not allow the owner to sign in with the Apple Account. The exact repeat error remains `-80045 This action cannot be completed at this time`. This rules out the first cache-only recovery; it does not diagnose the Apple Account credentials and does not change the LeeWay application evidence.
+
 ### Tier 2 — repair the pairing transport
 
 Only if Tier 1 repeats the same failure:
@@ -71,4 +73,4 @@ Reinstalling SideStore can affect applications SideStore manages. Do not begin t
 
 ## Evidence state
 
-**REPAIR PLAN RECORDED.** Physical Tier 1 execution is pending the device owner's on-screen actions. No Formula evaluation, canonical Veritas decision, Runtime Fabric action, or Learning Ledger update occurred in this recovery record.
+**TIER 1 FAILED; TIER 2 PENDING.** No Formula evaluation, canonical Veritas decision, Runtime Fabric action, or Learning Ledger update occurred in this recovery record.
