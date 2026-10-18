@@ -8,6 +8,14 @@ Deliver or update the native LeeWay Device Bridge IPA when SideStore's phone-sid
 
 iLoader on the Windows computer is authenticated, sees the connected iPhone, has an observed iOS Development certificate, and has already installed the native LeeWay Device Bridge. SideStore on the phone has a separate `-80045` sign-in blocker. The SideStore blocker does not prevent iLoader from signing and installing a LeeWay package through USB.
 
+## iLoader source qualification
+
+The installed Windows program is **iLoader 2.3.10**. On 2026-10-18, that is the official GitHub latest release and its release tag resolves to the same commit as the public `main` branch: `18907b1a801ed1d5aed3304c5477696c5d3ca411`.
+
+Downloading the GitHub source or rebuilding it would therefore reproduce the same code already running on this computer. The 2.3.10 release updates the Anisette server list; it does not claim to repair SideStore's separate iPhone-side `-80045` sign-in failure. Preserve this functioning iLoader installation, certificate, and account session.
+
+Sources: [official iLoader 2.3.10 release](https://github.com/nab138/iloader/releases/tag/v2.3.10) and [iLoader source repository](https://github.com/nab138/iloader).
+
 ## Delivery steps
 
 1. Connect the iPhone to Windows over USB and unlock it if prompted.

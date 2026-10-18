@@ -183,6 +183,21 @@ The `-80045` Apple Account sign-in error still occurred on the 0.7 build. An ope
 
 **Current repair boundary:** SideStore's phone-side account client is blocked upstream. Repeated attempts, SideJIT changes, pairing resets, and certificate revocation are not justified repairs. LeeWay native delivery instead uses the already verified iLoader USB route: [Apple direct iLoader delivery](../../docs/APPLE-DIRECT-ILOADER-DELIVERY.md).
 
+## iLoader GitHub-source qualification
+
+The owner proposed replacing or rebuilding iLoader from GitHub to correct its configuration. The host and GitHub evidence show that is not a justified repair:
+
+| Check | Result | State |
+| --- | --- | --- |
+| Installed iLoader executable | Version `2.3.10` | OBSERVED |
+| Official iLoader latest release | `v2.3.10` published 2026-10-18 | VERIFIED |
+| Release tag commit | `18907b1a801ed1d5aed3304c5477696c5d3ca411` | VERIFIED |
+| Public source `main` commit | `18907b1a801ed1d5aed3304c5477696c5d3ca411` | VERIFIED |
+| iLoader account / device handling | Working on this Windows host | OBSERVED |
+| SideStore phone sign-in | Separate `-80045` upstream blocker | BLOCKED |
+
+**Decision:** do not reinstall or rebuild iLoader. It already is the current official GitHub implementation and its working Apple account, certificate, and device session are needed for LeeWay direct delivery. The smallest correct repair is to preserve it and route the LeeWay package through its existing **Import IPA** path.
+
 ### Tier 3 — reinstall only after the two repairs fail
 
 Reinstalling SideStore can affect applications SideStore manages. Do not begin this tier until Tier 1 and Tier 2 results are captured. The LeeWay Device Bridge should not be deleted merely to resolve a SideStore sign-in error.
