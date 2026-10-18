@@ -54,6 +54,7 @@ jobs:
           : > xcodebuild-unsigned.log
           xcodebuild -project LeeWayDeviceBridgeApple.xcodeproj -scheme LeeWayDeviceBridgeApple \
             -configuration Debug -sdk iphoneos -destination 'generic/platform=iOS' \
+            MARKETING_VERSION="0.1.${GITHUB_RUN_NUMBER}" CURRENT_PROJECT_VERSION="${GITHUB_RUN_NUMBER}" \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build 2>&1 | tee xcodebuild-unsigned.log
 
       - name: Package unsigned sideload artifact
@@ -78,16 +79,25 @@ jobs:
           test -s "$IPA_PATH"
           cp apps/apple/AppleNativePackageManifest.json "$MANIFEST_PATH"
           IPA_SHA256="$(shasum -a 256 "$IPA_PATH" | awk '{print $1}')"
-          python3 - "$MANIFEST_PATH" "$GITHUB_SHA" "$IPA_SHA256" <<'PY'
+          python3 - "$MANIFEST_PATH" "$GITHUB_SHA" "$IPA_SHA256" "$APP_PATH/Info.plist" <<'PY'
           import json
+          import plistlib
           import sys
 
-          path, revision, digest = sys.argv[1:]
+          path, revision, digest, info_path = sys.argv[1:]
           with open(path, encoding="utf-8") as source:
               manifest = json.load(source)
+          with open(info_path, "rb") as source:
+              info = plistlib.load(source)
+          version = info.get("CFBundleShortVersionString")
+          build = info.get("CFBundleVersion")
+          if not isinstance(version, str) or not isinstance(build, str):
+              raise SystemExit("The built IPA is missing its SideStore update version or build number.")
           manifest["sourceRevision"] = revision
           manifest["artifact"]["fileName"] = "LeeWayDeviceBridge-unsigned.ipa"
           manifest["artifact"]["sha256"] = digest
+          manifest["artifact"]["version"] = version
+          manifest["artifact"]["build"] = build
           with open(path, "w", encoding="utf-8") as destination:
               json.dump(manifest, destination, indent=2)
               destination.write("\n")

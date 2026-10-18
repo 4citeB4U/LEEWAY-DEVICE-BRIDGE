@@ -20,6 +20,8 @@ test("Apple native package template preserves native and governance boundaries",
     format: "ipa",
     fileName: null,
     sha256: null,
+    version: null,
+    build: null,
     signingState: "UNSIGNED_OWNER_CONTROLLED_SIGNING_REQUIRED"
   });
 });

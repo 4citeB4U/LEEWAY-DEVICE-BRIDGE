@@ -50,10 +50,11 @@
     </div>
     <p class="muted">The PWA is your Apple front door. This separate LeeWay Device Bridge IPA contains the native Metal adapter. It has passed macOS source compilation, standard IPA-layout packaging, and manifest-digest verification. It remains unsigned until SideStore signs it for this iPhone.</p>
     <div class="panel-head">
-      <a class="action" id="openAppleNativePackage" href="https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/actions/runs/39144353786#artifacts" target="_blank" rel="noopener">OPEN CURRENT NATIVE PACKAGE</a>
+      <a class="action" id="openAppleNativePackage" href="https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/tag/apple-latest" target="_blank" rel="noopener">OPEN LATEST NATIVE PACKAGE</a>
+      <a class="action" id="addAppleSideStoreChannel" href="sidestore://source?url=https%3A%2F%2Fgithub.com%2F4citeB4U%2FLEEWAY-DEVICE-BRIDGE%2Freleases%2Fdownload%2Fapple-latest%2Fsidestore-source.json">ADD LEEWAY UPDATE CHANNEL</a>
       <a class="action" href="./APPLE-NATIVE-DELIVERY-PROTOCOL.md">APPLE DELIVERY PROTOCOL</a>
     </div>
-    <p class="package-meta"><strong>Artifact:</strong> <code>leeway-device-bridge-apple-unsigned-39144353786</code> · <strong>Source:</strong> <code>9da1bae</code> · Download the IPA and its manifest, import the IPA into SideStore, then run <strong>Run Device Bridge Metal Probe</strong> from the installed native app. SideStore signing, iPhone installation, Formula, Veritas, and receipt admission remain separate evidence gates.</p>
+    <p class="package-meta">Add the LeeWay update channel to SideStore once. After each qualified GitHub build, SideStore can show the next package as an update and keep its signing refreshed through LocalDevVPN. Apple still requires SideStore to sign the replacement app; GitHub cannot silently install an iPhone binary.</p>
   </section>
 
   <section class="panel" id="workstationLaunchers">

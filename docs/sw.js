@@ -1,4 +1,4 @@
-const CACHE = "leeway-device-bridge-v9";
+const CACHE = "leeway-device-bridge-v10";
 const ASSETS = [
   "./",
   "./index.html",
@@ -21,7 +21,8 @@ const ASSETS = [
   "./APPLE-PWA-DEVICE-BRIDGE.md",
   "./APPLE-PWA-WORKSTATION.md",
   "./APPLE-NATIVE-DELIVERY-PROTOCOL.md",
-  "./APPLE-NATIVE-SIDELOAD-DELIVERY.md"
+  "./APPLE-NATIVE-SIDELOAD-DELIVERY.md",
+  "./SIDESTORE-UPDATE-CHANNEL.md"
 ];
 
 self.addEventListener("install", event => {
