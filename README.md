@@ -49,9 +49,13 @@ The Device Bridge now defines one portable Device Operator contract rather than 
 - adapter registry: `operator/adapter-registry.json`
 - platform-adapter contract: `contracts/platform-adapter.schema.json`
 - platform architecture/authority map: `docs/DEVICE-OPERATOR.md`
+- installation selector and dry-run planner: `operator/installation-adapter.mjs`
+- installation contract and platform routes: `docs/INSTALLATION-ADAPTER.md`
 - native reference implementation: `apps/android`
 
 Registered targets are Android, iOS, iPadOS, Windows, macOS and Linux. Registration is not a claim of native implementation or physical qualification: Android is the active implementation target; the other adapters remain PROPOSED until their native code and acceptance campaigns pass.
+
+The Installation Adapter is read-only at this stage: it classifies explicit host/device observations, validates a package digest, and produces an owner-gated dry-run plan. It never resets credentials, modifies pairing, revokes certificates, or starts an installer.
 
 ## Development-source promotion
 
