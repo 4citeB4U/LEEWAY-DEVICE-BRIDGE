@@ -33,3 +33,15 @@ GitHub Actions run `39144035299` successfully generated the IPA and manifest. In
 The first artifact also included an internal uncompressed staging folder. The source IPA and manifest were correct, but the artifact was not minimal. The workflow now creates that staging folder outside the uploaded package root. The next run must demonstrate a clean artifact containing only the IPA, the manifest, and the build log.
 
 The first cleanup attempt, run `39144244776`, kept the native source compilation green but failed before IPA creation because the new package directory was not created before `zip` wrote into it. The workflow now creates both the package directory and the temporary IPA root before packaging. No artifact from that failed run is accepted.
+
+## Final reusable-package acceptance
+
+GitHub Actions run `39144353786` passed on source revision `9da1baee43b5c1505c52f8b7ea8eb8678419d773`. Independent artifact inspection confirmed:
+
+- The package contains exactly `LeeWayDeviceBridge-unsigned.ipa` and `LEEWAY-APPLE-PACKAGE-MANIFEST.json`.
+- The manifest schema version is `1.0.0`.
+- The manifest SHA-256 matches the downloaded IPA exactly.
+- The IPA contains `Payload/LeeWayDeviceBridge.app/`.
+- No temporary staging directory appears in the delivery package.
+
+**Result:** PASS — LeeWay now has a documented, repeatable Apple-native package protocol with a verified build, generated manifest, artifact digest, and clean IPA layout. The physical SideStore install and native iPhone Metal readback remain the next separate evidence gates.
