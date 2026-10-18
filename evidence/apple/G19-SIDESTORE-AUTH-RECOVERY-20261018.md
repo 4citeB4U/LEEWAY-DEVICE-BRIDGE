@@ -162,7 +162,24 @@ After the stable installation passed, SideStore on the iPhone still returned the
 
 iLoader and SideStore each hold their own Anisette/authentication session. The iLoader session does not automatically create a phone-side SideStore session. The PWA preflight now names this as a mandatory independent gate, preventing the earlier unsupported inference that a successful installer login proves SideStore account readiness.
 
-**Next repair:** in SideStore on the iPhone, select **Jkcoxson (Windows)** from its own built-in Anisette list, reset `adi.pb`, force-close SideStore, reopen it, and make one normal sign-in attempt. Do not alter the iLoader certificate or reinstall SideStore again during this phone-session repair.
+**Earlier next repair withdrawn:** phone-side selection of a SideJIT or Anisette entry is not justified before correcting the app version. The phone exposes only SideJIT Server, and SideJIT is unrelated to SideStore Apple Account sign-in.
+
+## Root-cause correction — SideStore 0.6.4 is upstream sign-in broken
+
+The physical iPhone reported **SideStore 0.6.4**. SideStore's own 0.6.4 release page warns: sign-in is broken on 0.6.4 and earlier. The official `0.7.0-alpha` release identifies Apple server-side changes as the cause and provides its direct repair.
+
+| Check | Result | State |
+| --- | --- | --- |
+| iLoader account and certificate | Logged in / certificate observed | OBSERVED |
+| iPhone SideStore version | 0.6.4 | OBSERVED |
+| Phone-side login failure | `-80045` repeated | OBSERVED |
+| SideJIT relevance | Not part of Apple Account authentication | VERIFIED against upstream release diagnosis |
+| Official repair artifact | SideStore `0.7.0-alpha` IPA | VERIFIED source identity |
+| Local IPA SHA-256 | `e334f86e6ceeab2e0d886c07611246533f474bb18838cf13ebc09ed1f0d622b5` | VERIFIED match to publisher digest |
+
+The verified repair file is `C:\Users\Leona\Downloads\SideStore-0.7.0-alpha.ipa`. It must be imported through the already-authenticated iLoader session, with the existing certificate and pairing file preserved. The owner must then observe the replacement version and make one normal sign-in attempt. Full protocol: [Apple SideStore 0.7.0 repair](../../docs/APPLE-SIDESTORE-0.7.0-REPAIR.md).
+
+This correction supersedes the earlier phone-side cache/provider retry. The underlying iLoader and LeeWay Device Bridge installation remain intact; they are not implicated in the known SideStore 0.6.4 defect.
 
 ### Tier 3 — reinstall only after the two repairs fail
 
@@ -189,4 +206,4 @@ Reinstalling SideStore can affect applications SideStore manages. Do not begin t
 
 ## Evidence state
 
-**TIER 1 FAILED; TIER 2 FAILED; ANISSETTE ROUTE REPAIR PENDING.** No Formula evaluation, canonical Veritas decision, Runtime Fabric action, or Learning Ledger update occurred in this recovery record.
+**VERSION REPAIR READY; PHONE-SIDE INSTALL AND SIGN-IN PENDING.** No Formula evaluation, canonical Veritas decision, Runtime Fabric action, or Learning Ledger update occurred in this recovery record.

@@ -1,4 +1,4 @@
-const CACHE = "leeway-device-bridge-v13";
+const CACHE = "leeway-device-bridge-v14";
 const ASSETS = [
   "./",
   "./index.html",
@@ -23,6 +23,7 @@ const ASSETS = [
   "./APPLE-NATIVE-DELIVERY-PROTOCOL.md",
   "./APPLE-NATIVE-SIDELOAD-DELIVERY.md",
   "./APPLE-SIDESTORE-PREFLIGHT.md",
+  "./APPLE-SIDESTORE-0.7.0-REPAIR.md",
   "./SIDESTORE-UPDATE-CHANNEL.md"
 ];
 

@@ -4,12 +4,13 @@ Use this check before installing or updating the native LeeWay Device Bridge IPA
 
 ## Required state
 
-1. **iLoader account:** the panel says **LOGGED IN AS**.
-2. **Physical device:** the intended iPhone is selected and connected by USB.
-3. **Anisette route:** use a built-in provider that completed account authentication on this Windows computer. The current observed working selection is **Jkcoxson (Windows)**.
-4. **Certificate:** iLoader's Certificates panel lists the existing iOS Development certificate. Do not revoke it merely because an Anisette provider is unavailable.
-5. **Installer:** only after the first four checks pass, select **SideStore (Stable)**.
-6. **Phone-side account:** open SideStore on the iPhone, select its own built-in Anisette provider, and complete its Apple Account sign-in. iLoader’s logged-in state does not transfer this session to SideStore.
+1. **Version gate:** do not attempt phone-side sign-in with SideStore **0.6.4 or earlier**. SideStore upstream marks those versions as sign-in broken. Use the controlled repair in [SideStore 0.7.0 sign-in repair](./APPLE-SIDESTORE-0.7.0-REPAIR.md).
+2. **iLoader account:** the panel says **LOGGED IN AS**.
+3. **Physical device:** the intended iPhone is selected and connected by USB.
+4. **Anisette route:** use a built-in provider that completed account authentication on this Windows computer. The current observed working selection is **Jkcoxson (Windows)**.
+5. **Certificate:** iLoader's Certificates panel lists the existing iOS Development certificate. Do not revoke it merely because an Anisette provider is unavailable.
+6. **Installer:** only after the first five checks pass, select **SideStore (Stable)** or import the approved SideStore repair IPA.
+7. **Phone-side account:** open the repaired SideStore build on the iPhone and complete its own Apple Account sign-in. iLoader’s logged-in state does not transfer this session to SideStore.
 
 ## Keep these routes separate
 
@@ -26,7 +27,8 @@ Use this check before installing or updating the native LeeWay Device Bridge IPA
 1. If an Anisette server returns 502 or another service error, change to another built-in provider and reset Anisette state. Keep the certificate and installed LeeWay app intact.
 2. If iLoader authenticates but the install reports `0xE8008018`, inspect the certificate state before any reset or revocation. That code is an install-stage identity rejection, distinct from an Anisette outage.
 3. Reinstall SideStore only after the provider, device connection, and certificate state have been examined.
-4. If iLoader installs successfully but SideStore login still fails, repair SideStore's own Anisette provider and `adi.pb` cache before reinstalling again.
+4. If iLoader installs successfully but SideStore reports version 0.6.4 or earlier, stop. That version has an upstream sign-in defect; install the approved 0.7.0 repair artifact before changing SideJIT, certificates, or iPhone Anisette settings.
+5. If the repaired SideStore build still fails, capture its exact version and error before investigating its own Anisette provider and `adi.pb` cache.
 
 ## Boundaries
 
