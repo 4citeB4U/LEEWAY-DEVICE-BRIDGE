@@ -21,6 +21,11 @@ export const schemas = Object.freeze({
   }).strict(),
   'device.job.status': z.object({ jobId: z.string().uuid() }).strict(),
   'device.job.stop': z.object({ jobId: z.string().uuid() }).strict(),
+  'device.screen.info': z.object({}).strict(),
+  'device.screen.capture': z.object({}).strict(),
+  'device.ui.click': z.object({ x: z.number().int().min(0).max(16384), y: z.number().int().min(0).max(16384), button: z.enum(['left','right']).default('left') }).strict(),
+  'device.ui.type': z.object({ text: z.string().max(4096) }).strict(),
+  'device.ui.key': z.object({ key: z.enum(['ENTER','ESC','TAB','UP','DOWN','LEFT','RIGHT','HOME','END','PAGEUP','PAGEDOWN','BACKSPACE','DELETE']) }).strict(),
   'device.process.execute': z.object({
     executable: z.enum(['node', 'npm', 'git', 'powershell']),
     arguments: z.array(z.string().max(2048)).max(64).default([]),
