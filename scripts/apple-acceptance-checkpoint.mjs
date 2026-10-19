@@ -15,7 +15,8 @@ function canonical(v) {
 }
 const digest = v => createHash("sha256").update(JSON.stringify(canonical(v))).digest("hex");
 export function checkpoint({ receipt, integrityReport, lineageReport, releaseReport }) {
-  const { receiptHash, evidenceHash, ...hashedPayload } = receipt;
+  const { receiptHash, ...hashedPayload } = receipt;
+  const evidenceHash = receipt.evidenceHash;
   // The hash covers all receipt fields except receiptHash; this is not a digital signature.
   const evidenceMatches = digest(receipt.evidence) === evidenceHash;
   const receiptMatches = digest(hashedPayload) === receiptHash;
