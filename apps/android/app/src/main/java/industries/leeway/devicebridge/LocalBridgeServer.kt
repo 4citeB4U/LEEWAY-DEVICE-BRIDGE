@@ -117,104 +117,25 @@ object LocalBridgeServer {
     }
 
     private fun handle(context: Context, socket: Socket) {
-        socket.use { client ->
-            client.soTimeout = 3000
-            val reader = BufferedReader(InputStreamReader(client.getInputStream(), Charsets.UTF_8))
-            val requestLine = reader.readLine() ?: return
-            val parts = requestLine.split(" ")
-            val method = parts.getOrNull(0) ?: ""
-            val target = parts.getOrNull(1) ?: "/"
-            val path = target.substringBefore("?")
-            val query = target.substringAfter("?", "")
-            val queryParams = query.split("&")
-                .mapNotNull { part ->
-                    if (part.isBlank()) null
-                    else {
-                        val idx = part.indexOf("=")
-                        if (idx <= 0) null
-                        else URLDecoder.decode(part.substring(0, idx), "UTF-8") to
-                            URLDecoder.decode(part.substring(idx + 1), "UTF-8")
-                    }
-                }.toMap()
-            var authorization: String? = null
-            while (true) {
-                val line = reader.readLine() ?: break
-                if (line.isEmpty()) break
-                if (line.startsWith("Authorization:", ignoreCase = true)) {
-                    authorization = line.substringAfter(":").trim()
+        LocalBridgeHttpHandler.serve(socket, LocalBridgeHttpHandler.Dependencies(
+            health = { status(context) },
+            ownerBootstrap = { nonce -> consumeOwnerBootstrap(context, nonce) },
+            accessEnabled = { LocalAuthority.agentAccessEnabled(context) },
+            bearerMatches = { token -> BridgeSecret.matches(context, token) },
+            protectedRead = { path ->
+                when (path) {
+                    "/passport" -> BootstrapStore.loadPassport(context) ?: DevicePassport.capture(context)
+                    "/capabilities" -> JSONObject().put("capabilities",
+                        (BootstrapStore.loadPassport(context) ?: DevicePassport.capture(context))
+                            .optJSONArray("capabilityClaims"))
+                    "/provisioning/plan" -> AndroidTrustedProvisioningObservation.capturePlan(context)
+                    "/receipts" -> JSONObject().put("receipts", ReceiptStore.list(context))
+                    "/providers/bluetooth" -> BluetoothProvider.snapshot(context)
+                    "/bridge" -> status(context)
+                    else -> null
                 }
-            }
-
-            if (method != "GET") {
-                respond(client, 405, JSONObject().put("ok", false).put("error", "METHOD_NOT_ALLOWED"))
-                return
-            }
-
-            if (path == "/health") {
-                respond(client, 200, status(context))
-                return
-            }
-
-            if (path == "/owner-bootstrap") {
-                val body = consumeOwnerBootstrap(context, queryParams["nonce"])
-                respond(client, if (body.optBoolean("ok")) 200 else 401, body)
-                return
-            }
-
-            val accessEnabled = LocalAuthority.agentAccessEnabled(context)
-            // Do not inspect or validate a credential when local agent access is disabled.
-            val bearer = authorization?.removePrefix("Bearer ")?.trim()
-            val credentialMatches = accessEnabled && BridgeSecret.matches(context, bearer)
-            val access = LocalBridgeReadAuthorization.evaluate(accessEnabled, credentialMatches)
-            if (access.status != 200) {
-                respond(client, access.status, JSONObject().put("ok", false).put("error", access.error))
-                return
-            }
-
-            val body = when (path) {
-                "/passport" -> BootstrapStore.loadPassport(context) ?: DevicePassport.capture(context)
-                "/capabilities" -> JSONObject().put(
-                    "capabilities",
-                    (BootstrapStore.loadPassport(context) ?: DevicePassport.capture(context))
-                        .optJSONArray("capabilityClaims")
-                )
-                "/provisioning/plan" -> AndroidTrustedProvisioningObservation.capturePlan(context)
-                "/receipts" -> JSONObject().put("receipts", ReceiptStore.list(context))
-                "/providers/bluetooth" -> BluetoothProvider.snapshot(context)
-                "/bridge" -> status(context)
-                else -> null
-            }
-
-            if (body == null) {
-                respond(client, 404, JSONObject().put("ok", false).put("error", "NOT_FOUND"))
-            } else {
-                ReceiptStore.record(context, "device.bridge.read", "PASS", "GET $path")
-                respond(client, 200, body)
-            }
-        }
-    }
-
-    private fun respond(socket: Socket, status: Int, body: JSONObject) {
-        val bytes = body.toString().toByteArray(Charsets.UTF_8)
-        val reason = when (status) {
-            200 -> "OK"
-            401 -> "Unauthorized"
-            403 -> "Forbidden"
-            404 -> "Not Found"
-            405 -> "Method Not Allowed"
-            else -> "Error"
-        }
-        val header = buildString {
-            append("HTTP/1.1 $status $reason\r\n")
-            append("Content-Type: application/json; charset=utf-8\r\n")
-            append("Content-Length: ${bytes.size}\r\n")
-            append("Connection: close\r\n")
-            append("Cache-Control: no-store\r\n\r\n")
-        }
-        socket.getOutputStream().use { out ->
-            out.write(header.toByteArray(Charsets.UTF_8))
-            out.write(bytes)
-            out.flush()
-        }
+            },
+            recordRead = { path -> ReceiptStore.record(context, "device.bridge.read", "PASS", "GET $path") }
+        ))
     }
 }
