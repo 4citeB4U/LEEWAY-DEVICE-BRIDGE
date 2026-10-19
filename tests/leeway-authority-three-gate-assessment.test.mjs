@@ -34,6 +34,6 @@ test("Learning Ledger receipt tied to wrong evidence digest fails closed",()=>{
  assert.equal(v.gates.learningIngest.learningAdmitted,false);
 });
 test("Only complete synthetic evidence sets all gates; assessment never executes",()=>{
- const v=assess(good);assert.equal(v.allThreeComplete,true);
+ const v=assess(good);assert.equal(v.evidenceClaimsComplete,true);assert.equal(v.allThreeComplete,false);
  assert.equal(v.execution,"READ_ONLY_ASSESSMENT");assert.equal(v.mutationsPerformed,false);
 });
