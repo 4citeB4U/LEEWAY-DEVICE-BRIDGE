@@ -14,13 +14,6 @@ function exists(filePath) {
   try { return fs.existsSync(filePath); } catch { return false; }
 }
 
-function jsonObject(filePath) {
-  try {
-    const value = JSON.parse(fs.readFileSync(filePath, "utf8"));
-    return value && typeof value === "object" && !Array.isArray(value) ? value : {};
-  } catch { return {}; }
-}
-
 function windowsFacts(commandRunner) {
   const script = [
     "$service = @(Get-Service -Name 'Apple Mobile Device Service','AppleMobileDeviceService' -ErrorAction SilentlyContinue | Where-Object {$_.Status -eq 'Running'}).Count -gt 0",
@@ -61,8 +54,6 @@ export function observeWindowsIloader({ appDataRoot, commandRunner = defaultComm
   const root = appDataRoot ?? path.join(process.env.APPDATA ?? path.join(os.homedir(), "AppData", "Roaming"), "me.nabdev.iloader");
   const preferencesPath = path.join(root, "preferences.json");
   const dataPath = path.join(root, "data.json");
-  const preferences = jsonObject(preferencesPath);
-  const data = jsonObject(dataPath);
   const host = windowsFacts(commandRunner);
   const localStatePresent = exists(root) && exists(preferencesPath) && exists(dataPath);
   // iLoader can enumerate a USB device through its own mobile-device stack;
@@ -73,8 +64,8 @@ export function observeWindowsIloader({ appDataRoot, commandRunner = defaultComm
     state: "WINDOWS_ILOADER_OBSERVED",
     hostProbeState: host.hostProbeState,
     localStatePresent,
-    selectedServerStored: Object.hasOwn(preferences, "newAnisetteServer"),
-    accountRecordStored: Object.keys(data).length > 0,
+    selectedServerStored: false, // Preference contents deliberately not inspected.
+    accountRecordStored: false, // Account-data contents deliberately not inspected.
     appleMobileDeviceServiceRunning: host.appleMobileDeviceServiceRunning,
     appleUsbPresent: host.appleUsbPresent,
     iLoaderRunning: host.iLoaderRunning,
