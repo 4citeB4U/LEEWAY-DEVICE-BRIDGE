@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leeway.local/contracts/device-lifecycle.schema.json",
+  "title": "LeeWay Device Lifecycle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["deviceId","state","previousState","evidenceState","updatedAt"],
+  "properties": {
+    "deviceId": {"type":"string","minLength":1},
+    "state": {
+      "enum": [
+        "UNKNOWN","DISCOVERED","IDENTIFIED","REGISTERED","PAIRING_REQUIRED",
+        "PAIRED","AUTHORIZED","AVAILABLE","ACTIVE","HEALTHY","VERIFIED",
+        "DEGRADED","BLOCKED","REVOKED","FAILED"
+      ]
+    },
+    "previousState": {
+      "type":["string","null"],
+      "enum":[
+        "UNKNOWN","DISCOVERED","IDENTIFIED","REGISTERED","PAIRING_REQUIRED",
+        "PAIRED","AUTHORIZED","AVAILABLE","ACTIVE","HEALTHY","VERIFIED",
+        "DEGRADED","BLOCKED","REVOKED","FAILED",null
+      ]
+    },
+    "reason":{"type":"string","minLength":1},
+    "evidenceState":{"enum":["VERIFIED","OBSERVED","INFERRED","PROPOSED","UNVERIFIED","FAILED","BLOCKED"]},
+    "evidenceRefs":{"type":"array","items":{"type":"string","minLength":1}},
+    "receiptRefs":{"type":"array","items":{"type":"string","minLength":1}},
+    "updatedAt":{"type":"string","format":"date-time"}
+  }
+}
