@@ -60,4 +60,27 @@ class NativeProvisioningAuthorizationTest {
             if (!wasRunning) LocalBridgeServer.stop(context)
         }
     }
+    @Test fun nativeServerStopClosesLoopback() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val originalAccess = LocalAuthority.agentAccessEnabled(context)
+        val originallyRunning = LocalBridgeServer.isRunning()
+        try {
+            if (!originallyRunning) LocalBridgeServer.start(context)
+            assertTrue(LocalBridgeServer.isRunning())
+            assertEquals(200, request("/health").first)
+            LocalBridgeServer.stop(context)
+            assertFalse(LocalBridgeServer.isRunning())
+            try {
+                request("/health")
+                fail("Loopback health must not remain reachable after server stop")
+            } catch (_: java.net.ConnectException) {
+                // Expected: closed loopback socket refuses new connections.
+            }
+        } finally {
+            LocalAuthority.setAgentAccess(context, originalAccess)
+            if (originallyRunning && !LocalBridgeServer.isRunning()) LocalBridgeServer.start(context)
+            if (!originallyRunning && LocalBridgeServer.isRunning()) LocalBridgeServer.stop(context)
+        }
+    }
 }
+
