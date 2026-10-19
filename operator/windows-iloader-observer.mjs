@@ -3,7 +3,7 @@ REGION: Windows iLoader observation adapter
 TAG: LEEWAY-WINDOWS-ILOADER-OBSERVER
 WHAT: Collect minimal non-secret Windows/iLoader readiness facts for an iOS dry-run plan.
 WHY: Supply observed transport and local-state facts without reading credentials or changing Apple state.
-HOW: File existence and allowlisted preference-key presence plus read-only Windows service/PnP booleans.
+HOW: File existence only for iLoader files, plus read-only Windows service/PnP booleans; no account-file parsing.
 */
 import fs from "node:fs";
 import os from "node:os";
@@ -12,13 +12,6 @@ import { execFileSync } from "node:child_process";
 
 function exists(filePath) {
   try { return fs.existsSync(filePath); } catch { return false; }
-}
-
-function jsonObject(filePath) {
-  try {
-    const value = JSON.parse(fs.readFileSync(filePath, "utf8"));
-    return value && typeof value === "object" && !Array.isArray(value) ? value : {};
-  } catch { return {}; }
 }
 
 function windowsFacts(commandRunner) {
@@ -61,8 +54,6 @@ export function observeWindowsIloader({ appDataRoot, commandRunner = defaultComm
   const root = appDataRoot ?? path.join(process.env.APPDATA ?? path.join(os.homedir(), "AppData", "Roaming"), "me.nabdev.iloader");
   const preferencesPath = path.join(root, "preferences.json");
   const dataPath = path.join(root, "data.json");
-  const preferences = jsonObject(preferencesPath);
-  const data = jsonObject(dataPath);
   const host = windowsFacts(commandRunner);
   const localStatePresent = exists(root) && exists(preferencesPath) && exists(dataPath);
   // iLoader can enumerate a USB device through its own mobile-device stack;
@@ -73,8 +64,10 @@ export function observeWindowsIloader({ appDataRoot, commandRunner = defaultComm
     state: "WINDOWS_ILOADER_OBSERVED",
     hostProbeState: host.hostProbeState,
     localStatePresent,
-    selectedServerStored: Object.hasOwn(preferences, "newAnisetteServer"),
-    accountRecordStored: Object.keys(data).length > 0,
+    selectedServerStored: false, // Legacy Boolean placeholder, not evidence of absence; consult ObservationState.
+    selectedServerObservationState: "NOT_OBSERVED",
+    accountRecordStored: false, // Legacy Boolean placeholder, not evidence of absence; consult ObservationState.
+    accountRecordObservationState: "NOT_OBSERVED",
     appleMobileDeviceServiceRunning: host.appleMobileDeviceServiceRunning,
     appleUsbPresent: host.appleUsbPresent,
     iLoaderRunning: host.iLoaderRunning,
