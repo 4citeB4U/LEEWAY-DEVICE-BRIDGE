@@ -1,0 +1,110 @@
+/* ===================================================================
+   LEEWAY-VISION-FLOAT-WIDGET-v1 — isolated optical UI conversion
+   Original media/camera, tracking, Wi-Fi, artwork, 3D view all preserved.
+   Only the eye moves in X/Y and resizes; control tags stay at left X=0.
+   =================================================================== */
+html, body, .stage { background:#000!important; }
+body.vision-widget-mode { --vision-edge-width:53px; --vision-panel-width:334px; --vision-tab-offset:84px; --vision-panel-top:84px; }
+body.vision-widget-mode .controls,body.vision-widget-mode #padLauncher,body.vision-widget-mode #optOverlayLauncher { display:none!important; }
+body.vision-widget-mode .optpad { position:fixed!important; inset:0!important; width:100vw!important; height:100dvh!important; background:none!important; pointer-events:none!important; z-index:80!important; }
+/* The eye is a consistent aspect-ratio floating element, not full-screen chrome. */
+body.vision-widget-mode.pad-open:not(.matrix) #widget,
+body.vision-widget-mode.pad-minimized:not(.matrix) #widget,
+body.vision-widget-mode.matrix #widget,
+body.vision-widget-mode[data-profile="watch"] #widget {
+  top:50%!important; left:50%!important;
+  width:var(--vision-widget-size, min(72vw,630px))!important;
+  max-width:calc(100vw - 14px)!important;
+  min-width:0!important; height:auto!important;
+  aspect-ratio:1.18!important;
+  transform:translate(calc(-50% + var(--x,0px)),calc(-50% + var(--y,0px)))!important;
+  transition:none!important; touch-action:none!important; z-index:15!important;
+}
+body.vision-widget-mode .widget .poster,body.vision-widget-mode .widget #preview {display:none!important}
+/* Hamburger and resize grip ride with the eye, not screen edges. */
+#visionEyeMenu {position:absolute!important;z-index:50;right:1.5%;top:46%;width:46px;height:46px;
+  display:grid;place-items:center;border:1.5px solid #65edff;border-radius:13px;
+  background:linear-gradient(155deg,rgba(5,48,70,.97),rgba(1,16,28,.98));
+  box-shadow:0 0 16px #0486b8, inset 0 0 14px #115c70;color:#e6feff;
+  touch-action:manipulation;cursor:pointer;pointer-events:auto;
+}
+#visionEyeMenu:hover,#visionEyeMenu[aria-expanded="true"]{background:linear-gradient(145deg,#0a7496,#093346);box-shadow:0 0 20px #19cdf2;}
+#visionEyeMenu svg{width:26px;height:26px;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;fill:none}
+#visionEyeResize {position:absolute!important;z-index:51;right:10%;bottom:6%;width:39px;height:39px;
+  display:grid;place-items:center;border:1px solid rgba(62,223,248,.66);border-radius:10px;
+  background:rgba(0,23,34,.9);color:#abf9ff;box-shadow:0 0 11px rgba(48,230,252,.3);
+  touch-action:none;cursor:nwse-resize;pointer-events:auto;
+}
+#visionEyeResize svg{width:23px;height:23px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round}
+/* Hamburger reveals these screen-attached tabs; only the rail's Y coordinate is mutable. */
+#visionEdgeRail {position:fixed;z-index:120;left:0!important;top:var(--vision-tab-offset,84px);width:var(--vision-edge-width,53px);
+ display:flex;flex-direction:column;gap:4px;padding:5px 5px 7px 0;
+ border:1px solid rgba(22,205,239,.66);border-left:0;border-radius:0 14px 14px 0;
+ background:linear-gradient(160deg,rgba(0,27,39,.98),rgba(0,8,19,.98));
+ box-shadow:0 0 17px rgba(0,187,247,.33);max-height:calc(100dvh - 14px);overflow-y:auto;
+ scrollbar-width:none;pointer-events:auto;visibility:hidden;opacity:0;transform:translateX(-12px);
+ transition:visibility .18s,opacity .18s,transform .18s;}
+#visionEdgeRail::-webkit-scrollbar{display:none}
+body.vision-widget-mode.vision-tags-visible #visionEdgeRail {visibility:visible;opacity:1;transform:translateX(0)}
+#visionRailGrip {display:grid;place-items:center;width:45px;height:29px;min-height:29px;
+ border:0;background:none;color:#8cefff;font-size:17px;cursor:ns-resize;touch-action:none;user-select:none;}
+#visionEdgeRail .vision-edge-tab{width:45px;min-height:54px;border:1px solid #126f8d;
+ border-radius:0 8px 8px 0;background:linear-gradient(140deg,#06384d,#041c2c);
+ color:#a5f6ff;display:flex;flex-direction:column;align-items:center;justify-content:center;
+ gap:2px;cursor:pointer;padding:4px 1px;white-space:nowrap;touch-action:manipulation;}
+#visionEdgeRail .vision-edge-tab .ico{font-size:20px;line-height:1.05}
+#visionEdgeRail .vision-edge-tab .txt{font:600 8px/1.2 Consolas,monospace;letter-spacing:0}
+#visionEdgeRail .vision-edge-tab[aria-selected="true"]{background:linear-gradient(145deg,#08759d,#04384f);border-color:#7af7ff;box-shadow:inset 0 0 12px rgba(43,228,244,.2),0 0 10px rgba(47,230,253,.3);color:#fff;}
+/* Screen-left popup drawer. LEFT and RIGHT source sections share same x coordinate. */
+body.vision-widget-mode #optLeftDock, body.vision-widget-mode #optRightDock,
+body.vision-widget-mode #optLowerDock {
+ position:fixed!important;z-index:111!important;
+ left:calc(var(--vision-edge-width,53px) + 5px)!important;right:auto!important;
+ top:var(--vision-panel-top,84px)!important;bottom:auto!important;
+ width:min(var(--vision-panel-width,334px),calc(100vw - var(--vision-edge-width,53px) - 13px))!important;
+ height:min(72dvh,675px)!important;max-height:calc(100dvh - 17px)!important;
+ margin:0!important;transform:none!important;
+ border:1px solid #14c4e3!important;border-radius:0 16px 16px 13px!important;
+ background:linear-gradient(160deg,rgba(2,17,27,.985),rgba(3,31,42,.985))!important;
+ box-shadow:0 0 19px rgba(2,178,236,.28),inset 0 0 0 1px #164d62!important;
+ padding:5px!important;overflow:hidden!important;
+ pointer-events:none!important;opacity:0!important;visibility:hidden!important;
+ transition:none!important;
+}
+body.vision-widget-mode.vision-tags-visible[data-vision-drawer="optics"] #optLeftDock,
+body.vision-widget-mode.vision-tags-visible[data-vision-drawer="cameras"] #optRightDock,
+body.vision-widget-mode.vision-tags-visible[data-vision-drawer="settings"] #optRightDock,
+body.vision-widget-mode.vision-tags-visible[data-vision-drawer="matrix"] #optRightDock,
+body.vision-widget-mode.vision-tags-visible[data-vision-drawer="diagnostics"] #optRightDock,
+body.vision-widget-mode.vision-tags-visible[data-vision-drawer="navigation"] #optLowerDock {
+ visibility:visible!important;opacity:1!important;pointer-events:auto!important;
+}
+body.vision-widget-mode .opt-dock .dock-tab {display:none!important}
+body.vision-widget-mode .opt-dock .dock-scroll {width:100%;padding:10px 12px 8px!important;overflow:auto!important;visibility:visible!important;pointer-events:auto!important;flex:1;}
+body.vision-widget-mode .opt-dock .dock-header{min-height:58px!important;padding:6px 2px 12px!important;touch-action:auto!important;cursor:default!important}
+body.vision-widget-mode .opt-dock .dock-header strong{font-size:20px!important}
+body.vision-widget-mode #optRightDock .pad-well,#optLeftDock .pad-well {min-height:0!important}
+body.vision-widget-mode .optpad #optLowerDock .pad-bottom {display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ width:100%!important;margin:6px 0 10px!important;gap:8px!important;padding:8px!important;}
+body.vision-widget-mode .optpad #optLowerDock .pad-bottom button {height:48px!important;font-size:15px!important;}
+body.vision-widget-mode .optpad #optLowerDock .pad-bottom button:first-child{font-size:11px!important}
+#visionNavTools{margin:12px 7px 10px;display:grid;gap:10px;}
+#visionNavTools .vision-range-row{display:flex;justify-content:space-between;font:12px Consolas,monospace;color:#b1f2ff}
+#visionNavTools input[type="range"]{width:100%;accent-color:#3ad8ff;cursor:pointer}
+#visionNavTools button{padding:10px;border:1px solid #218cb3;background:#074157;color:#ddfaff;border-radius:7px;cursor:pointer}
+#visionDrawerHeader{position:sticky;top:0;z-index:6;display:flex;justify-content:space-between;align-items:center;gap:8px;
+ padding:9px 11px 10px;font:700 12px Consolas,monospace;letter-spacing:.05em;color:#8cecff;
+ background:linear-gradient(100deg,#083346,#031927);border-bottom:1px solid #177b9a;}
+#visionDrawerHeader button,.vision-drawer-header button{padding:2px 10px;border:1px solid #208aa8;background:#062737;border-radius:6px;color:#d6ffff;font-size:19px;cursor:pointer;}
+.vision-drawer-header{position:sticky;top:0;z-index:8;display:flex;justify-content:space-between;align-items:center;
+ padding:10px 11px;font:700 12px Consolas,monospace;color:#93f7ff;letter-spacing:.04em;
+ border-bottom:1px solid #187b98;background:#052b3b;}
+body.vision-widget-mode #optLeftDock::before,body.vision-widget-mode #optRightDock::before,
+body.vision-widget-mode #optLeftDock::after,body.vision-widget-mode #optRightDock::after{display:none!important}
+@media(max-width:680px){
+ body.vision-widget-mode #optLeftDock, body.vision-widget-mode #optRightDock,body.vision-widget-mode #optLowerDock{width:calc(100vw - var(--vision-edge-width,53px) - 9px)!important;height:min(78dvh,650px)!important;}
+ body.vision-widget-mode #visionEyeMenu{width:40px;height:40px;right:1%;top:43%}
+ body.vision-widget-mode #visionEyeResize{width:36px;height:36px}
+}
+@media(prefers-reduced-motion:reduce){#visionEdgeRail{transition:none!important}}
+
