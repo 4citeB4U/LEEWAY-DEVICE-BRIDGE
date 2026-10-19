@@ -6,7 +6,7 @@ const baseline = readCanonical();
 test("Archived receipt blocks handoff when canonical providers are absent", () => {
   const plan = planAppleReceiptHandoff(baseline);
   assert.equal(plan.status, "BLOCKED");
-  assert.deepEqual(plan.blockers, ["CANONICAL_VERITAS_PROVIDER_NOT_QUALIFIED", "LEARNING_LEDGER_PROVIDER_NOT_QUALIFIED"]);
+  assert.deepEqual(plan.blockers, ["CANONICAL_VERITAS_PROVIDER_NOT_QUALIFIED", "LEARNING_LEDGER_PROVIDER_NOT_QUALIFIED", "CANONICAL_AUTHORITY_BINDING_NOT_INDEPENDENTLY_VERIFIED"]);
   assert.equal(plan.receiptSubmitted, false);
 });
 test("Caller assertions alone cannot qualify authority", () => {
