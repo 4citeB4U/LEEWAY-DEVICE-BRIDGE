@@ -284,5 +284,32 @@
       "implementationPath": null,
       "documentation": "docs/DEVICE-OPERATOR.md"
     }
+  ],
+  "iosApplications": [
+    {
+      "applicationId": "leeway-gpu-apple",
+      "authorityRepository": "4citeB4U/LeeWay-Edge-GPU",
+      "sourcePath": "native/apple/LeeWayGPUApple",
+      "bundleIdPrefix": "industries.leeway.gpu",
+      "observedSignedBundle": "industries.leeway.gpu.7K2LF3G25U",
+      "platform": "ios",
+      "adapterId": "leeway.operator.ios",
+      "physicalEvidence": {
+        "device": "Apple A13 GPU",
+        "metalProbe": "PASS",
+        "lanes": 256,
+        "mismatches": 0,
+        "neuralClassifier": "OWNER_REPORTED_PASS",
+        "neuralMaxAbsError": 0
+      },
+      "components": {
+        "formula": "UNBOUND",
+        "ldwmd": "UNBOUND",
+        "continuum": "UNBOUND",
+        "veritas": "UNBOUND"
+      },
+      "integrationState": "DISCOVERED_NOT_CANONICALLY_ADMITTED",
+      "authorityBoundary": "The GPU app is a separate Apple sandbox application. Device Bridge discovery does not itself grant cross-application invocation, Formula/LDWMD/Continuum authority, or Veritas verification."
+    }
   ]
 }
