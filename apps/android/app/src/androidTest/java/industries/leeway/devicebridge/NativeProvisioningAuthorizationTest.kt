@@ -111,5 +111,31 @@ class NativeProvisioningAuthorizationTest {
         }
     }
 
+    @Test fun expiredBootstrapNonceDoesNotReturnPairingCredential() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val originalAccess = LocalAuthority.agentAccessEnabled(context)
+        val originallyRunning = LocalBridgeServer.isRunning()
+        val nonce = java.util.UUID.randomUUID().toString().replace("-", "")
+        val expiry = LocalBridgeServer::class.java.getDeclaredField("ownerBootstrapExpiresAt")
+        expiry.isAccessible = true
+        try {
+            if (!originallyRunning) LocalBridgeServer.start(context)
+            assertTrue(LocalBridgeServer.armOwnerBootstrap(context, nonce).getBoolean("ok"))
+            // Test-only clock boundary injection: no 120-second delay or production change.
+            expiry.setLong(LocalBridgeServer, System.currentTimeMillis() - 1L)
+            val expired = request("/owner-bootstrap?nonce=" + nonce)
+            assertEquals(401, expired.first)
+            assertEquals("BOOTSTRAP_NOT_ARMED_OR_EXPIRED", expired.second.getString("error"))
+            assertFalse(expired.second.has("pairingToken"))
+            val repeated = request("/owner-bootstrap?nonce=" + nonce)
+            assertEquals(401, repeated.first)
+            assertFalse(repeated.second.has("pairingToken"))
+        } finally {
+            expiry.setLong(LocalBridgeServer, 0L)
+            LocalAuthority.setAgentAccess(context, originalAccess)
+            if (!originallyRunning) LocalBridgeServer.stop(context)
+        }
+    }
+
 }
 
