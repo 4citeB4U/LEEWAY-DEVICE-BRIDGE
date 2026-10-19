@@ -17,7 +17,7 @@ assert.equal(observed.observation.accountRecordStored, true);
 assert.equal(observed.observation.credentialStoreState, "NOT_INSPECTED");
 assert.equal(JSON.stringify(observed).includes("redacted"), false);
 const packageDescriptor = { type: "ipa", expectedSha256: "b".repeat(64), actualSha256: "b".repeat(64) };
-assert.equal(planInstallation({ target: observed.installationTarget, package: packageDescriptor }).state, "APPLE_ACCOUNT_AUTH_NOT_OBSERVED");
+assert.equal(planInstallation({ target: observed.installationTarget, package: packageDescriptor }).state, "TRANSPORT_NOT_READY");
 assert.equal(observeWindowsIloader({ hostPlatform: "linux" }).state, "WINDOWS_HOST_REQUIRED");
 fs.rmSync(root, { recursive: true, force: true });
 console.log("PASS Windows iLoader observer privacy and planning contract");
