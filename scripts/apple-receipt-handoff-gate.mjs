@@ -15,8 +15,11 @@ export function planAppleReceiptHandoff(checkpoint, bindings = {}) {
   if (!verifiedLocal) failures.push("LOCAL_RECEIPT_HASH_REPLAY_NOT_PASSED");
   if (!qualified(veritas)) failures.push("CANONICAL_VERITAS_PROVIDER_NOT_QUALIFIED");
   if (!qualified(ledger)) failures.push("LEARNING_LEDGER_PROVIDER_NOT_QUALIFIED");
+  // Caller-controlled provider flags are claims, never external proof of qualification.
+  failures.push("CANONICAL_AUTHORITY_BINDING_NOT_INDEPENDENTLY_VERIFIED");
   return {
-    status: failures.length === 0 ? "DRY_RUN_HANDOFF_ROUTE_READY" : "BLOCKED",
+    status: "BLOCKED",
+    providerClaimsStructurallyComplete: qualified(veritas) && qualified(ledger),
     blockers: failures,
     verification: "NOT_EXECUTED",
     receiptSubmitted: false,
