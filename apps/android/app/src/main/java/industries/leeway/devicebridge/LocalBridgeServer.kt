@@ -161,14 +161,13 @@ object LocalBridgeServer {
                 return
             }
 
-            if (!LocalAuthority.agentAccessEnabled(context)) {
-                respond(client, 403, JSONObject().put("ok", false).put("error", "AGENT_ACCESS_DISABLED"))
-                return
-            }
-
+            val accessEnabled = LocalAuthority.agentAccessEnabled(context)
+            // Do not inspect or validate a credential when local agent access is disabled.
             val bearer = authorization?.removePrefix("Bearer ")?.trim()
-            if (!BridgeSecret.matches(context, bearer)) {
-                respond(client, 401, JSONObject().put("ok", false).put("error", "UNAUTHORIZED"))
+            val credentialMatches = accessEnabled && BridgeSecret.matches(context, bearer)
+            val access = LocalBridgeReadAuthorization.evaluate(accessEnabled, credentialMatches)
+            if (access.status != 200) {
+                respond(client, access.status, JSONObject().put("ok", false).put("error", access.error))
                 return
             }
 
