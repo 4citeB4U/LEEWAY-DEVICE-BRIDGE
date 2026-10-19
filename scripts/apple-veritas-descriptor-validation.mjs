@@ -23,8 +23,22 @@ export function validateAppleVeritasDescriptor(descriptor, contract) {
     }
     for (const field of fields) {
       const value = group[field];
+      const fieldPath = section + "." + field;
       if (value === undefined || value === null || (typeof value === "string" && value.trim() === "")) {
-        errors.push("MISSING_FIELD:" + section + "." + field);
+        errors.push("MISSING_FIELD:" + fieldPath);
+        continue;
+      }
+      // These field kinds follow the canonical contract's vocabulary.
+      // No arbitrary truthy object, string "true" or empty capability list can pass.
+      if (["contracts","operations","permissions","veritasRequirements"].includes(field)) {
+        if (!Array.isArray(value) || value.length === 0 ||
+            !value.every(item => typeof item === "string" && item.trim() !== "")) {
+          errors.push("INVALID_LIST:" + fieldPath);
+        }
+      } else if (["contractPortable","adapterImplemented","platformTested"].includes(field)) {
+        if (typeof value !== "boolean") errors.push("INVALID_BOOLEAN:" + fieldPath);
+      } else if (typeof value !== "string" || value.trim() === "") {
+        errors.push("INVALID_STRING:" + fieldPath);
       }
     }
   }
