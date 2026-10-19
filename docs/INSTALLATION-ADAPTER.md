@@ -16,15 +16,15 @@ The Installation Adapter selects an observed, authorized platform installer for 
 
 ## Windows iLoader observation
 
-`npm run observe:iloader` runs the read-only Windows observer. It reports only booleans and state labels: iLoader local-state presence, selected-server record presence, account-record presence, USB Apple-device presence, iLoader process presence, and Apple Mobile Device Service state. It does not return, log, or inspect credential values, pairing material, certificate keys, profile contents, Anisette headers, or iLoader logs.
+`npm run observe:iloader` runs the read-only Windows observer. It reports privacy-reduced booleans and state labels. Only file existence (`localStatePresent`), generic Apple USB presence, process presence, and Apple Mobile Device Service state are observed. `selectedServerStored` and `accountRecordStored` are **null (unknown)**, with `selectedServerObservationState` and `accountRecordObservationState` set to `NOT_OBSERVED`; no account or preference file contents are parsed. Consumers must not interpret unknown as false or as proof that saved settings are absent. It does not return, log, or inspect credential values, pairing material, certificate keys, profile contents, Anisette headers, or iLoader logs.
 
-USB Apple-device presence is the iLoader transport fact. Apple Mobile Device Service is diagnostic information only because iLoader may use its own mobile-device stack.
+Generic Apple USB presence is only a diagnostic marker and **does not** prove exact selected-device identity, pairing, or transport readiness. `transport.ready=false` until a trusted target-specific provider is integrated. Apple Mobile Device Service is diagnostic information only because iLoader may use its own mobile-device stack.
 
 ## Existing routes it recognizes
 
 | Target | Observed provider required | Dry-run route |
 | --- | --- | --- |
-| iPhone / iPad | `iloader`, healthy USB transport, Apple signing and profile facts | `APPLE_ILOADER_USB` |
+| iPhone / iPad | `iloader`, verified exact-device transport, Apple signing and profile facts | `APPLE_ILOADER_USB` |
 | Android | `android-package-installer`, healthy authorized handoff | `ANDROID_PACKAGE_INSTALLER_HANDOFF` |
 | Windows | `windows-native-installer` | `WINDOWS_NATIVE_INSTALLER` |
 | macOS | `macos-native-installer` | `MACOS_NATIVE_INSTALLER` |
