@@ -68,3 +68,22 @@ Source, browser observation, build qualification, physical-device execution, For
 - Never reset Anisette, revoke certificates, delete pairing, uninstall the Device Bridge, or modify the phone as a diagnostic shortcut.
 - No physical install occurs without an intended package, package-hash match, a fresh preflight, owner authorization, a rollback/data-preservation plan, and recorded result.
 - Contributors report checkpoints in this file and may not self-certify a shared acceptance gate.
+
+## Recovery reconciliation — K1/K2 shared review (2026-10-18)
+
+**Authority:** Owner request to stop redundant work; K1 Codex transcript audit; independent K2 conclusions; existing K1-H1 historian; Issue #37. These are evidence classifications, not a new implementation or external verifier decision.
+
+| Handoff | Lane | Established fact | Remaining boundary | K1 disposition / K2 acknowledgment |
+| --- | --- | --- | --- | --- |
+| H-011 | K1 + K2 | PRs #40, #41, #42 merged following K2 compatibility/source reviews; fail-closed iLoader observation and regression tests preserved. | No qualified positive pairing/signing observer | K1 incorporated K2 reviews; no repeat build. |
+| H-012 | K1-H1 + K2 | Prior native iPhone Metal local PASS (Apple A13, 256 lanes, zero mismatches), receipt exported and deterministic local hashes independently replayed PASS; evidence under `evidence/apple/`. | Receipt declares `PENDING_EXTERNAL_VERIFICATION`; not a Veritas signature or Ledger admission | K1 accepts local-only PASS; K2 independent review conclusion agrees. |
+| H-013 | K1 + K2 | Source IPA v0.1.27/build27 digest `833d88a1...` and ARM64/Info.plist/Metal resource qualification complete; owner-designated iPhone/iLoader GUI evidence recorded. | Earlier physically observed receipt-enabled IPA digest `9457b8bd...` differs; exact build27 physical install identity not proven | Both reviews preserve lineage; no repeat local probe. |
+| H-014 | K1 evidence-vault inventory | Read-only inventory of `C:\\LeeWay-Evidence-Vault` found four top-level Gemma/Agent Lee files and no directories. | This folder does not establish full Runtime Fabric/Veritas/Evidence Vault storage; search canonical receipt authority separately | K1 read-only observation; not external acceptance proof. |
+
+### Next jointly reviewed work — no duplication
+
+1. **K1 + K2:** Discover the existing canonical Veritas receipt acceptance, Runtime Fabric receipt consumer and Learning Ledger provider before altering code or importing a second record. Confirm repository/path/commit and matching receipt/evidence SHA-256, or explicitly record `NOT_FOUND_IN_SCOPED_SEARCH`.
+2. **K2/J7:** Search existing signing and installed-version evidence for exact source v0.1.27/build27 digest before asking owner to install anything. Do not replace earlier local physical acceptance.
+3. **K1:** After evidence comparison, produce one pass/fail master checkpoint with provenance; request only the smallest truly missing execution step and separate owner authorization if physical changes are needed.
+
+**Operating law:** Investigate → Diagnose → Plan → Implement → Test → Validate → Repair → Retest → Verify → Evidence. Apply reuse-before-build classification `ALREADY BUILT / PARTIALLY BUILT / MISSING GLUE / TRULY MISSING`; one authority chain; no LLM runtime dependency; no fresh Formula/Veritas authority invented. No device, credential or signing mutation in reconciliation.
