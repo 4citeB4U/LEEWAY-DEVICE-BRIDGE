@@ -608,7 +608,6 @@ class MainActivity : AppCompatActivity() {
                         bootstrap.optString("error")
                     )
                 }
-            }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
