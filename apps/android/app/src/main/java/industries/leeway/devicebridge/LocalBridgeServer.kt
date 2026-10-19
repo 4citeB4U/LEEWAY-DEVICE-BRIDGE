@@ -179,6 +179,7 @@ object LocalBridgeServer {
                     (BootstrapStore.loadPassport(context) ?: DevicePassport.capture(context))
                         .optJSONArray("capabilityClaims")
                 )
+                "/provisioning/plan" -> AndroidTrustedProvisioningObservation.capturePlan(context)
                 "/receipts" -> JSONObject().put("receipts", ReceiptStore.list(context))
                 "/providers/bluetooth" -> BluetoothProvider.snapshot(context)
                 "/bridge" -> status(context)
