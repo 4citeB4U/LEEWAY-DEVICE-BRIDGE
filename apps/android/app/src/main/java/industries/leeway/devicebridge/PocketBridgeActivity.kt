@@ -14,6 +14,7 @@ package industries.leeway.devicebridge
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.os.ResultReceiver
 import android.view.Gravity
 import android.widget.LinearLayout
 import android.widget.ProgressBar
@@ -40,6 +41,8 @@ class PocketBridgeActivity : Activity() {
         val token = intent?.getStringExtra("leeway_pocket_token")
         val capability = intent?.getStringExtra("leeway_capability").orEmpty()
         val rawArgs = intent?.getStringExtra("leeway_arguments").orEmpty()
+        @Suppress("DEPRECATION")
+        val streamReceiver = intent?.getParcelableExtra<ResultReceiver>("leeway_stream_receiver")
 
         if (caller != "industries.leeway.pocket") {
             finishBlocked("CALLER_NOT_AUTHORIZED", caller)
@@ -82,8 +85,12 @@ class PocketBridgeActivity : Activity() {
                 capability,
                 arguments,
                 true,
-                conversationRequest = true
+                conversationRequest = true,
+                onStream = if (capability == "agent.chat" && streamReceiver != null) { delta ->
+                    streamReceiver.send(1, Bundle().apply { putString("delta", delta) })
+                } else null
             )
+            streamReceiver?.send(2, Bundle())
             ReceiptStore.record(
                 applicationContext,
                 capability,
