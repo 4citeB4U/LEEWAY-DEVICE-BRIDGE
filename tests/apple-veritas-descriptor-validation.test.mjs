@@ -62,3 +62,21 @@ test("Object-shaped provider binding cannot pass string identity",()=>{
   const r=validateAppleVeritasDescriptor({...descriptor,binding:{...descriptor.binding,provider:{providerId:"invented"}}},contract);
   assert.ok(r.errors.includes("INVALID_STRING:binding.provider"));
 });
+
+test("Caller cannot erase all canonical required fields", () => {
+  const result=validateAppleVeritasDescriptor({identity:{adapterClass:"evidence-veritas"}},{...contract,required:{}});
+  assert.equal(result.validShape,false);
+  assert.equal(result.state,"CONTRACT_NOT_RECOGNIZED");
+  assert.equal(result.authorized,false);
+});
+test("Caller cannot omit, replace, or duplicate required fields", () => {
+  for (const fields of [
+    {...required,governance:["authorizationClass"]},
+    {...required,governance:["authorizationClass","invented"]},
+    {...required,governance:["permissions","permissions"]}
+  ]) {
+    const result=validateAppleVeritasDescriptor(descriptor,{...contract,required:fields});
+    assert.equal(result.validShape,false);
+    assert.equal(result.state,"CONTRACT_NOT_RECOGNIZED");
+  }
+});
