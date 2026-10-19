@@ -38,6 +38,8 @@ internal object LocalBridgeHttpHandler {
             var authorization: String? = null
             var totalHeaderChars = 0
             var headerCount = 0
+            var authorizationCount = 0
+            var unexpectedBodyHeaders = false
             while (true) {
                 val line = try { readBoundedLine(reader, 4096) } catch (_: IOException) {
                     respond(socket, 431, JSONObject().put("ok", false).put("error", "HEADERS_TOO_LARGE"))
@@ -54,9 +56,19 @@ internal object LocalBridgeHttpHandler {
                     respond(socket, 431, JSONObject().put("ok", false).put("error", "HEADERS_TOO_LARGE"))
                     return
                 }
-                if (line.startsWith("Authorization:", ignoreCase = true)) {
+                val name = line.substringBefore(":")
+                if (name.equals("Authorization", ignoreCase = true)) {
+                    authorizationCount++
                     authorization = line.substringAfter(":").trim()
                 }
+                if (name.equals("Content-Length", ignoreCase = true) ||
+                    name.equals("Transfer-Encoding", ignoreCase = true)) {
+                    unexpectedBodyHeaders = true
+                }
+            }
+            if (authorizationCount > 1 || unexpectedBodyHeaders) {
+                respond(socket, 400, JSONObject().put("ok", false).put("error", "AMBIGUOUS_OR_UNEXPECTED_HEADERS"))
+                return
             }
             if (method != "GET") {
                 respond(socket, 405, JSONObject().put("ok", false).put("error", "METHOD_NOT_ALLOWED"))
@@ -67,11 +79,14 @@ internal object LocalBridgeHttpHandler {
                 return
             }
             if (path == "/owner-bootstrap") {
-                val nonce = query.split("&").mapNotNull {
+                val nonce = try { query.split("&").mapNotNull {
                     val index = it.indexOf("=")
                     if (index < 1) null else URLDecoder.decode(it.substring(0, index), "UTF-8") to
                         URLDecoder.decode(it.substring(index + 1), "UTF-8")
-                }.toMap()["nonce"]
+                }.toMap()["nonce"] } catch (_: IllegalArgumentException) {
+                    respond(socket, 400, JSONObject().put("ok", false).put("error", "BAD_QUERY_ENCODING"))
+                    return
+                }
                 val body = dependencies.ownerBootstrap(nonce)
                 respond(socket, if (body.optBoolean("ok")) 200 else 401, body)
                 return
