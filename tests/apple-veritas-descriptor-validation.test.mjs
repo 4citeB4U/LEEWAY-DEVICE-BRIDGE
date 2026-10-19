@@ -80,3 +80,24 @@ test("Caller cannot omit, replace, or duplicate required fields", () => {
     assert.equal(result.state,"CONTRACT_NOT_RECOGNIZED");
   }
 });
+
+test("Caller cannot erase all canonical required fields",()=>{
+  const r=validateAppleVeritasDescriptor({identity:{adapterClass:"evidence-veritas"}},{...contract,required:{}});
+  assert.equal(r.state,"CONTRACT_NOT_RECOGNIZED");
+  assert.equal(r.validShape,false);assert.equal(r.authorized,false);
+});
+test("Caller cannot omit governance section from claimed canonical contract",()=>{
+  const {governance,...weakened}=contract.required;
+  const r=validateAppleVeritasDescriptor(descriptor,{...contract,required:weakened});
+  assert.equal(r.state,"CONTRACT_NOT_RECOGNIZED");
+});
+test("Caller cannot redefine canonical required fields to omit provider binding",()=>{
+  const r=validateAppleVeritasDescriptor(descriptor,{...contract,required:{...contract.required,binding:["runtimeTarget","bindingMode"]}});
+  assert.equal(r.state,"CONTRACT_NOT_RECOGNIZED");
+});
+test("Pinned required field map tolerates array order but never allows duplicate entries",()=>{
+  const reordered={...contract,required:{...contract.required,identity:[...contract.required.identity].reverse()}};
+  assert.equal(validateAppleVeritasDescriptor(descriptor,reordered).state,"SHAPE_ONLY_UNTRUSTED");
+  const duplicate={...contract,required:{...contract.required,identity:["id","id","domain","adapterClass"]}};
+  assert.equal(validateAppleVeritasDescriptor(descriptor,duplicate).state,"CONTRACT_NOT_RECOGNIZED");
+});
