@@ -16,7 +16,9 @@ test("Caller assertions alone cannot qualify authority", () => {
 test("Even two explicitly qualified contract bindings cannot execute or claim verified receipt", () => {
   const a={providerId:"fixture",contractRef:"tests/fixture",independentlyQualified:true};
   const plan=planAppleReceiptHandoff(baseline,{veritas:a,learningLedger:a});
-  assert.equal(plan.status,"DRY_RUN_HANDOFF_ROUTE_READY");
+  assert.equal(plan.status,"BLOCKED");
+  assert.equal(plan.providerClaimsStructurallyComplete,true);
+  assert.ok(plan.blockers.includes("CANONICAL_AUTHORITY_BINDING_NOT_INDEPENDENTLY_VERIFIED"));
   assert.equal(plan.executable,false);
   assert.equal(plan.verification,"NOT_EXECUTED");
   assert.equal(plan.learningLedgerUpdated,false);
@@ -25,4 +27,13 @@ test("Tampered receipt blocks even synthetic qualified bindings", () => {
   const a={providerId:"fixture",contractRef:"tests/fixture",independentlyQualified:true};
   const plan=planAppleReceiptHandoff({...baseline,localEvidence:{...baseline.localEvidence,evidenceMatches:false}}, {veritas:a,learningLedger:a});
   assert.equal(plan.status,"BLOCKED");
+});
+
+test("Untrusted claim cannot become readiness even if all fields are true", () => {
+  const claim={providerId:"invented",contractRef:"invented",independentlyQualified:true};
+  const plan=planAppleReceiptHandoff(baseline,{veritas:claim,learningLedger:claim});
+  assert.equal(plan.status,"BLOCKED");
+  assert.equal(plan.executable,false);
+  assert.equal(plan.receiptSubmitted,false);
+  assert.equal(plan.learningLedgerUpdated,false);
 });
