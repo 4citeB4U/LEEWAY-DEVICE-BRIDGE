@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leeway.local/contracts/device-command-envelope.schema.json",
+  "title": "LeeWay Device Command Envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "commandId",
+    "sessionId",
+    "deviceId",
+    "capabilityId",
+    "providerId",
+    "createdAt",
+    "expiresAt",
+    "nonce",
+    "sequence",
+    "argumentsHash",
+    "authorityTier",
+    "formulaDecisionRef",
+    "timeoutPolicyRef",
+    "expectedStateHash",
+    "failSafePolicyRef",
+    "replayPolicy",
+    "integrity"
+  ],
+  "properties": {
+    "version": {"const": "1.0.0"},
+    "commandId": {"type": "string", "minLength": 1},
+    "sessionId": {"type": "string", "minLength": 1},
+    "deviceId": {"type": "string", "minLength": 1},
+    "capabilityId": {"type": "string", "minLength": 1},
+    "providerId": {"type": "string", "minLength": 1},
+    "createdAt": {"type": "string", "format": "date-time"},
+    "expiresAt": {"type": "string", "format": "date-time"},
+    "nonce": {"type": "string", "minLength": 16},
+    "sequence": {"type": "integer", "minimum": 0},
+    "argumentsHash": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"},
+    "authorityTier": {"enum": ["READ", "OPERATE", "MUTATE", "ADMIN"]},
+    "creatorAuthorization": {"type": ["string", "null"]},
+    "formulaDecisionRef": {"type": "string", "minLength": 1},
+    "timeoutPolicyRef": {"type": "string", "minLength": 1},
+    "expectedStateHash": {"type": "string", "pattern": "^[A-Fa-f0-9]{64}$"},
+    "failSafePolicyRef": {"type": "string", "minLength": 1},
+    "replayPolicy": {"const": "COMMAND_ID_NONCE_SEQUENCE_FIRST_SEEN_REQUIRED"},
+    "integrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "stamp"],
+      "properties": {
+        "transportChecksum": {"type": ["string", "null"]},
+        "algorithm": {"enum": ["HMAC-SHA256", "ED25519"]},
+        "stamp": {"type": "string", "minLength": 32}
+      }
+    }
+  }
+}
