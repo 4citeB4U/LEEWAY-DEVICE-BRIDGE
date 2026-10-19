@@ -75,9 +75,7 @@ object RemoteCommandRouter {
                 "device.apps.list" -> AppOperator.listLaunchable(context)
                 "device.apps.launch" -> AppOperator.launch(context, arguments.getString("packageName"))
                 "device.apps.install.status" -> PackageInstallBroker.status(context)
-                "device.apps.install.plan" -> AndroidProvisioningCompatibility.evaluate(
-                    DevicePassport.capture(context), null, null
-                ).put("installerCapability", PackageInstallBroker.status(context))
+                "device.apps.install.plan" -> AndroidTrustedProvisioningObservation.capturePlan(context)
                 "device.apps.install" -> PackageInstallBroker.installFromUrl(
                     context,
                     arguments.getString("url"),
