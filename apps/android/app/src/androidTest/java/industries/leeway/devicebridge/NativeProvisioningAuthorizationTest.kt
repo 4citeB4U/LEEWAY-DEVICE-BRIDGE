@@ -82,5 +82,34 @@ class NativeProvisioningAuthorizationTest {
             if (!originallyRunning && LocalBridgeServer.isRunning()) LocalBridgeServer.stop(context)
         }
     }
+    @Test fun bootstrapNonceMismatchAndReplayNeverReturnToken() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val originalAccess = LocalAuthority.agentAccessEnabled(context)
+        val originallyRunning = LocalBridgeServer.isRunning()
+        val nonce = java.util.UUID.randomUUID().toString().replace("-", "")
+        val other = java.util.UUID.randomUUID().toString().replace("-", "")
+        try {
+            if (!originallyRunning) LocalBridgeServer.start(context)
+            val before = request("/owner-bootstrap?nonce=" + nonce)
+            assertEquals(401, before.first)
+            assertFalse(before.second.has("pairingToken"))
+            val arm = LocalBridgeServer.armOwnerBootstrap(context, nonce)
+            assertTrue(arm.getBoolean("ok"))
+            val mismatch = request("/owner-bootstrap?nonce=" + other)
+            assertEquals(401, mismatch.first)
+            assertFalse(mismatch.second.has("pairingToken"))
+            val authorized = request("/owner-bootstrap?nonce=" + nonce)
+            assertEquals(200, authorized.first)
+            assertEquals("OWNER_LOCAL_LOOPBACK_BOOTSTRAP", authorized.second.getString("authority"))
+            assertTrue(authorized.second.has("pairingToken"))
+            val replay = request("/owner-bootstrap?nonce=" + nonce)
+            assertEquals(401, replay.first)
+            assertFalse(replay.second.has("pairingToken"))
+        } finally {
+            LocalAuthority.setAgentAccess(context, originalAccess)
+            if (!originallyRunning) LocalBridgeServer.stop(context)
+        }
+    }
+
 }
 
