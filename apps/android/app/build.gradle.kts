@@ -20,10 +20,13 @@ android {
         targetSdk = 35
         versionCode = 23
         versionName = "0.9.8-pocket-rc8"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 }
 dependencies {
     testImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
     testImplementation("org.json:json:20240303")
     implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
