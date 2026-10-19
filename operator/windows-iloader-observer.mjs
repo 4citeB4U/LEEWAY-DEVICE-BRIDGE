@@ -67,8 +67,8 @@ export function observeWindowsIloader({ appDataRoot, commandRunner = defaultComm
   const localStatePresent = exists(root) && exists(preferencesPath) && exists(dataPath);
   // iLoader can enumerate a USB device through its own mobile-device stack;
   // Apple Mobile Device Service is useful diagnostic evidence, not a route prerequisite.
-  const transportReady = host.appleUsbPresent;
-  const providerHealth = localStatePresent && transportReady ? "HEALTHY" : "UNKNOWN";
+  const transportReady = false; // Generic Apple PnP presence does not prove selected-device trust.
+  const providerHealth = "UNKNOWN"; // No supported signing-provider status observed.
   const observation = {
     state: "WINDOWS_ILOADER_OBSERVED",
     hostProbeState: host.hostProbeState,
