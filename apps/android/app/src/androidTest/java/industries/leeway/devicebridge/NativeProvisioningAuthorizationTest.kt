@@ -6,14 +6,13 @@ import org.json.JSONObject
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.net.HttpURLConnection
-import java.net.URL
+import java.net.Socket
 
 /** Emulator-only authority test; secrets never leave the process or appear in logs. */
 @RunWith(AndroidJUnit4::class)
 class NativeProvisioningAuthorizationTest {
     private fun request(path: String, bearer: String? = null): Pair<Int, JSONObject> {
-        java.net.Socket("127.0.0.1", LocalBridgeServer.PORT).use { socket ->
+        Socket("127.0.0.1", LocalBridgeServer.PORT).use { socket ->
             socket.soTimeout = 3000
             val request = buildString {
                 append("GET ").append(path).append(" HTTP/1.1\r\n")
