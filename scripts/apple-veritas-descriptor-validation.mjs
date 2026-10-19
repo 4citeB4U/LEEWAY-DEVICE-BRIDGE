@@ -1,24 +1,4 @@
 // Shape-only compatibility check against the canonical Runtime Fabric universal adapter contract.
-const CANONICAL_REQUIRED = Object.freeze({
-  identity:["id","version","domain","adapterClass"],
-  capability:["contracts","operations"],
-  binding:["provider","runtimeTarget","bindingMode"],
-  portability:["contractPortable","adapterImplemented","platformTested"],
-  governance:["authorizationClass","permissions"],
-  evidence:["measurementSchema","veritasRequirements"],
-  lifecycle:["health","cancel","failure","rollbackOrFallback"]
-});
-function matchesCanonicalFields(required) {
-  if (!required || typeof required !== "object" || Array.isArray(required)) return false;
-  const expectedSections = Object.keys(CANONICAL_REQUIRED);
-  if (Object.keys(required).length !== expectedSections.length) return false;
-  return expectedSections.every(section =>
-    Array.isArray(required[section]) &&
-    required[section].length === CANONICAL_REQUIRED[section].length &&
-    new Set(required[section]).size === required[section].length &&
-    CANONICAL_REQUIRED[section].every(field => required[section].includes(field)));
-}
-
 // This does not authenticate an issuer, grant authority or permit execution.
 // Pinned field set from 4citeB4U/Leeway-Runtime-Fabric/contracts/universal-adapter-contract.v1.json.
 // Caller-supplied contracts cannot weaken the canonical required schema.
