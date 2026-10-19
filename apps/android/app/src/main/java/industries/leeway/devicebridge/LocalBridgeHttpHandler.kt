@@ -3,6 +3,7 @@ package industries.leeway.devicebridge
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.io.IOException
 import java.net.Socket
 import java.net.URLDecoder
 
@@ -24,16 +25,35 @@ internal object LocalBridgeHttpHandler {
         client.use { socket ->
             socket.soTimeout = 3000
             val reader = BufferedReader(InputStreamReader(socket.getInputStream(), Charsets.UTF_8))
-            val requestLine = reader.readLine() ?: return
+            val requestLine = try { readBoundedLine(reader, 4096) } catch (_: IOException) { null }
+            if (requestLine == null || !Regex("^[A-Z]+ /[^\\s]* HTTP/1\\.[01]$").matches(requestLine)) {
+                respond(socket, 400, JSONObject().put("ok", false).put("error", "BAD_REQUEST"))
+                return
+            }
             val parts = requestLine.split(" ")
-            val method = parts.getOrNull(0).orEmpty()
-            val target = parts.getOrNull(1).orEmpty()
+            val method = parts[0]
+            val target = parts[1]
             val path = target.substringBefore("?")
             val query = target.substringAfter("?", "")
             var authorization: String? = null
+            var totalHeaderChars = 0
+            var headerCount = 0
             while (true) {
-                val line = reader.readLine() ?: break
+                val line = try { readBoundedLine(reader, 4096) } catch (_: IOException) {
+                    respond(socket, 431, JSONObject().put("ok", false).put("error", "HEADERS_TOO_LARGE"))
+                    return
+                }
+                if (line == null) {
+                    respond(socket, 400, JSONObject().put("ok", false).put("error", "INCOMPLETE_HEADERS"))
+                    return
+                }
                 if (line.isEmpty()) break
+                totalHeaderChars += line.length
+                headerCount++
+                if (totalHeaderChars > 8192 || headerCount > 40 || line.any { it == '\u0000' }) {
+                    respond(socket, 431, JSONObject().put("ok", false).put("error", "HEADERS_TOO_LARGE"))
+                    return
+                }
                 if (line.startsWith("Authorization:", ignoreCase = true)) {
                     authorization = line.substringAfter(":").trim()
                 }
@@ -74,10 +94,23 @@ internal object LocalBridgeHttpHandler {
         }
     }
 
+    private fun readBoundedLine(reader: BufferedReader, limit: Int): String? {
+        val line = StringBuilder()
+        while (true) {
+            val code = reader.read()
+            if (code < 0) return null
+            if (code == 10) return line.toString().removeSuffix("\r")
+            if (line.length >= limit) throw IOException("LINE_LIMIT")
+            line.append(code.toChar())
+        }
+    }
+
     private fun respond(socket: Socket, status: Int, body: JSONObject) {
         val bytes = body.toString().toByteArray(Charsets.UTF_8)
         val reason = when (status) {
             200 -> "OK"
+            400 -> "Bad Request"
+            431 -> "Request Header Fields Too Large"
             401 -> "Unauthorized"
             403 -> "Forbidden"
             404 -> "Not Found"
