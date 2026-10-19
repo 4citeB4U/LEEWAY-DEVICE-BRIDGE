@@ -29,8 +29,6 @@ export function assessLeeWayAuthorityGates(input={}) {
     learningIngest:{status:learningAdmitted&&n8nQualified?"VERIFIED_ADMITTED":"BLOCKED",
       n8nQualified,learningAdmitted}
   };
-  return {gates,allThreeComplete:Object.values(gates).every(g=>!g.status.includes("BLOCKED")
-      && g.status!=="LIVE_HEALTH_OBSERVED" && g.status!=="HASH_CHAIN_VERIFIED")?
-        true:(liveHealthy&&chainVerified&&learningAdmitted&&n8nQualified),
+  return {gates,allThreeComplete:liveHealthy&&chainVerified&&learningAdmitted&&n8nQualified,
     execution:"READ_ONLY_ASSESSMENT",mutationsPerformed:false};
 }
