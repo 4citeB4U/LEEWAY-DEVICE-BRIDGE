@@ -13,17 +13,19 @@ import java.net.URL
 @RunWith(AndroidJUnit4::class)
 class NativeProvisioningAuthorizationTest {
     private fun request(path: String, bearer: String? = null): Pair<Int, JSONObject> {
-        val connection = (URL("http://127.0.0.1:5323" + path).openConnection() as HttpURLConnection)
-        connection.connectTimeout = 3000
-        connection.readTimeout = 3000
-        connection.requestMethod = "GET"
-        if (bearer != null) connection.setRequestProperty("Authorization", "Bearer " + bearer)
-        return try {
-            val status = connection.responseCode
-            val stream = if (status < 400) connection.inputStream else connection.errorStream
-            status to JSONObject(stream.bufferedReader().use { it.readText() })
-        } finally {
-            connection.disconnect()
+        java.net.Socket("127.0.0.1", LocalBridgeServer.PORT).use { socket ->
+            socket.soTimeout = 3000
+            val request = buildString {
+                append("GET ").append(path).append(" HTTP/1.1\r\n")
+                append("Host: 127.0.0.1\r\n")
+                if (bearer != null) append("Authorization: Bearer ").append(bearer).append("\r\n")
+                append("Connection: close\r\n\r\n")
+            }
+            socket.getOutputStream().write(request.toByteArray(Charsets.UTF_8))
+            socket.getOutputStream().flush()
+            val response = socket.getInputStream().bufferedReader().readText()
+            val status = response.substringBefore("\r\n").split(" ")[1].toInt()
+            return status to JSONObject(response.substringAfter("\r\n\r\n"))
         }
     }
     @Test fun nativeCredentialAndFailClosedPlan() {
