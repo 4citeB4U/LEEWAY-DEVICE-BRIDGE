@@ -64,9 +64,9 @@ export function observeWindowsIloader({ appDataRoot, commandRunner = defaultComm
     state: "WINDOWS_ILOADER_OBSERVED",
     hostProbeState: host.hostProbeState,
     localStatePresent,
-    selectedServerStored: false, // Legacy Boolean placeholder, not evidence of absence; consult ObservationState.
+    selectedServerStored: null, // Unknown: record contents deliberately not inspected.
     selectedServerObservationState: "NOT_OBSERVED",
-    accountRecordStored: false, // Legacy Boolean placeholder, not evidence of absence; consult ObservationState.
+    accountRecordStored: null, // Unknown: record contents deliberately not inspected.
     accountRecordObservationState: "NOT_OBSERVED",
     appleMobileDeviceServiceRunning: host.appleMobileDeviceServiceRunning,
     appleUsbPresent: host.appleUsbPresent,
