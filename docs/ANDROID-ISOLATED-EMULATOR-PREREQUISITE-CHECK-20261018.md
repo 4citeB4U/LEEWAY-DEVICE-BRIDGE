@@ -1,0 +1,7 @@
+# Issue #37 — Isolated Android emulator prerequisite check (2026-10-18)
+
+Read-only checks established that SDK command-line tools sdkmanager/avdmanager are available, but the existing SDK does not include an installed emulator binary, Android system image or default AVD. The SDK package index advertises emulator 37.2.12 and Android 35 default x86_64 system image. Windows systeminfo reports a detected hypervisor; processor virtualization flags were inconclusive, and querying optional Windows hypervisor features requires elevation.
+
+Attempted to provision the emulator and Android 35 system image in an **isolated evidence-staging SDK root** using sdkmanager, without changing the normal Android SDK or connected Fold6. The installer did not complete or produce installed emulator/image directories during the observation window. A matching stalled sdkmanager Java process was stopped; **emulator setup NOT VERIFIED / no emulator boot / no runtime HTTP acceptance**. SDK license or download availability may require further authorized setup; exact cause not established.
+
+Next: resolve isolated SDK package provisioning with observable logs and license state without bypassing consent; then create a separate AVD and test only within that environment. Maintain PR #38 draft and do not install or update production Fold6 Device Bridge. Android JVM suite last verified 71/71 PASS, review debug APK build/signing verified, installed signer comparison unresolved; Golden Formula NOT_EXECUTED and no canonical Veritas/Learning Ledger update.

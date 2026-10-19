@@ -552,6 +552,34 @@ class MainActivity : AppCompatActivity() {
             }
             "TERMUX_BOOTSTRAP" -> {
                 val nonce = intent?.getStringExtra("leeway_nonce").orEmpty()
+                // An exported activity must not arm a credential-bearing bootstrap just
+                // because an external caller supplied a syntactically valid nonce.
+                // Keep the established Termux flow behind explicit owner approval.
+                val nonceValid = nonce.matches(Regex("^[A-Za-z0-9_-]{32,128}$"))
+                if (!nonceValid) {
+                    ReceiptStore.record(this, "device.owner.bootstrap", "BLOCKED", "INVALID_BOOTSTRAP_NONCE")
+                    output.text = "Termux bootstrap blocked: invalid request."
+                } else {
+                    android.app.AlertDialog.Builder(this)
+                        .setTitle("Authorize LeeWay Termux bootstrap")
+                        .setMessage("Allow this local workstation bootstrap to enable agent access and issue the pairing credential? Only approve if you initiated this request.")
+                        .setPositiveButton("Allow") { _, _ ->
+                            completeOwnerTermuxBootstrap(nonce) {
+                                refreshRuntimeState()
+                            }
+                        }
+                        .setNegativeButton("Deny") { _, _ ->
+                            ReceiptStore.record(this, "device.owner.bootstrap", "BLOCKED", "Owner denied Termux bootstrap")
+                            output.text = "Termux bootstrap denied."
+                        }
+                        .setCancelable(false)
+                        .show()
+                }
+            }
+        }
+    }
+
+    private fun completeOwnerTermuxBootstrap(nonce: String, refreshRuntimeState: () -> Unit) {
                 val bootstrap = LocalBridgeServer.armOwnerBootstrap(this, nonce)
                 if (bootstrap.optBoolean("ok")) {
                     LocalAuthority.setAgentAccess(this, true)
@@ -580,8 +608,6 @@ class MainActivity : AppCompatActivity() {
                         bootstrap.optString("error")
                     )
                 }
-            }
-        }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
