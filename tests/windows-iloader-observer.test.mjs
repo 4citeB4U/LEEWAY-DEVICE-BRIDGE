@@ -12,8 +12,10 @@ const runner = () => JSON.stringify({ appleMobileDeviceServiceRunning: true, app
 const observed = observeWindowsIloader({ appDataRoot: root, commandRunner: runner, hostPlatform: "win32" });
 
 assert.equal(observed.state, "WINDOWS_ILOADER_OBSERVED");
-assert.equal(observed.observation.selectedServerStored, false);
-assert.equal(observed.observation.accountRecordStored, false);
+assert.equal(observed.observation.selectedServerStored, null);
+assert.equal(observed.observation.selectedServerObservationState, "NOT_OBSERVED");
+assert.equal(observed.observation.accountRecordStored, null);
+assert.equal(observed.observation.accountRecordObservationState, "NOT_OBSERVED");
 assert.equal(observed.observation.credentialStoreState, "NOT_INSPECTED");
 assert.equal(observed.observation.localStatePresent, true);
 assert.equal(JSON.stringify(observed).includes("redacted"), false);
