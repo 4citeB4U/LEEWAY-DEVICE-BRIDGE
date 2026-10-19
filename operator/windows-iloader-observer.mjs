@@ -3,7 +3,7 @@ REGION: Windows iLoader observation adapter
 TAG: LEEWAY-WINDOWS-ILOADER-OBSERVER
 WHAT: Collect minimal non-secret Windows/iLoader readiness facts for an iOS dry-run plan.
 WHY: Supply observed transport and local-state facts without reading credentials or changing Apple state.
-HOW: File existence and allowlisted preference-key presence plus read-only Windows service/PnP booleans.
+HOW: File existence only for iLoader files, plus read-only Windows service/PnP booleans; no account-file parsing.
 */
 import fs from "node:fs";
 import os from "node:os";
@@ -64,8 +64,10 @@ export function observeWindowsIloader({ appDataRoot, commandRunner = defaultComm
     state: "WINDOWS_ILOADER_OBSERVED",
     hostProbeState: host.hostProbeState,
     localStatePresent,
-    selectedServerStored: false, // Preference contents deliberately not inspected.
-    accountRecordStored: false, // Account-data contents deliberately not inspected.
+    selectedServerStored: null, // Unknown: preference contents deliberately not inspected.
+    selectedServerObservationState: "NOT_OBSERVED",
+    accountRecordStored: null, // Unknown: account-data contents deliberately not inspected.
+    accountRecordObservationState: "NOT_OBSERVED",
     appleMobileDeviceServiceRunning: host.appleMobileDeviceServiceRunning,
     appleUsbPresent: host.appleUsbPresent,
     iLoaderRunning: host.iLoaderRunning,
