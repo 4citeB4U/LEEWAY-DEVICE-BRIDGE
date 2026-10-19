@@ -68,3 +68,24 @@ Source, browser observation, build qualification, physical-device execution, For
 - Never reset Anisette, revoke certificates, delete pairing, uninstall the Device Bridge, or modify the phone as a diagnostic shortcut.
 - No physical install occurs without an intended package, package-hash match, a fresh preflight, owner authorization, a rollback/data-preservation plan, and recorded result.
 - Contributors report checkpoints in this file and may not self-certify a shared acceptance gate.
+
+
+## K2 closure reconciliation — 2026-10-18 (pending K1 review)
+
+This reconciliation corrects the coordination gap after H-010. It records completed work **without granting installation or Veritas authority**. Owner requested reuse-before-build, canonical Formula and full Investigate → Diagnose → Plan → Implement → Test → Validate → Repair → Retest → Verify → Evidence execution. This ledger update is evidence bookkeeping, not a second installer or runtime.
+
+| ID | Classification | Completion / proof | Remaining boundary | K1 acceptance |
+| --- | --- | --- | --- | --- |
+| H-011 | ALREADY BUILT | PR [#40](https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/pull/40), merge `00bb2fd0ed8df158d5c923621f77dda1639f4c44`: observer no longer reads iLoader private account/preferences content | Saved files cannot prove current authorization | REVIEW REQUESTED |
+| H-012 | ALREADY BUILT | PR [#41](https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/pull/41), merge `9e7cd9a8a0c4b6ae7a492428dee5eccab2204f4d`: uninspected status explicitly NOT_OBSERVED | Unknown is not absence or authorization | REVIEW REQUESTED |
+| H-013 | ALREADY BUILT | PR [#42](https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/pull/42), merge `5392d7d9afc4220b6dd465f0be15b42703e2d5ab`: regression tests for observer and planner fail-closed trust boundary | No installation executor granted | REVIEW REQUESTED |
+| H-014 | ALREADY BUILT | [Apple exported receipt](evidence/apple/artifacts/iphone11-metal-receipt-20261018.json) and [integrity replay](evidence/apple/G19-IPHONE11-LOCAL-RECEIPT-INTEGRITY-20261018.md): 256 Metal lanes, 0 mismatches, both hashes replay PASS | Local receipt verification is not canonical Veritas PASS | REVIEW REQUESTED |
+| H-015 | PARTIALLY BUILT | [Build-27 IPA acceptance](evidence/apple/G19-DIRECT-ILOADER-ACCEPTANCE-20261018.md): v0.1.27/build27 source IPA hash verified | Earlier physical receipt came from different IPA: exact build-27 device installation/lineage NOT VERIFIED | REVIEW REQUESTED |
+| H-016 | MISSING GLUE / NOT ESTABLISHED | [Receipt protocol](docs/APPLE-NATIVE-RECEIPT-PROTOCOL.md) defines external verifier handoff | Must locate existing canonical signed verifier decision, Runtime Fabric consumption, and Learning Ledger admission before implementing any integration | REVIEW REQUESTED |
+
+### Closure gates and evidence ownership
+
+- **K1**: review H-011–H-016 and reconcile upstream PR merges; validate canonical governance, Formula contract and independent receipt authority before marking shared gate complete.
+- **K2**: locate supported non-secret evidence for exact installed IPA identity, external verifier decision and Runtime Fabric/Learning Ledger handoff. Preserve previously verified local receipt and source IPA. Never invent a decision from folder presence or hash replay.
+- **K1/K2 shared**: record findings under [Issue #37](https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/issues/37) with paths, commit SHAs, PASS/FAIL/NOT_OBSERVED, and explicit K1 acknowledgment. Run or repeat an implementation/test **only for a proven gap**.
+- **No automatic installation**: signing, pairing, install, rollback, certificate and account mutations require separate qualified authority and owner consent. This record authorizes none.
