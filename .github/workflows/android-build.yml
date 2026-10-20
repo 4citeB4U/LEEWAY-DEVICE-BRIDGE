@@ -31,6 +31,13 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install declared schema test dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Qualify source and contracts
         shell: bash
         run: |

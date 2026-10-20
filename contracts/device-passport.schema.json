@@ -1,81 +1,179 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://leeway.local/contracts/device-passport.schema.json",
-  "title": "LeeWay Verified Device Passport Candidate",
-  "type": "object",
-  "required": ["schemaVersion", "authority", "manufacturer", "model", "device", "product"],
-  "properties": {
-    "schemaVersion": { "type": "string" },
-    "authority": {
-      "enum": [
-        "NATIVE_ANDROID_OBSERVED",
-        "NATIVE_APPLE_OBSERVED",
-        "VERIFIED_DEVICE_PASSPORT"
-      ]
-    },
-    "manufacturer": { "type": "string" },
-    "model": { "type": "string" },
-    "device": { "type": "string" },
-    "product": { "type": "string" },
-    "hardware": { "type": "string" },
-    "androidRelease": { "type": "string" },
-    "sdkInt": { "type": "integer" },
-    "securityPatch": { "type": "string" },
-    "supportedAbis": { "type": "array", "items": { "type": "string" } },
-    "osVersion": { "type": "string" },
-    "buildNumber": { "type": "string" },
-    "applePlatform": { "enum": ["ios", "ipados", "macos", "tvos", "watchos"] },
-    "memory": { "type": "object" },
-    "storage": { "type": "object" },
-    "display": { "type": "object" },
-    "capabilityClaims": { "type": "array", "items": { "type": "object" } },
-    "reconciliation": {
-      "type": "object",
-      "required": ["reconciliationSessionId", "observedAuthority", "reconciledAt", "status"],
-      "properties": {
-        "reconciliationSessionId": { "type": "string" },
-        "observedAuthority": { "enum": ["NATIVE_ANDROID_OBSERVED", "NATIVE_APPLE_OBSERVED"] },
-        "reconciledAt": { "type": "string" },
-        "status": { "enum": ["MATCH", "PARTIAL_MATCH"] }
-      }
-    }
-  },
-  "allOf": [
-    {
-      "if": {
-        "properties": { "authority": { "const": "NATIVE_ANDROID_OBSERVED" } }
-      },
-      "then": {
-        "required": ["androidRelease", "sdkInt", "supportedAbis"],
-        "not": {
-          "anyOf": [
-            { "required": ["applePlatform"] },
-            { "required": ["osVersion"] }
-          ]
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": { "authority": { "const": "NATIVE_APPLE_OBSERVED" } }
-      },
-      "then": {
-        "required": ["osVersion"],
-        "not": {
-          "anyOf": [
-            { "required": ["androidRelease"] },
-            { "required": ["sdkInt"] }
-          ]
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": { "authority": { "const": "VERIFIED_DEVICE_PASSPORT" } }
-      },
-      "then": {
-        "required": ["reconciliation"]
-      }
-    }
-  ]
+    "$schema":  "https://json-schema.org/draft/2020-12/schema",
+    "$id":  "https://leeway.local/contracts/device-passport.schema.json",
+    "title":  "LeeWay Verified Device Passport Candidate",
+    "type":  "object",
+    "required":  [
+                     "schemaVersion",
+                     "authority",
+                     "manufacturer",
+                     "model",
+                     "device",
+                     "product"
+                 ],
+    "properties":  {
+                       "schemaVersion":  {
+                                             "type":  "string"
+                                         },
+                       "authority":  {
+                                         "enum":  [
+                                                      "NATIVE_ANDROID_OBSERVED",
+                                                      "NATIVE_APPLE_OBSERVED",
+                                                      "VERIFIED_DEVICE_PASSPORT"
+                                                  ]
+                                     },
+                       "manufacturer":  {
+                                            "type":  "string"
+                                        },
+                       "model":  {
+                                     "type":  "string"
+                                 },
+                       "device":  {
+                                      "type":  "string"
+                                  },
+                       "product":  {
+                                       "type":  "string"
+                                   },
+                       "hardware":  {
+                                        "type":  "string"
+                                    },
+                       "androidRelease":  {
+                                              "type":  "string"
+                                          },
+                       "sdkInt":  {
+                                      "type":  "integer"
+                                  },
+                       "securityPatch":  {
+                                             "type":  "string"
+                                         },
+                       "supportedAbis":  {
+                                             "type":  "array",
+                                             "items":  {
+                                                           "type":  "string"
+                                                       }
+                                         },
+                       "osVersion":  {
+                                         "type":  "string"
+                                     },
+                       "buildNumber":  {
+                                           "type":  "string"
+                                       },
+                       "applePlatform":  {
+                                             "enum":  [
+                                                          "ios",
+                                                          "ipados",
+                                                          "macos",
+                                                          "tvos",
+                                                          "watchos"
+                                                      ]
+                                         },
+                       "memory":  {
+                                      "type":  "object"
+                                  },
+                       "storage":  {
+                                       "type":  "object"
+                                   },
+                       "display":  {
+                                       "type":  "object"
+                                   },
+                       "capabilityClaims":  {
+                                                "type":  "array",
+                                                "items":  {
+                                                              "type":  "object"
+                                                          }
+                                            },
+                       "reconciliation":  {
+                                              "$ref":  "https://leeway.local/contracts/reconciliation.schema.json"
+                                          }
+                   },
+    "allOf":  [
+                  {
+                      "if":  {
+                                 "properties":  {
+                                                    "authority":  {
+                                                                      "const":  "NATIVE_ANDROID_OBSERVED"
+                                                                  }
+                                                }
+                             },
+                      "then":  {
+                                   "required":  [
+                                                    "androidRelease",
+                                                    "sdkInt",
+                                                    "supportedAbis"
+                                                ],
+                                   "not":  {
+                                               "anyOf":  [
+                                                             {
+                                                                 "required":  [
+                                                                                  "applePlatform"
+                                                                              ]
+                                                             },
+                                                             {
+                                                                 "required":  [
+                                                                                  "osVersion"
+                                                                              ]
+                                                             }
+                                                         ]
+                                           }
+                               }
+                  },
+                  {
+                      "if":  {
+                                 "properties":  {
+                                                    "authority":  {
+                                                                      "const":  "NATIVE_APPLE_OBSERVED"
+                                                                  }
+                                                }
+                             },
+                      "then":  {
+                                   "required":  [
+                                                    "osVersion"
+                                                ],
+                                   "not":  {
+                                               "anyOf":  [
+                                                             {
+                                                                 "required":  [
+                                                                                  "androidRelease"
+                                                                              ]
+                                                             },
+                                                             {
+                                                                 "required":  [
+                                                                                  "sdkInt"
+                                                                              ]
+                                                             }
+                                                         ]
+                                           }
+                               }
+                  },
+                  {
+                      "if":  {
+                                 "properties":  {
+                                                    "authority":  {
+                                                                      "const":  "VERIFIED_DEVICE_PASSPORT"
+                                                                  }
+                                                }
+                             },
+                      "then":  {
+                                   "required":  [
+                                                    "reconciliation"
+                                                ],
+                                   "properties":  {
+                                                      "reconciliation":  {
+                                                                             "required":  [
+                                                                                              "promotedAuthority"
+                                                                                          ],
+                                                                             "properties":  {
+                                                                                                "status":  {
+                                                                                                               "const":  "MATCH"
+                                                                                                           },
+                                                                                                "promotedAuthority":  {
+                                                                                                                          "const":  "VERIFIED_DEVICE_PASSPORT"
+                                                                                                                      }
+                                                                                            },
+                                                                             "type":  "object"
+                                                                         }
+                                                  }
+                               }
+                  }
+              ]
 }

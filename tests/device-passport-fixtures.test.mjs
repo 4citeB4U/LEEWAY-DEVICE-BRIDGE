@@ -22,6 +22,8 @@ const Ajv2020 = require("ajv/dist/2020.js");
 const ajv = new Ajv2020({ allErrors: true });
 const schemaPath = path.join(HERE, "../contracts/device-passport.schema.json");
 const schema = JSON.parse(fs.readFileSync(schemaPath, "utf8"));
+const reconciliationSchema = JSON.parse(fs.readFileSync(path.join(HERE, '../contracts/reconciliation.schema.json'), 'utf8'));
+ajv.addSchema(reconciliationSchema);
 const validate = ajv.compile(schema);
 
 // Fixture 1: Real Android Observed Specimen (from DevicePassport.kt & test logs)
@@ -121,13 +123,14 @@ export const verifiedPassportSpecimen = {
   product: "iPhone12,1",
   osVersion: "17.6.1",
   reconciliation: {
-    reconciliationSessionId: "rec-session-20261014-001",
-    observedAuthority: "NATIVE_APPLE_OBSERVED",
-    reconciledAt: "2026-10-14T14:52:00.000Z",
-    status: "MATCH"
+    bootstrapSessionId: "rec-session-20261020-001",
+    browserAuthority: "BROWSER_DISCOVERY_ONLY",
+    nativeAuthority: "NATIVE_APPLE_OBSERVED",
+    status: "MATCH",
+    differences: [],
+    promotedAuthority: "VERIFIED_DEVICE_PASSPORT"
   }
 };
-
 // Invariant 1: Android existing passport MUST ALWAYS validate
 assert.equal(validate(androidSpecimen), true, "Android specimen must pass schema validation");
 
@@ -153,3 +156,13 @@ assert.equal(validate(unprovenancedVerifiedPassportSpecimen), false, "Verified p
 assert.equal(validate(verifiedPassportSpecimen), true, "Verified reconciled passport with provenance must pass schema validation");
 
 console.log("PASS device passport cross-platform fixtures (unconditional Apple, hybrid rejection & reconciliation provenance)");
+
+assert.equal(validate({...verifiedPassportSpecimen,
+ reconciliation:{...verifiedPassportSpecimen.reconciliation,bootstrapSessionId:undefined}}),false,
+ "Verified passport with missing canonical session must fail");
+assert.equal(validate({...verifiedPassportSpecimen,
+ reconciliation:{...verifiedPassportSpecimen.reconciliation,status:"PARTIAL_MATCH"}}),false,
+ "Partial match cannot promote verified passport");
+assert.equal(validate({...verifiedPassportSpecimen,
+ reconciliation:{...verifiedPassportSpecimen.reconciliation,promotedAuthority:"NOT_PROMOTED"}}),false,
+ "Explicit not-promoted reconciliation cannot become verified passport");
