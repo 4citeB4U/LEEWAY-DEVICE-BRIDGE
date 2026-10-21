@@ -1,0 +1,50 @@
+# LEEWAY HEADER - DO NOT REMOVE
+# REGION: LEEWAY.DEVICE_BRIDGE.CI
+# TAG: LEEWAY.C3.PORTABLE.PASSPORT.SCHEMA
+# WHAT: Validate Android/Apple passport structure and canonical browser/native reconciliation.
+# WHY: GitHub-hosted clean installs must independently test source contracts.
+# WHO: Device Bridge source test runner; no operational identity authority.
+# WHERE: GitHub Actions ubuntu runner on approved source.
+# WHEN: 2026-10-20, pull requests and main pushes.
+# HOW: npm ci followed by deterministic schema and negative-fixture tests.
+# AUTHORITY: Source-only CI; no signing, device enrollment or production promotion.
+name: Cross-Platform Passport Schema
+
+on:
+  pull_request:
+    paths:
+      - 'contracts/**'
+      - 'tests/device-passport-fixtures.test.mjs'
+      - 'tests/universal-device-schema.test.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/cross-platform-passport-schema.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'contracts/**'
+      - 'tests/device-passport-fixtures.test.mjs'
+      - 'tests/universal-device-schema.test.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/cross-platform-passport-schema.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  passport-schema:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install committed dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Verify native Android, Apple and reconciliation fixtures
+        run: node tests/device-passport-fixtures.test.mjs
+      - name: Verify existing universal device schema
+        run: node --test tests/universal-device-schema.test.mjs
