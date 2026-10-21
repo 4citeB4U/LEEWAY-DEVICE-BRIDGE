@@ -159,20 +159,103 @@
                                                 ],
                                    "properties":  {
                                                       "reconciliation":  {
-                                                                             "required":  [
-                                                                                              "promotedAuthority"
-                                                                                          ],
                                                                              "properties":  {
                                                                                                 "status":  {
                                                                                                                "const":  "MATCH"
                                                                                                            },
                                                                                                 "promotedAuthority":  {
                                                                                                                           "const":  "VERIFIED_DEVICE_PASSPORT"
-                                                                                                                      }
+                                                                                                                      },
+                                                                                                "bootstrapSessionId":  {
+                                                                                                                           "type":  "string",
+                                                                                                                           "minLength":  1
+                                                                                                                       },
+                                                                                                "differences":  {
+                                                                                                                    "type":  "array",
+                                                                                                                    "maxItems":  0
+                                                                                                                }
                                                                                             },
-                                                                             "type":  "object"
+                                                                             "type":  "object",
+                                                                             "required":  [
+                                                                                              "promotedAuthority",
+                                                                                              "bootstrapSessionId"
+                                                                                          ]
                                                                          }
                                                   }
+                               }
+                  },
+                  {
+                      "if":  {
+                                 "properties":  {
+                                                    "authority":  {
+                                                                      "const":  "VERIFIED_DEVICE_PASSPORT"
+                                                                  },
+                                                    "reconciliation":  {
+                                                                           "properties":  {
+                                                                                              "nativeAuthority":  {
+                                                                                                                      "const":  "NATIVE_ANDROID_OBSERVED"
+                                                                                                                  }
+                                                                                          },
+                                                                           "type":  "object"
+                                                                       }
+                                                }
+                             },
+                      "then":  {
+                                   "required":  [
+                                                    "androidRelease",
+                                                    "sdkInt",
+                                                    "supportedAbis"
+                                                ],
+                                   "not":  {
+                                               "anyOf":  [
+                                                             {
+                                                                 "required":  [
+                                                                                  "applePlatform"
+                                                                              ]
+                                                             },
+                                                             {
+                                                                 "required":  [
+                                                                                  "osVersion"
+                                                                              ]
+                                                             }
+                                                         ]
+                                           }
+                               }
+                  },
+                  {
+                      "if":  {
+                                 "properties":  {
+                                                    "authority":  {
+                                                                      "const":  "VERIFIED_DEVICE_PASSPORT"
+                                                                  },
+                                                    "reconciliation":  {
+                                                                           "properties":  {
+                                                                                              "nativeAuthority":  {
+                                                                                                                      "const":  "NATIVE_APPLE_OBSERVED"
+                                                                                                                  }
+                                                                                          },
+                                                                           "type":  "object"
+                                                                       }
+                                                }
+                             },
+                      "then":  {
+                                   "required":  [
+                                                    "osVersion"
+                                                ],
+                                   "not":  {
+                                               "anyOf":  [
+                                                             {
+                                                                 "required":  [
+                                                                                  "androidRelease"
+                                                                              ]
+                                                             },
+                                                             {
+                                                                 "required":  [
+                                                                                  "sdkInt"
+                                                                              ]
+                                                             }
+                                                         ]
+                                           }
                                }
                   }
               ]

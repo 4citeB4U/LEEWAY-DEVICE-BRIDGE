@@ -166,3 +166,28 @@ assert.equal(validate({...verifiedPassportSpecimen,
 assert.equal(validate({...verifiedPassportSpecimen,
  reconciliation:{...verifiedPassportSpecimen.reconciliation,promotedAuthority:"NOT_PROMOTED"}}),false,
  "Explicit not-promoted reconciliation cannot become verified passport");
+// Negative promotion verification: these are source-only JSON fixtures,
+// never credentials or production device-enrollment evidence.
+const verifiedAndroidSpecimen={
+ ...androidSpecimen,authority:"VERIFIED_DEVICE_PASSPORT",
+ reconciliation:{...verifiedPassportSpecimen.reconciliation,nativeAuthority:"NATIVE_ANDROID_OBSERVED"}
+};
+assert.equal(validate(verifiedAndroidSpecimen),true,
+ "Verified Android shape must preserve canonical reconciled native Android identity");
+assert.equal(validate({...verifiedPassportSpecimen,
+ reconciliation:{...verifiedPassportSpecimen.reconciliation,differences:[{field:"model"}]}}),false,
+ "Mismatch evidence cannot be promoted by reporting status MATCH");
+assert.equal(validate({...verifiedPassportSpecimen,
+ reconciliation:{...verifiedPassportSpecimen.reconciliation,bootstrapSessionId:""}}),false,
+ "Blank bootstrap session cannot be promoted");
+assert.equal(validate({...verifiedPassportSpecimen,androidRelease:"14"}),false,
+ "Promoted Apple passport must reject Android-only hardware fields");
+assert.equal(validate({...verifiedPassportSpecimen,osVersion:undefined}),false,
+ "Promoted Apple passport requires native Apple OS version");
+assert.equal(validate({...verifiedPassportSpecimen,
+ reconciliation:{...verifiedPassportSpecimen.reconciliation,nativeAuthority:"NATIVE_ANDROID_OBSERVED"}}),false,
+ "Promoted Apple payload cannot claim Android native authority");
+assert.equal(validate({...verifiedAndroidSpecimen,supportedAbis:undefined}),false,
+ "Promoted Android passport must retain native architecture field");
+assert.equal(validate({...verifiedAndroidSpecimen,osVersion:"18.7"}),false,
+ "Promoted Android passport rejects native Apple fields");
