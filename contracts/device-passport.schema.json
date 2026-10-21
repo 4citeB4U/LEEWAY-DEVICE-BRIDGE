@@ -140,6 +140,11 @@
                                                                  "required":  [
                                                                                   "sdkInt"
                                                                               ]
+                                                             },
+                                                             {
+                                                                 "required":  [
+                                                                                  "supportedAbis"
+                                                                              ]
                                                              }
                                                          ]
                                            }
@@ -252,6 +257,11 @@
                                                              {
                                                                  "required":  [
                                                                                   "sdkInt"
+                                                                              ]
+                                                             },
+                                                             {
+                                                                 "required":  [
+                                                                                  "supportedAbis"
                                                                               ]
                                                              }
                                                          ]

@@ -191,3 +191,5 @@ assert.equal(validate({...verifiedAndroidSpecimen,supportedAbis:undefined}),fals
  "Promoted Android passport must retain native architecture field");
 assert.equal(validate({...verifiedAndroidSpecimen,osVersion:"18.7"}),false,
  "Promoted Android passport rejects native Apple fields");
+assert.equal(validate({...appleSpecimen,supportedAbis:["arm64-v8a"]}),false,"Native Apple must reject Android ABIs");
+assert.equal(validate({...verifiedPassportSpecimen,supportedAbis:["arm64-v8a"]}),false,"Reconciled Apple must reject Android ABIs");
