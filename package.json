@@ -2,9 +2,12 @@
   "name": "leeway-device-bridge-workspace",
   "private": true,
   "type": "module",
+  "bin": { "leeway-bridge": "./operator/device-bridge-cli.mjs" },
   "workspaces": ["packages/*", "apps/desktop"],
   "scripts": {
     "test:mcp": "node --test tests/mcp/*.test.mjs",
+    "test:cli": "node --test tests/cli/*.test.mjs",
+    "bridge": "node operator/device-bridge-cli.mjs",
     "mcp": "node apps/desktop/mcp-server.mjs"
   },
   "engines": { "node": ">=22" }

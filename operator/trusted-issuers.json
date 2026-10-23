@@ -1,0 +1,17 @@
+{
+  "$schema": "https://leeway.industries/schemas/trusted-issuers.v1.json",
+  "registryId": "LEEWAY_TRUSTED_ISSUER_REGISTRY::20261014",
+  "authority": "LeeWay Runtime Fabric Sovereign Authority",
+  "generatedAt": "2026-10-14T17:30:00.000Z",
+  "issuers": {
+    "leeway.runtime.carrier.v1": {
+      "issuerId": "leeway.runtime.carrier.v1",
+      "displayName": "LeeWay Canonical Runtime Fabric Carrier",
+      "keyId": "carrier-ed25519-key-001",
+      "algorithm": "Ed25519",
+      "publicKeySpki": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAVZ7KX4QCfpId1dtpHK866vZhCL1jY1k/mzPcYsft7yE=\n-----END PUBLIC KEY-----\n",
+      "status": "ACTIVE",
+      "validUntil": "2027-01-01T00:00:00.000Z"
+    }
+  }
+}
