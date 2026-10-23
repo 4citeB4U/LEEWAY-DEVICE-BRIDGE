@@ -1,0 +1,63 @@
+// DIAGNOSTIC cross-repository integration: real HTTP/SDK/dispatcher/Runtime
+// binding/LDWMD contracts; synthetic device and neural output, ephemeral keys.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {isAbsolute, resolve, join} from 'node:path';
+import {pathToFileURL} from 'node:url';
+import {mkdtemp, rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {listenGpuService} from './service.mjs';
+import {setGpuPreference} from './preferences.mjs';
+const gpuRoot = process.env.LEEWAY_GPU_SOURCE_ROOT, runtimeRoot = process.env.LEEWAY_RUNTIME_SOURCE_ROOT;
+test('existing HTTP service reaches SDK, real signed Runtime binding and original LDWMD',
+  {skip: !gpuRoot || !runtimeRoot ? 'Set reviewed GPU and Runtime source roots for integration' : false}, async t => {
+    assert(isAbsolute(gpuRoot) && isAbsolute(runtimeRoot));
+    const load = (root, path) => import(pathToFileURL(resolve(root, path)));
+    const {createLeeWayGpuInferenceProvider} = await load(gpuRoot, 'sdk/inference-provider.mjs');
+    const {syntheticModelPlan} = await load(gpuRoot, 'tests/fixtures/portable-model-plan.mjs');
+    const {HybridDispatcher} = await load(gpuRoot, 'core/hybrid.dispatcher.js');
+    const {inferenceHash} = await load(gpuRoot, 'core/inference-contract.mjs');
+    const {createInferenceFixture} = await load(runtimeRoot, 'tests/fixtures/inference-binding-fixture.mjs');
+    const {LeeWayDeviceWorkingMemoryDatabase} = await load(runtimeRoot, 'automation-runtime/src/vtensor/vram-database.mjs');
+    const {createLDWMDWebGPUAdapter, prepareLDWMDWebGPUBufferLease} = await load(runtimeRoot, 'adapters/edge-gpu/ldwmd-webgpu.mjs');
+    const device = {lost: new Promise(() => {}), limits: {maxBufferSize: 1024}, pushErrorScope() {},
+      async popErrorScope() { return null; }, createBuffer({size}) { return {size, destroy() {}}; },
+      createCommandEncoder() { return {clearBuffer() {}, finish() { return {}; }}; },
+      queue: {submit() {}, async onSubmittedWorkDone() {}}};
+    const adapter = createLDWMDWebGPUAdapter({device, deviceId: 'fixture-device', capacityBytes: 1024});
+    const database = new LeeWayDeviceWorkingMemoryDatabase({deviceId: 'fixture-device', deviceGeneration: 'fixture-generation',
+      totalVramBytes: 1024, hardwareAdapter: adapter});
+    const f = await createInferenceFixture({principal: {clientId: 'registered-client'}, memoryFactory: s =>
+      prepareLDWMDWebGPUBufferLease({device, database, adapter, requestHash: s.requestHash,
+        leaseId: s.permit.body.leaseId, generation: 'fixture-generation', budgetBytes: 1024, specs: [{bytes: 64, usage: 136}]})});
+    const plan = syntheticModelPlan();
+    const qualification = {publicKeySpki: f.trust.veritasPublicKeySpki,
+      envelope: await f.sign('leeway.gpu.provider-qualification.v1', {serviceId: 'leeway.gpu.service',
+        deviceId: 'fixture-device', platform: 'LINUX', receiptId: 'DIAGNOSTIC_FIXTURE_ONLY', expiresAtMs: Date.now() + 30000,
+        models: [{modelId: 'fixture-model', modelSha256: plan.modelSha256, tokenizerSha256: plan.tokenizerSha256,
+          implementationSha256: plan.implementationSha256, planSha256: await inferenceHash(plan)}]}, 'veritas')};
+    const provider = createLeeWayGpuInferenceProvider({models: [{modelId: 'fixture-model', plan}], platform: 'linux',
+      deviceId: 'fixture-device', qualification, bindingProvider: {readiness: () => f.binding.readiness(),
+        forClient(client) { assert.equal(client.clientId, 'registered-client'); return f.binding; }},
+      deviceProvider: {getDevice: async () => device},
+      executeModel: async input => new HybridDispatcher({inferenceBinding: input.inferenceBinding, ml: {
+        async run() { return {...f.result, outputIds: [plan.metadata['tokenizer.ggml.tokens'].indexOf('4')]}; }, async close() {}
+      }}).dispatch({type: 'AI_INFERENCE', requestId: input.requestId, sessionId: input.sessionId,
+        modelSha256: plan.modelSha256, tokenizerSha256: plan.tokenizerSha256, implementationSha256: plan.implementationSha256,
+        contextLimit: plan.contextLimit, maxNewTokens: input.plan.maxNewTokens, inputIds: input.plan.inputTokens}, {capability: 'WEBGPU'})});
+    const root = await mkdtemp(join(tmpdir(), 'leeway-full-gpu-')), preferenceFile = join(root, 'preferences.json');
+    setGpuPreference(true, {file: preferenceFile});
+    const server = await listenGpuService({port: 0, platform: 'linux', preferenceFile, inferenceProvider: provider,
+      authenticateClient: async ({request}) => request.headers.authorization === 'Bearer diagnostic-token' ? {clientId: 'registered-client'} : null});
+    t.after(async () => { await new Promise(resolve => server.close(resolve)); await rm(root, {recursive: true, force: true}); });
+    const base = 'http://127.0.0.1:' + server.address().port;
+    const capability = await fetch(base + '/v1/capabilities').then(r => r.json()); assert.equal(capability.gpuVerified, true);
+    const post = (path, body) => fetch(base + path, {method: 'POST', headers: {'content-type': 'application/json', authorization: 'Bearer diagnostic-token'}, body: JSON.stringify(body)});
+    assert.equal((await post('/v1/models/activate', {modelId: 'fixture-model'})).status, 200);
+    const response = await post('/v1/generate', {modelId: 'fixture-model', prompt: 'a', maxNewTokens: 1});
+    assert.equal(response.status, 200); const result = await response.json();
+    assert.equal(result.text, '4'); assert.equal(result.backend, 'LEEWAY_GPU');
+    assert.match(result.executionBinding.commitAttestationSha256, /^[a-f0-9]{64}$/);
+    assert.equal(database.receipt().activePhysicalBytes, 0);
+    assert.equal(f.calls.filter(call => call === 'receipt.append').length, 1);
+  });
