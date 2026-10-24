@@ -1,0 +1,14 @@
+﻿{
+    "schemaVersion":  "leeway.commander.source-migration.v1",
+    "provider":  "LEEWAY_NATIVE_HOST_COMMANDER",
+    "owner":  "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+    "governingSkill":  "leeway-host-commander",
+    "priorSourceSha256":  "B1818C305544273C5102FB9C2AC270064427F13B9294F9247BC779385F7D275A",
+    "sourceSha256":  "A93A73F21A5EB2D304CF6569B8E8C6703C512F9DF368B2D33D42E1ECCE967E43",
+    "priorRole":  "Runtime Fabric host capability",
+    "newPath":  "providers/desktop-commander/native-host/server.mjs",
+    "scope":  "EXISTING_LOOPBACK_EXECUTOR_REHOMED",
+    "remoteExposure":  false,
+    "runtimeActivated":  false,
+    "formulaExecution":  "NOT_EXECUTED"
+}

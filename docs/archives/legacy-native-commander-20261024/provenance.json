@@ -1,0 +1,225 @@
+{
+  "schema": "leeway.legacy-commander.source-only.v1",
+  "createdAt": "2026-10-24T06:32:05.327Z",
+  "currentMain": "c0d66a8470c2bb6fb8643d13e2c9b1f2d0507656",
+  "uniqueSource": 36,
+  "sourceReferences": [
+    {
+      "source": "native-commander-p7g3",
+      "sourcePath": "providers/desktop-commander/native-host/server.mjs",
+      "sha256": "2c107757076fb6155bf880801ce7f627a21b5875a5d4c6272acc25ba10dd8bf3",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/native-commander-p7g3/providers/desktop-commander/native-host/server.mjs"
+    },
+    {
+      "source": "native-commander-p7g3",
+      "sourcePath": "contracts/agent-lee-cursor-event.v1.schema.json",
+      "sha256": "f904b984826dbfc8c49162376138874a6424504a932850bd81a11f86381d4cd5",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/native-commander-p7g3/contracts/agent-lee-cursor-event.v1.schema.json"
+    },
+    {
+      "source": "native-commander-p7g3",
+      "sourcePath": "providers/desktop-commander/native-host/add-native-ui-observation.py",
+      "sha256": "a40955ff93f157da47f0da532acfa1eec2f5c8be73e376d2273b6598522227a3",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/native-commander-p7g3/providers/desktop-commander/native-host/add-native-ui-observation.py"
+    },
+    {
+      "source": "native-commander-p7g3",
+      "sourcePath": "providers/desktop-commander/native-host/agent-cursor-admission.mjs",
+      "sha256": "c2d993a81d3be93a106a4284cca38785fd57f3863861ebbb4cbbcb1f46efa951",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/native-commander-p7g3/providers/desktop-commander/native-host/agent-cursor-admission.mjs"
+    },
+    {
+      "source": "native-commander-p7g3",
+      "sourcePath": "providers/desktop-commander/native-host/agent-cursor-admission.test.mjs",
+      "sha256": "c5350590b47f2f92606318c587e205b2e18ee408ae398f7cf2eb2ce0c574366d",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/native-commander-p7g3/providers/desktop-commander/native-host/agent-cursor-admission.test.mjs"
+    },
+    {
+      "source": "native-commander-p7g3",
+      "sourcePath": "providers/desktop-commander/native-host/agent-ui-host.py",
+      "sha256": "7577df0847454b754cbce55cab553ef7ecf7e0558335d1c13230da5534125c84",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/native-commander-p7g3/providers/desktop-commander/native-host/agent-ui-host.py"
+    },
+    {
+      "source": "native-commander-p7g3",
+      "sourcePath": "providers/desktop-commander/native-host/agent-vt-ui-serve.py",
+      "sha256": "7e274e93b504cfaa0a9556c472d43aefc48733b47a7b766e92a1636c0bc16aab",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/native-commander-p7g3/providers/desktop-commander/native-host/agent-vt-ui-serve.py"
+    },
+    {
+      "source": "native-commander-p7g3",
+      "sourcePath": "providers/desktop-commander/native-host/native-server-browser.test.mjs",
+      "sha256": "b7703e30340342c9ee6d6eb09c9911ac3495ac74b9410df23f3bf2dd08889783",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/native-commander-p7g3/providers/desktop-commander/native-host/native-server-browser.test.mjs"
+    },
+    {
+      "source": "native-commander-p7g3",
+      "sourcePath": "providers/desktop-commander/native-host/repair-native-dpi.py",
+      "sha256": "a3c88762349992846df717e976e7e8f2eb80f63dc334a25a5226a62b8e6f3d1a",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/native-commander-p7g3/providers/desktop-commander/native-host/repair-native-dpi.py"
+    },
+    {
+      "source": "native-commander-p7g3",
+      "sourcePath": "providers/desktop-commander/native-host/repair-native-hit-testing.py",
+      "sha256": "176d2779359d18a9c17410171654d476b7c08532818fcd400f6791ad1a1c61c7",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/native-commander-p7g3/providers/desktop-commander/native-host/repair-native-hit-testing.py"
+    },
+    {
+      "source": "native-commander-p7g3",
+      "sourcePath": "providers/desktop-commander/native-host/repair-native-window.py",
+      "sha256": "092dcd6eb1e27413040be016802124d427f69398ca23de9e57fa8cdefe3f99e3",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/native-commander-p7g3/providers/desktop-commander/native-host/repair-native-window.py"
+    },
+    {
+      "source": "native-commander-p7g3",
+      "sourcePath": "providers/desktop-commander/native-host/visible-browser.mjs",
+      "sha256": "4c2e4680954f62b45aba159db01c6cfe78b8f47f365495e32fb7a7e5df8aa8cf",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/native-commander-p7g3/providers/desktop-commander/native-host/visible-browser.mjs"
+    },
+    {
+      "source": "native-commander-p7g3",
+      "sourcePath": "providers/desktop-commander/native-host/visible-browser.test.mjs",
+      "sha256": "23d09524f259026c9b82580a3eae41a731c14ab8948c73ae09b290303b2e1e3e",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/native-commander-p7g3/providers/desktop-commander/native-host/visible-browser.test.mjs"
+    },
+    {
+      "source": "native-commander-p7g3",
+      "sourcePath": "providers/desktop-commander/native-host/vision_native_widget.py",
+      "sha256": "ef054ea49878ebfa58c25ebc457af9b335548974985615ca8f6a600cc011fe40",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/native-commander-p7g3/providers/desktop-commander/native-host/vision_native_widget.py"
+    },
+    {
+      "source": "native-commander-p7g3",
+      "sourcePath": "providers/desktop-commander/native-host/windows-input-actuator.mjs",
+      "sha256": "2856550f28c780bde38cc1a3543f095b4522a1ecf3b82b3cc1d4f8087ca0a8ef",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/native-commander-p7g3/providers/desktop-commander/native-host/windows-input-actuator.mjs"
+    },
+    {
+      "source": "native-commander-p7g3",
+      "sourcePath": "providers/desktop-commander/native-host/windows-input-actuator.test.mjs",
+      "sha256": "c15b761ea8c982858babd504a32516620ca86f6a427cde6a5014b76089e77e12",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/native-commander-p7g3/providers/desktop-commander/native-host/windows-input-actuator.test.mjs"
+    },
+    {
+      "source": "native-commander-p7g3",
+      "sourcePath": "providers/desktop-commander/native-host/windows-input-plan.mjs",
+      "sha256": "41a581ed3cf4cd4fe78f5471ad537f74df1ac763958cb5de571666032613a1f7",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/native-commander-p7g3/providers/desktop-commander/native-host/windows-input-plan.mjs"
+    },
+    {
+      "source": "native-commander-p7g3",
+      "sourcePath": "providers/desktop-commander/native-host/windows-input-plan.test.mjs",
+      "sha256": "141f975320c457010639dcd83565cda3cf2633c802a35cc5a7fbf9b0a8027308",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/native-commander-p7g3/providers/desktop-commander/native-host/windows-input-plan.test.mjs"
+    },
+    {
+      "source": "native-commander-p7g3",
+      "sourcePath": "providers/desktop-commander/phone-model-inventory.mjs",
+      "sha256": "5c096d8fd2189709041ee8018c5e4698ecadd527772e1107e236c1d7bd37053d",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/native-commander-p7g3/providers/desktop-commander/phone-model-inventory.mjs"
+    },
+    {
+      "source": "native-commander-p7g3",
+      "sourcePath": "providers/desktop-commander/phone-runtime-gateway.mjs",
+      "sha256": "c34ab529896e236f8b5a0a04235d76af54c76124e01b113488bd9bf33568951f",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/native-commander-p7g3/providers/desktop-commander/phone-runtime-gateway.mjs"
+    },
+    {
+      "source": "native-commander-p7g3",
+      "sourcePath": "providers/desktop-commander/tests/phone-model-inventory.test.mjs",
+      "sha256": "7d7d61aba58670649306f772199b53310f93607d4a2de1870220b24a44788fd4",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/native-commander-p7g3/providers/desktop-commander/tests/phone-model-inventory.test.mjs"
+    },
+    {
+      "source": "android-hardening-20261005",
+      "sourcePath": "Apply-NativeCommanderBinding.ps1",
+      "sha256": "ce63a7d1b3391515f2810b373e4a226fc9b3f751ae8591d76896decf1538fbb7",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/android-hardening-20261005/Apply-NativeCommanderBinding.ps1"
+    },
+    {
+      "source": "android-hardening-20261005",
+      "sourcePath": "Stage-NativeCommander.ps1",
+      "sha256": "6df47346d1561ce550cf3564d8effd5d0ae3f3bbbba8cc366fa896ad50130e3b",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/android-hardening-20261005/Stage-NativeCommander.ps1"
+    },
+    {
+      "source": "android-hardening-20261005",
+      "sourcePath": "clients/android-commander/src/main/kotlin/industries/leeway/devices/commander/AndroidCommanderStore.kt",
+      "sha256": "f532615410b5bd7d662578e08b6eeef790e5096a5c7333f28e629caa641b4a44",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/android-hardening-20261005/clients/android-commander/src/main/kotlin/industries/leeway/devices/commander/AndroidCommanderStore.kt"
+    },
+    {
+      "source": "android-hardening-20261005",
+      "sourcePath": "clients/android-commander/src/main/kotlin/industries/leeway/devices/commander/CommanderProtocol.kt",
+      "sha256": "2b8f9c1f093512140ba91852cbc6d6911d49adb463a7b37e0a114d5cdb064054",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/android-hardening-20261005/clients/android-commander/src/main/kotlin/industries/leeway/devices/commander/CommanderProtocol.kt"
+    },
+    {
+      "source": "android-hardening-20261005",
+      "sourcePath": "clients/android-commander/src/main/kotlin/industries/leeway/devices/commander/CommanderWssClient.kt",
+      "sha256": "9b881ec58964a1b1d4f1d681bbd197bcb87ea5827aae2ff05c5228eb08beb016",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/android-hardening-20261005/clients/android-commander/src/main/kotlin/industries/leeway/devices/commander/CommanderWssClient.kt"
+    },
+    {
+      "source": "android-hardening-20261005",
+      "sourcePath": "clients/android-commander/src/test/kotlin/industries/leeway/devices/commander/CommanderProtocolTest.kt",
+      "sha256": "380cf51e6d0550c192add773edbcc56f27752d6ba5ceba334167c4326ae53d5f",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/android-hardening-20261005/clients/android-commander/src/test/kotlin/industries/leeway/devices/commander/CommanderProtocolTest.kt"
+    },
+    {
+      "source": "android-hardening-20261005",
+      "sourcePath": "providers/desktop-commander/native-host-transport.mjs",
+      "sha256": "f6bfb86bc5068a8d89932757c9fab4351b6aeb69f90d8301952600bf5dc10b79",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/android-hardening-20261005/providers/desktop-commander/native-host-transport.mjs"
+    },
+    {
+      "source": "android-hardening-20261005",
+      "sourcePath": "providers/desktop-commander/native-host/Patch-CommandPolicy.ps1",
+      "sha256": "a5568daf251c007b810bbafc7739173d4cc1563a64b78e1432561ad4f5120a4f",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/android-hardening-20261005/providers/desktop-commander/native-host/Patch-CommandPolicy.ps1"
+    },
+    {
+      "source": "android-hardening-20261005",
+      "sourcePath": "providers/desktop-commander/native-host/Repair-StaleRootOverride.ps1",
+      "sha256": "efb0ed5ba69538ec199475eb0095a145b3bb3965102640c6ad92fa7b5eec28d6",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/android-hardening-20261005/providers/desktop-commander/native-host/Repair-StaleRootOverride.ps1"
+    },
+    {
+      "source": "android-hardening-20261005",
+      "sourcePath": "providers/desktop-commander/native-host/command-policy.mjs",
+      "sha256": "091b09323077f09b3168f2d9401d632542313ce0b8be04d218c5fa69fb0c6649",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/android-hardening-20261005/providers/desktop-commander/native-host/command-policy.mjs"
+    },
+    {
+      "source": "android-hardening-20261005",
+      "sourcePath": "providers/desktop-commander/native-host/server.mjs",
+      "sha256": "aacd3fee1626a25ec2a7adeba38b4797b8297428933f6096e07a8ffc53f53d79",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/android-hardening-20261005/providers/desktop-commander/native-host/server.mjs"
+    },
+    {
+      "source": "android-hardening-20261005",
+      "sourcePath": "providers/desktop-commander/native-host/source-lineage.json",
+      "sha256": "3e4ef0b50ada02d1f75270ef4c31cdbf2c3cedf2698ad54c01ed1e53d62615e3",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/android-hardening-20261005/providers/desktop-commander/native-host/source-lineage.json"
+    },
+    {
+      "source": "android-hardening-20261005",
+      "sourcePath": "providers/desktop-commander/remote-session.mjs",
+      "sha256": "6b4281684df3dafb3263f153800f9af2bc6ebf0919377d2b0f05af5be43c2385",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/android-hardening-20261005/providers/desktop-commander/remote-session.mjs"
+    },
+    {
+      "source": "android-hardening-20261005",
+      "sourcePath": "tests/commander-remote-session.test.mjs",
+      "sha256": "6c618aedf18ca1719934b871d714e5180620ceb17ee4f3e9fa2a29a0c4cfa049",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/android-hardening-20261005/tests/commander-remote-session.test.mjs"
+    },
+    {
+      "source": "android-hardening-20261005",
+      "sourcePath": "tests/native-commander-integration.test.mjs",
+      "sha256": "14dd63afbf5b3e7932cb9e44d4191843d46d1b982aaa90006c96ac0b3f5b9eea",
+      "archivePath": "docs/archives/legacy-native-commander-20261024/android-hardening-20261005/tests/native-commander-integration.test.mjs"
+    }
+  ],
+  "excluded": []
+}

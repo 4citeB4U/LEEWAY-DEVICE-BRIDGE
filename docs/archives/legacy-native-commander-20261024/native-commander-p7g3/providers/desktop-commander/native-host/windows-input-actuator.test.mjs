@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {executeWindowsInput as run} from './windows-input-actuator.mjs';
+const req={action:'move',requestId:'test-request-12345',ownerApproved:true,x:20,y:40};
+const bounds={width:1920,height:1080};let calls=0;const operator={execute:async()=>{calls++;return{ok:true}}};
+let stage=0;const observe=async()=>{stage++;return stage===1?{ok:true,x:0,y:0}:{ok:true,x:20,y:40}};
+assert.equal((await run(req,{bounds})).state,'NOT_EXECUTED');
+assert.equal((await run(req,{bounds,armed:true})).state,'DENIED');
+assert.equal((await run({...req,ownerApproved:false},{bounds,armed:true,operator,observe})).state,'DENIED');
+assert.equal((await run({...req,action:'click'},{bounds,armed:true,operator,observe})).state,'DENIED');
+assert.equal(calls,0);
+assert.equal((await run(req,{bounds,armed:true,operator,observe})).state,'EXECUTED_OBSERVED');
+assert.equal(calls,1);
+assert.equal((await run(req,{bounds,armed:true,operator,observe:async()=>({ok:true,x:2,y:2})})).state,'UNVERIFIED');
+console.log('WINDOWS_INPUT_ACTUATOR_CONTRACT_PASS 7 ASSERTIONS; MOCK ONLY; NO OS INPUT');
