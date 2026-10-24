@@ -1,0 +1,5 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# Deterministic source-byte policy for reviewed C3 trust and USB adapters.
+operator/c3-admission-binding.mjs text eol=lf
+operator/physical-adapters.mjs text eol=lf
+operator/physical-apple-usb.mjs text eol=lf

@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { Bridge, schemas } from '../../packages/protocol/index.mjs';
 import { RelayAdapter } from '../../packages/agent-relay/index.mjs';
 import { DesktopAdapter } from './adapter.mjs';
+import { createC3AdmissionBinding } from '../../operator/c3-admission-binding.mjs';
 
 function screenResult(value) {
   if (value.ok !== true) return null;
@@ -53,22 +54,32 @@ export function createServer(bridge) {
 const deviceSchema = z.object({
   id: z.string().min(1).max(128), type: z.enum(['desktop', 'relay']),
   grants: z.array(z.enum(Object.keys(schemas))).max(Object.keys(schemas).length),
-  workspace: z.string().optional(), tokenEnv: z.string().regex(/^[A-Z][A-Z0-9_]*$/).optional(),
+  workspace: z.string().optional(), skillsRoot: z.string().max(2048).optional(), tokenEnv: z.string().regex(/^[A-Z][A-Z0-9_]*$/).optional(),
   url: z.string().url().optional(),
 }).strict();
+
+// Production must never interpret configured device grants as Formula/Veritas approval.
+// Until the canonical, authenticated Runtime Fabric device-command pre-gate is bound,
+// every command fails admission. Do not substitute host-read ValidationPolicy or test hooks.
+export function createProductionAdmission(devices, { veritasPreGate = null, consentProvider = null, formulaPreGate = null } = {}) {
+  const deviceRegistry = new Map(devices.map(device => [device.id, {
+    platform: device.type === 'desktop' ? 'windows' : (device.platform || null),
+  }]));
+  return createC3AdmissionBinding({ deviceRegistry, veritasPreGate, consentProvider, formulaPreGate });
+}
 
 export async function start(configPath) {
   if (!configPath) throw new Error('CONFIG_REQUIRED');
   const config = z.object({ devices: z.array(deviceSchema).min(1).max(32), receipts: z.string().min(1) }).strict().parse(JSON.parse(await fs.readFile(configPath, 'utf8')));
   const base = path.dirname(path.resolve(configPath));
-  const devices = config.devices.map(d => ({ ...d, adapter: d.type === 'desktop'
-    ? new DesktopAdapter(d.workspace ? path.resolve(base, d.workspace) : (() => { throw new Error('WORKSPACE_REQUIRED'); })())
-    : new RelayAdapter({ deviceId: d.id, url: d.url, token: d.tokenEnv ? process.env[d.tokenEnv] : undefined }) }));
   const receiptPath = path.resolve(base, config.receipts);
+  const devices = config.devices.map(d => ({ ...d, adapter: d.type === 'desktop'
+    ? new DesktopAdapter(d.workspace ? path.resolve(base, d.workspace) : (() => { throw new Error('WORKSPACE_REQUIRED'); })(), {skillsRoot: d.skillsRoot ? path.resolve(base,d.skillsRoot) : null, receiptPath})
+    : new RelayAdapter({ deviceId: d.id, url: d.url, token: d.tokenEnv ? process.env[d.tokenEnv] : undefined }) }));
   await fs.mkdir(path.dirname(receiptPath), { recursive: true });
   const bridge = new Bridge(devices, {
-    // This explicit config policy is not a canonical Formula or Veritas evaluation.
-    admission: async () => true,
+    // C3 fail-closed: production has no authenticated device-command Veritas binding yet.
+    admission: createProductionAdmission(devices),
     receiptSink: evidence => fs.appendFile(receiptPath, JSON.stringify(evidence) + '\n', { mode: 0o600 }),
   });
   const server = createServer(bridge);
