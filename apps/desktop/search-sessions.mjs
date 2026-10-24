@@ -105,4 +105,3 @@ export class DesktopSearchSessions{
       total:all.length,truncated:all.length>args.limit};
   }
 }
-

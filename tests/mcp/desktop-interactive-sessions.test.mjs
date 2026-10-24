@@ -127,4 +127,3 @@ test('production-default MCP rejects interactive command and never starts a chil
  assert.equal(JSON.parse(res.content[0].text).error,'ADMISSION_DENIED');
  assert.equal(adapter.sessions.sessions.size,0);
 });
-

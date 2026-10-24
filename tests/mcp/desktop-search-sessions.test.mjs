@@ -98,4 +98,3 @@ test('MCP exports search lifecycle but cannot execute without production authori
  assert.equal(JSON.parse(res.content[0].text).error,'ADMISSION_DENIED');
  assert.equal(adapter.searchSessions.searches.size,0);
 });
-

@@ -88,4 +88,3 @@ test('MCP parity capabilities are advertised yet cannot perform actions without 
   deviceId:'transfer-host',arguments:{path:'.',offset:0,limit:10}}});
  assert.equal(JSON.parse(r.content[0].text).error,'ADMISSION_DENIED');
 });
-
