@@ -540,9 +540,12 @@ const STANDARD_ARGS_DIGEST = computeArgsDigest(STANDARD_ARGS);
 {
   const fs = await import("node:fs");
   const { loadTrustedIssuerRegistry, verifyConsentEvidence, ConsentReplayGuard } = await import("../operator/trusted-issuer-registry.mjs");
-  const CANONICAL_CARRIER_KEY_PATH = "E:/LeeWay-Work/runtime-c3-clean-formula-20261007/security/keys/dev-key.pem";
-  assert.ok(fs.existsSync(CANONICAL_CARRIER_KEY_PATH), "Canonical carrier private key must exist");
-  const canonicalPrivPem = fs.readFileSync(CANONICAL_CARRIER_KEY_PATH, "utf8");
+  const canonicalCarrierKeyPath = process.env.LEEWAY_CANONICAL_CARRIER_TEST_KEY_PATH;
+  if (!canonicalCarrierKeyPath) {
+    console.log("  ↷ Invariant 16: skipped; provide LEEWAY_CANONICAL_CARRIER_TEST_KEY_PATH for the owner-host key check");
+  } else {
+  assert.ok(fs.existsSync(canonicalCarrierKeyPath), "Configured canonical carrier test key must exist");
+  const canonicalPrivPem = fs.readFileSync(canonicalCarrierKeyPath, "utf8");
 
   const enrolledRegistry = loadTrustedIssuerRegistry();
 
@@ -573,6 +576,7 @@ const STANDARD_ARGS_DIGEST = computeArgsDigest(STANDARD_ARGS);
   assert.equal(verification.issuer, "leeway.runtime.carrier.v1");
   assert.equal(verification.keyId, "carrier-ed25519-key-001");
   console.log("  ✔ Invariant 16: Canonical carrier private key produces authentic consent token verified by enrolled registry");
+  }
 }
 
 // ── Invariant 17: Attacker key fails verification against enrolled registry file

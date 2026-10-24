@@ -36,13 +36,13 @@ test('file edit uses compare-and-swap and move never replaces an existing target
  const root=await fs.mkdtemp(path.join(os.tmpdir(),'leeway-file-edit-'));t.after(()=>fs.rm(root,{recursive:true,force:true}));
  const a=new DesktopAdapter(root);await fs.mkdir(path.join(root,'left'));await fs.mkdir(path.join(root,'right'));
  await fs.writeFile(path.join(root,'left','source.txt'),'before');
- const first=await a.execute('device.files.read',{path:'left/source.txt'});
+ const first=await a.execute('device.files.hash',{path:'left/source.txt'});
  assert.equal(first.sha256,createHash('sha256').update('before').digest('hex'));
- await a.execute('device.files.replace',{path:'left/source.txt',text:'after',expectedSha256:first.sha256});
+ await a.execute('device.files.edit',{path:'left/source.txt',oldText:'before',newText:'after',expectedReplacements:1,expectedSha256:first.sha256});
  const current=await a.execute('device.files.read',{path:'left/source.txt'});
  assert.equal(current.text,'after');
- await assert.rejects(a.execute('device.files.replace',{path:'left/source.txt',text:'stale',expectedSha256:first.sha256}),/FILE_VERSION_MISMATCH/);
- const digest=createHash('sha256').update('after').digest('hex');
+ await assert.rejects(a.execute('device.files.edit',{path:'left/source.txt',oldText:'before',newText:'stale',expectedReplacements:1,expectedSha256:first.sha256}),/EDIT_SOURCE_CHANGED/);
+ const digest=(await a.execute('device.files.hash',{path:'left/source.txt'})).sha256;
  await a.execute('device.files.move',{from:'left/source.txt',to:'right/renamed.txt',expectedSha256:digest});
  assert.equal((await a.execute('device.files.read',{path:'right/renamed.txt'})).text,'after');
  await fs.writeFile(path.join(root,'right','occupied.txt'),'keep');
@@ -50,22 +50,22 @@ test('file edit uses compare-and-swap and move never replaces an existing target
  await assert.rejects(a.execute('device.files.move',{from:'right/renamed.txt',to:'../escaped.txt',expectedSha256:digest}),/INVALID_PATH|PATH_OUTSIDE_WORKSPACE/);
 });
 
-test('long-running jobs accept bounded interactive stdin and close input explicitly',async t=>{
+test('interactive sessions accept bounded stdin and close input explicitly',async t=>{
  const root=await fs.mkdtemp(path.join(os.tmpdir(),'leeway-job-input-'));t.after(()=>fs.rm(root,{recursive:true,force:true}));
  const a=new DesktopAdapter(root);
  const script='process.stdin.setEncoding("utf8");process.stdin.on("data",d=>process.stdout.write("echo:"+d));process.stdin.on("end",()=>process.exit(0));';
- const started=await a.execute('device.job.start',{executable:'node',arguments:['-e',script],cwd:'.',timeoutMs:10000});
- assert.equal((await a.execute('device.job.status',{jobId:started.jobId})).inputOpen,true);
- const input=await a.execute('device.job.write',{jobId:started.jobId,text:'hello\n',closeInput:true});
- assert.deepEqual(input,{accepted:true,bytes:6,inputClosed:true});
+ const started=await a.execute('device.session.start',{executable:'node',arguments:['-e',script],cwd:'.',timeoutMs:10000});
+ assert.equal(started.state,'RUNNING');
+ const input=await a.execute('device.session.input',{sessionId:started.sessionId,text:'hello',appendNewline:true,closeInput:true});
+ assert.equal(input.acceptedBytes,6);
+ assert.equal(input.inputClosed,true);
  let status;
  for(let attempt=0;attempt<80;attempt++){
-  status=await a.execute('device.job.status',{jobId:started.jobId});
+  status=await a.execute('device.session.read',{sessionId:started.sessionId,stdoutOffset:0,stderrOffset:0,maxBytes:1024});
   if(status.state==='EXITED')break;
   await new Promise(resolve=>setTimeout(resolve,25));
  }
- assert.match(status.stdout,/echo:hello/);
- assert.equal(status.inputOpen,false);
+ assert.match(status.stdout.text,/echo:hello/);
  assert.equal(status.state,'EXITED');
- await assert.rejects(a.execute('device.job.write',{jobId:started.jobId,text:'again'}),/JOB_INPUT_CLOSED/);
+ await assert.rejects(a.execute('device.session.input',{sessionId:started.sessionId,text:'again'}),/SESSION_NOT_WRITABLE/);
 });
