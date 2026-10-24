@@ -29,16 +29,26 @@ import {
   ConsentReplayGuard
 } from "../operator/trusted-issuer-registry.mjs";
 
-// Import canonical Veritas Core and Collaboration Receipt standards
-const { runValidationPolicy } = await import("file:///E:/LeeWay-Work/runtime-c3-clean-formula-20261007/standards/src/core/veritas/ValidationPolicy.ts");
-const { emitReceipt } = await import("file:///E:/LeeWay-Work/runtime-c3-clean-formula-20261007/standards/governance/law/ReceiptSchema.ts");
+// This host integration requires owner-controlled Runtime Fabric source and key
+// material. CI has neither; the portable contract and negative tests run there.
+const veritasPolicyPath = process.env.LEEWAY_RUNTIME_VERITAS_POLICY_PATH;
+const receiptSchemaPath = process.env.LEEWAY_RUNTIME_RECEIPT_SCHEMA_PATH;
+const canonicalCarrierKeyPath = process.env.LEEWAY_CANONICAL_CARRIER_TEST_KEY_PATH;
+if (![veritasPolicyPath, receiptSchemaPath, canonicalCarrierKeyPath].every(Boolean)) {
+  console.log("SKIP canonical owner-host integration: set the three LeeWay Runtime source/key path variables to run it locally");
+  process.exit(0);
+}
+for (const requiredPath of [veritasPolicyPath, receiptSchemaPath, canonicalCarrierKeyPath]) {
+  assert.ok(fs.existsSync(requiredPath), "Configured LeeWay owner-host integration input must exist");
+}
+const { pathToFileURL } = await import("node:url");
+const { runValidationPolicy } = await import(pathToFileURL(veritasPolicyPath).href);
+const { emitReceipt } = await import(pathToFileURL(receiptSchemaPath).href);
 
 // ── Production Carrier Identity Setup ─────────────────────────────────────────
 
 // 1. Load canonical carrier private key from Runtime Fabric
-const CANONICAL_CARRIER_KEY_PATH = "E:/LeeWay-Work/runtime-c3-clean-formula-20261007/security/keys/dev-key.pem";
-assert.ok(fs.existsSync(CANONICAL_CARRIER_KEY_PATH), "Canonical carrier key must exist at " + CANONICAL_CARRIER_KEY_PATH);
-const carrierPrivPkcs8 = fs.readFileSync(CANONICAL_CARRIER_KEY_PATH, "utf8");
+const carrierPrivPkcs8 = fs.readFileSync(canonicalCarrierKeyPath, "utf8");
 
 // 2. Load enrolled Trusted Issuer Registry from operator/trusted-issuers.json
 const enrolledRegistry = loadTrustedIssuerRegistry();

@@ -234,4 +234,26 @@ const bridge = new Bridge(devices, {
   console.log("  ✔ Invariant 11: ATTACK refused: Caller-supplied _humanConfirmed / _authorityTier ignored and denied");
 }
 
-console.log("\nPASS canonical C3 admission binding — governed multi-platform admission enforced with signed consent and mandatory Veritas");
+// A newly registered platform is admitted from the adapter registry instead of
+// being rejected by a hard-coded operating-system list in C3.
+{
+  const platform = "leeway-simulated-device";
+  const portableRegistry = {
+    operatorId: "leeway.device.operator",
+    adapters: [{
+      adapterId: "leeway.operator.simulated-device",
+      platform,
+      capabilities: { "device.info": { state: "AVAILABLE", requiresHumanConsent: false } }
+    }]
+  };
+  const portableAdmission = createC3AdmissionBinding({
+    deviceRegistry: [{ id: "portable-device", platform }],
+    registry: portableRegistry,
+    formulaPreGate: async () => ({ passed: true }),
+    veritasPreGate: async () => true
+  });
+  assert.equal(await portableAdmission({ deviceId: "portable-device", capability: "device.info", args: {} }), true);
+  assert.equal(portableAdmission.lastAdmissionEvidence.records[0].platform, platform);
+}
+
+console.log("\nPASS canonical C3 admission binding — registered platform adapters, signed consent and mandatory Formula/Veritas gates enforced");

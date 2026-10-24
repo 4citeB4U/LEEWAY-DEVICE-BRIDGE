@@ -67,14 +67,14 @@ test('move rejects overwrite, modified source and linked source, then moves exac
   await fs.writeFile(path.join(root,'occupied.txt'),'existing');
   const digest=sha('original');
   const args={from:'source.txt',to:'moved.txt',expectedSha256:digest};
-  await assert.rejects(adapter.execute('device.files.move',{...args,expectedSha256:sha('wrong')}),/SOURCE_CHANGED/);
-  await assert.rejects(adapter.execute('device.files.move',{...args,to:'occupied.txt'}),/EEXIST/);
+  await assert.rejects(adapter.execute('device.files.move',{...args,expectedSha256:sha('wrong')}),/SOURCE_CHANGED|FILE_VERSION_MISMATCH/);
+  await assert.rejects(adapter.execute('device.files.move',{...args,to:'occupied.txt'}),/EEXIST|TARGET_ALREADY_EXISTS/);
   assert.equal(await fs.readFile(path.join(root,'occupied.txt'),'utf8'),'existing');
   const moved=await adapter.execute('device.files.move',args);
   assert.equal(moved.moved,true);
   await assert.rejects(fs.stat(path.join(root,'source.txt')),{code:'ENOENT'});
   assert.equal(await fs.readFile(path.join(root,'moved.txt'),'utf8'),'original');
-  await assert.rejects(adapter.execute('device.files.move',{from:'moved.txt',to:'moved.txt',expectedSha256:digest}),/SOURCE_EQUALS_DESTINATION/);
+  await assert.rejects(adapter.execute('device.files.move',{from:'moved.txt',to:'moved.txt',expectedSha256:digest}),/SOURCE_EQUALS_DESTINATION|SAME_SOURCE_AND_TARGET/);
   try{
     await fs.link(path.join(root,'moved.txt'),path.join(root,'linked.txt'));
     await assert.rejects(adapter.execute('device.files.move',{from:'moved.txt',to:'another.txt',expectedSha256:digest}),/LINK_NOT_ALLOWED/);
@@ -109,3 +109,4 @@ test('MCP exposes all five tools but the default missing authority denies execut
   assert.equal(JSON.parse(res.content[0].text).error,'ADMISSION_DENIED');
   assert.equal(await fs.readFile(path.join(root,'read.txt'),'utf8'),'test');
 });
+

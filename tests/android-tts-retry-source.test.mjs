@@ -6,9 +6,9 @@ const voice=fs.readFileSync("apps/android/app/src/main/java/industries/leeway/de
 assert.doesNotMatch(voice,/TextToSpeech/);
 assert.doesNotMatch(voice,/voice\.tts\./);
 assert.match(voice,/LEEWAY_VOICE_FABRIC/);
-assert.match(voice,/agent-lee-voice-one/);
 assert.match(voice,/VOICE_UNAVAILABLE/);
-assert.match(voice,/fallbackAllowed/);
+assert.match(voice,/fallbackAllowed", false/);
+assert.doesNotMatch(voice,/agent-lee-voice-one|kokoro-am_michael|fallbackProvider/);
 assert.match(voice,/openVoiceFabric/);
 assert.match(voice,/voice\.fabric\.open/);
 assert.match(voice,/voice\.fabric\.speak/);
