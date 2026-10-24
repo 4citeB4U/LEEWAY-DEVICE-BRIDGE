@@ -7,12 +7,25 @@ export const schemas = Object.freeze({
   'device.health': empty,
   'device.info': empty,
   'device.files.read': z.object({ path: z.string().min(1).max(1024) }).strict(),
+  'device.files.info': z.object({ path: z.string().min(1).max(1024) }).strict(),
+  'device.files.read_multiple': z.object({ paths: z.array(z.string().min(1).max(1024)).min(1).max(8) }).strict(),
   'device.files.write': z.object({ path: z.string().min(1).max(1024), text: z.string().max(65536) }).strict(),
   'device.files.replace': z.object({ path: z.string().min(1).max(1024), text: z.string().max(65536), expectedSha256: z.string().regex(/^[a-f0-9]{64}$/) }).strict(),
+  'device.files.hash': z.object({ path: z.string().min(1).max(1024) }).strict(),
+  'device.files.read_binary': z.object({ path: z.string().min(1).max(1024), offset: z.number().int().min(0).safe().default(0), length: z.number().int().min(1).max(262144).default(65536) }).strict(),
+  'device.files.write_binary': z.object({ path: z.string().min(1).max(1024), base64: z.string().max(349528), expectedSha256: z.string().regex(/^[a-f0-9]{64}$/) }).strict(),
+  'device.files.append_binary': z.object({ path: z.string().min(1).max(1024), base64: z.string().max(349528), expectedOffset: z.number().int().safe().min(0), expectedSha256: z.string().regex(/^[a-f0-9]{64}$/), expectedChunkSha256: z.string().regex(/^[a-f0-9]{64}$/) }).strict(),
   'device.files.move': z.object({ from: z.string().min(1).max(1024), to: z.string().min(1).max(1024), expectedSha256: z.string().regex(/^[a-f0-9]{64}$/) }).strict(),
+  'device.files.edit': z.object({ path: z.string().min(1).max(1024), oldText: z.string().min(1).max(65536), newText: z.string().max(65536), expectedReplacements: z.number().int().min(1).max(1000), expectedSha256: z.string().regex(/^[a-f0-9]{64}$/) }).strict(),
   'device.directories.list': z.object({ path: z.string().min(1).max(1024).default('.'), limit: z.number().int().min(1).max(500).default(200) }).strict(),
+  'device.directories.page': z.object({ path: z.string().min(1).max(1024).default('.'), offset: z.number().int().safe().min(0).default(0), limit: z.number().int().min(1).max(500).default(100), expectedSnapshotSha256: z.string().regex(/^[a-f0-9]{64}$/).optional() }).strict(),
   'device.directories.create': z.object({ path: z.string().min(1).max(1024) }).strict(),
   'device.search.files': z.object({ path: z.string().min(1).max(1024).default('.'), query: z.string().min(1).max(128), limit: z.number().int().min(1).max(200).default(50) }).strict(),
+  'device.search.content': z.object({ path: z.string().min(1).max(1024).default('.'), query: z.string().min(1).max(128), limit: z.number().int().min(1).max(50).default(20) }).strict(),
+  'device.search.start': z.object({ path: z.string().min(1).max(1024).default('.'), query: z.string().min(1).max(128), mode: z.enum(['name', 'content']).default('name') }).strict(),
+  'device.search.next': z.object({ searchId: z.string().uuid(), offset: z.number().int().safe().min(0).default(0), limit: z.number().int().min(1).max(50).default(20) }).strict(),
+  'device.search.stop': z.object({ searchId: z.string().uuid() }).strict(),
+  'device.search.list': z.object({ limit: z.number().int().min(1).max(20).default(10) }).strict(),
   'device.process.list': z.object({ limit: z.number().int().min(1).max(500).default(200) }).strict(),
   'device.process.terminate': z.object({ pid: z.number().int().min(1), expectedCommand: z.string().min(1).max(260) }).strict(),
   'device.job.start': z.object({
@@ -24,6 +37,24 @@ export const schemas = Object.freeze({
   'device.job.write': z.object({ jobId: z.string().uuid(), text: z.string().max(8192), closeInput: z.boolean().default(false) }).strict(),
   'device.job.status': z.object({ jobId: z.string().uuid() }).strict(),
   'device.job.stop': z.object({ jobId: z.string().uuid() }).strict(),
+  'device.session.start': z.object({
+    executable: z.enum(['node', 'npm', 'git', 'powershell']),
+    arguments: z.array(z.string().max(2048)).max(64).default([]),
+    cwd: z.string().min(1).max(1024).default('.'),
+    timeoutMs: z.number().int().min(1000).max(1800000).default(300000),
+  }).strict(),
+  'device.session.read': z.object({
+    sessionId: z.string().uuid(),
+    stdoutOffset: z.number().int().safe().min(0).default(0),
+    stderrOffset: z.number().int().safe().min(0).default(0),
+    maxBytes: z.number().int().min(1).max(65536).default(16384),
+  }).strict(),
+  'device.session.input': z.object({
+    sessionId: z.string().uuid(), text: z.string().max(32768),
+    appendNewline: z.boolean().default(false), closeInput: z.boolean().default(false),
+  }).strict(),
+  'device.session.stop': z.object({ sessionId: z.string().uuid() }).strict(),
+  'device.session.list': z.object({ limit: z.number().int().min(1).max(20).default(10) }).strict(),
   'device.process.execute': z.object({
     executable: z.enum(['node', 'npm', 'git', 'powershell']),
     arguments: z.array(z.string().max(2048)).max(64).default([]),
@@ -105,3 +136,4 @@ export class Bridge {
     }
   }
 }
+
