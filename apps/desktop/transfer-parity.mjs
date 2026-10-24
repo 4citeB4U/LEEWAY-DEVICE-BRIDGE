@@ -83,4 +83,3 @@ export async function directoryPage(adapter,args){
     }),total:names.length,snapshotSha256,nextOffset:args.offset+selected.length,
     moreAvailable:args.offset+selected.length<names.length};
 }
-

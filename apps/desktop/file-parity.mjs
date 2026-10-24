@@ -130,4 +130,3 @@ export async function exactEdit(adapter,args){
     return {edited:true,replacements:count,bytes:output.length,sha256:hash(output)};
   }finally{await fs.rm(tmp,{force:true}).catch(()=>{});}
 }
-

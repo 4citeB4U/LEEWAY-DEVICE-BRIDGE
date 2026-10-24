@@ -98,4 +98,3 @@ test('new MCP tools register but protected calls remain denied in production def
   const res = await client.callTool({ name: 'device_files_read_multiple', arguments: { deviceId: 'parity-host', arguments: { paths: ['read.txt'] } } });
   assert.equal(JSON.parse(res.content[0].text).error, 'ADMISSION_DENIED');
 });
-

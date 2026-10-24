@@ -4,8 +4,6 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { WebSocketServer } from 'ws';
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
@@ -14,19 +12,13 @@ import { RelayAdapter, parseRemoteQualified } from '../../packages/agent-relay/i
 import { DesktopAdapter } from '../../apps/desktop/adapter.mjs';
 import { createServer } from '../../apps/desktop/mcp-server.mjs';
 
-const execFileAsync = promisify(execFile);
-
-test('real SDK stdio tools/list and tools/call create/read plus fail-closed checks and receipts', async t => {
+test('real SDK stdio tools/list and tools/call fail-closed without canonical C3 authority', async t => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'leeway-mcp-'));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   await fs.mkdir(path.join(root, 'workspace'));
-  const configPath = path.join(root, 'config.json');
-  await fs.writeFile(configPath, JSON.stringify({ devices: [{ id: 'test-host', type: 'desktop', workspace: 'workspace', grants: ['device.health', 'device.files.read', 'device.files.write', 'device.ui.tap'] }] }));
-  const cliFailure = await execFileAsync(process.execPath, [path.resolve('apps/desktop/mcp-server.mjs'), configPath]).catch(error => error);
-  assert.equal(cliFailure.code, 1);
-  assert.match(cliFailure.stderr, /TRUSTED_RUNTIME_COMPOSITION_REQUIRED/);
+  await fs.writeFile(path.join(root, 'config.json'), JSON.stringify({ devices: [{ id: 'test-host', type: 'desktop', workspace: 'workspace', grants: ['device.health', 'device.files.read', 'device.files.write', 'device.ui.tap'] }], receipts: 'receipts.jsonl' }));
   const client = new Client({ name: 'acceptance-test', version: '1.0.0' });
-  const transport = new StdioClientTransport({ command: process.execPath, args: [path.resolve('tests/mcp/fixtures/trusted-host.mjs'), configPath], stderr: 'pipe' });
+  const transport = new StdioClientTransport({ command: process.execPath, args: [path.resolve('apps/desktop/mcp-server.mjs'), path.join(root, 'config.json')], stderr: 'pipe' });
   t.after(() => client.close());
   await client.connect(transport);
   const listing = await client.listTools();
@@ -40,15 +32,18 @@ test('real SDK stdio tools/list and tools/call create/read plus fail-closed chec
   assert.equal(caps.capabilities.find(x => x.name === 'device.files.write').granted, true);
   assert.ok(!caps.capabilities.some(x => x.name === 'device.ui.tap'));
   const written = await invoke('device_files_write', { ...scope, arguments: { path: 'proof.txt', text: 'device bridge proof' } });
-  assert.equal(written.ok, true);
+  assert.equal(written.ok, false);
+  assert.equal(written.error, 'ADMISSION_DENIED');
   const read = await invoke('device_files_read', { ...scope, arguments: { path: 'proof.txt' } });
-  assert.equal(read.result.text, 'device bridge proof');
+  assert.equal(read.ok, false);
+  assert.equal(read.error, 'ADMISSION_DENIED');
   const { sha256, ...body } = read.receipt;
   assert.equal(sha256, digest(body));
   assert.equal(read.receipt.formula, 'NOT_EVALUATED');
-  assert.equal((await invoke('device_files_write', { ...scope, arguments: { path: 'proof.txt', text: 'overwrite' } })).ok, false);
+  await assert.rejects(fs.stat(path.join(root, 'workspace', 'proof.txt')), { code: 'ENOENT' });
+  assert.equal((await invoke('device_files_write', { ...scope, arguments: { path: 'proof.txt', text: 'overwrite' } })).error, 'ADMISSION_DENIED');
   assert.equal((await invoke('device_files_read', { ...scope, arguments: { path: '../config.json' } })).ok, false);
-  assert.equal((await invoke('device_ui_tap', { ...scope, arguments: { x: 1, y: 1 } })).error, 'CAPABILITY_UNAVAILABLE');
+  assert.equal((await invoke('device_ui_tap', { ...scope, arguments: { x: 1, y: 1 } })).error, 'ADMISSION_DENIED');
   assert.equal((await invoke('device_info', { ...scope, arguments: {} })).error, 'CAPABILITY_NOT_GRANTED');
   assert.equal((await invoke('device_health', { deviceId: 'unknown', arguments: {} })).error, 'UNKNOWN_DEVICE');
   const invalid = await client.callTool({ name: 'device_ui_tap', arguments: { ...scope, arguments: { x: -1, y: 1 } } });

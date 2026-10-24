@@ -1,0 +1,83 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.DEVICE_BRIDGE.WINDOWS_APPLICATION_SDK_CI
+# TAG: LEEWAY_WINDOWS_APP_TO_NATIVE_SOFTWARE_GPU_INDEPENDENT_PROOF
+# WHO: Creator-authorized LeeWay engineering.
+# WHAT: Test actual native Windows client against original LeeWay engine.
+# WHEN: 2026-10-24. WHERE: GitHub Windows CI.
+# WHY: Full API usability must be independently executable by a Windows app.
+# HOW: Build GPU UMD lab DLL, Device Bridge service, WinHTTP SDK and run tests.
+# AUTHORITY: LAB_ONLY; no WDDM installation or protected production.
+# LICENSE: LeeWay.
+name: LeeWay Windows native application SDK
+on:
+  pull_request:
+    paths:
+      - 'packages/leeway-gpu-service/native-windows-client/**'
+      - 'packages/leeway-gpu-service/client.mjs'
+      - 'packages/leeway-gpu-service/client.test.mjs'
+      - '.github/workflows/leeway-windows-app-sdk.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/leeway-gpu-service/native-windows-client/**'
+      - 'packages/leeway-gpu-service/client.mjs'
+      - 'packages/leeway-gpu-service/client.test.mjs'
+      - '.github/workflows/leeway-windows-app-sdk.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  independent-windows-app-to-leeway:
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: 4citeB4U/LeeWay-Edge-GPU
+          ref: e84022ba16c34006f70579d1889524ac52ef1ac4
+          path: leeway-gpu-src
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Compile original LeeWay native UMD lab engine
+        run: cmake -S leeway-gpu-src/native/windows/d3d11-umd -B build/native-gpu -G "Visual Studio 17 2022" -A x64 -DLEEWAY_ENABLE_UMD_LAB_BRIDGE=ON
+      - name: Compile and validate native renderer and ABI
+        shell: pwsh
+        run: |
+          cmake --build build/native-gpu --config Release --parallel 2
+          if ($LASTEXITCODE -ne 0) { throw 'LEEWAY_NATIVE_ENGINE_BUILD_FAILED' }
+          ctest --test-dir build/native-gpu -C Release --output-on-failure
+          if ($LASTEXITCODE -ne 0) { throw 'LEEWAY_NATIVE_ENGINE_TEST_FAILED' }
+      - name: Compile Windows WinHTTP application client
+        run: cmake -S packages/leeway-gpu-service/native-windows-client -B build/winclient -G "Visual Studio 17 2022" -A x64
+      - name: Build Windows SDK and run external app against real service
+        shell: pwsh
+        run: |
+          cmake --build build/winclient --config Release --parallel 2
+          if ($LASTEXITCODE -ne 0) { throw 'LEEWAY_WINDOWS_CLIENT_BUILD_FAILED' }
+          $gpu = (Resolve-Path 'build/native-gpu/Release').Path
+          $env:LEEWAY_GPU_SOFTWARE_DIAG_RUNNER = Join-Path $gpu 'leeway_umd_lab_bridge_test.exe'
+          $env:LEEWAY_GPU_SOFTWARE_DIAG_DLL = Join-Path $gpu 'leeway_d3d11_umd.dll'
+          $env:LEEWAY_GPU_PORT = '4180'
+          $env:LEEWAY_GPU_PREVIEW_MODE = 'disabled'
+          $service = (Resolve-Path 'packages/leeway-gpu-service').Path
+          $node = (Get-Command node).Source
+          $proc = Start-Process -FilePath $node -ArgumentList 'service.mjs' -WorkingDirectory $service -PassThru
+          try {
+            $ready = $false
+            for ($i=0; $i -lt 25; $i++) {
+              Start-Sleep -Milliseconds 500
+              try {
+                $r = Invoke-RestMethod 'http://127.0.0.1:4180/v1/status' -TimeoutSec 2
+                if ($r.serviceId -eq 'leeway.gpu.service') { $ready=$true; break }
+              } catch {}
+            }
+            if (-not $ready) { throw 'LEEWAY_NATIVE_SERVICE_NOT_READY' }
+            ctest --test-dir build/winclient -C Release --output-on-failure
+            if ($LASTEXITCODE -ne 0) { throw 'LEEWAY_WINDOWS_APP_NATIVE_CLIENT_FAILED' }
+            node --test packages/leeway-gpu-service/client.test.mjs
+            if ($LASTEXITCODE -ne 0) { throw 'LEEWAY_JS_CLIENT_TESTS_FAILED' }
+          } finally {
+            Stop-Process -Id $proc.Id -ErrorAction SilentlyContinue
+          }

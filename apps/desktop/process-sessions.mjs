@@ -116,4 +116,3 @@ export class DesktopSessions{
       total:this.sessions.size,truncated:this.sessions.size>args.limit};
   }
 }
-

@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { Bridge, schemas } from '../../packages/protocol/index.mjs';
 import { RelayAdapter } from '../../packages/agent-relay/index.mjs';
 import { DesktopAdapter } from './adapter.mjs';
-import { requireTrustedRuntimeComposition } from './runtime-composition.mjs';
+import { createC3AdmissionBinding } from '../../operator/c3-admission-binding.mjs';
 
 function screenResult(value) {
   if (value.ok !== true) return null;
@@ -54,28 +54,38 @@ export function createServer(bridge) {
 const deviceSchema = z.object({
   id: z.string().min(1).max(128), type: z.enum(['desktop', 'relay']),
   grants: z.array(z.enum(Object.keys(schemas))).max(Object.keys(schemas).length),
-  workspace: z.string().optional(), tokenEnv: z.string().regex(/^[A-Z][A-Z0-9_]*$/).optional(),
+  workspace: z.string().optional(), skillsRoot: z.string().max(2048).optional(), tokenEnv: z.string().regex(/^[A-Z][A-Z0-9_]*$/).optional(),
   url: z.string().url().optional(),
 }).strict();
 
-export async function start(configPath,{admission,receiptSink}={}) {
+// Production must never interpret configured device grants as Formula/Veritas approval.
+// Until the canonical, authenticated Runtime Fabric device-command pre-gate is bound,
+// every command fails admission. Do not substitute host-read ValidationPolicy or test hooks.
+export function createProductionAdmission(devices, { veritasPreGate = null, consentProvider = null, formulaPreGate = null } = {}) {
+  const deviceRegistry = new Map(devices.map(device => [device.id, {
+    platform: device.type === 'desktop' ? 'windows' : (device.platform || null),
+  }]));
+  return createC3AdmissionBinding({ deviceRegistry, veritasPreGate, consentProvider, formulaPreGate });
+}
+
+export async function start(configPath) {
   if (!configPath) throw new Error('CONFIG_REQUIRED');
-  const runtime=requireTrustedRuntimeComposition({admission,receiptSink});
-  const config = z.object({ devices: z.array(deviceSchema).min(1).max(32) }).strict().parse(JSON.parse(await fs.readFile(configPath, 'utf8')));
+  const config = z.object({ devices: z.array(deviceSchema).min(1).max(32), receipts: z.string().min(1) }).strict().parse(JSON.parse(await fs.readFile(configPath, 'utf8')));
   const base = path.dirname(path.resolve(configPath));
+  const receiptPath = path.resolve(base, config.receipts);
   const devices = config.devices.map(d => ({ ...d, adapter: d.type === 'desktop'
-    ? new DesktopAdapter(d.workspace ? path.resolve(base, d.workspace) : (() => { throw new Error('WORKSPACE_REQUIRED'); })())
+    ? new DesktopAdapter(d.workspace ? path.resolve(base, d.workspace) : (() => { throw new Error('WORKSPACE_REQUIRED'); })(), {skillsRoot: d.skillsRoot ? path.resolve(base,d.skillsRoot) : null, receiptPath})
     : new RelayAdapter({ deviceId: d.id, url: d.url, token: d.tokenEnv ? process.env[d.tokenEnv] : undefined }) }));
-  // Configuration grants are a capability ceiling; they cannot authorize execution.
-  // Trusted Runtime Fabric supplies canonical admission and evidence persistence.
-  const bridge = new Bridge(devices,runtime);
+  await fs.mkdir(path.dirname(receiptPath), { recursive: true });
+  const bridge = new Bridge(devices, {
+    // C3 fail-closed: production has no authenticated device-command Veritas binding yet.
+    admission: createProductionAdmission(devices),
+    receiptSink: evidence => fs.appendFile(receiptPath, JSON.stringify(evidence) + '\n', { mode: 0o600 }),
+  });
   const server = createServer(bridge);
   await server.connect(new StdioServerTransport());
   return server;
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
-  start(process.argv[2]).catch(error => {
-    const code=/^[A-Z_]+$/.test(error?.message||'')?error.message:'DEVICE_BRIDGE_STARTUP_FAILED';
-    console.error(`Device Bridge MCP startup failed: ${code}`);process.exitCode=1;
-  });
+  start(process.argv[2]).catch(() => { console.error('Device Bridge MCP startup failed; check configuration and credential environment.'); process.exitCode = 1; });
 }
