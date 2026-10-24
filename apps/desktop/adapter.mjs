@@ -15,13 +15,14 @@ import os from 'node:os';
 import { spawn, execFile } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { fileDigest, binaryRange, binaryCreate, guardedMove, exactEdit } from './file-parity.mjs';
+import { DesktopSessions } from './process-sessions.mjs';
 import { promisify } from 'node:util';
 const execFileAsync = promisify(execFile);
 
 // Bounded workspace files and explicitly allowlisted process execution. Never invokes a shell.
 export class DesktopAdapter {
-  constructor(root) { this.root = path.resolve(root); this.jobs = new Map(); }
-  async discover() { await fs.access(this.root); return ['device.health','device.info','device.files.read','device.files.info','device.files.read_multiple','device.files.write','device.files.hash','device.files.read_binary','device.files.write_binary','device.files.move','device.files.edit','device.directories.list','device.directories.create','device.search.files','device.search.content','device.process.list','device.process.terminate','device.process.execute','device.job.start','device.job.status','device.job.stop']; }
+  constructor(root) { this.root = path.resolve(root); this.jobs = new Map(); this.sessions = new DesktopSessions(this); }
+  async discover() { await fs.access(this.root); return ['device.health','device.info','device.files.read','device.files.info','device.files.read_multiple','device.files.write','device.files.hash','device.files.read_binary','device.files.write_binary','device.files.move','device.files.edit','device.directories.list','device.directories.create','device.search.files','device.search.content','device.process.list','device.process.terminate','device.process.execute','device.job.start','device.job.status','device.job.stop','device.session.start','device.session.read','device.session.input','device.session.stop','device.session.list']; }
   async safePath(relative, writing = false) {
     if (path.isAbsolute(relative) || relative.includes(':') || relative.includes('\0')) throw new Error('PATH_OUTSIDE_WORKSPACE');
     const parts = relative.replaceAll('\\', '/').split('/');
@@ -189,6 +190,11 @@ export class DesktopAdapter {
     if (capability === 'device.job.status') return this.jobView(args.jobId);
     if (capability === 'device.job.stop') { const j=this.jobs.get(args.jobId); if(!j)throw new Error('UNKNOWN_JOB'); if(j.child){j.state='STOPPING';j.child.kill();} return this.jobView(args.jobId); }
     if (capability === 'device.process.execute') return this.executeProcess(args);
+    if (capability === 'device.session.start') return this.sessions.start(args);
+    if (capability === 'device.session.read') return this.sessions.read(args);
+    if (capability === 'device.session.input') return this.sessions.input(args);
+    if (capability === 'device.session.stop') return this.sessions.stop(args);
+    if (capability === 'device.session.list') return this.sessions.list(args);
     if (capability === 'device.files.hash') return fileDigest(this,args);
     if (capability === 'device.files.read_binary') return binaryRange(this,args);
     if (capability === 'device.files.write_binary') return binaryCreate(this,args);

@@ -47,11 +47,11 @@ Each capability is registered through the existing MCP `schemas` map and the gua
 | 18 | list_searches | None | MISSING: search inventory |
 | 19 | get_file_info | `device.files.info`, `device.files.hash` | BOUNDED |
 | 20 | edit_block | `device.files.edit` | BATCH3: exact text replacement; no DOCX/PDF editing |
-| 21 | start_process | `device.process.execute`, `device.job.start` | PARTIAL: bounded allowlisted commands; no interactive stdin |
-| 22 | read_process_output | `device.job.status` | PARTIAL: last 64 KiB; no pagination/stream cursor |
-| 23 | interact_with_process | None | MISSING: interactive stdin/session |
-| 24 | force_terminate | `device.job.stop` | PARTIAL: job scoped; kill result/reconciliation needs qualification |
-| 25 | list_sessions | None | MISSING: interactive session enumeration |
+| 21 | start_process | `device.process.execute`, `device.job.start`, `device.session.start` | BATCH4: bounded allowlisted interactive session start; no arbitrary shell executable |
+| 22 | read_process_output | `device.job.status`, `device.session.read` | BATCH4: cursor-paged stdout/stderr with 256 KiB retained ring |
+| 23 | interact_with_process | `device.session.input` | BATCH4: bounded stdin, newline and close-input controls |
+| 24 | force_terminate | `device.job.stop`, `device.session.stop` | BATCH4: job/session stop; forced kill completion needs live qualification |
+| 25 | list_sessions | `device.session.list` | BATCH4: per-adapter opaque session IDs, state and output counters |
 | 26 | list_processes | `device.process.list` | BOUNDED |
 | 27 | kill_process | `device.process.terminate` | BOUNDED: identity matched, not arbitrary PID |
 | 28 | get_usage_stats | None | MISSING |
@@ -70,6 +70,19 @@ are additions; they do **not** compensate for missing reference commands.
 - `device.files.move`: digest-bound exact file move with no destination replacement.
 - `device.files.edit`: exact SHA + replacement count, UTF-8, bounded file, staged rename.
 
+## Batch 4 delivered, not activated in production
+
+- `device.session.start`: interactive subprocess start, allowlisted executable,
+  bounded working directory and maximum 30-minute lifetime.
+- `device.session.input`: 32 KiB input bound, optional newline and stdin close.
+- `device.session.read`: cursor-paged stdout/stderr with Base64 source fidelity,
+  a 256 KiB retained ring and an explicit error for expired cursors.
+- `device.session.stop`: session-specific termination.
+- `device.session.list`: bounded opaque IDs and lifecycle state.
+- At most eight active local sessions per desktop adapter; reconnect persistence
+  and distributed lease ownership are **not** established.
+- Focused MCP and CLI regression: 35/35 PASS on 2026-10-24.
+
 Test boundary: disposable local workspace. Successful mock/fixture tests are not an
 owner-approved production command. Every protected MCP call still needs authenticated
 Formula, consent, and independent Veritas admission. No bypass fallback is permitted.
@@ -80,8 +93,9 @@ Formula, consent, and independent Veritas admission. No bypass fallback is permi
    device identities and reconnect/error recovery (no credential disclosure).
 2. File parity completion: append, larger binary streams, directory-safe moves,
    cursor pagination, DOCX/PDF under appropriate document policies.
-3. Process parity: interactive sessions, bounded stdin, streaming stdout/stderr,
-   explicit session lifecycle and cancellation, no orphan jobs.
+3. Process parity: complete remote persistence, detached-session restoration,
+   reconnect/error recovery and no orphan jobs; current in-process sessions are
+   bounded and cursor-paged, not yet proven across service restart.
 4. Search parity: ongoing sessions, continuation, cancel and scope checks.
 5. Device management, configuration, usage and audit/history equivalence.
 6. Windows + Android + iOS interoperability, portable non-LLM execution, UI
