@@ -12,7 +12,7 @@ This is an additive monorepo foundation. `apps/android` remains the existing And
 
 ## Run
 
-Install Node 22 or newer, then run `npm ci --ignore-scripts`. Make an owner-controlled device configuration and workspace. The MCP server is started by a trusted LeeWay Runtime composition that injects canonical `admission` and `receiptSink` providers. Direct CLI startup without both providers fails closed; configuration grants alone do not authorize operations. Standard output is reserved for MCP JSON-RPC; startup errors go to standard error.
+Install Node 22 or newer, then run `npm ci --ignore-scripts`. Make an owner-controlled device configuration and workspace. A trusted LeeWay Runtime process can inject canonical admission and receipt providers. Direct CLI startup has no such authority binding and denies governed operations; configuration grants alone do not authorize them. Standard output is reserved for MCP JSON-RPC; startup errors go to standard error.
 
 ```json
 {
@@ -20,12 +20,14 @@ Install Node 22 or newer, then run `npm ci --ignore-scripts`. Make an owner-cont
     {
       "id": "local-workstation",
       "type": "desktop",
+      "platform": "windows",
       "workspace": "workspace",
       "grants": ["device.health", "device.info", "device.files.read", "device.files.write"]
     },
     {
       "id": "REPLACE_WITH_PAIRED_DEVICE_ID",
       "type": "relay",
+      "platform": "android",
       "tokenEnv": "LEEWAY_PAIRING_TOKEN",
       "url": "wss://agent-lee-x.vercel.app/api/device-relay",
       "grants": ["device.health", "model.status"]
@@ -34,7 +36,9 @@ Install Node 22 or newer, then run `npm ci --ignore-scripts`. Make an owner-cont
 }
 ```
 
-The trusted startup calls `start(configPath, { admission, receiptSink })` using the existing Runtime owner adapters. Neither callback is accepted from request JSON or the device config. There is no local always-allow fallback.
+Trusted startup passes callbacks from its existing LeeWay owner adapters directly to the process API: `start(configPath, { admission, receiptSink })`. Here `admission` is the already-composed Runtime/C3 gate; or pass the existing `formulaPreGate` and `veritasPreGate` providers with `receiptSink` to have this host compose the canonical C3 gate. Device registry, adapter registry, trusted issuer registry, replay guard, and consent provider can be supplied by the same trusted host composition. These values are never read from request JSON or device configuration. The `receiptSink` must target the authorized durable LeeWay receipt provider for production. The local JSONL sink is a controller-observation fallback only and cannot qualify a production ledger.
+
+`platform` is an explicit adapter-registry identity. It is not inferred from `type`, the host operating system, or the device name. The portable schema accepts registered platform identifiers; C3 checks the owner-controlled adapter registry for the target capability. An absent or unregistered platform fails closed.
 
 Relative paths resolve against the configuration directory. Set the existing owner-room token through the MCP process environment; never copy it into a repository, command line, prompt, or receipt. Omit the relay entry when using only the desktop adapter. No grants are enabled implicitly. Adding a grant does not implement an unavailable capability or override Android permission and device admission checks.
 
@@ -46,7 +50,7 @@ Successful `device_screen_capture` calls return native MCP ImageContent (JPEG or
 
 Admission requires a known device, known capability, strict bounded arguments, an explicit configuration grant, a positive admission callback, and fresh adapter discovery. The relay remains the device's owner authentication and execution gate. Its `remoteQualified` list is a supported route list, **not** proof of OS permission, verified behavior, or Formula approval. A successful discovery is never labeled verified.
 
-The library and MCP startup both fail closed without an admission callback and a durable evidence sink. These callbacks are necessary startup bindings, not production certification: Bridge receipts remain hash-only controller observations with `formula: NOT_EVALUATED`. Trusted Runtime composition must execute the exact applicable Formula and Veritas gates and persist their canonical evidence before reporting production acceptance. This package creates no alternate Formula, Veritas, or ledger authority. The application's existing Android Formula implementation is unchanged and is not endorsed by this host.
+Without trusted startup callbacks, governed operations fail closed; CLI-local JSONL observations do not authorize execution. Startup bindings are not production certification: Bridge receipts remain hash-only controller observations with `formula: NOT_EVALUATED`. Trusted Runtime composition must execute the exact applicable Formula and Veritas gates and persist their canonical evidence before reporting production acceptance. This package creates no alternate Formula, Veritas, or ledger authority. The application's existing Android Formula implementation is unchanged and is not endorsed by this host.
 
 Every dispatched operation must first persist an ADMITTED receipt. Completion persists PASS only after a successful adapter response. Receipt storage failure prevents initial execution; failure after dispatch returns uncertainty (`operationMayHaveExecuted`). Do not blindly retry a failed mutation. Receipts record controller observations with argument/result SHA-256 digests and pre/post hash linkage; they omit raw prompts, file contents, and credentials. These hashes provide content binding, **not** device signatures, authenticated Veritas receipts, or tamper-proof durable storage. Preserve receipts using the deployment's access controls. SDK-rejected malformed requests never reach execution and do not create domain receipts.
 
