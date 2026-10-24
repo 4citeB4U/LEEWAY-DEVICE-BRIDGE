@@ -43,6 +43,13 @@ article span{overflow-wrap:anywhere}footer{padding:26px 0;font-size:13px;color:#
 </div>
 <section class="grid" id="data"><article><b>STATUS</b><span>Checking local service…</span></article></section>
 <section class="inference">
+ <h2>LeeWay software-only native execution</h2>
+ <p>This calls the original LeeWay software graphics engine through the native Windows UMD laboratory DLL. It uses the host CPU, not an NVIDIA execution provider. This diagnostic does not claim Windows adapter registration or production Veritas approval.</p>
+ <button id="gpu-software-run" type="button" disabled>Run LeeWay Software Engine</button>
+ <p id="gpu-software-status" role="status" aria-live="polite">Checking native LeeWay software engine...</p>
+ <div id="gpu-software-result" class="result" aria-live="polite"></div>
+</section>
+<section class="inference">
  <h2>Run a model on this LeeWay GPU workstation</h2>
  <p class="preview-warning">GPU inference preview: the workstation calls its local CUDA model runtime and accepts a result only when Ollama reports VRAM residency. This path is not yet admitted by Formula, LDWMD, Continuum or Veritas and does not create a canonical Receipt or Learning Ledger entry.</p>
  <label for="gpu-model">Installed model</label><select id="gpu-model"><option value="qwen3.5:4b">Qwen 3.5 4B</option><option value="qwen2.5:0.5b">Qwen 2.5 0.5B</option></select>
@@ -59,6 +66,9 @@ article span{overflow-wrap:anywhere}footer{padding:26px 0;font-size:13px;color:#
 <script>
 let token=null;let selected=false;const toggle=document.getElementById('gpu-switch');
 const mode=document.getElementById('mode');
+const softwareButton=document.getElementById('gpu-software-run');
+const softwareStatus=document.getElementById('gpu-software-status');
+const softwareResult=document.getElementById('gpu-software-result');
 function render(status){
  selected=status.requestedEnabled===true;
  toggle.setAttribute('aria-checked',String(selected));toggle.textContent=selected?'ON — REQUESTED':'OFF';
@@ -78,6 +88,7 @@ async function init(){
   if(!res.ok)throw Error('SERVICE_UNAVAILABLE');
   const data=await res.json();token=data.csrfToken;render(data);toggle.disabled=false;
   await refreshInferenceStatus();
+  await refreshSoftwareEngineStatus();
  }catch{mode.textContent='Control unavailable; no preference changed';}
 }
 toggle.addEventListener('click',async()=>{
@@ -90,6 +101,38 @@ toggle.addEventListener('click',async()=>{
   render(await res.json());
  }catch{mode.textContent='Preference update failed; current mode unchanged';}
  finally{toggle.disabled=false;}
+});
+async function refreshSoftwareEngineStatus(){
+ try{
+  const response=await fetch('/v1/diagnostics/software-graphics',{cache:'no-store'});
+  const state=await response.json();
+  if(!response.ok||state.available!==true){
+   softwareStatus.textContent='Native LeeWay software engine is not configured on this service.';
+   return;
+  }
+  softwareStatus.textContent='Native LeeWay software renderer available (diagnostic only).';
+  softwareButton.disabled=false;
+ }catch{softwareStatus.textContent='Native engine status unavailable.';}
+}
+softwareButton.addEventListener('click',async()=>{
+ if(!token)return;
+ softwareButton.disabled=true;
+ softwareStatus.textContent='Running native LeeWay software graphics on this computer...';
+ softwareResult.textContent='';
+ try{
+  const response=await fetch('/v1/diagnostics/software-graphics/run',{
+   method:'POST',headers:{'x-leeway-csrf':token}});
+  const result=await response.json();
+  if(!response.ok)throw Error(result.code||'SOFTWARE_GPU_DIAGNOSTIC_FAILED');
+  softwareStatus.textContent='PASS — native LeeWay software renderer; diagnostic scope only.';
+  softwareResult.textContent='Engine: '+result.implementation+
+   '\nVerified pixels: '+result.borrowedPixels+
+   '\nCompleted fence: '+result.completedFence+
+   '\nIndependent readback: '+result.independentReadback+
+   '\nWindows adapter registered: '+result.osGpuRegistered+
+   '\nProduction authorized: '+result.productionReady;
+ }catch(error){softwareStatus.textContent='Native software execution failed: '+error.message;}
+ finally{softwareButton.disabled=false;}
 });
 const inferButton=document.getElementById('gpu-infer');
 async function refreshInferenceStatus(){
