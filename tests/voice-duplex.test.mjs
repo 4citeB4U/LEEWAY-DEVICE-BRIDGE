@@ -68,3 +68,20 @@ test('Device Bridge consumes the canonical voice binding read-only',async()=>{
  assert.equal(data.deviceExecutionAuthorized,false);
  assert.equal(data.remoteDeviceSyncQualified,false);
 });
+
+test('GPU readiness discovery cannot grant transformer execution',async()=>{
+ const {getLocalGpuVoiceReadiness}=await import('../operator/voice-duplex.mjs');
+ const state=await getLocalGpuVoiceReadiness({fetchImpl:async()=>({ok:true,json:async()=>({
+  schema:'leeway.voice.gpu-readiness.v1',provider:'LEEWAY_EDGE_GPU',
+  status:'GPU_SOURCE_DISCOVERED_GOVERNANCE_UNBOUND',
+  gpuModelExecutionAuthorized:true,voiceExecution:'CERTIFIED',
+  observed:{gpuSource:true,transformerSource:true}
+ })})});
+ assert.equal(state.status,'GPU_SOURCE_DISCOVERED_GOVERNANCE_UNBOUND');
+ assert.equal(state.gpuModelExecutionAuthorized,false);
+ assert.equal(state.voiceExecution,'NOT_ADMITTED');
+ const bad=await getLocalGpuVoiceReadiness({fetchImpl:async()=>({ok:true,json:async()=>({
+  schema:'untrusted',provider:'LEEWAY_EDGE_GPU',status:'READY'
+ })})});
+ assert.equal(bad.gpuModelExecutionAuthorized,false);
+});

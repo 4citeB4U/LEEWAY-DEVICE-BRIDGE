@@ -42,6 +42,7 @@ Usage: leeway-bridge <command> [options]
 
   voice-status              Check local Voice Fabric duplex service (read-only)
   voice-binding             Read canonical owner voice without publishing
+  voice-gpu-status          Read LeeWay GPU voice readiness (no execution)
   voice-start               Launch configured local duplex runtime explicitly
   voice-open                Open local duplex UI by explicit operator command
   doctor                    Check local entrypoints and admission readiness
@@ -77,10 +78,11 @@ async function main() {
     if (!state.mcpSourcePresent || !state.packageManifestPresent) process.exitCode = 2;
     return;
   }
-  if (command === 'voice-status' || command === 'voice-open' || command === 'voice-start' || command === 'voice-binding') {
-    const {getVoiceDuplexStatus,openLocalVoiceDuplex,startLocalVoiceDuplex,getLocalVoiceBinding}=await import('./voice-duplex.mjs');
+  if (command === 'voice-status' || command === 'voice-open' || command === 'voice-start' || command === 'voice-binding' || command === 'voice-gpu-status') {
+    const {getVoiceDuplexStatus,openLocalVoiceDuplex,startLocalVoiceDuplex,getLocalVoiceBinding,getLocalGpuVoiceReadiness}=await import('./voice-duplex.mjs');
     if(command === 'voice-status'){print(await getVoiceDuplexStatus());return;}
     if(command === 'voice-binding'){print(await getLocalVoiceBinding());return;}
+    if(command === 'voice-gpu-status'){print(await getLocalGpuVoiceReadiness());return;}
     if(command === 'voice-start'){print(await startLocalVoiceDuplex());return;}
     print(openLocalVoiceDuplex());
     return;

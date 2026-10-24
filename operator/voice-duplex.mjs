@@ -29,6 +29,33 @@ export async function getVoiceDuplexStatus({fetchImpl=fetch}={}){
    productionCertified:false,physicalAcousticsVerified:false,
    deviceExecutionAuthorized:false,deviceCommands:'EXISTING_C3_ADMISSION_REQUIRED'};
 }
+// LEEWAY HEADER — DO NOT REMOVE
+// REGION: DEVICE.BRIDGE.GPU.VOICE.READINESS
+// WHO: LeeWay Industries; WHAT: read existing Edge RTC GPU admission state;
+// WHY: distinguish C3 diagnostics from governed transformer inference;
+// WHEN: 2026-10-24; HOW: fixed localhost endpoint and strict response projection.
+// AUTHORITY: discovery only, no model execution or owner approval.
+export async function getLocalGpuVoiceReadiness({fetchImpl=fetch}={}){
+ const url='http://127.0.0.1:5173/__leeway/gpu-voice-readiness';
+ try{
+  const response=await fetchImpl(url,{method:'GET',redirect:'error',signal:AbortSignal.timeout(1900)});
+  if(!response.ok)return {status:'GPU_VOICE_READINESS_UNAVAILABLE',http:response.status,
+    gpuModelExecutionAuthorized:false};
+  const state=await response.json();
+  if(state.schema!=='leeway.voice.gpu-readiness.v1'||state.provider!=='LEEWAY_EDGE_GPU'||
+     typeof state.status!=='string')return {status:'GPU_READINESS_UNTRUSTED_SCHEMA',
+      gpuModelExecutionAuthorized:false};
+  // Do not pass through an untrusted 'authorized' flag. This endpoint is
+  // a read-only source inspector, never Runtime Fabric inference admission.
+  return {schema:state.schema,provider:state.provider,status:state.status,
+   observed:state.observed||{},gpuModelExecutionAuthorized:false,
+   voiceExecution:'NOT_ADMITTED',remoteAccess:'NOT_QUALIFIED',
+   reason:'LIVE_RUNTIME_INFERENCE_GRANT_AND_VERITAS_EVIDENCE_REQUIRED'};
+ }catch{
+  return {status:'GPU_VOICE_READINESS_TRANSPORT_UNAVAILABLE',
+    gpuModelExecutionAuthorized:false};
+ }
+}
 export async function getLocalVoiceBinding({fetchImpl=fetch}={}){
   const endpoint='http://127.0.0.1:5173/__leeway/voice-binding';
   try{
