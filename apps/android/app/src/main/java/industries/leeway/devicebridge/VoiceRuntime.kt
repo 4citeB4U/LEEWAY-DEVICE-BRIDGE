@@ -50,7 +50,6 @@ object VoiceRuntime {
             JSONObject().apply {
                 put("ok", false)
                 put("opened", false)
-                put("voicePackageId", VOICE_PACKAGE_ID)
                 put("error", e.message ?: e.javaClass.simpleName)
             }
         }
