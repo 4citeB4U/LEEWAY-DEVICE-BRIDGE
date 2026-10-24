@@ -50,7 +50,13 @@ test('existing HTTP service reaches SDK, real signed Runtime binding and origina
             decodeMs:0,decodeModelSteps:0,decodeVisibleTokens:0,decodeStopTokens:0,decodeTokensPerSecond:null,
             graphAfterLoadMs:5,modelLoadAndGraphMs:17,
             promptTokens:input.plan.inputTokens.length,visibleOutputTokens:1,
-            tokenTimings:Array.from({length:input.plan.inputTokens.length},(_,position)=>({position,commands:8,elapsedMs:4}))}}; }, async close() {}
+            tokenTimings:Array.from({length:input.plan.inputTokens.length},(_,position)=>({position,commands:8,elapsedMs:4}))},
+          performanceTelemetry:{schema:'leeway.gpu.raw-performance-telemetry.v1',
+            scope:'LEEWAY_OPERATOR_ALLOCATOR_AND_MODEL_GRAPH_COUNTERS_NOT_PHYSICAL_HARDWARE_COUNTERS_OR_FORMULA_MAPPING',
+            modelWeightUploadBytes:4096,pagedEmbeddingUploadBytes:0,encodedDispatchCount:32,
+            trackedBufferLiveBytes:8192,trackedBufferPeakBytes:12288,admittedBufferBudgetBytes:16384,
+            kvCacheReservedBytes:2048,kvCacheCapacityTokens:input.plan.contextLimit,
+            kvCachePositionsProcessed:input.plan.inputTokens.length}}; }, async close() {}
       }}).dispatch({type: 'AI_INFERENCE', requestId: input.requestId, sessionId: input.sessionId,
         modelSha256: plan.modelSha256, tokenizerSha256: plan.tokenizerSha256, implementationSha256: plan.implementationSha256,
         contextLimit: plan.contextLimit, maxNewTokens: input.plan.maxNewTokens, inputIds: input.plan.inputTokens}, {capability: 'WEBGPU'})});
@@ -70,6 +76,8 @@ test('existing HTTP service reaches SDK, real signed Runtime binding and origina
     assert.equal(result.modelGraphTimings.modelLoadAndGraphMs,17);
     assert.equal(result.modelGraphTimings.tokenTimings[0].position,0);
     assert.equal(result.modelGraphTimings.tokenTimings.at(-1).position,result.modelGraphTimings.promptTokens-1);
+    assert.equal(result.performanceTelemetry.modelWeightUploadBytes,4096);
+    assert.equal(result.performanceTelemetry.kvCachePositionsProcessed,result.modelGraphTimings.promptTokens);
     assert.match(result.executionBinding.commitAttestationSha256, /^[a-f0-9]{64}$/);
     const {createQualifiedGpuClient} = await load(modelHubRoot, 'src/qualified-gpu-client.mjs');
     const hubClient = createQualifiedGpuClient({endpoint: base,
@@ -86,6 +94,7 @@ test('existing HTTP service reaches SDK, real signed Runtime binding and origina
     assert.equal(hubAnswer.modelGraphTimings.modelLoadAndGraphMs,17);
     assert.equal(hubAnswer.modelGraphTimings.tokenTimings[0].position,0);
     assert.equal(hubAnswer.modelGraphTimings.tokenTimings.at(-1).position,hubAnswer.modelGraphTimings.promptTokens-1);
+    assert.equal(hubAnswer.performanceTelemetry.trackedBufferPeakBytes,12288);
     assert.equal(database.receipt().activePhysicalBytes, 0);
     assert.equal(f.calls.filter(call => call === 'receipt.append').length, 2);
   });
