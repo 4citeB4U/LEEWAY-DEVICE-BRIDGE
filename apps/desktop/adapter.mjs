@@ -19,13 +19,15 @@ import { DesktopSessions } from './process-sessions.mjs';
 import { DesktopSearchSessions } from './search-sessions.mjs';
 import { LeeWaySkillsCatalog } from './skills-catalog.mjs';
 import { appendBinary, directoryPage } from './transfer-parity.mjs';
+import { writePdf } from './documents-parity.mjs';
+import { recentAudit, usageAudit } from './audit-parity.mjs';
 import { promisify } from 'node:util';
 const execFileAsync = promisify(execFile);
 
 // Bounded workspace files and explicitly allowlisted process execution. Never invokes a shell.
 export class DesktopAdapter {
-  constructor(root,{skillsRoot=null}={}) { this.root = path.resolve(root); this.jobs = new Map(); this.sessions = new DesktopSessions(this); this.searchSessions = new DesktopSearchSessions(this); this.skills=skillsRoot?new LeeWaySkillsCatalog(skillsRoot):null; }
-  async discover() { await fs.access(this.root); return [...(this.skills?['skills.list','skills.read']:[]),'device.health','device.info','device.files.read','device.files.info','device.files.read_multiple','device.files.write','device.files.hash','device.files.read_binary','device.files.write_binary','device.files.append_binary','device.files.move','device.files.edit','device.directories.list','device.directories.page','device.directories.create','device.search.files','device.search.content','device.search.start','device.search.next','device.search.stop','device.search.list','device.process.list','device.process.terminate','device.process.execute','device.job.start','device.job.status','device.job.stop','device.session.start','device.session.read','device.session.input','device.session.stop','device.session.list']; }
+  constructor(root,{skillsRoot=null,receiptPath=null}={}) { this.root = path.resolve(root); this.jobs = new Map(); this.sessions = new DesktopSessions(this); this.searchSessions = new DesktopSearchSessions(this); this.skills=skillsRoot?new LeeWaySkillsCatalog(skillsRoot):null; this.receiptPath=receiptPath; }
+  async discover() { await fs.access(this.root); return [...(this.skills?['skills.list','skills.read']:[]),'device.health','device.info','device.documents.write_pdf','device.audit.recent','device.audit.usage','device.files.read','device.files.info','device.files.read_multiple','device.files.write','device.files.hash','device.files.read_binary','device.files.write_binary','device.files.append_binary','device.files.move','device.files.edit','device.directories.list','device.directories.page','device.directories.create','device.search.files','device.search.content','device.search.start','device.search.next','device.search.stop','device.search.list','device.process.list','device.process.terminate','device.process.execute','device.job.start','device.job.status','device.job.stop','device.session.start','device.session.read','device.session.input','device.session.stop','device.session.list']; }
   async safePath(relative, writing = false) {
     if (path.isAbsolute(relative) || relative.includes(':') || relative.includes('\0')) throw new Error('PATH_OUTSIDE_WORKSPACE');
     const parts = relative.replaceAll('\\', '/').split('/');
@@ -185,6 +187,9 @@ export class DesktopAdapter {
     if (capability === 'device.info') return { platform: process.platform, architecture: os.arch(), node: process.version, uiControl: false };
     if (capability === 'skills.list' && this.skills) return this.skills.list(args);
     if (capability === 'skills.read' && this.skills) return this.skills.read(args);
+    if (capability === 'device.documents.write_pdf') return writePdf(this,args);
+    if (capability === 'device.audit.recent') return recentAudit(this.receiptPath,args);
+    if (capability === 'device.audit.usage') return usageAudit(this.receiptPath);
     if (capability === 'device.directories.list') return this.listDirectory(args);
     if (capability === 'device.directories.page') return directoryPage(this,args);
     if (capability === 'device.directories.create') return this.createDirectory(args);

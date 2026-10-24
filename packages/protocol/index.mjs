@@ -17,6 +17,9 @@ const coordinate = z.number().finite().min(0).max(32768);
 export const schemas = Object.freeze({
   'device.health': empty,
   'device.info': empty,
+  'device.documents.write_pdf': z.object({path:z.string().min(5).max(1024),title:z.string().max(200).default(''),text:z.string().min(1).max(32768)}).strict(),
+  'device.audit.recent': z.object({offset:z.number().int().safe().min(0).default(0),limit:z.number().int().min(1).max(50).default(20)}).strict(),
+  'device.audit.usage': z.object({}).strict(),
   'skills.list': z.object({query:z.string().max(128).default(''),offset:z.number().int().safe().min(0).default(0),limit:z.number().int().min(1).max(100).default(25)}).strict(),
   'skills.read': z.object({skillId:z.string().min(1).max(240),expectedSha256:z.string().regex(/^[a-f0-9]{64}$/)}).strict(),
   'device.files.read': z.object({ path: z.string().min(1).max(1024) }).strict(),

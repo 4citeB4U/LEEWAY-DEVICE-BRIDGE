@@ -37,7 +37,7 @@ Each capability is registered through the existing MCP `schemas` map and the gua
 | 8 | read_file | `device.files.read`, `device.files.read_binary` | BOUNDED: 64 KiB text, binary range <=256 KiB; larger file read via offsets |
 | 9 | read_multiple_files | `device.files.read_multiple` | BOUNDED: max 8 files / 128 KiB |
 | 10 | write_file | `device.files.write`, `device.files.write_binary`, `device.files.append_binary`, `device.files.edit` | BATCH6: digest/offset-bound binary append permits reconnection; still no unlimited document authoring |
-| 11 | write_pdf | None | MISSING: PDF creation with validation |
+| 11 | write_pdf | `device.documents.write_pdf` | BATCH7: bounded plain-text PDF creation, offline stdlib renderer; rich PDF editing not yet equivalent |
 | 12 | create_directory | `device.directories.create` | BOUNDED |
 | 13 | list_directory | `device.directories.list`, `device.directories.page` | BATCH6: snapshot-SHA and offset pagination detects changes between pages |
 | 14 | move_file | `device.files.move` | BATCH3: SHA-bound move, exclusive destination, 64 MiB maximum |
@@ -54,8 +54,8 @@ Each capability is registered through the existing MCP `schemas` map and the gua
 | 25 | list_sessions | `device.session.list` | BATCH4: per-adapter opaque session IDs, state and output counters |
 | 26 | list_processes | `device.process.list` | BOUNDED |
 | 27 | kill_process | `device.process.terminate` | BOUNDED: identity matched, not arbitrary PID |
-| 28 | get_usage_stats | None | MISSING |
-| 29 | get_recent_tool_calls | Receipt Ledger (separate) | PARTIAL: no compatible query/readback tool |
+| 28 | get_usage_stats | `device.audit.usage` | BATCH7: protected local receipt outcome counts, explicitly not account billing or independent certification |
+| 29 | get_recent_tool_calls | `device.audit.recent` | BATCH7: bounded sanitized local controller history, source unverified, not full provider-wide history |
 
 Note: `list_remote_tool_calls` is host/provider-specific; a truthful equivalent may
 expose LeeWay pending jobs and receipts rather than reproduce provider account metrics.
@@ -109,6 +109,19 @@ are additions; they do **not** compensate for missing reference commands.
 - Full MCP/CLI regression: 47/47 PASS on 2026-10-24.
 - These changes do **not** prove production enrollment, native device operation
   or live independent Veritas execution.
+
+## Batch 7 delivered, not activated in production
+
+- `device.documents.write_pdf`: offline, bounded, create-only plain-text PDF
+  documents using a self-contained Python standard-library renderer. ReportLab
+  was present but Pillow missing, so no third-party installation was performed.
+- `device.audit.recent`: sanitized controller receipt history with pagination
+  and malformed-record denial. Does not expose raw command arguments/results.
+- `device.audit.usage`: outcome counts for a bounded local receipt sample, not
+  customer billing or independent cryptographic certification.
+- Read-only local CLI probe of a real Node MCP stdio service discovered 54
+  tools and canonical Agent Skills; connected/mobile/production claims withheld.
+- Production Veritas signer roots still remain unqualified and unregistered.
 
 Test boundary: disposable local workspace. Successful mock/fixture tests are not an
 owner-approved production command. Every protected MCP call still needs authenticated
