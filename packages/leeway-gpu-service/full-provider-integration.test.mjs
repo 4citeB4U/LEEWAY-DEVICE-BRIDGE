@@ -8,16 +8,18 @@ import {mkdtemp, rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {listenGpuService} from './service.mjs';
 import {setGpuPreference} from './preferences.mjs';
-const gpuRoot = process.env.LEEWAY_GPU_SOURCE_ROOT, runtimeRoot = process.env.LEEWAY_RUNTIME_SOURCE_ROOT;
+const gpuRoot = process.env.LEEWAY_GPU_SOURCE_ROOT, runtimeRoot = process.env.LEEWAY_RUNTIME_SOURCE_ROOT,
+  modelHubRoot = process.env.LEEWAY_MODEL_HUB_SOURCE_ROOT;
 test('existing HTTP service reaches SDK, real signed Runtime binding and original LDWMD',
-  {skip: !gpuRoot || !runtimeRoot ? 'Set reviewed GPU and Runtime source roots for integration' : false}, async t => {
-    assert(isAbsolute(gpuRoot) && isAbsolute(runtimeRoot));
+  {skip: !gpuRoot || !runtimeRoot || !modelHubRoot ? 'Set reviewed GPU, Runtime and Model Hub source roots for integration' : false}, async t => {
+    assert(isAbsolute(gpuRoot) && isAbsolute(runtimeRoot) && isAbsolute(modelHubRoot));
     const load = (root, path) => import(pathToFileURL(resolve(root, path)));
     const {createLeeWayGpuInferenceProvider} = await load(gpuRoot, 'sdk/inference-provider.mjs');
     const {syntheticModelPlan} = await load(gpuRoot, 'tests/fixtures/portable-model-plan.mjs');
     const {HybridDispatcher} = await load(gpuRoot, 'core/hybrid.dispatcher.js');
     const {inferenceHash} = await load(gpuRoot, 'core/inference-contract.mjs');
     const {createInferenceFixture} = await load(runtimeRoot, 'tests/fixtures/inference-binding-fixture.mjs');
+    const {createLeeWayInferenceBindingProvider} = await load(runtimeRoot, 'adapters/edge-gpu/inference-binding.mjs');
     const {LeeWayDeviceWorkingMemoryDatabase} = await load(runtimeRoot, 'automation-runtime/src/vtensor/vram-database.mjs');
     const {createLDWMDWebGPUAdapter, prepareLDWMDWebGPUBufferLease} = await load(runtimeRoot, 'adapters/edge-gpu/ldwmd-webgpu.mjs');
     const device = {lost: new Promise(() => {}), limits: {maxBufferSize: 1024}, pushErrorScope() {},
@@ -37,8 +39,7 @@ test('existing HTTP service reaches SDK, real signed Runtime binding and origina
         models: [{modelId: 'fixture-model', modelSha256: plan.modelSha256, tokenizerSha256: plan.tokenizerSha256,
           implementationSha256: plan.implementationSha256, planSha256: await inferenceHash(plan)}]}, 'veritas')};
     const provider = createLeeWayGpuInferenceProvider({models: [{modelId: 'fixture-model', plan}], platform: 'linux',
-      deviceId: 'fixture-device', qualification, bindingProvider: {readiness: () => f.binding.readiness(),
-        forClient(client) { assert.equal(client.clientId, 'registered-client'); return f.binding; }},
+      deviceId: 'fixture-device', qualification, bindingProvider: createLeeWayInferenceBindingProvider(f),
       deviceProvider: {getDevice: async () => device},
       executeModel: async input => new HybridDispatcher({inferenceBinding: input.inferenceBinding, ml: {
         async run() { return {...f.result, outputIds: [plan.metadata['tokenizer.ggml.tokens'].indexOf('4')]}; }, async close() {}
@@ -58,6 +59,17 @@ test('existing HTTP service reaches SDK, real signed Runtime binding and origina
     assert.equal(response.status, 200); const result = await response.json();
     assert.equal(result.text, '4'); assert.equal(result.backend, 'LEEWAY_GPU');
     assert.match(result.executionBinding.commitAttestationSha256, /^[a-f0-9]{64}$/);
+    const {createQualifiedGpuClient} = await load(modelHubRoot, 'src/qualified-gpu-client.mjs');
+    const hubClient = createQualifiedGpuClient({endpoint: base,
+      authenticateGpuRequest: async () => ({clientId: 'registered-client', headers: {authorization: 'Bearer diagnostic-token'}}),
+      verifyGpuQualification: async ({capabilities}) => capabilities.receiptId === 'DIAGNOSTIC_FIXTURE_ONLY',
+      verifyGpuResult: async ({result: answer, request}) => answer.executionBinding.requestId === request.requestId &&
+        /^[a-f0-9]{64}$/.test(answer.executionBinding.receiptLedgerReceiptSha256)});
+    assert.equal((await hubClient.capabilities()).gpuInferenceQualified, true);
+    const hubActivation = await hubClient.activateModel({modelId: 'fixture-model'});
+    const hubAnswer = await hubClient.generate({modelId: 'fixture-model', prompt: 'a', sessionId: hubActivation.sessionId,
+      maxNewTokens: 1}, {expectedClientId: hubActivation.clientId});
+    assert.equal(hubAnswer.text, '4'); assert.equal(hubAnswer.verification, 'TRUSTED_CONSUMER_VERIFIED');
     assert.equal(database.receipt().activePhysicalBytes, 0);
-    assert.equal(f.calls.filter(call => call === 'receipt.append').length, 1);
+    assert.equal(f.calls.filter(call => call === 'receipt.append').length, 2);
   });
