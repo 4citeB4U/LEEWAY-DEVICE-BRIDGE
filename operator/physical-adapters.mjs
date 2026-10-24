@@ -11,6 +11,7 @@ LICENSE: MIT
 */
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { selectQualifiedAppleUsbDevice } from './physical-apple-usb.mjs';
 
 const execFileAsync = promisify(execFile);
 
@@ -97,7 +98,8 @@ export class PhysicalAppleAdapter {
         records = [];
       }
 
-      const composite = records.find(r => r.DeviceID && r.DeviceID.includes(this.deviceId)) || records[0];
+      const composite = selectQualifiedAppleUsbDevice(records, this.deviceId);
+      if (!composite) throw new Error('APPLE_USB_DEVICE_IDENTITY_NOT_QUALIFIED');
       return {
         ok: true,
         platform: "ios",
@@ -105,17 +107,20 @@ export class PhysicalAppleAdapter {
         transport: "WINDOWS_PNP_CIM_USB_BUS",
         nativeIosExecution: "NOT_PERFORMED_HOST_USB_OBSERVATION_ONLY",
         hardwareId: this.deviceId,
-        name: composite ? composite.Name : "Apple iPhone",
-        manufacturer: composite ? composite.Manufacturer : "Apple Inc.",
-        pnpStatus: composite ? composite.Status : "OK",
+        deviceInstanceId: composite.DeviceID,
+        name: composite.Name,
+        manufacturer: composite.Manufacturer,
+        pnpStatus: composite.Status,
         uiControl: false
       };
     }
 
     if (capability === "device.health") {
+      const identity = await this.execute('device.info', {});
       return {
         ok: true,
         platform: "ios",
+        deviceInstanceId: identity.deviceInstanceId,
         hardwareId: this.deviceId,
         status: "PRESENT_ON_USB_BUS",
         driverState: "INTACT_WINDOWS_APPLE_MOBILE_DEVICE"
