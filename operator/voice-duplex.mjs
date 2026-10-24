@@ -29,6 +29,20 @@ export async function getVoiceDuplexStatus({fetchImpl=fetch}={}){
    productionCertified:false,physicalAcousticsVerified:false,
    deviceExecutionAuthorized:false,deviceCommands:'EXISTING_C3_ADMISSION_REQUIRED'};
 }
+export async function getLocalVoiceBinding({fetchImpl=fetch}={}){
+  const endpoint='http://127.0.0.1:5173/__leeway/voice-binding';
+  try{
+    const response=await fetchImpl(endpoint,{method:'GET',redirect:'error',signal:AbortSignal.timeout(1800)});
+    if(!response.ok)return {status:'VOICE_BINDING_UNAVAILABLE',http:response.status};
+    const data=await response.json();
+    if(data.authority!=='LEEWAY_VOICE_FABRIC'||
+       !/^kokoro-(?:af|am|bf|bm)_[a-z0-9]+$/.test(data.binding?.voicePackageId)||
+       !data.recordRevision)return {status:'VOICE_BINDING_UNVERIFIED'};
+    return {status:'CANONICAL_VOICE_READBACK',voicePackageId:data.binding.voicePackageId,
+      revision:data.recordRevision,authority:data.authority,
+      deviceExecutionAuthorized:false,remoteDeviceSyncQualified:false};
+  }catch{return {status:'VOICE_BINDING_TRANSPORT_UNAVAILABLE'}}
+}
 export async function startLocalVoiceDuplex({
   root=process.env.LEEWAY_VOICE_FABRIC_ROOT,
   spawnImpl=spawn,

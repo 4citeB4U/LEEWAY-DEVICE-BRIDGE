@@ -55,3 +55,16 @@ test('voice startup launches only the inspected local Voice Fabric startup entry
     assert.equal(invocation.opts.shell,false);
   }finally{await rm(temp,{recursive:true,force:true})}
 });
+
+test('Device Bridge consumes the canonical voice binding read-only',async()=>{
+ const {getLocalVoiceBinding}=await import('../operator/voice-duplex.mjs');
+ const data=await getLocalVoiceBinding({fetchImpl:async()=>({ok:true,json:async()=>({
+  authority:'LEEWAY_VOICE_FABRIC',binding:{voicePackageId:'kokoro-am_michael'},
+  recordRevision:'verified-revision',csrf:'DO_NOT_EXPOSE'})})});
+ assert.equal(data.status,'CANONICAL_VOICE_READBACK');
+ assert.equal(data.voicePackageId,'kokoro-am_michael');
+ assert.equal(data.revision,'verified-revision');
+ assert.equal(data.csrf,undefined);
+ assert.equal(data.deviceExecutionAuthorized,false);
+ assert.equal(data.remoteDeviceSyncQualified,false);
+});
