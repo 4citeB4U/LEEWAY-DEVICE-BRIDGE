@@ -43,11 +43,14 @@ test('existing HTTP service reaches SDK, real signed Runtime binding and origina
       deviceProvider: {getDevice: async () => device},
       executeModel: async input => new HybridDispatcher({inferenceBinding: input.inferenceBinding, ml: {
         async run() { return {...f.result, outputIds: [plan.metadata['tokenizer.ggml.tokens'].indexOf('4')],
-          modelGraphTimings:{schema:'leeway.gpu.model-graph-timings.v1',
+          modelGraphTimings:{schema:'leeway.gpu.model-graph-timings.v2',
             scope:'MODEL_GRAPH_AFTER_LOAD_EXCLUDES_AUTHORIZATION_POST_VERITAS_AND_CONTINUUM_COMMIT',
-            modelLoadMs:12,prefillMs:4,timeToFirstTokenMs:4,decodeMs:1,totalInferenceMs:5,
+            modelLoadState:'COLD_LOAD',modelLoadMs:12,prefillMs:4,modelGraphFirstTokenReadyMs:4,
+            clientTimeToFirstTokenMs:null,clientTimeToFirstTokenStatus:'NOT_MEASURED_NON_STREAMING_RESPONSE',
+            decodeMs:0,decodeModelSteps:0,decodeVisibleTokens:0,decodeStopTokens:0,decodeTokensPerSecond:null,
+            graphAfterLoadMs:5,modelLoadAndGraphMs:17,
             promptTokens:input.plan.inputTokens.length,visibleOutputTokens:1,
-            tokenTimings:[{position:input.plan.inputTokens.length-1,commands:8,elapsedMs:4}]}}; }, async close() {}
+            tokenTimings:Array.from({length:input.plan.inputTokens.length},(_,position)=>({position,commands:8,elapsedMs:4}))}}; }, async close() {}
       }}).dispatch({type: 'AI_INFERENCE', requestId: input.requestId, sessionId: input.sessionId,
         modelSha256: plan.modelSha256, tokenizerSha256: plan.tokenizerSha256, implementationSha256: plan.implementationSha256,
         contextLimit: plan.contextLimit, maxNewTokens: input.plan.maxNewTokens, inputIds: input.plan.inputTokens}, {capability: 'WEBGPU'})});
@@ -63,8 +66,10 @@ test('existing HTTP service reaches SDK, real signed Runtime binding and origina
     const response = await post('/v1/generate', {modelId: 'fixture-model', prompt: 'a', maxNewTokens: 1});
     assert.equal(response.status, 200); const result = await response.json();
     assert.equal(result.text, '4'); assert.equal(result.backend, 'LEEWAY_GPU');
-    assert.equal(result.modelGraphTimings.totalInferenceMs,5);
-    assert.equal(result.modelGraphTimings.tokenTimings[0].position,result.modelGraphTimings.promptTokens-1);
+    assert.equal(result.modelGraphTimings.graphAfterLoadMs,5);
+    assert.equal(result.modelGraphTimings.modelLoadAndGraphMs,17);
+    assert.equal(result.modelGraphTimings.tokenTimings[0].position,0);
+    assert.equal(result.modelGraphTimings.tokenTimings.at(-1).position,result.modelGraphTimings.promptTokens-1);
     assert.match(result.executionBinding.commitAttestationSha256, /^[a-f0-9]{64}$/);
     const {createQualifiedGpuClient} = await load(modelHubRoot, 'src/qualified-gpu-client.mjs');
     const hubClient = createQualifiedGpuClient({endpoint: base,
@@ -77,8 +82,10 @@ test('existing HTTP service reaches SDK, real signed Runtime binding and origina
     const hubAnswer = await hubClient.generate({modelId: 'fixture-model', prompt: 'a', sessionId: hubActivation.sessionId,
       maxNewTokens: 1}, {expectedClientId: hubActivation.clientId});
     assert.equal(hubAnswer.text, '4'); assert.equal(hubAnswer.verification, 'TRUSTED_CONSUMER_VERIFIED');
-    assert.equal(hubAnswer.modelGraphTimings.totalInferenceMs,5);
-    assert.equal(hubAnswer.modelGraphTimings.tokenTimings[0].position,hubAnswer.modelGraphTimings.promptTokens-1);
+    assert.equal(hubAnswer.modelGraphTimings.graphAfterLoadMs,5);
+    assert.equal(hubAnswer.modelGraphTimings.modelLoadAndGraphMs,17);
+    assert.equal(hubAnswer.modelGraphTimings.tokenTimings[0].position,0);
+    assert.equal(hubAnswer.modelGraphTimings.tokenTimings.at(-1).position,hubAnswer.modelGraphTimings.promptTokens-1);
     assert.equal(database.receipt().activePhysicalBytes, 0);
     assert.equal(f.calls.filter(call => call === 'receipt.append').length, 2);
   });
