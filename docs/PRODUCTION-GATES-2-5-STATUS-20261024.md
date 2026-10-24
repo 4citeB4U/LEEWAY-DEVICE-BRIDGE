@@ -97,12 +97,14 @@ authority. Neither can stand in for independently enrolled production PRE/POST.
 **Not passed.** The merged Runtime binding and full pipeline fixture already
 implement the intended request correlation across Formula, PRE, model source,
 LDWMD, compute, Continuum readback/commit, POST and both ledgers. The production
-Formula provider and inference mapping are qualified; this request has no
-recorded Formula evaluation. Retained governed-run evidence blocked before
-inference because production Veritas and canonical Learning Ledger admission
-providers were unregistered. The native Windows run is diagnostic-only, and the
-service is not currently reachable. No same-request protected production
-execution is evidenced.
+Formula provider and inference mapping are already qualified. The remaining
+proof is that production binds those authorities to the same protected request
+and correlates the request through device observation, Veritas PRE/POST, and
+both ledgers. Retained governed-run evidence stopped before protected inference
+because production Veritas and canonical Learning Ledger admission providers
+were unregistered. The native Windows run is diagnostic-only, and the service
+was not observed listening during this review. No same-request protected
+production execution is evidenced by the reviewed artifacts.
 
 ### Gate 4 — Production service activation
 
