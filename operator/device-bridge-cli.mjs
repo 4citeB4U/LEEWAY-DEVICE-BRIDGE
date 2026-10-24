@@ -40,7 +40,7 @@ function usage() {
   process.stdout.write(`LeeWay Device Bridge CLI
 Usage: leeway-bridge <command> [options]
 
-  doctor                    Check local entrypoints and admission readiness
+  voice-status              Check local Voice Fabric duplex service (read-only)\n  voice-open                Open local duplex UI by explicit operator command\n  doctor                    Check local entrypoints and admission readiness
   status [--config FILE]     Show source/configuration status, NOT live connection
   devices --config FILE      List configured device IDs, NOT online state
   catalog                   Read the existing published package manifest
@@ -71,6 +71,12 @@ async function main() {
     };
     print(state);
     if (!state.mcpSourcePresent || !state.packageManifestPresent) process.exitCode = 2;
+    return;
+  }
+  if (command === 'voice-status' || command === 'voice-open') {
+    const {getVoiceDuplexStatus,openLocalVoiceDuplex}=await import('./voice-duplex.mjs');
+    if(command === 'voice-status'){print(await getVoiceDuplexStatus());return;}
+    print(openLocalVoiceDuplex());
     return;
   }
   if (command === 'devices') {

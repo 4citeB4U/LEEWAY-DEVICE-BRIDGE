@@ -8,6 +8,7 @@ import { Bridge, schemas } from '../../packages/protocol/index.mjs';
 import { RelayAdapter } from '../../packages/agent-relay/index.mjs';
 import { DesktopAdapter } from './adapter.mjs';
 import { createC3AdmissionBinding } from '../../operator/c3-admission-binding.mjs';
+import {getVoiceDuplexStatus} from '../../operator/voice-duplex.mjs';
 
 function screenResult(value) {
   if (value.ok !== true) return null;
@@ -35,6 +36,12 @@ function screenResult(value) {
 export function createServer(bridge) {
   const server = new McpServer({ name: 'leeway-device-bridge', version: '0.1.0' });
   const result = value => ({ content: [{ type: 'text', text: JSON.stringify(value) }], ...(value.ok === false ? { isError: true } : {}) });
+  // Read-only local capability discovery. No microphone activation, voice
+  // initiation, device command, privilege, or C3 admission is inferred.
+  server.registerTool('voice_duplex_status', {
+    description: 'Read-only local Voice Fabric duplex availability; no production or device authority.',
+    inputSchema: {},
+  }, async () => result(await getVoiceDuplexStatus()));
   server.registerTool('bridge_devices', { description: 'List configured device IDs. Configuration does not prove connectivity.', inputSchema: {} }, async () => result({ devices: [...bridge.devices.keys()] }));
   server.registerTool('bridge_capabilities', { description: 'Discover current capabilities for one device; grants and verification are distinct.', inputSchema: { deviceId: z.string().min(1).max(128) } }, async ({ deviceId }) => {
     try { return result(await bridge.discover(deviceId)); } catch { return result({ ok: false, error: 'DISCOVERY_FAILED' }); }
