@@ -46,3 +46,38 @@ export async function executeLeeWayGpu({endpoint=LOOPBACK,request,fetchImpl=fetc
  return Object.freeze({status:'EXECUTED_RESPONSE_UNVERIFIED',requestId:request.requestId,
   workloadHash:request.workloadHash,veritasReceipt:result.veritasReceipt,verificationRequired:true});
 }
+
+/**
+ * LEEWAY HEADER — DO NOT REMOVE
+ * REGION: LEEWAY.DEVICE_BRIDGE.GPU_SERVICE.CROSS_PLATFORM_CLIENT
+ * TAG: LEEWAY_APPLICATION_EXPLICIT_SOFTWARE_GPU_DIAGNOSTIC_V1
+ * WHO: Creator-authorized LeeWay engineering.
+ * WHAT: Let Node/Electron Windows applications invoke the installed native engine.
+ * WHEN: 2026-10-24. WHERE: packages/leeway-gpu-service/client.mjs.
+ * WHY: Apps can explicitly use LeeWay without pretending DXGI has enumerated it.
+ * HOW: Bound loopback request, same-origin token, reject false authority.
+ * AUTHORITY: LAB_ONLY; no unqualified canonical execution.
+ * LICENSE: Existing LeeWay repository terms.
+ */
+export async function runLeeWaySoftwareGraphicsDiagnostic({endpoint='http://127.0.0.1:4180',fetchImpl=fetch}={}){
+ const url=localServiceUrl(endpoint);
+ const controlResponse=await fetchImpl(new URL('/v1/control',url));
+ if(!controlResponse.ok)throw Error('LEEWAY_GPU_CONTROL_UNAVAILABLE');
+ const control=await controlResponse.json();
+ if(control?.serviceId!=='leeway.gpu.service'||typeof control.csrfToken!=='string'||
+     !/^[a-f0-9]{64}$/.test(control.csrfToken))throw Error('LEEWAY_GPU_CONTROL_IDENTITY_MISMATCH');
+ const response=await fetchImpl(new URL('/v1/diagnostics/software-graphics/run',url),{
+  method:'POST',headers:{'origin':url.origin,'x-leeway-csrf':control.csrfToken}
+ });
+ let body;try{body=await response.json();}catch{throw Error('LEEWAY_GPU_DIAGNOSTIC_RESPONSE_INVALID')}
+ if(!response.ok)throw Error(typeof body?.code==='string'?body.code:'LEEWAY_GPU_DIAGNOSTIC_DENIED');
+ if(body?.serviceId!=='leeway.gpu.service'||body?.schema!=='leeway.gpu.software-graphics-diagnostic.v1'||
+     body.status!=='PASS_DIAGNOSTIC_ONLY'||body.scope!=='LAB_ONLY'||
+     body.backend!=='LEEWAY_GPU_SOFTWARE'||body.borrowedPixels!==16||
+     body.completedFence!==1||body.independentReadback!==true||
+     body.requestCorrelated!==true||body.foreignRejected!==true||
+     body.canonicalReceiptIssued!==false||body.osGpuRegistered!==false||
+     body.productionReady!==false||body.dispatchAllowed!==false)
+    throw Error('LEEWAY_GPU_DIAGNOSTIC_EVIDENCE_MISMATCH');
+ return Object.freeze({...body,endpoint:url.origin,executionClass:'UNADMITTED_DIAGNOSTIC'});
+}
