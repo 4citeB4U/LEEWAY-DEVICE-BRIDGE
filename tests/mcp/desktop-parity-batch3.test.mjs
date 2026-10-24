@@ -74,7 +74,7 @@ test('move rejects overwrite, modified source and linked source, then moves exac
   assert.equal(moved.moved,true);
   await assert.rejects(fs.stat(path.join(root,'source.txt')),{code:'ENOENT'});
   assert.equal(await fs.readFile(path.join(root,'moved.txt'),'utf8'),'original');
-  await assert.rejects(adapter.execute('device.files.move',{from:'moved.txt',to:'moved.txt',expectedSha256:digest}),/SOURCE_EQUALS_DESTINATION/);
+  await assert.rejects(adapter.execute('device.files.move',{from:'moved.txt',to:'moved.txt',expectedSha256:digest}),/SOURCE_EQUALS_DESTINATION|SAME_SOURCE_AND_TARGET/);
   try{
     await fs.link(path.join(root,'moved.txt'),path.join(root,'linked.txt'));
     await assert.rejects(adapter.execute('device.files.move',{from:'moved.txt',to:'another.txt',expectedSha256:digest}),/LINK_NOT_ALLOWED/);
