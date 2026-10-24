@@ -84,7 +84,8 @@ export async function guardedMove(adapter,args){
   if(pre.sha256!==args.expectedSha256||pre.ino!==initial.ino)throw Error('SOURCE_CHANGED');
   // link() is exclusive: unlike rename(), an existing destination is never replaced.
   // Both paths are in one checked workspace. A failed subsequent unlink retains source.
-  await fs.link(source,destination);
+  try{await fs.link(source,destination);}
+  catch(error){if(error?.code==='EEXIST')throw Error('TARGET_ALREADY_EXISTS');throw error;}
   try{
     const linked=await fs.lstat(destination);
     const current=await fs.lstat(source);
