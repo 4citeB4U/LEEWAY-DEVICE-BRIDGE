@@ -4,8 +4,13 @@ import path from 'node:path';
 import os from 'node:os';
 import { spawn, execFile } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
+import { fileDigest, binaryRange, binaryCreate, exactEdit } from './file-parity.mjs';
+import { DesktopSessions } from './process-sessions.mjs';
+import { DesktopSearchSessions } from './search-sessions.mjs';
+import { appendBinary, directoryPage } from './transfer-parity.mjs';
 import { promisify } from 'node:util';
 const execFileAsync = promisify(execFile);
+const MAX_MOVE_BYTES = 64 * 1024 * 1024;
 async function hashFile(file,{maxBytes=Number.POSITIVE_INFINITY}={}) {
   const hash=createHash('sha256');let bytes=0;
   for await(const chunk of createReadStream(file)){
@@ -14,7 +19,9 @@ async function hashFile(file,{maxBytes=Number.POSITIVE_INFINITY}={}) {
   return {sha256:hash.digest('hex'),bytes};
 }
 async function moveNoReplace(source,target,expectedSha256) {
-  const before=await fs.stat(source);let handle;
+  const before=await fs.stat(source);
+  if(!before.isFile()||before.nlink>1||before.size>MAX_MOVE_BYTES)throw new Error('FILE_EXCEEDS_MOVE_LIMIT');
+  let handle;
   try { handle=await fs.open(target,'wx',0o600); }
   catch(error) { if(error.code==='EEXIST')throw new Error('TARGET_ALREADY_EXISTS');throw error; }
   const hash=createHash('sha256');
@@ -42,8 +49,8 @@ async function moveNoReplace(source,target,expectedSha256) {
 
 // Bounded workspace files and explicitly allowlisted process execution. Never invokes a shell.
 export class DesktopAdapter {
-  constructor(root) { this.root = path.resolve(root); this.jobs = new Map(); }
-  async discover() { await fs.access(this.root); return ['device.health','device.info','device.files.read','device.files.write','device.files.replace','device.files.move','device.directories.list','device.directories.create','device.search.files','device.process.list','device.process.terminate','device.process.execute','device.job.start','device.job.write','device.job.status','device.job.stop']; }
+  constructor(root) { this.root = path.resolve(root); this.jobs = new Map(); this.sessions = new DesktopSessions(this); this.searchSessions = new DesktopSearchSessions(this); }
+  async discover() { await fs.access(this.root); return ['device.health','device.info','device.files.read','device.files.info','device.files.read_multiple','device.files.write','device.files.replace','device.files.hash','device.files.read_binary','device.files.write_binary','device.files.append_binary','device.files.move','device.files.edit','device.directories.list','device.directories.page','device.directories.create','device.search.files','device.search.content','device.search.start','device.search.next','device.search.stop','device.search.list','device.process.list','device.process.terminate','device.process.execute','device.job.start','device.job.write','device.job.status','device.job.stop','device.session.start','device.session.read','device.session.input','device.session.stop','device.session.list']; }
   async safePath(relative, writing = false) {
     if (path.isAbsolute(relative) || relative.includes(':') || relative.includes('\0')) throw new Error('PATH_OUTSIDE_WORKSPACE');
     const parts = relative.replaceAll('\\', '/').split('/');
@@ -140,6 +147,42 @@ export class DesktopAdapter {
     const walk=async dir=>{for(const e of await fs.readdir(dir,{withFileTypes:true})){if(matches.length>=args.limit)return;const full=path.join(dir,e.name);if(e.isSymbolicLink?.())continue;if(e.name.toLowerCase().includes(q))matches.push(path.relative(root,full)||e.name);if(e.isDirectory())await walk(full);}};
     await walk(root); return {matches,truncated:matches.length>=args.limit};
   }
+  async searchContent(args) {
+    const base = await this.safeDirectory(args.path);
+    const query = args.query.toLowerCase();
+    const matches = [];
+    let filesScanned = 0, bytesScanned = 0, truncated = false;
+    const visit = async (directory, depth) => {
+      if (truncated) return;
+      const entries = await fs.readdir(directory, { withFileTypes: true });
+      for (const entry of entries) {
+        if (matches.length >= args.limit || filesScanned >= 128 || bytesScanned >= 2097152) { truncated = true; return; }
+        const full = path.join(directory, entry.name);
+        const stat = await fs.lstat(full).catch(() => null);
+        if (!stat || stat.isSymbolicLink()) continue;
+        if (stat.isDirectory()) {
+          if (depth < 6) await visit(full, depth + 1);
+          else truncated = true;
+          continue;
+        }
+        if (!stat.isFile() || stat.nlink !== 1 || stat.size > 65536) continue;
+        filesScanned++;
+        bytesScanned += stat.size;
+        if (bytesScanned > 2097152) { truncated = true; return; }
+        const contents = await fs.readFile(full, 'utf8');
+        if (contents.includes('\0')) continue;
+        const lines = contents.split(/\r?\n/);
+        for (let n = 0; n < lines.length; n++) {
+          if (matches.length >= args.limit) { truncated = true; return; }
+          if (lines[n].toLowerCase().includes(query)) {
+            matches.push({ path: path.relative(base, full), line: n + 1, excerpt: lines[n].slice(0, 240) });
+          }
+        }
+      }
+    };
+    await visit(base, 0);
+    return { matches, filesScanned, bytesScanned, truncated };
+  }
   async listProcesses(args) {
     const command=process.platform==='win32'?'powershell.exe':'ps';
     const argv=process.platform==='win32'?['-NoProfile','-Command','Get-Process | Select-Object -First '+args.limit+' Id,ProcessName | ConvertTo-Json -Compress']:['-eo','pid=,comm='];
@@ -177,15 +220,47 @@ export class DesktopAdapter {
     if (capability === 'device.health') return { ok: true, platform: process.platform, adapter: 'bounded-workspace', uiControl: false };
     if (capability === 'device.info') return { platform: process.platform, architecture: os.arch(), node: process.version, uiControl: false };
     if (capability === 'device.directories.list') return this.listDirectory(args);
+    if (capability === 'device.directories.page') return directoryPage(this, args);
     if (capability === 'device.directories.create') return this.createDirectory(args);
     if (capability === 'device.search.files') return this.searchFiles(args);
+    if (capability === 'device.search.content') return this.searchContent(args);
+    if (capability === 'device.search.start') return this.searchSessions.start(args);
+    if (capability === 'device.search.next') return this.searchSessions.next(args);
+    if (capability === 'device.search.stop') return this.searchSessions.stop(args);
+    if (capability === 'device.search.list') return this.searchSessions.list(args);
     if (capability === 'device.process.list') return this.listProcesses(args);
     if (capability === 'device.process.terminate') return this.terminateProcess(args);
     if (capability === 'device.job.start') return this.startJob(args);
     if (capability === 'device.job.write') return this.writeJob(args);
     if (capability === 'device.job.status') return this.jobView(args.jobId);
     if (capability === 'device.job.stop') { const j=this.jobs.get(args.jobId); if(!j)throw new Error('UNKNOWN_JOB'); if(j.child){j.state='STOPPING';j.child.kill();} return this.jobView(args.jobId); }
+    if (capability === 'device.session.start') return this.sessions.start(args);
+    if (capability === 'device.session.read') return this.sessions.read(args);
+    if (capability === 'device.session.input') return this.sessions.input(args);
+    if (capability === 'device.session.stop') return this.sessions.stop(args);
+    if (capability === 'device.session.list') return this.sessions.list(args);
     if (capability === 'device.process.execute') return this.executeProcess(args);
+    if (capability === 'device.files.info') {
+      const filename = await this.safePath(args.path);
+      const stat = await fs.stat(filename);
+      return { path: args.path, type: 'file', sizeBytes: stat.size, modifiedUtc: stat.mtime.toISOString(), createdUtc: stat.birthtime.toISOString(), mode: stat.mode & 0o777 };
+    }
+    if (capability === 'device.files.read_multiple') {
+      const files = [];
+      let totalBytes = 0;
+      for (const filePath of args.paths) {
+        const result = await this.execute('device.files.read', { path: filePath });
+        totalBytes += Buffer.byteLength(result.text, 'utf8');
+        if (totalBytes > 131072) throw new Error('BATCH_OUTPUT_TOO_LARGE');
+        files.push({ path: filePath, text: result.text });
+      }
+      return { files, totalBytes };
+    }
+    if (capability === 'device.files.hash') return fileDigest(this, args);
+    if (capability === 'device.files.read_binary') return binaryRange(this, args);
+    if (capability === 'device.files.write_binary') return binaryCreate(this, args);
+    if (capability === 'device.files.append_binary') return appendBinary(this, args);
+    if (capability === 'device.files.edit') return exactEdit(this, args);
     if (capability === 'device.files.read') {
       const handle = await fs.open(await this.safePath(args.path), 'r');
       try {
@@ -244,3 +319,4 @@ export class DesktopAdapter {
     throw new Error('CAPABILITY_UNAVAILABLE');
   }
 }
+
