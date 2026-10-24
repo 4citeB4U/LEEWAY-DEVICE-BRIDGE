@@ -246,6 +246,9 @@ export class DesktopAdapter {
       return { path: args.path, type: 'file', sizeBytes: stat.size, modifiedUtc: stat.mtime.toISOString(), createdUtc: stat.birthtime.toISOString(), mode: stat.mode & 0o777 };
     }
     if (capability === 'device.files.read_multiple') {
+      if (!Array.isArray(args.paths) || args.paths.length < 1 || args.paths.length > 8) {
+        throw new Error('INVALID_BATCH_SIZE');
+      }
       const files = [];
       let totalBytes = 0;
       for (const filePath of args.paths) {
