@@ -1,0 +1,42 @@
+{
+  "schema": "leeway.gpu.service.discovery.v1",
+  "productName": "LeeWay GPU",
+  "serviceId": "leeway.gpu.service",
+  "runtimeFabricProviderId": "edge-gpu-provider",
+  "canonicalOwner": "Runtime Fabric",
+  "bridgePackage": "@leeway/device-bridge-gpu-service",
+  "version": "0.1.0",
+  "backendNaming": {
+    "windows": "LeeWay GPU — D3D12",
+    "apple": { "name": "LeeWay GPU — Metal", "qualification": "NOT_IMPLEMENTED_OR_TESTED" },
+    "android": "LeeWay GPU — Vulkan",
+    "linux": { "name": "LeeWay GPU — Vulkan", "qualification": "NOT_QUALIFIED" }
+  },
+  "platforms": {
+    "windows": {
+      "backend": "D3D12",
+      "backendName": "LeeWay GPU — D3D12",
+      "transport": "127.0.0.1:4178"
+    },
+    "android": {
+      "backend": "Vulkan",
+      "backendName": "LeeWay GPU — Vulkan",
+      "packageName": "industries.leeway.gpu",
+      "action": "industries.leeway.gpu.BIND_SERVICE"
+    },
+    "linux": {
+      "backend": "Vulkan",
+      "backendName": "LeeWay GPU — Vulkan",
+      "transport": "127.0.0.1:4178"
+    }
+  },
+  "clients": "explicit-integration-and-authorized-application-registration",
+  "runtimeDispatchEnabled": false,
+  "requireFormula": true,
+  "requireLDWMD": true,
+  "requireContinuum": true,
+  "requireVeritas": true,
+  "mandatoryEnforcementVerified": false,
+  "otherApplicationsSupportedOnOptInBasis": true,
+  "operatingSystemDriverReplacement": false
+}

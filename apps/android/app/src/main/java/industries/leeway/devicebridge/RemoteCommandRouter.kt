@@ -17,6 +17,8 @@ object RemoteCommandRouter {
 
     fun execute(context: Context, commandId: String, capability: String, arguments: JSONObject, firstSeen: Boolean, conversationRequest: Boolean = false): JSONObject {
         val governance = LocalAuthority.agentAccessEnabled(context)
+        val permissions = LocalAuthority.permissions(context)
+        val permissionAdmitted = permissions.admitsRemoteCapability(capability)
         val supported = capability in remoteQualified
         val prompt = if (capability == "agent.chat") ConversationPrompt.userRequest(
             if (arguments.has("userRequest")) arguments.optString("userRequest") else null,
@@ -41,7 +43,7 @@ object RemoteCommandRouter {
             governance = governance,
             conditions = listOf(
                 commandId.isNotBlank(), capability.isNotBlank(), supported,
-                firstSeen, capabilityPrecondition
+                firstSeen, capabilityPrecondition, permissionAdmitted
             )
         )
         if (!gate.optBoolean("fire")) return JSONObject().apply {

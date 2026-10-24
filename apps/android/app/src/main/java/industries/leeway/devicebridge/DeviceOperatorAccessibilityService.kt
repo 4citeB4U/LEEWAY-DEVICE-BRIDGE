@@ -165,8 +165,28 @@ class DeviceOperatorAccessibilityService : AccessibilityService() {
             val gesture = GestureDescription.Builder()
                 .addStroke(GestureDescription.StrokeDescription(path, 0, 60))
                 .build()
-            val accepted = service.dispatchGesture(gesture, null, null)
-            return JSONObject().put("ok", accepted).put("x", x).put("y", y)
+            if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper())
+                return blocked("GESTURE_CALLBACK_REQUIRES_WORKER")
+            val finished = java.util.concurrent.CountDownLatch(1)
+            val completed = java.util.concurrent.atomic.AtomicBoolean(false)
+            val accepted = service.dispatchGesture(gesture, object : GestureResultCallback() {
+                override fun onCompleted(gestureDescription: GestureDescription?) {
+                    completed.set(true); finished.countDown()
+                }
+                override fun onCancelled(gestureDescription: GestureDescription?) {
+                    finished.countDown()
+                }
+            }, android.os.Handler(android.os.Looper.getMainLooper()))
+            if (!accepted) return blocked("GESTURE_DISPATCH_REJECTED")
+            val callbackSeen = finished.await(2, TimeUnit.SECONDS)
+            return JSONObject().put("ok", false).put("dispatched", true)
+                .put("gestureCompleted", callbackSeen && completed.get())
+                .put("x", x).put("y", y)
+                .put("error", when {
+                    !callbackSeen -> "GESTURE_CALLBACK_TIMEOUT"
+                    !completed.get() -> "GESTURE_CANCELLED"
+                    else -> "GESTURE_COMPLETED_UNVERIFIED"
+                })
         }
 
         fun swipe(x1: Float, y1: Float, x2: Float, y2: Float, durationMs: Long): JSONObject {
@@ -175,8 +195,27 @@ class DeviceOperatorAccessibilityService : AccessibilityService() {
             val gesture = GestureDescription.Builder()
                 .addStroke(GestureDescription.StrokeDescription(path, 0, durationMs.coerceIn(50, 5000)))
                 .build()
-            val accepted = service.dispatchGesture(gesture, null, null)
-            return JSONObject().put("ok", accepted)
+            if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper())
+                return blocked("GESTURE_CALLBACK_REQUIRES_WORKER")
+            val finished = java.util.concurrent.CountDownLatch(1)
+            val completed = java.util.concurrent.atomic.AtomicBoolean(false)
+            val accepted = service.dispatchGesture(gesture, object : GestureResultCallback() {
+                override fun onCompleted(gestureDescription: GestureDescription?) {
+                    completed.set(true); finished.countDown()
+                }
+                override fun onCancelled(gestureDescription: GestureDescription?) {
+                    finished.countDown()
+                }
+            }, android.os.Handler(android.os.Looper.getMainLooper()))
+            if (!accepted) return blocked("GESTURE_DISPATCH_REJECTED")
+            val callbackSeen = finished.await(7, TimeUnit.SECONDS)
+            return JSONObject().put("ok", false).put("dispatched", true)
+                .put("gestureCompleted", callbackSeen && completed.get())
+                .put("error", when {
+                    !callbackSeen -> "GESTURE_CALLBACK_TIMEOUT"
+                    !completed.get() -> "GESTURE_CANCELLED"
+                    else -> "GESTURE_COMPLETED_UNVERIFIED"
+                })
         }
 
         fun setFocusedText(text: String): JSONObject {

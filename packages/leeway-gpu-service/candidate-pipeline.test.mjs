@@ -1,0 +1,8 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {runCandidateGpuPipeline} from './candidate-pipeline.mjs';
+const request={requestId:'r',workloadHash:'h',deviceId:'d',adapterId:'a'};
+const names={authority:'verifyAndConsume',formula:'evaluateGpuWorkload',ldwmd:'allocatePhysicalLease',continuum:'bindLineage',dispatch:'executeNative',veritas:'verifyCanonical'};
+function providers(events,bad){return Object.fromEntries(Object.entries(names).map(([k,v])=>[k,{[v]:async({request})=>{events.push(k);return {requestId:request.requestId,workloadHash:bad===k?'WRONG':request.workloadHash,verified:true}}}]));}
+test('candidate exercises all six steps in sequence without canonical claim',async()=>{const events=[];const r=await runCandidateGpuPipeline({request,providers:providers(events)});assert.deepEqual(events,Object.keys(names));assert.equal(r.canonicalReceiptIssued,false)});
+test('bad Formula correlation prevents memory and dispatch',async()=>{const events=[];await assert.rejects(runCandidateGpuPipeline({request,providers:providers(events,'formula')}),/GPU_STAGE_NOT_VERIFIED:formula/);assert.deepEqual(events,['authority','formula'])});
+test('unbound issuer never invokes dispatch',async()=>{const events=[];const p=providers(events);delete p.authority;await assert.rejects(runCandidateGpuPipeline({request,providers:p}),/GPU_STAGE_UNBOUND:authority/);assert.deepEqual(events,[])});
