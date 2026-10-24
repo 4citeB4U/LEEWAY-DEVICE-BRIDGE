@@ -54,7 +54,7 @@ export function createServer(bridge) {
 const deviceSchema = z.object({
   id: z.string().min(1).max(128), type: z.enum(['desktop', 'relay']),
   grants: z.array(z.enum(Object.keys(schemas))).max(Object.keys(schemas).length),
-  workspace: z.string().optional(), tokenEnv: z.string().regex(/^[A-Z][A-Z0-9_]*$/).optional(),
+  workspace: z.string().optional(), skillsRoot: z.string().max(2048).optional(), tokenEnv: z.string().regex(/^[A-Z][A-Z0-9_]*$/).optional(),
   url: z.string().url().optional(),
 }).strict();
 
@@ -73,7 +73,7 @@ export async function start(configPath) {
   const config = z.object({ devices: z.array(deviceSchema).min(1).max(32), receipts: z.string().min(1) }).strict().parse(JSON.parse(await fs.readFile(configPath, 'utf8')));
   const base = path.dirname(path.resolve(configPath));
   const devices = config.devices.map(d => ({ ...d, adapter: d.type === 'desktop'
-    ? new DesktopAdapter(d.workspace ? path.resolve(base, d.workspace) : (() => { throw new Error('WORKSPACE_REQUIRED'); })())
+    ? new DesktopAdapter(d.workspace ? path.resolve(base, d.workspace) : (() => { throw new Error('WORKSPACE_REQUIRED'); })(), {skillsRoot: d.skillsRoot ? path.resolve(base,d.skillsRoot) : null})
     : new RelayAdapter({ deviceId: d.id, url: d.url, token: d.tokenEnv ? process.env[d.tokenEnv] : undefined }) }));
   const receiptPath = path.resolve(base, config.receipts);
   await fs.mkdir(path.dirname(receiptPath), { recursive: true });

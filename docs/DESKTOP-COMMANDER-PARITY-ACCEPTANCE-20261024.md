@@ -34,12 +34,12 @@ Each capability is registered through the existing MCP `schemas` map and the gua
 | 5 | shutdown | `device.job.stop` is not relay shutdown | MISSING: guarded disconnect |
 | 6 | get_config | None | MISSING: protected configuration read |
 | 7 | set_config_value | None | MISSING: governed configuration updates |
-| 8 | read_file | `device.files.read`, `device.files.read_binary` | PARTIAL: 64 KiB text; binary chunks max 256 KiB |
+| 8 | read_file | `device.files.read`, `device.files.read_binary` | BOUNDED: 64 KiB text, binary range <=256 KiB; larger file read via offsets |
 | 9 | read_multiple_files | `device.files.read_multiple` | BOUNDED: max 8 files / 128 KiB |
-| 10 | write_file | `device.files.write`, `device.files.write_binary`, `device.files.edit` | PARTIAL: create-only and exact text edits; no append protocol |
+| 10 | write_file | `device.files.write`, `device.files.write_binary`, `device.files.append_binary`, `device.files.edit` | BATCH6: digest/offset-bound binary append permits reconnection; still no unlimited document authoring |
 | 11 | write_pdf | None | MISSING: PDF creation with validation |
 | 12 | create_directory | `device.directories.create` | BOUNDED |
-| 13 | list_directory | `device.directories.list` | PARTIAL: limit, no cursor paging |
+| 13 | list_directory | `device.directories.list`, `device.directories.page` | BATCH6: snapshot-SHA and offset pagination detects changes between pages |
 | 14 | move_file | `device.files.move` | BATCH3: SHA-bound move, exclusive destination, 64 MiB maximum |
 | 15 | start_search | `device.search.files`, `device.search.content`, `device.search.start` | BATCH5: bounded asynchronous workspace search with opaque ID |
 | 16 | get_more_search_results | `device.search.next` | BATCH5: cursor-paged results, max 50 per page |
@@ -94,6 +94,22 @@ are additions; they do **not** compensate for missing reference commands.
 - Focused search session acceptance: 4/4 PASS; comprehensive MCP/CLI
   regression must be rerun before publication.
 
+## Batch 6 delivered, not activated in production
+
+- `skills.list` and `skills.read` expose the existing canonical LeeWay Agent
+  Skills SKILL.md files as reference-only, hash-bound capabilities. All actual
+  Agent Skills workflows retain their original MCP owner/provider authority.
+- `device.files.append_binary` permits 256 KiB chunks with mandatory current
+  file offset, whole-file SHA-256 and chunk SHA-256, exclusive append locking,
+  post-write flush and resumability after a new adapter instance.
+- `device.directories.page` supplies bounded paginated metadata with a
+  SHA-256 snapshot pin that detects changed directory listings.
+- A real Agent Skills repository discovery/readback test and synthetic tamper,
+  symlink/path, append-replay and directory-snapshot tests passed.
+- Full MCP/CLI regression: 47/47 PASS on 2026-10-24.
+- These changes do **not** prove production enrollment, native device operation
+  or live independent Veritas execution.
+
 Test boundary: disposable local workspace. Successful mock/fixture tests are not an
 owner-approved production command. Every protected MCP call still needs authenticated
 Formula, consent, and independent Veritas admission. No bypass fallback is permitted.
@@ -102,8 +118,9 @@ Formula, consent, and independent Veritas admission. No bypass fallback is permi
 
 1. Source-pinned, user-approved launch of the installed LeeWay MCP service, with real
    device identities and reconnect/error recovery (no credential disclosure).
-2. File parity completion: append, larger binary streams, directory-safe moves,
-   cursor pagination, DOCX/PDF under appropriate document policies.
+2. File parity completion: append and snapshot directory paging added in Batch 6.
+   Verify 128 MiB file transfer under disconnects and simultaneous hosts, directory
+   moves and rich DOCX/PDF authoring under appropriate document policies.
 3. Process parity: complete remote persistence, detached-session restoration,
    reconnect/error recovery and no orphan jobs; current in-process sessions are
    bounded and cursor-paged, not yet proven across service restart.
