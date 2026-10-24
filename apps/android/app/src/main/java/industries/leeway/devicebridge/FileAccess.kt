@@ -34,6 +34,7 @@ object FileAccess {
     const val REQUEST_OPEN_TREE = 4101
     private const val PREFS = "leeway_device_bridge"
     private const val TREE_KEY = "authorized_tree_uri"
+    private const val APPEND_JOURNAL_KEY = "saf_append_journal_v1"
     private const val EDIT_JOURNAL_KEY = "saf_edit_journal_v1"
     private const val MOVE_JOURNAL_KEY = "saf_move_journal_v1"
     private const val MAX_FILE_BYTES = 128L * 1024 * 1024
@@ -116,6 +117,7 @@ object FileAccess {
         val write = isWriteCapability(capability)
         val access = grant(context, write || hasPendingRecovery(context))
         reconcileMove(context, access)
+        recoverAppend(context, access)
         recoverEdit(context, access)
         when (capability) {
             "device.files.read" -> readText(context, access, arguments.getString("path"))
@@ -142,6 +144,7 @@ object FileAccess {
 
     private data class Access(val tree: Uri, val rootId: String)
     private enum class MoveOutcome { NOT_APPLIED, APPLIED }
+    internal enum class AppendRecoveryState { NOT_APPLIED, APPLIED, CONFLICT }
     private data class Doc(
         val id: String,
         val uri: Uri,
@@ -180,7 +183,7 @@ object FileAccess {
 
     private fun hasPendingRecovery(context: Context): Boolean {
         val prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        return prefs.contains(EDIT_JOURNAL_KEY) || prefs.contains(MOVE_JOURNAL_KEY)
+        return prefs.contains(APPEND_JOURNAL_KEY) || prefs.contains(EDIT_JOURNAL_KEY) || prefs.contains(MOVE_JOURNAL_KEY)
     }
 
     private fun uniqueChild(context: Context, access: Access, parent: Doc, name: String): Doc? {
@@ -405,28 +408,106 @@ object FileAccess {
         if (current.first != expectedOffset || current.second != expectedHash) throw IllegalArgumentException("TRANSFER_OFFSET_OR_HASH_MISMATCH")
         if (current.first + bytes.size > MAX_FILE_BYTES) throw IllegalArgumentException("TRANSFER_SIZE_LIMIT")
         val expectedAfterHash = digestWithSuffix(context, doc, bytes)
-        val parent = resolve(context, access, if (normalizeRelativePath(path).size == 1) "." else normalizeRelativePath(path).dropLast(1).joinToString("/"))
-        val lockName = ".leeway-append-${sha256(doc.uri.toString().toByteArray(StandardCharsets.UTF_8)).take(32)}.lock"
-        if (uniqueChild(context, access, parent, lockName) != null) {
-            throw IllegalStateException("TRANSFER_RECOVERY_REQUIRED")
+        val nextSize = current.first + bytes.size
+        val journal = JSONObject()
+            .put("path", path)
+            .put("documentId", doc.id)
+            .put("expectedOffset", current.first)
+            .put("expectedSha256", current.second)
+            .put("chunkSha256", chunkHash)
+            .put("expectedNextOffset", nextSize)
+            .put("expectedNextSha256", expectedAfterHash)
+            .put("attempted", false)
+        val prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        if (!prefs.edit().putString(APPEND_JOURNAL_KEY, journal.toString()).commit()) {
+            throw IllegalStateException("APPEND_JOURNAL_PERSIST_FAILED")
         }
-        val lock = createDocument(context, access, parent, lockName, "text/plain")
+        val documentBeforeWrite = resolve(context, access, path)
+        val currentBeforeWrite = digest(context, documentBeforeWrite)
+        if (documentBeforeWrite.id != doc.id || currentBeforeWrite.first != current.first || currentBeforeWrite.second != current.second) {
+            if (!prefs.edit().remove(APPEND_JOURNAL_KEY).commit()) throw IllegalStateException("APPEND_JOURNAL_CLEAR_FAILED")
+            throw IllegalArgumentException("TRANSFER_TARGET_CHANGED")
+        }
+        if (!prefs.edit().putString(APPEND_JOURNAL_KEY, journal.put("attempted", true).toString()).commit()) {
+            prefs.edit().remove(APPEND_JOURNAL_KEY).commit()
+            throw IllegalStateException("APPEND_JOURNAL_START_FAILED")
+        }
         try {
-            writeBytes(context, lock, "LeeWay append in progress; inspect file hash before clearing.".toByteArray(StandardCharsets.UTF_8))
             val output = resolver(context).openOutputStream(doc.uri, "wa") ?: throw IllegalStateException("APPEND_UNSUPPORTED_BY_PROVIDER")
             output.use { it.write(bytes); it.flush() }
-            val after = digest(context, resolve(context, access, path))
-            if (after.first != current.first + bytes.size || after.second != expectedAfterHash) {
+            val documentAfterWrite = resolve(context, access, path)
+            val after = digest(context, documentAfterWrite)
+            if (documentAfterWrite.id != doc.id || after.first != nextSize || after.second != expectedAfterHash) {
                 throw IllegalStateException("TRANSFER_POSTCONDITION_FAILED")
             }
-            deleteDocumentVerified(context, access, parent, lock)
+            if (!prefs.edit().remove(APPEND_JOURNAL_KEY).commit()) {
+                throw IllegalStateException("APPEND_JOURNAL_CLEAR_FAILED")
+            }
             return JSONObject().put("appended", true).put("previousBytes", current.first)
                 .put("sizeBytes", after.first).put("appendedBytes", bytes.size)
                 .put("sha256", after.second).put("expectedNextOffset", after.first).put("persistentResume", true)
         } catch (error: Exception) {
-            // A durable lock deliberately remains after an uncertain write. The owner must inspect the hash before clearing it.
-            throw IllegalStateException("TRANSFER_RECOVERY_REQUIRED", error)
+            when (runCatching { recoverAppend(context, access) }.getOrNull()) {
+                AppendRecoveryState.APPLIED -> return JSONObject().put("appended", true).put("previousBytes", current.first)
+                    .put("sizeBytes", nextSize).put("appendedBytes", bytes.size)
+                    .put("sha256", expectedAfterHash).put("expectedNextOffset", nextSize)
+                    .put("persistentResume", true).put("recovered", true)
+                AppendRecoveryState.NOT_APPLIED -> throw error
+                null, AppendRecoveryState.CONFLICT -> throw IllegalStateException("TRANSFER_RECOVERY_REQUIRED", error)
+            }
         }
+    }
+
+    internal fun classifyAppendRecovery(
+        currentSize: Long,
+        currentSha256: String,
+        expectedOffset: Long,
+        expectedSha256: String,
+        expectedNextOffset: Long,
+        expectedNextSha256: String
+    ): AppendRecoveryState = when {
+        currentSize == expectedNextOffset && currentSha256 == expectedNextSha256 -> AppendRecoveryState.APPLIED
+        currentSize == expectedOffset && currentSha256 == expectedSha256 -> AppendRecoveryState.NOT_APPLIED
+        else -> AppendRecoveryState.CONFLICT
+    }
+
+    private fun recoverAppend(context: Context, access: Access): AppendRecoveryState? {
+        val prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val raw = prefs.getString(APPEND_JOURNAL_KEY, null) ?: return null
+        val journal = runCatching { JSONObject(raw) }
+            .getOrElse { throw IllegalStateException("APPEND_RECOVERY_REQUIRED") }
+        val path = journal.getString("path")
+        normalizeRelativePath(path)
+        val expectedOffset = journal.getLong("expectedOffset")
+        val expectedSha256 = journal.getString("expectedSha256")
+        val expectedNextOffset = journal.getLong("expectedNextOffset")
+        val expectedNextSha256 = journal.getString("expectedNextSha256")
+        val chunkSha256 = journal.getString("chunkSha256")
+        val documentId = journal.getString("documentId")
+        if (expectedOffset < 0 || expectedNextOffset <= expectedOffset || expectedNextOffset > MAX_FILE_BYTES) {
+            throw IllegalStateException("APPEND_RECOVERY_REQUIRED")
+        }
+        requireHash(expectedSha256)
+        requireHash(expectedNextSha256)
+        requireHash(chunkSha256)
+        if (!journal.optBoolean("attempted", true)) {
+            if (!prefs.edit().remove(APPEND_JOURNAL_KEY).commit()) {
+                throw IllegalStateException("APPEND_JOURNAL_CLEAR_FAILED")
+            }
+            return AppendRecoveryState.NOT_APPLIED
+        }
+        val doc = resolve(context, access, path)
+        if (doc.isDirectory || doc.id != documentId) throw IllegalStateException("APPEND_RECOVERY_REQUIRED")
+        val current = digest(context, doc)
+        val outcome = classifyAppendRecovery(
+            current.first, current.second, expectedOffset, expectedSha256,
+            expectedNextOffset, expectedNextSha256
+        )
+        if (outcome == AppendRecoveryState.CONFLICT) throw IllegalStateException("APPEND_RECOVERY_REQUIRED")
+        if (!prefs.edit().remove(APPEND_JOURNAL_KEY).commit()) {
+            throw IllegalStateException("APPEND_JOURNAL_CLEAR_FAILED")
+        }
+        return outcome
     }
 
     private fun move(context: Context, access: Access, from: String, to: String, expectedSha: String): JSONObject {
@@ -521,6 +602,7 @@ object FileAccess {
         val newText = args.getString("newText")
         val expectedReplacements = args.getInt("expectedReplacements")
         if (oldText.isEmpty() || expectedReplacements !in 1..1000) throw IllegalArgumentException("EDIT_PRECONDITION_REQUIRED")
+        if (oldText.contains('\u0000') || newText.contains('\u0000')) throw IllegalArgumentException("TEXT_FILE_REQUIRED")
         val matches = Regex(Regex.escape(oldText)).findAll(text).count()
         if (matches != expectedReplacements) throw IllegalArgumentException("EDIT_MATCH_COUNT_MISMATCH")
         val replacement = text.replace(oldText, newText)
