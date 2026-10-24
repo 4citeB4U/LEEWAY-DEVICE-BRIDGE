@@ -7,6 +7,7 @@ import {describeGpuService} from './index.mjs';
 import {defaultPreferencesPath,readGpuPreference,setGpuPreference} from './preferences.mjs';
 import {validateInferenceRequest} from '../gpu-inference/index.mjs';
 import {createInferenceRoutes} from './inference-routes.mjs';
+import {createNativeSoftwareGraphicsDiagnostic} from './software-graphics-diagnostic.mjs';
 
 export const API_VERSION='leeway.gpu.service.v1';
 const reply=(res,status,payload,extraHeaders={})=>{
@@ -61,7 +62,7 @@ export function publicStatus(platform=process.platform,{preferenceFile=defaultPr
    effectiveMode:requestedEnabled?'REQUESTED_NOT_AUTHORIZED':'OFF',previewInference:previewMode,
   supportedConsumers:'EXPLICIT_SDK_OR_IPC_INTEGRATION_REQUIRED'};
 }
-export function createGpuService({platform=process.platform,preferenceFile=defaultPreferencesPath(),previewProvider=null,inferenceProvider=null,authenticateClient}={}){
+export function createGpuService({platform=process.platform,preferenceFile=defaultPreferencesPath(),previewProvider=null,inferenceProvider=null,authenticateClient,softwareGraphicsDiagnostic=null}={}){
  const csrf=randomBytes(32).toString('hex');
  const inference=createInferenceRoutes({provider:inferenceProvider,authenticateClient,reply,
   enabled:()=>readGpuPreference(preferenceFile).requestedEnabled});
@@ -106,6 +107,36 @@ export function createGpuService({platform=process.platform,preferenceFile=defau
     if(!body.requestedEnabled)inference.cancelAll();
      return reply(res,200,await status());
    }
+    // LEEWAY HEADER — DO NOT REMOVE
+    // Original first-party Windows software engine, explicitly LAB_ONLY.
+    // The canonical /v1/execute and inference admissions are unchanged.
+    if(req.method==='GET'&&url.pathname==='/v1/diagnostics/software-graphics')
+     return reply(res,200,{schema:'leeway.gpu.software-graphics-diagnostic.v1',
+      available:typeof softwareGraphicsDiagnostic?.run==='function',
+      scope:'LAB_ONLY',productionReady:false,dispatchAllowed:false});
+    if(req.method==='POST'&&url.pathname==='/v1/diagnostics/software-graphics/run'){
+     if(req.headers.origin!=='http://'+host||
+        req.headers['x-leeway-csrf']!==csrf||
+        req.headers['content-type']!==undefined)
+       return reply(res,403,{code:'GPU_DIAGNOSTIC_ORIGIN_OR_TOKEN_REJECTED'});
+     let bytes=0;for await(const chunk of req){bytes+=chunk.length;
+       if(bytes>0)return reply(res,400,{code:'GPU_DIAGNOSTIC_BODY_FORBIDDEN'});}
+     if(typeof softwareGraphicsDiagnostic?.run!=='function')
+      return reply(res,503,{code:'GPU_SOFTWARE_DIAGNOSTIC_NOT_CONFIGURED',dispatchAllowed:false});
+     let result;try{result=await softwareGraphicsDiagnostic.run();}
+     catch{return reply(res,503,{code:'GPU_SOFTWARE_DIAGNOSTIC_EXECUTION_FAILED',dispatchAllowed:false});}
+     if(result?.status!=='PASS_DIAGNOSTIC_ONLY'||
+        result?.serviceId!=='leeway.gpu.service'||
+        result?.backend!=='LEEWAY_GPU_SOFTWARE'||
+        result?.scope!=='LAB_ONLY'||
+        result?.productionReady!==false||
+        result?.dispatchAllowed!==false||
+        result?.canonicalReceiptIssued!==false||
+        result?.osGpuRegistered!==false)
+       return reply(res,503,{code:'GPU_SOFTWARE_DIAGNOSTIC_EVIDENCE_INVALID',dispatchAllowed:false});
+     return reply(res,200,{...result,authority:'UNADMITTED_DIAGNOSTIC',
+       productionReady:false,dispatchAllowed:false,canonicalReceiptIssued:false});
+    }
     if(req.method==='GET'&&url.pathname==='/v1/inference/status'){
      if(!previewProvider)return reply(res,200,{available:false,mode:'UNAVAILABLE',reason:'GPU_INFERENCE_PROVIDER_NOT_CONFIGURED'});
      return reply(res,200,{...await previewProvider.status(),mode:previewProvider.mode||'LOCAL_GPU_PREVIEW',authority:'UNADMITTED_PREVIEW'});
@@ -162,6 +193,8 @@ export function createGpuService({platform=process.platform,preferenceFile=defau
      endpoint:'/v1/execute',discovery:'/v1/status',control:'/v1/control',
      compatiblePlatforms:['win32','linux','android','darwin','ios','ipados'],
      inference:{capabilities:'/v1/capabilities',activate:'/v1/models/activate',generate:'/v1/generate'},
+     softwareGraphicsDiagnostic:{status:'/v1/diagnostics/software-graphics',
+      run:'/v1/diagnostics/software-graphics/run',scope:'LAB_ONLY'},
      consumerMode:'explicit-registration',automaticSystemGpuReplacement:false,available:false});
    if(url.pathname==='/v1/execute')
     return reply(res,503,{status:'DENIED',code:'GPU_CANONICAL_EXECUTION_AUTHORITY_NOT_CONNECTED',
@@ -172,9 +205,9 @@ export function createGpuService({platform=process.platform,preferenceFile=defau
   }
  });
 }
-export async function listenGpuService({port=0,host='127.0.0.1',platform=process.platform,preferenceFile,previewProvider=null,inferenceProvider=null,authenticateClient}={}){
+export async function listenGpuService({port=0,host='127.0.0.1',platform=process.platform,preferenceFile,previewProvider=null,inferenceProvider=null,authenticateClient,softwareGraphicsDiagnostic=null}={}){
  if(host!=='127.0.0.1')throw Error('GPU_SERVICE_LOOPBACK_ONLY');
- const server=createGpuService({platform,preferenceFile,previewProvider,inferenceProvider,authenticateClient});
+ const server=createGpuService({platform,preferenceFile,previewProvider,inferenceProvider,authenticateClient,softwareGraphicsDiagnostic});
  server.requestTimeout=30000;
  server.headersTimeout=10000;
  await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,host,resolve)});
@@ -189,7 +222,11 @@ if(process.argv[1]&&basename(fileURLToPath(import.meta.url))===basename(process.
   let previewProvider=null;
   if(mode==='workstation')previewProvider=new ollama.OllamaGpuAdapter({baseUrl:process.env.LEEWAY_GPU_OLLAMA_URL||'http://127.0.0.1:21435',models,deviceName:process.env.LEEWAY_GPU_DEVICE_NAME||'NVIDIA GPU'});
   if(mode==='client')previewProvider=remote.createRemoteGpuClient({host:process.env.LEEWAY_GPU_REMOTE_HOST,port:Number(process.env.LEEWAY_GPU_REMOTE_PORT||4178),token,models});
-  const app=await listenGpuService({port,previewProvider});
+  const runnerPath=process.env.LEEWAY_GPU_SOFTWARE_DIAG_RUNNER;
+  const dllPath=process.env.LEEWAY_GPU_SOFTWARE_DIAG_DLL;
+  if(Boolean(runnerPath)!==Boolean(dllPath))throw Error('LEEWAY_SOFTWARE_DIAG_CONFIG_INCOMPLETE');
+  const softwareGraphicsDiagnostic=runnerPath?createNativeSoftwareGraphicsDiagnostic({runnerPath,dllPath}):null;
+  const app=await listenGpuService({port,previewProvider,softwareGraphicsDiagnostic});
   console.log('LEEWAY_GPU_LOCAL_APP_LISTEN 127.0.0.1:'+port+' MODE='+mode);
   if(mode==='workstation'){
    if(!token)throw Error('GPU_PAIRING_KEY_REQUIRED');
