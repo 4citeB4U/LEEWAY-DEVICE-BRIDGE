@@ -116,13 +116,15 @@ reviewed artifacts.
 
 ### Gate 4 — Production service activation
 
-**Not passed.** Current Runtime port and phone state are unknown: local socket
-inspection was denied by the sandbox, and the latest retained phone observation
-did not refresh because ADB could not start in that check. That retained
-observation recorded a connected device without the LeeWay Device Bridge package
-and with Accessibility inactive. Android requires the device owner to enable
-Accessibility in system settings. The governed MCP production composition has
-not been observed running with its real providers.
+**Not passed.** Runtime port reachability remains unknown because local socket
+inspection was denied by the sandbox. A live, read-only ADB check on 2026-10-24
+found the existing LeeWay Device Bridge app installed as `0.9.8-pocket-rc8`
+(version code 23). No app service was running; relay enablement, Agent Access,
+and SAF read/write grants were unset. Android Accessibility is enabled at the
+system level, but LeeWay's Device Operator service is not enabled. The governed
+MCP production composition has not been observed running with its real
+providers. No separate bridge app is needed; the existing app still needs its
+owner-controlled setup.
 
 ### Gate 5 — Desktop Commander parity
 
@@ -130,11 +132,13 @@ not been observed running with its real providers.
 open.** PR #56 now implements and tests bounded binary transfer, hash-checked
 moves and edits, interactive job/session I/O, directory paging and search on
 Windows, Linux and macOS. Android screen/UI routes and model/Agent Lee routes
-already exist behind the native relay and owner authority, but the latest
-retained phone observation recorded Accessibility as inactive; current phone
-state was not refreshed. These routes have not been proven live end to end.
-Android SAF file routes are implemented in the PR #60 candidate; Android CI
-passed, but the routes remain unqualified on a real owner-granted tree. Desktop
+already exist behind the native relay and owner authority, but the live check
+found LeeWay Accessibility and the relay inactive. These routes have not been
+proven live end to end. The installed app predates PR #60 and has no persisted
+SAF tree grants. Android SAF file routes are implemented in the PR #60
+candidate; Android CI passed, but the routes remain unqualified on a real
+owner-granted tree. This is an update to the existing app, not a second bridge
+application. Desktop
 screen/UI operations are not advertised. Interactive and search sessions are
 process-local, so restart recovery is not qualified.
 
@@ -148,14 +152,15 @@ process-local, so restart recovery is not qualified.
    Veritas PRE/POST, Receipt Ledger and Learning Ledger. Correlate every record
    to that same request.
 3. Activate the governed service with its real owner providers; verify startup,
-   reconnect, STOP, restart recovery and failure handling. Install the
-   appropriate Android build and have the device owner enable Accessibility
-   through Android settings.
+   reconnect, STOP, restart recovery and failure handling. Use the installed
+   Android app and have the device owner enable LeeWay Accessibility through
+   Android settings.
 4. Test the Android SAF-backed remote file routes on a real owner-granted
-   document tree. If the phone is not already running a build with PR #60's
-   source, update the existing Device Bridge app; no second bridge app is
-   introduced. Activate the phone relay and Accessibility service through
-   device-owner actions. Verify authenticated model/Agent Lee access with a live
+   document tree. PR #60 adds routes to the existing Device Bridge app; its
+   source is not yet in the installed build. Update that app only to test these
+   new routes; do not install a second bridge. The device owner must choose the
+   folder, activate the phone relay and enable LeeWay Accessibility. Verify
+   authenticated model/Agent Lee access with a live
    paired device. Qualify process restart recovery and implement desktop
    screen/UI operations before claiming those
    parity items.
