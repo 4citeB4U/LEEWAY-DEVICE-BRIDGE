@@ -3,10 +3,10 @@ REGION: 🟢 CORE / OPERATOR
 TAG: LEEWAY-C3-ADMISSION-BINDING
 WHO: Agent Lee / authorized LeeWay runtimes
 WHAT: Canonical C3 admission gate for Bridge.call(), replacing placeholder admission: async () => true.
-WHEN: Before every command dispatch across universal device adapters (iOS, Android, Windows, macOS, Linux).
+WHEN: Before every command dispatch across owner-registered device adapters.
 WHERE: 4citeB4U/LEEWAY-DEVICE-BRIDGE/operator
 WHY: Prevent unauthorized, unavailable, or non-consensual operations from executing.
-     Enforces platform capability state, authority tiers (READ vs MUTATE vs ADMIN),
+     Enforces registered-platform capability state, authority tiers (READ vs MUTATE vs ADMIN),
      enrolled trusted issuer consent tokens, and mandatory Veritas pre-gate compliance; denies by default.
 HOW: Bridge admission callback -> device platform lookup -> admitCommand() evaluation ->
      signed consent verification (verifyConsentEvidence) -> mandatory Veritas Pre-Gate attestation.
@@ -214,7 +214,9 @@ export function createC3AdmissionBinding({
 
     // 10. Qualified Gate Vector Conjunction: Bind each mathematical bit to an independently authenticated evidence record
     // Bit 0: Device Platform Registration Authority
-    const bit0 = (device && typeof platform === "string" && ["ios", "android", "windows", "macos", "linux"].includes(platform)) ? 1 : 0;
+    const platformRegistered = Array.isArray(registry?.adapters) &&
+      registry.adapters.some(adapter => adapter?.platform === platform);
+    const bit0 = (device && typeof platform === "string" && platformRegistered) ? 1 : 0;
     const evidenceBit0 = {
       bitIndex: 0,
       authority: "DEVICE_REGISTRATION",
