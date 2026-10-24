@@ -10,6 +10,8 @@ AUTHORITY: discovery is read-only; actuation must use existing C3 admission.
 LICENSE: MIT
 */
 import {spawn} from 'node:child_process';
+import {realpath,stat} from 'node:fs/promises';
+import path from 'node:path';
 export const VOICE_DUPLEX_URL='http://127.0.0.1:5173/LeeWay-Edge-RTC/conversation-gate.html';
 export const VOICE_STUDIO_URL='http://127.0.0.1:8897/studio.html';
 export async function getVoiceDuplexStatus({fetchImpl=fetch}={}){
@@ -26,6 +28,23 @@ export async function getVoiceDuplexStatus({fetchImpl=fetch}={}){
    entrypoint:VOICE_DUPLEX_URL,studio:VOICE_STUDIO_URL,results,
    productionCertified:false,physicalAcousticsVerified:false,
    deviceExecutionAuthorized:false,deviceCommands:'EXISTING_C3_ADMISSION_REQUIRED'};
+}
+export async function startLocalVoiceDuplex({
+  root=process.env.LEEWAY_VOICE_FABRIC_ROOT,
+  spawnImpl=spawn,
+}={}){
+  if(!root)throw Error('LEEWAY_VOICE_FABRIC_ROOT_REQUIRED');
+  const canonical=await realpath(path.resolve(root));
+  const file=path.join(canonical,'scripts','voice-duplex-start.mjs');
+  const scriptReal=await realpath(file);
+  if(scriptReal!==file || !(await stat(file)).isFile())throw Error('VOICE_FABRIC_START_SCRIPT_UNTRUSTED');
+  const p=spawnImpl(process.execPath,[file],{
+    cwd:canonical,detached:true,stdio:'ignore',shell:false,
+  });
+  p.unref?.();
+  return {initiated:true,processId:p.pid||null,
+    entrypoint:VOICE_DUPLEX_URL,mode:'EXPLICIT_LOCAL_OPERATOR_START',
+    ready:'NOT_YET_VERIFIED',deviceCommandsAuthorized:false};
 }
 export function openLocalVoiceDuplex({spawnImpl=spawn,platform=process.platform}={}){
  const cmd=platform==='win32'?'cmd':platform==='darwin'?'open':'xdg-open';
