@@ -24,13 +24,14 @@
   requires trusted providers; it does not generate owner keys or enroll itself.
   Runtime's binding retries failed cleanup in-process, while fresh-process
   cleanup recovery still needs durable owner records and qualification.
-- The current Device Bridge draft PR hardens startup, keeps voice routed only
+- The current Device Bridge source hardens startup, keeps voice routed only
   through LeeWay Voice Fabric, and adds compare-and-swap file editing, checked
   moves and bounded job input. Its previous Android and portable protocol/MCP CI
   pair passed after removing a stale voice-package reference. The latest
   portable protocol/MCP run also passes on Windows, Linux and macOS after fixing
   direct adapter batch bounds and aligning the same-path move assertion. The
-  Android build passes on the current PR head.
+  The retained Android build result is scoped to its recorded PR head and does
+  not include the candidate edits currently in this checkout.
 - Device Bridge PR #56 now carries bounded binary range reads, create-only
   binary writes, resumable chunk append, exact text edits, hash-checked moves,
   directory paging, interactive jobs/sessions and paged search. The 39-test
@@ -38,8 +39,11 @@
   adapter contracts, not production authority or physical cross-device parity.
 - Android source already contains the owner-granted Accessibility adapter,
   screen/UI routes, Voice Fabric boundary and local model/Agent Lee routes.
-  Its file picker stores an owner-granted Storage Access Framework tree, but
-  the remote router does not yet expose the same binary file operations.
+  This checkout now wires the owner-picked Storage Access Framework tree to
+  bounded read/write/hash/transfer/move/edit/directory routes and reports current
+  grants in the device passport. This candidate has not passed Android
+  compilation or physical owner-tree testing; historical Android CI evidence
+  does not cover these working-tree edits.
 
 ## Manifest and source identity
 
@@ -123,8 +127,9 @@ moves and edits, interactive job/session I/O, directory paging and search on
 Windows, Linux and macOS. Android screen/UI routes and model/Agent Lee routes
 already exist behind the native relay and owner authority, but the Android
 Accessibility service is inactive and these routes have not been proven live
-end to end. Android remote file transfer is not exposed. Desktop screen/UI
-operations are not advertised. Interactive and search sessions are
+end to end. Android SAF file routes are implemented in the current candidate
+worktree but remain unbuilt and unqualified on a real owner-granted tree. Desktop
+screen/UI operations are not advertised. Interactive and search sessions are
 process-local, so restart recovery is not qualified.
 
 ## Acceptance evidence still required
@@ -140,7 +145,7 @@ process-local, so restart recovery is not qualified.
    reconnect, STOP, restart recovery and failure handling. Install the
    appropriate Android build and have the device owner enable Accessibility
    through Android settings.
-4. Complete Android SAF-backed remote file capability binding, then test it on
+4. Build and test the Android SAF-backed remote file capability candidate on
    a real owner-granted document tree. Install and activate the phone relay and
    Accessibility service through device-owner actions. Verify authenticated
    model/Agent Lee access with a live paired device. Qualify process restart
@@ -149,4 +154,5 @@ process-local, so restart recovery is not qualified.
 
 No release or execution claim should advance from fixture tests or the
 diagnostic service alone.
+
 
