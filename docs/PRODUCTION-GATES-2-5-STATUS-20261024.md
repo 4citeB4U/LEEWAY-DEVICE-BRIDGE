@@ -26,12 +26,10 @@
   cleanup recovery still needs durable owner records and qualification.
 - The current Device Bridge source hardens startup, keeps voice routed only
   through LeeWay Voice Fabric, and adds compare-and-swap file editing, checked
-  moves and bounded job input. Its previous Android and portable protocol/MCP CI
-  pair passed after removing a stale voice-package reference. The latest
-  portable protocol/MCP run also passes on Windows, Linux and macOS after fixing
-  direct adapter batch bounds and aligning the same-path move assertion. PR #60
-  head `e18067679147a5a43a2e0dcdd94c9c02a27fae7f` passed the Android Build
-  workflow (run `40133692536`) and protocol/MCP workflow (run `40133692518`).
+  moves, journaled append recovery and bounded job input. PR #60 commit
+  `94a7cb7703abe98ec82b87fbbcc338feadb405a7` passed the Android Build workflow
+  (run `40134361817`) and protocol/MCP workflow (run `40134361826`) on Windows,
+  Linux and macOS.
   Android unit tests and package assembly passed; its artifact is attached to
   the PR run and was not published to GitHub Pages.
 - Device Bridge PR #56 now carries bounded binary range reads, create-only
@@ -43,7 +41,8 @@
   screen/UI routes, Voice Fabric boundary and local model/Agent Lee routes.
   This checkout now wires the owner-picked Storage Access Framework tree to
   bounded read/write/hash/transfer/move/edit/directory routes and reports current
-  grants in the device passport. The PR #60 Android build and unit tests pass;
+  grants in the device passport. Append, move and edit persist recovery journals.
+  The PR #60 Android build and unit tests pass;
   physical owner-tree/provider behavior and live relay execution remain
   unqualified. This is an additive change to the existing Android app, not a
   second bridge application.
