@@ -41,10 +41,10 @@ Each capability is registered through the existing MCP `schemas` map and the gua
 | 12 | create_directory | `device.directories.create` | BOUNDED |
 | 13 | list_directory | `device.directories.list` | PARTIAL: limit, no cursor paging |
 | 14 | move_file | `device.files.move` | BATCH3: SHA-bound move, exclusive destination, 64 MiB maximum |
-| 15 | start_search | `device.search.files`, `device.search.content` | PARTIAL: immediate bounded search, no long-running session |
-| 16 | get_more_search_results | None | MISSING: search continuation |
-| 17 | stop_search | None | MISSING: search cancellation |
-| 18 | list_searches | None | MISSING: search inventory |
+| 15 | start_search | `device.search.files`, `device.search.content`, `device.search.start` | BATCH5: bounded asynchronous workspace search with opaque ID |
+| 16 | get_more_search_results | `device.search.next` | BATCH5: cursor-paged results, max 50 per page |
+| 17 | stop_search | `device.search.stop` | BATCH5: cooperative cancellation and terminal state |
+| 18 | list_searches | `device.search.list` | BATCH5: session inventory, scoped to desktop adapter |
 | 19 | get_file_info | `device.files.info`, `device.files.hash` | BOUNDED |
 | 20 | edit_block | `device.files.edit` | BATCH3: exact text replacement; no DOCX/PDF editing |
 | 21 | start_process | `device.process.execute`, `device.job.start`, `device.session.start` | BATCH4: bounded allowlisted interactive session start; no arbitrary shell executable |
@@ -83,6 +83,17 @@ are additions; they do **not** compensate for missing reference commands.
   and distributed lease ownership are **not** established.
 - Focused MCP and CLI regression: 35/35 PASS on 2026-10-24.
 
+## Batch 5 delivered, not activated in production
+
+- `device.search.start`: asynchronous filename/content scans bounded to 5,000
+  entries, 8 MiB of scanned content, 512 results and 15 seconds.
+- `device.search.next`: paged, ordered results with explicit state and cursor.
+- `device.search.stop`: cooperative cancellation without mutating user files.
+- `device.search.list`: bounded search inventory.
+- Symbolic links are excluded; at most four scans run per adapter.
+- Focused search session acceptance: 4/4 PASS; comprehensive MCP/CLI
+  regression must be rerun before publication.
+
 Test boundary: disposable local workspace. Successful mock/fixture tests are not an
 owner-approved production command. Every protected MCP call still needs authenticated
 Formula, consent, and independent Veritas admission. No bypass fallback is permitted.
@@ -96,7 +107,9 @@ Formula, consent, and independent Veritas admission. No bypass fallback is permi
 3. Process parity: complete remote persistence, detached-session restoration,
    reconnect/error recovery and no orphan jobs; current in-process sessions are
    bounded and cursor-paged, not yet proven across service restart.
-4. Search parity: ongoing sessions, continuation, cancel and scope checks.
+4. Search parity: the session lifecycle, continuation and cancellation are now
+   covered by bounded fixture tests; verify large real-world searches, restart
+   recovery, search result integrity and remote cancellation semantics.
 5. Device management, configuration, usage and audit/history equivalence.
 6. Windows + Android + iOS interoperability, portable non-LLM execution, UI
    authorization, STOP/reconnect, physically observed device proof.

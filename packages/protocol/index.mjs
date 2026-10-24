@@ -30,6 +30,10 @@ export const schemas = Object.freeze({
   'device.directories.create': z.object({ path: z.string().min(1).max(1024) }).strict(),
   'device.search.files': z.object({ path: z.string().min(1).max(1024).default('.'), query: z.string().min(1).max(128), limit: z.number().int().min(1).max(200).default(50) }).strict(),
   'device.search.content': z.object({ path: z.string().min(1).max(1024).default('.'), query: z.string().min(1).max(128), limit: z.number().int().min(1).max(50).default(20) }).strict(),
+  'device.search.start': z.object({ path: z.string().min(1).max(1024).default('.'), query: z.string().min(1).max(128), mode: z.enum(['name','content']).default('name') }).strict(),
+  'device.search.next': z.object({ searchId: z.string().uuid(), offset: z.number().int().safe().min(0).default(0), limit: z.number().int().min(1).max(50).default(20) }).strict(),
+  'device.search.stop': z.object({ searchId: z.string().uuid() }).strict(),
+  'device.search.list': z.object({ limit: z.number().int().min(1).max(20).default(10) }).strict(),
   'device.process.list': z.object({ limit: z.number().int().min(1).max(500).default(200) }).strict(),
   'device.process.terminate': z.object({ pid: z.number().int().min(1), expectedCommand: z.string().min(1).max(260) }).strict(),
   'device.job.start': z.object({

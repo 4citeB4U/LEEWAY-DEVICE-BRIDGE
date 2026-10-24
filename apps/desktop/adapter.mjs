@@ -16,13 +16,14 @@ import { spawn, execFile } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { fileDigest, binaryRange, binaryCreate, guardedMove, exactEdit } from './file-parity.mjs';
 import { DesktopSessions } from './process-sessions.mjs';
+import { DesktopSearchSessions } from './search-sessions.mjs';
 import { promisify } from 'node:util';
 const execFileAsync = promisify(execFile);
 
 // Bounded workspace files and explicitly allowlisted process execution. Never invokes a shell.
 export class DesktopAdapter {
-  constructor(root) { this.root = path.resolve(root); this.jobs = new Map(); this.sessions = new DesktopSessions(this); }
-  async discover() { await fs.access(this.root); return ['device.health','device.info','device.files.read','device.files.info','device.files.read_multiple','device.files.write','device.files.hash','device.files.read_binary','device.files.write_binary','device.files.move','device.files.edit','device.directories.list','device.directories.create','device.search.files','device.search.content','device.process.list','device.process.terminate','device.process.execute','device.job.start','device.job.status','device.job.stop','device.session.start','device.session.read','device.session.input','device.session.stop','device.session.list']; }
+  constructor(root) { this.root = path.resolve(root); this.jobs = new Map(); this.sessions = new DesktopSessions(this); this.searchSessions = new DesktopSearchSessions(this); }
+  async discover() { await fs.access(this.root); return ['device.health','device.info','device.files.read','device.files.info','device.files.read_multiple','device.files.write','device.files.hash','device.files.read_binary','device.files.write_binary','device.files.move','device.files.edit','device.directories.list','device.directories.create','device.search.files','device.search.content','device.search.start','device.search.next','device.search.stop','device.search.list','device.process.list','device.process.terminate','device.process.execute','device.job.start','device.job.status','device.job.stop','device.session.start','device.session.read','device.session.input','device.session.stop','device.session.list']; }
   async safePath(relative, writing = false) {
     if (path.isAbsolute(relative) || relative.includes(':') || relative.includes('\0')) throw new Error('PATH_OUTSIDE_WORKSPACE');
     const parts = relative.replaceAll('\\', '/').split('/');
@@ -184,6 +185,10 @@ export class DesktopAdapter {
     if (capability === 'device.directories.create') return this.createDirectory(args);
     if (capability === 'device.search.files') return this.searchFiles(args);
     if (capability === 'device.search.content') return this.searchContent(args);
+    if (capability === 'device.search.start') return this.searchSessions.start(args);
+    if (capability === 'device.search.next') return this.searchSessions.next(args);
+    if (capability === 'device.search.stop') return this.searchSessions.stop(args);
+    if (capability === 'device.search.list') return this.searchSessions.list(args);
     if (capability === 'device.process.list') return this.listProcesses(args);
     if (capability === 'device.process.terminate') return this.terminateProcess(args);
     if (capability === 'device.job.start') return this.startJob(args);
