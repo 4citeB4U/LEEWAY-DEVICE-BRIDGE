@@ -1,12 +1,12 @@
 # Portable device contract and MCP foundation
 
-This is an additive monorepo foundation. `apps/android` remains the existing Android implementation. No package migration or competing relay is required.
+This is an additive monorepo foundation. `apps/android` remains the existing Android Device Bridge app; PR #60 adds SAF-backed file routes to that app. No package migration or competing relay is required.
 
 | Path | Implemented responsibility |
 | --- | --- |
 | `packages/protocol` | Common capability argument schemas, admission boundary, per-device grants, evidence hashes |
 | `packages/agent-relay` | Client for the existing production WebSocket relay protocol |
-| `apps/android` | Existing Device Bridge app; unchanged by this foundation |
+| `apps/android` | Existing Device Bridge app, extended by PR #60 with owner-scoped SAF file routes |
 | `apps/desktop` | Node stdio MCP host, bounded local workspace file operations and interactive process pipes |
 | `apps/web` | Browser capability boundary documentation; no browser-control adapter yet |
 
@@ -58,7 +58,7 @@ Every dispatched operation must first persist an ADMITTED receipt. Completion pe
 
 The desktop adapter supports bounded UTF-8 create/read, compare-and-swap file replacement, hash-checked moves, and interactive stdin/stdout pipes for allowlisted long-running processes. Text file writes are limited to 64 KiB. A file replacement requires the SHA-256 read from the current version; it prefers same-directory rename and uses an in-place recovery path when the OS denies that rename. A move requires the expected source SHA and refuses an existing destination; it copies to an exclusively created destination, verifies source and destination bytes, then removes the source. An interrupted move may leave both paths, so inspect state after an uncertain result before retrying. Interactive jobs are pipes, not pseudo-terminals, so full-screen terminal programs and terminal resize/key semantics are not provided. These controls remain bounded to the configured workspace and explicit process allowlist.
 
-The desktop adapter still has no native screen capture, mouse/keyboard control or browser control. Android screen/UI operations require the owner-enabled Accessibility service; the relay only advertises capabilities the phone reports. The current Android source candidate in this checkout routes the bounded file/directory operations through the exact owner-selected Storage Access Framework tree. This candidate has not yet passed an Android build or a physical owner-tree test in this checkout. It does not bypass mobile permissions, install a background daemon, pair automatically, add WebRTC, or establish universal platform support. Earlier Windows Node 24 and cross-platform CI results remain scoped to the source revisions they tested; they do not test these Android source edits or prove a live Fold/production relay.
+The desktop adapter still has no native screen capture, mouse/keyboard control or browser control. Android screen/UI operations require the owner-enabled Accessibility service; the relay only advertises capabilities the phone reports. PR #60 routes bounded file/directory operations through the exact owner-selected Storage Access Framework tree in the existing Android app. Its Android Build workflow passed `testDebugUnitTest assembleDebug` at commit `e18067679147a5a43a2e0dcdd94c9c02a27fae7f` (run `40133692536`); the artifact is PR-only and was not published. The protocol/MCP workflow passed on Windows, Linux and macOS at the same commit (run `40133692518`). Physical owner-tree/provider behavior and live phone relay execution remain unqualified. This adds no second bridge app, permission bypass, background daemon, automatic pairing, WebRTC, or universal platform support.
 
 Run `npm run test:mcp` for a real official SDK stdio roundtrip, file read/write, capability denial, missing admission, failed receipt persistence, changed capabilities, traversal/link/file-size defenses, relay authentication, nested execution errors, timeout and malformed response checks. Run `npm audit` for dependency findings.
 
