@@ -21,6 +21,16 @@ The host passes `inferenceProvider` and `authenticateClient` to
 LeeWay graph. The authentication adapter returns the verified `clientId`;
 request JSON cannot provide its own identity, URLs, callbacks or authority.
 
+This is a trusted deployment composition contract, not a claim that the generic
+command-line launcher already binds production authorities. The current CLI
+entrypoint wires only the explicitly labeled preview provider; it does not
+construct the governed `inferenceProvider` or discover owner authorities from
+an OS path, local port, container, or request. Governed generation therefore
+remains unavailable through that launcher until an authorized Runtime Fabric
+startup supplies the existing owner providers and authenticated-client adapter.
+The cross-repository full-provider test uses diagnostic fixture providers and
+does not certify ordinary launcher wiring or production enrollment.
+
 ```js
 const server = await listenGpuService({
   port: deployment.port,
