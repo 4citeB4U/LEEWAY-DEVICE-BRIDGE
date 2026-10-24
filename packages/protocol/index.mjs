@@ -7,10 +7,13 @@ export const schemas = Object.freeze({
   'device.health': empty,
   'device.info': empty,
   'device.files.read': z.object({ path: z.string().min(1).max(1024) }).strict(),
+  'device.files.info': z.object({ path: z.string().min(1).max(1024) }).strict(),
+  'device.files.read_multiple': z.object({ paths: z.array(z.string().min(1).max(1024)).min(1).max(8) }).strict(),
   'device.files.write': z.object({ path: z.string().min(1).max(1024), text: z.string().max(65536) }).strict(),
   'device.directories.list': z.object({ path: z.string().min(1).max(1024).default('.'), limit: z.number().int().min(1).max(500).default(200) }).strict(),
   'device.directories.create': z.object({ path: z.string().min(1).max(1024) }).strict(),
   'device.search.files': z.object({ path: z.string().min(1).max(1024).default('.'), query: z.string().min(1).max(128), limit: z.number().int().min(1).max(200).default(50) }).strict(),
+  'device.search.content': z.object({ path: z.string().min(1).max(1024).default('.'), query: z.string().min(1).max(128), limit: z.number().int().min(1).max(50).default(20) }).strict(),
   'device.process.list': z.object({ limit: z.number().int().min(1).max(500).default(200) }).strict(),
   'device.process.terminate': z.object({ pid: z.number().int().min(1), expectedCommand: z.string().min(1).max(260) }).strict(),
   'device.job.start': z.object({
@@ -39,6 +42,14 @@ export const schemas = Object.freeze({
   'device.apps.launch': z.object({ packageName: z.string().regex(/^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z0-9_]+)+$/).max(255) }).strict(),
   'model.status': empty,
   'model.inference': z.object({ prompt: z.string().min(1).max(8192) }).strict(),
+  // GPU inference preview traffic uses an authenticated relay room plus an
+  // application-level AES-GCM envelope. The relay must never receive prompts.
+  'gpu.inference.preview.sealed': z.object({
+    version: z.literal(1),
+    nonce: z.string().regex(/^[A-Za-z0-9_-]{16}$/),
+    ciphertext: z.string().min(1).max(48 * 1024),
+    tag: z.string().regex(/^[A-Za-z0-9_-]{22}$/),
+  }).strict(),
   'voice.status': empty,
   'voice.speak': z.object({ text: z.string().min(1).max(4096) }).strict(),
 });
