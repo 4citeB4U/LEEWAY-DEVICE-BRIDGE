@@ -1,15 +1,27 @@
+/*
+LEEWAY HEADER — DO NOT REMOVE
+REGION: LEEWAY.DEVICE.BRIDGE.DESKTOP
+TAG: LEEWAY.DESKTOP_COMMANDER_PARITY_ADAPTER_V1
+WHO: LeeWay Industries; WHAT: bounded host capability implementation.
+WHEN: 2026-10-24; WHERE: apps/desktop/adapter.mjs.
+WHY: Reuse the existing DesktopAdapter and append parity capabilities, not a second executor.
+HOW: Workspace-bound operations; command admission remains in Bridge.
+AUTHORITY: Candidate source only; independent Formula and Veritas remain mandatory.
+LICENSE: MIT
+*/
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { spawn, execFile } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
+import { fileDigest, binaryRange, binaryCreate, guardedMove, exactEdit } from './file-parity.mjs';
 import { promisify } from 'node:util';
 const execFileAsync = promisify(execFile);
 
 // Bounded workspace files and explicitly allowlisted process execution. Never invokes a shell.
 export class DesktopAdapter {
   constructor(root) { this.root = path.resolve(root); this.jobs = new Map(); }
-  async discover() { await fs.access(this.root); return ['device.health','device.info','device.files.read','device.files.info','device.files.read_multiple','device.files.write','device.directories.list','device.directories.create','device.search.files','device.search.content','device.process.list','device.process.terminate','device.process.execute','device.job.start','device.job.status','device.job.stop']; }
+  async discover() { await fs.access(this.root); return ['device.health','device.info','device.files.read','device.files.info','device.files.read_multiple','device.files.write','device.files.hash','device.files.read_binary','device.files.write_binary','device.files.move','device.files.edit','device.directories.list','device.directories.create','device.search.files','device.search.content','device.process.list','device.process.terminate','device.process.execute','device.job.start','device.job.status','device.job.stop']; }
   async safePath(relative, writing = false) {
     if (path.isAbsolute(relative) || relative.includes(':') || relative.includes('\0')) throw new Error('PATH_OUTSIDE_WORKSPACE');
     const parts = relative.replaceAll('\\', '/').split('/');
@@ -177,6 +189,11 @@ export class DesktopAdapter {
     if (capability === 'device.job.status') return this.jobView(args.jobId);
     if (capability === 'device.job.stop') { const j=this.jobs.get(args.jobId); if(!j)throw new Error('UNKNOWN_JOB'); if(j.child){j.state='STOPPING';j.child.kill();} return this.jobView(args.jobId); }
     if (capability === 'device.process.execute') return this.executeProcess(args);
+    if (capability === 'device.files.hash') return fileDigest(this,args);
+    if (capability === 'device.files.read_binary') return binaryRange(this,args);
+    if (capability === 'device.files.write_binary') return binaryCreate(this,args);
+    if (capability === 'device.files.move') return guardedMove(this,args);
+    if (capability === 'device.files.edit') return exactEdit(this,args);
     if (capability === 'device.files.info') {
       const filename = await this.safePath(args.path);
       const stat = await fs.stat(filename);
