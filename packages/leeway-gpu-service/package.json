@@ -1,0 +1,15 @@
+{
+  "name": "@leeway/device-bridge-gpu-service",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.mjs",
+    "./client": "./client.mjs",
+    "./service": "./service.mjs"
+  },
+  "scripts": {
+    "test": "node --test *.test.mjs",
+    "start": "node service.mjs"
+  }
+}
