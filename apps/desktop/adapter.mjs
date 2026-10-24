@@ -1,15 +1,49 @@
 import fs from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { spawn, execFile } from 'node:child_process';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { promisify } from 'node:util';
 const execFileAsync = promisify(execFile);
+async function hashFile(file,{maxBytes=Number.POSITIVE_INFINITY}={}) {
+  const hash=createHash('sha256');let bytes=0;
+  for await(const chunk of createReadStream(file)){
+    bytes+=chunk.length;if(bytes>maxBytes)throw new Error('FILE_TOO_LARGE');hash.update(chunk);
+  }
+  return {sha256:hash.digest('hex'),bytes};
+}
+async function moveNoReplace(source,target,expectedSha256) {
+  const before=await fs.stat(source);let handle;
+  try { handle=await fs.open(target,'wx',0o600); }
+  catch(error) { if(error.code==='EEXIST')throw new Error('TARGET_ALREADY_EXISTS');throw error; }
+  const hash=createHash('sha256');
+  let open=true,bytes=0;
+  try {
+    for await(const chunk of createReadStream(source)){
+      hash.update(chunk);bytes+=chunk.length;let offset=0;
+      while(offset<chunk.length){const written=await handle.write(chunk,offset,chunk.length-offset,null);if(!written.bytesWritten)throw new Error('FILE_MOVE_WRITE_FAILED');offset+=written.bytesWritten;}
+    }
+    const copiedSha256=hash.digest('hex');
+    if(copiedSha256!==expectedSha256)throw new Error('FILE_VERSION_MISMATCH');
+    await handle.sync();await handle.close();open=false;
+    const [after,sourceReadback,destinationReadback]=await Promise.all([fs.stat(source),hashFile(source),hashFile(target)]);
+    if(after.dev!==before.dev||after.ino!==before.ino||after.size!==before.size||after.mtimeMs!==before.mtimeMs||
+      sourceReadback.sha256!==copiedSha256||destinationReadback.sha256!==copiedSha256||destinationReadback.bytes!==bytes)
+      throw new Error('FILE_CHANGED_DURING_MOVE');
+    await fs.unlink(source);
+    return {sha256:copiedSha256,bytes};
+  } catch(error) {
+    if(open)await handle.close().catch(()=>{});
+    await fs.rm(target,{force:true}).catch(()=>{});
+    throw error;
+  }
+}
 
 // Bounded workspace files and explicitly allowlisted process execution. Never invokes a shell.
 export class DesktopAdapter {
   constructor(root) { this.root = path.resolve(root); this.jobs = new Map(); }
-  async discover() { await fs.access(this.root); return ['device.health','device.info','device.files.read','device.files.write','device.directories.list','device.directories.create','device.search.files','device.process.list','device.process.terminate','device.process.execute','device.job.start','device.job.status','device.job.stop']; }
+  async discover() { await fs.access(this.root); return ['device.health','device.info','device.files.read','device.files.write','device.files.replace','device.files.move','device.directories.list','device.directories.create','device.search.files','device.process.list','device.process.terminate','device.process.execute','device.job.start','device.job.write','device.job.status','device.job.stop']; }
   async safePath(relative, writing = false) {
     if (path.isAbsolute(relative) || relative.includes(':') || relative.includes('\0')) throw new Error('PATH_OUTSIDE_WORKSPACE');
     const parts = relative.replaceAll('\\', '/').split('/');
@@ -119,15 +153,26 @@ export class DesktopAdapter {
     const {stdout}=await execFileAsync('ps',['-p',String(pid),'-o','comm=']); if(path.basename(stdout.trim())!==args.expectedCommand)throw new Error('PROCESS_IDENTITY_MISMATCH'); process.kill(pid,'SIGTERM'); return {terminated:true,pid};
   }
   async startJob(args) {
-    const cwd=await this.safeDirectory(args.cwd), id=randomUUID(), child=spawn(this.executableName(args.executable),args.arguments,{cwd,shell:false,windowsHide:true,stdio:['ignore','pipe','pipe']});
-    const job={id,pid:child.pid,state:'RUNNING',stdout:'',stderr:'',exitCode:null,startedAt:new Date().toISOString(),timer:null,child};
+    const cwd=await this.safeDirectory(args.cwd), id=randomUUID(), child=spawn(this.executableName(args.executable),args.arguments,{cwd,shell:false,windowsHide:true,stdio:['pipe','pipe','pipe']});
+    const job={id,pid:child.pid,state:'RUNNING',stdout:'',stderr:'',exitCode:null,startedAt:new Date().toISOString(),timer:null,child,stdin:child.stdin,stdinEnded:false};
+    child.stdin.on('error',()=>{job.stdinEnded=true;});
     const add=(k,b)=>{job[k]=(job[k]+b.toString('utf8')).slice(-65536);};
     child.stdout.on('data',b=>add('stdout',b)); child.stderr.on('data',b=>add('stderr',b));
-    child.on('close',code=>{job.state='EXITED';job.exitCode=code;clearTimeout(job.timer);job.child=null;});
+    child.on('error',()=>{job.state='FAILED';job.spawnError='PROCESS_SPAWN_FAILED';clearTimeout(job.timer);job.child=null;job.stdin=null;});
+    child.on('close',code=>{if(job.state!=='FAILED'&&job.state!=='TIMED_OUT')job.state='EXITED';job.exitCode=code;clearTimeout(job.timer);job.child=null;job.stdin=null;});
     job.timer=setTimeout(()=>{if(job.child){job.state='TIMED_OUT';job.child.kill();}},args.timeoutMs);
     this.jobs.set(id,job); return {jobId:id,pid:job.pid,state:job.state};
   }
-  jobView(id) { const j=this.jobs.get(id); if(!j)throw new Error('UNKNOWN_JOB'); return {jobId:j.id,pid:j.pid,state:j.state,exitCode:j.exitCode,startedAt:j.startedAt,stdout:j.stdout,stderr:j.stderr}; }
+  async writeJob(args) {
+    const job=this.jobs.get(args.jobId);if(!job)throw new Error('UNKNOWN_JOB');
+    if(!job.child||!job.stdin||job.stdin.destroyed||job.stdinEnded)throw new Error('JOB_INPUT_CLOSED');
+    const bytes=Buffer.byteLength(args.text,'utf8');
+    if(job.stdin.writableLength+bytes>65536)throw new Error('JOB_INPUT_BACKPRESSURE');
+    await new Promise((resolve,reject)=>job.stdin.write(args.text,error=>error?reject(new Error('JOB_INPUT_FAILED')):resolve()));
+    if(args.closeInput){job.stdinEnded=true;job.stdin.end();}
+    return {accepted:true,bytes,inputClosed:job.stdinEnded};
+  }
+  jobView(id) { const j=this.jobs.get(id); if(!j)throw new Error('UNKNOWN_JOB'); return {jobId:j.id,pid:j.pid,state:j.state,exitCode:j.exitCode,startedAt:j.startedAt,stdout:j.stdout,stderr:j.stderr,inputOpen:Boolean(j.stdin&&!j.stdinEnded&&!j.stdin.destroyed),...(j.spawnError?{error:j.spawnError}:{})}; }
   async execute(capability, args) {
     if (capability === 'device.health') return { ok: true, platform: process.platform, adapter: 'bounded-workspace', uiControl: false };
     if (capability === 'device.info') return { platform: process.platform, architecture: os.arch(), node: process.version, uiControl: false };
@@ -137,6 +182,7 @@ export class DesktopAdapter {
     if (capability === 'device.process.list') return this.listProcesses(args);
     if (capability === 'device.process.terminate') return this.terminateProcess(args);
     if (capability === 'device.job.start') return this.startJob(args);
+    if (capability === 'device.job.write') return this.writeJob(args);
     if (capability === 'device.job.status') return this.jobView(args.jobId);
     if (capability === 'device.job.stop') { const j=this.jobs.get(args.jobId); if(!j)throw new Error('UNKNOWN_JOB'); if(j.child){j.state='STOPPING';j.child.kill();} return this.jobView(args.jobId); }
     if (capability === 'device.process.execute') return this.executeProcess(args);
@@ -148,7 +194,8 @@ export class DesktopAdapter {
         const buffer = Buffer.alloc(65537);
         const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
         if (bytesRead > 65536) throw new Error('FILE_TOO_LARGE');
-        return { text: buffer.subarray(0, bytesRead).toString('utf8') };
+        const text=buffer.subarray(0, bytesRead);
+        return { text:text.toString('utf8'),sha256:createHash('sha256').update(text).digest('hex') };
       } finally { await handle.close(); }
     }
     if (capability === 'device.files.write') {
@@ -156,6 +203,43 @@ export class DesktopAdapter {
       // Create-only prevents replacement of user files. Owner can rename/delete externally.
       await fs.writeFile(await this.safePath(args.path, true), args.text, { flag: 'wx', mode: 0o600 });
       return { created: true, bytes: Buffer.byteLength(args.text, 'utf8') };
+    }
+    if (capability === 'device.files.replace') {
+      const target=await this.safePath(args.path), before=await fs.lstat(target);
+      const existing=await hashFile(target,{maxBytes:65536});
+      if(existing.sha256!==args.expectedSha256)throw new Error('FILE_VERSION_MISMATCH');
+      if(Buffer.byteLength(args.text,'utf8')>65536)throw new Error('FILE_TOO_LARGE');
+      const previous=await fs.readFile(target), temporary=path.join(path.dirname(target),`.leeway-${randomUUID()}.tmp`);
+      try {
+        await fs.writeFile(temporary,args.text,{flag:'wx',mode:0o600});
+        const current=await fs.lstat(target);
+        if(current.dev!==before.dev||current.ino!==before.ino||current.size!==before.size||current.mtimeMs!==before.mtimeMs)
+          throw new Error('FILE_CHANGED_DURING_REPLACE');
+        if((await hashFile(target,{maxBytes:65536})).sha256!==args.expectedSha256)throw new Error('FILE_CHANGED_DURING_REPLACE');
+        try { await fs.rename(temporary,target); }
+        catch(error) {
+          if(!['EPERM','EACCES'].includes(error.code))throw error;
+          const handle=await fs.open(target,'r+');let changed=false;
+          try {
+            const latest=await handle.stat();
+            if(latest.dev!==before.dev||latest.ino!==before.ino||latest.size!==before.size||latest.mtimeMs!==before.mtimeMs)
+              throw new Error('FILE_CHANGED_DURING_REPLACE');
+            if((await hashFile(target,{maxBytes:65536})).sha256!==args.expectedSha256)throw new Error('FILE_CHANGED_DURING_REPLACE');
+            await handle.truncate(0);changed=true;await handle.writeFile(args.text,'utf8');await handle.sync();
+          } catch(writeError) {
+            if(changed){try{await handle.truncate(0);await handle.writeFile(previous);await handle.sync();}
+              catch{throw new Error('FILE_REPLACE_RECOVERY_FAILED');}}
+            throw writeError;
+          } finally { await handle.close(); }
+        }
+      } finally { await fs.rm(temporary,{force:true}); }
+      return {replaced:true,bytes:Buffer.byteLength(args.text,'utf8'),sha256:createHash('sha256').update(args.text,'utf8').digest('hex')};
+    }
+    if (capability === 'device.files.move') {
+      if(args.from===args.to)throw new Error('SAME_SOURCE_AND_TARGET');
+      const source=await this.safePath(args.from), target=await this.safePath(args.to,true);
+      const moved=await moveNoReplace(source,target,args.expectedSha256);
+      return {moved:true,from:args.from,to:args.to,...moved};
     }
     throw new Error('CAPABILITY_UNAVAILABLE');
   }

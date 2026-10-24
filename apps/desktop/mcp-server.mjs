@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { Bridge, schemas } from '../../packages/protocol/index.mjs';
 import { RelayAdapter } from '../../packages/agent-relay/index.mjs';
 import { DesktopAdapter } from './adapter.mjs';
+import { requireTrustedRuntimeComposition } from './runtime-composition.mjs';
 
 function screenResult(value) {
   if (value.ok !== true) return null;
@@ -57,24 +58,24 @@ const deviceSchema = z.object({
   url: z.string().url().optional(),
 }).strict();
 
-export async function start(configPath) {
+export async function start(configPath,{admission,receiptSink}={}) {
   if (!configPath) throw new Error('CONFIG_REQUIRED');
-  const config = z.object({ devices: z.array(deviceSchema).min(1).max(32), receipts: z.string().min(1) }).strict().parse(JSON.parse(await fs.readFile(configPath, 'utf8')));
+  const runtime=requireTrustedRuntimeComposition({admission,receiptSink});
+  const config = z.object({ devices: z.array(deviceSchema).min(1).max(32) }).strict().parse(JSON.parse(await fs.readFile(configPath, 'utf8')));
   const base = path.dirname(path.resolve(configPath));
   const devices = config.devices.map(d => ({ ...d, adapter: d.type === 'desktop'
     ? new DesktopAdapter(d.workspace ? path.resolve(base, d.workspace) : (() => { throw new Error('WORKSPACE_REQUIRED'); })())
     : new RelayAdapter({ deviceId: d.id, url: d.url, token: d.tokenEnv ? process.env[d.tokenEnv] : undefined }) }));
-  const receiptPath = path.resolve(base, config.receipts);
-  await fs.mkdir(path.dirname(receiptPath), { recursive: true });
-  const bridge = new Bridge(devices, {
-    // This explicit config policy is not a canonical Formula or Veritas evaluation.
-    admission: async () => true,
-    receiptSink: evidence => fs.appendFile(receiptPath, JSON.stringify(evidence) + '\n', { mode: 0o600 }),
-  });
+  // Configuration grants are a capability ceiling; they cannot authorize execution.
+  // Trusted Runtime Fabric supplies canonical admission and evidence persistence.
+  const bridge = new Bridge(devices,runtime);
   const server = createServer(bridge);
   await server.connect(new StdioServerTransport());
   return server;
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
-  start(process.argv[2]).catch(() => { console.error('Device Bridge MCP startup failed; check configuration and credential environment.'); process.exitCode = 1; });
+  start(process.argv[2]).catch(error => {
+    const code=/^[A-Z_]+$/.test(error?.message||'')?error.message:'DEVICE_BRIDGE_STARTUP_FAILED';
+    console.error(`Device Bridge MCP startup failed: ${code}`);process.exitCode=1;
+  });
 }

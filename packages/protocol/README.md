@@ -7,12 +7,12 @@ This is an additive monorepo foundation. `apps/android` remains the existing And
 | `packages/protocol` | Common capability argument schemas, admission boundary, per-device grants, evidence hashes |
 | `packages/agent-relay` | Client for the existing production WebSocket relay protocol |
 | `apps/android` | Existing Device Bridge app; unchanged by this foundation |
-| `apps/desktop` | Node stdio MCP host and bounded local workspace file/status adapter |
+| `apps/desktop` | Node stdio MCP host, bounded local workspace file operations and interactive process pipes |
 | `apps/web` | Browser capability boundary documentation; no browser-control adapter yet |
 
 ## Run
 
-Install Node 22 or newer, then run `npm ci --ignore-scripts`. Make an owner-controlled configuration file outside the repository (example below). Create the workspace directory. Start with `node apps/desktop/mcp-server.mjs /absolute/path/to/config.json`, or configure an MCP host to launch that command. Standard output is reserved for MCP JSON-RPC; errors go to standard error.
+Install Node 22 or newer, then run `npm ci --ignore-scripts`. Make an owner-controlled device configuration and workspace. The MCP server is started by a trusted LeeWay Runtime composition that injects canonical `admission` and `receiptSink` providers. Direct CLI startup without both providers fails closed; configuration grants alone do not authorize operations. Standard output is reserved for MCP JSON-RPC; startup errors go to standard error.
 
 ```json
 {
@@ -30,10 +30,11 @@ Install Node 22 or newer, then run `npm ci --ignore-scripts`. Make an owner-cont
       "url": "wss://agent-lee-x.vercel.app/api/device-relay",
       "grants": ["device.health", "model.status"]
     }
-  ],
-  "receipts": "evidence/controller-receipts.jsonl"
+  ]
 }
 ```
+
+The trusted startup calls `start(configPath, { admission, receiptSink })` using the existing Runtime owner adapters. Neither callback is accepted from request JSON or the device config. There is no local always-allow fallback.
 
 Relative paths resolve against the configuration directory. Set the existing owner-room token through the MCP process environment; never copy it into a repository, command line, prompt, or receipt. Omit the relay entry when using only the desktop adapter. No grants are enabled implicitly. Adding a grant does not implement an unavailable capability or override Android permission and device admission checks.
 
@@ -45,15 +46,15 @@ Successful `device_screen_capture` calls return native MCP ImageContent (JPEG or
 
 Admission requires a known device, known capability, strict bounded arguments, an explicit configuration grant, a positive admission callback, and fresh adapter discovery. The relay remains the device's owner authentication and execution gate. Its `remoteQualified` list is a supported route list, **not** proof of OS permission, verified behavior, or Formula approval. A successful discovery is never labeled verified.
 
-The library defaults to denial without an admission callback and a receipt sink. The runnable host uses the operator-owned configuration as a narrow local policy adapter. It does **not** execute canonical Formula, consume Veritas attestations, or invent `qA`. Canonical task admission can be connected through the async `admission` callback; it must return literal `true`. The application's existing Android Formula implementation is unchanged and is not endorsed by this host.
+The library and MCP startup both fail closed without an admission callback and a durable evidence sink. These callbacks are necessary startup bindings, not production certification: Bridge receipts remain hash-only controller observations with `formula: NOT_EVALUATED`. Trusted Runtime composition must execute the exact applicable Formula and Veritas gates and persist their canonical evidence before reporting production acceptance. This package creates no alternate Formula, Veritas, or ledger authority. The application's existing Android Formula implementation is unchanged and is not endorsed by this host.
 
 Every dispatched operation must first persist an ADMITTED receipt. Completion persists PASS only after a successful adapter response. Receipt storage failure prevents initial execution; failure after dispatch returns uncertainty (`operationMayHaveExecuted`). Do not blindly retry a failed mutation. Receipts record controller observations with argument/result SHA-256 digests and pre/post hash linkage; they omit raw prompts, file contents, and credentials. These hashes provide content binding, **not** device signatures, authenticated Veritas receipts, or tamper-proof durable storage. Preserve receipts using the deployment's access controls. SDK-rejected malformed requests never reach execution and do not create domain receipts.
 
 ## Limits and tested platforms
 
-The local adapter is a bounded, create-only UTF-8 file and status adapter, not a native UI daemon. It denies absolute/traversal paths, symlinks, hardlinks, reserved device paths, existing-file replacement and files above 64 KiB. Parent directories must already exist. It is intended for a dedicated owner-controlled workspace. Path checks are not an OS sandbox: do not let hostile local processes concurrently modify workspace directories (filesystem race isolation is not implemented).
+The desktop adapter supports bounded UTF-8 create/read, compare-and-swap file replacement, hash-checked moves, and interactive stdin/stdout pipes for allowlisted long-running processes. Text file writes are limited to 64 KiB. A file replacement requires the SHA-256 read from the current version; it prefers same-directory rename and uses an in-place recovery path when the OS denies that rename. A move requires the expected source SHA and refuses an existing destination; it copies to an exclusively created destination, verifies source and destination bytes, then removes the source. An interrupted move may leave both paths, so inspect state after an uncertain result before retrying. Interactive jobs are pipes, not pseudo-terminals, so full-screen terminal programs and terminal resize/key semantics are not provided. These controls remain bounded to the configured workspace and explicit process allowlist.
 
-No desktop screen capture, mouse/keyboard control, web browser control, mobile permission bypass, background daemon installation, automatic pairing, WebRTC, or universal platform support is implemented here. Windows Node 24 is the only platform tested for this change; macOS/Linux portability is a design goal pending platform testing. Android relay compatibility is tested against a local mock of the source-observed production wire contract, not a live Fold or production relay.
+The desktop adapter still has no native screen capture, mouse/keyboard control or browser control. Android screen/UI operations require the owner-enabled Accessibility service; the relay only advertises capabilities the phone reports. This change does not implement file operations through Android's authorized storage tree, mobile permission bypass, background daemon installation, automatic pairing, WebRTC or universal platform support. Windows Node 24 is the only platform tested for these changes; macOS/Linux portability is a design goal pending platform testing. Android relay compatibility is tested against a local mock of the source-observed production wire contract, not a live Fold or production relay.
 
 Run `npm run test:mcp` for a real official SDK stdio roundtrip, file read/write, capability denial, missing admission, failed receipt persistence, changed capabilities, traversal/link/file-size defenses, relay authentication, nested execution errors, timeout and malformed response checks. Run `npm audit` for dependency findings.
 

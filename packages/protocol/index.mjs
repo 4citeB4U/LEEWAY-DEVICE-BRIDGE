@@ -8,6 +8,8 @@ export const schemas = Object.freeze({
   'device.info': empty,
   'device.files.read': z.object({ path: z.string().min(1).max(1024) }).strict(),
   'device.files.write': z.object({ path: z.string().min(1).max(1024), text: z.string().max(65536) }).strict(),
+  'device.files.replace': z.object({ path: z.string().min(1).max(1024), text: z.string().max(65536), expectedSha256: z.string().regex(/^[a-f0-9]{64}$/) }).strict(),
+  'device.files.move': z.object({ from: z.string().min(1).max(1024), to: z.string().min(1).max(1024), expectedSha256: z.string().regex(/^[a-f0-9]{64}$/) }).strict(),
   'device.directories.list': z.object({ path: z.string().min(1).max(1024).default('.'), limit: z.number().int().min(1).max(500).default(200) }).strict(),
   'device.directories.create': z.object({ path: z.string().min(1).max(1024) }).strict(),
   'device.search.files': z.object({ path: z.string().min(1).max(1024).default('.'), query: z.string().min(1).max(128), limit: z.number().int().min(1).max(200).default(50) }).strict(),
@@ -19,6 +21,7 @@ export const schemas = Object.freeze({
     cwd: z.string().min(1).max(1024).default('.'),
     timeoutMs: z.number().int().min(1000).max(86400000).default(3600000),
   }).strict(),
+  'device.job.write': z.object({ jobId: z.string().uuid(), text: z.string().max(8192), closeInput: z.boolean().default(false) }).strict(),
   'device.job.status': z.object({ jobId: z.string().uuid() }).strict(),
   'device.job.stop': z.object({ jobId: z.string().uuid() }).strict(),
   'device.process.execute': z.object({
