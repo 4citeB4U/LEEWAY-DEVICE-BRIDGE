@@ -1,0 +1,29 @@
+name: Portable LeeWay GPU service contracts
+on:
+  pull_request:
+    paths:
+      - 'packages/leeway-gpu-service/**'
+      - 'packages/gpu-inference/**'
+      - '.github/workflows/portable-gpu-service.yml'
+  push:
+    branches: ['codex/leeway-gpu-portable-service']
+permissions:
+  contents: read
+jobs:
+  service:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Existing service, authentication, cancellation and evidence contracts
+        run: node --test packages/leeway-gpu-service/*.test.mjs packages/gpu-inference/*.test.mjs
+
+# Full-provider integration additionally needs the separately authorized private
+# Runtime checkout and reviewed GPU checkout; run it locally with both root envs.

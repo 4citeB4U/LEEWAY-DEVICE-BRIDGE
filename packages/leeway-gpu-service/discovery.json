@@ -1,0 +1,65 @@
+{
+  "schema": "leeway.gpu.service.discovery.v1",
+  "productName": "LeeWay Edge GPU",
+  "serviceId": "leeway.gpu.service",
+  "runtimeFabricProviderId": "edge-gpu-provider",
+  "canonicalOwner": "Runtime Fabric",
+  "bridgePackage": "@leeway/device-bridge-gpu-service",
+  "version": "0.1.0",
+  "backendNaming": {
+    "productIdentity": "LeeWay Edge GPU",
+    "physicalAdapters": "Implementation details, independently qualified per device"
+  },
+  "platforms": {
+    "windows": {
+      "platformBackendHint": "D3D12",
+      "transport": "CONFIGURED_PLATFORM_ADAPTER",
+      "qualification": "PENDING_GOVERNED_DEVICE_ACCEPTANCE",
+      "backend": "LEEWAY_GPU"
+    },
+    "linux": {
+      "platformBackendHint": "Vulkan",
+      "transport": "CONFIGURED_PLATFORM_ADAPTER",
+      "qualification": "PENDING_GOVERNED_DEVICE_ACCEPTANCE",
+      "backend": "LEEWAY_GPU"
+    },
+    "android": {
+      "platformBackendHint": "Vulkan",
+      "transport": "CONFIGURED_PLATFORM_ADAPTER",
+      "qualification": "PENDING_GOVERNED_DEVICE_ACCEPTANCE",
+      "backend": "LEEWAY_GPU"
+    },
+    "macos": {
+      "platformBackendHint": "Metal",
+      "transport": "CONFIGURED_PLATFORM_ADAPTER",
+      "qualification": "PENDING_GOVERNED_DEVICE_ACCEPTANCE",
+      "backend": "LEEWAY_GPU"
+    },
+    "ios": {
+      "platformBackendHint": "Metal",
+      "transport": "CONFIGURED_PLATFORM_ADAPTER",
+      "qualification": "PENDING_GOVERNED_DEVICE_ACCEPTANCE",
+      "backend": "LEEWAY_GPU"
+    },
+    "ipados": {
+      "platformBackendHint": "Metal",
+      "transport": "CONFIGURED_PLATFORM_ADAPTER",
+      "qualification": "PENDING_GOVERNED_DEVICE_ACCEPTANCE",
+      "backend": "LEEWAY_GPU"
+    }
+  },
+  "clients": "explicit-integration-and-authorized-application-registration",
+  "runtimeDispatchEnabled": false,
+  "requireFormula": true,
+  "requireLDWMD": true,
+  "requireContinuum": true,
+  "requireVeritas": true,
+  "mandatoryEnforcementVerified": false,
+  "otherApplicationsSupportedOnOptInBasis": true,
+  "operatingSystemDriverReplacement": false,
+  "inferenceEndpoints": {
+    "activate": "/v1/models/activate",
+    "capabilities": "/v1/capabilities",
+    "generate": "/v1/generate"
+  }
+}
