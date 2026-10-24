@@ -1,0 +1,56 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.DEVICE_BRIDGE.GPU_INFERENCE_PROTECTED_STARTUP_CI
+# TAG: LEEWAY_RUNTIME_SIGNED_STARTUP_ORIGINAL_SDK_RECOVERY_GATES_V1
+# WHO: Creator-authorized LeeWay engineering.
+# WHAT: Exercise actual Runtime Fabric + LeeWay GPU SDK through Device Bridge startup.
+# WHEN: 2026-10-24. WHERE: GitHub Actions.
+# WHY: Reproduce fail-closed production startup wiring, never manufacture enrollment.
+# HOW: Source-pinned checkouts + ephemeral diagnostic Ed25519 fixtures.
+# AUTHORITY: DIAGNOSTIC_FIXTURE_ONLY, no production authorization or ledger writes.
+# LICENSE: Existing LeeWay repository terms.
+name: LeeWay trusted GPU inference startup
+on:
+  pull_request:
+    paths:
+      - 'packages/leeway-gpu-service/trusted-startup.mjs'
+      - 'packages/leeway-gpu-service/trusted-startup.test.mjs'
+      - 'packages/leeway-gpu-service/TRUSTED-INFERENCE-STARTUP.md'
+      - '.github/workflows/leeway-gpu-trusted-inference-startup.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/leeway-gpu-service/trusted-startup.mjs'
+      - 'packages/leeway-gpu-service/trusted-startup.test.mjs'
+      - '.github/workflows/leeway-gpu-trusted-inference-startup.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  owner-signed-startup-contract:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, ubuntu-24.04, macos-15]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: 4citeB4U/LeeWay-Edge-GPU
+          ref: 3e0052b2d2a921559f005f8621f900feb77901bc
+          path: source-gpu
+      - uses: actions/checkout@v4
+        with:
+          repository: 4citeB4U/Leeway-Runtime-Fabric
+          ref: 6354dd756c28c1f6d3d24dd2f84361b546283eda
+          path: source-runtime
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run signed enrollment and separate fresh-process recovery gates
+        env:
+          LEEWAY_GPU_SOURCE_ROOT: ${{ github.workspace }}/source-gpu
+          LEEWAY_RUNTIME_SOURCE_ROOT: ${{ github.workspace }}/source-runtime
+        run: node --test packages/leeway-gpu-service/trusted-startup.test.mjs
+      - name: Reject forged production bindings and run existing GPU service tests
+        run: node --test packages/leeway-gpu-service/inference-routes.test.mjs packages/leeway-gpu-service/service.test.mjs
