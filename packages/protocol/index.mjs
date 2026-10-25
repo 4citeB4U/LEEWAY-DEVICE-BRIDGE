@@ -22,6 +22,7 @@ export const schemas = Object.freeze({
   'device.audit.usage': z.object({}).strict(),
   'skills.list': z.object({query:z.string().max(128).default(''),offset:z.number().int().safe().min(0).default(0),limit:z.number().int().min(1).max(100).default(25)}).strict(),
   'skills.read': z.object({skillId:z.string().min(1).max(240),expectedSha256:z.string().regex(/^[a-f0-9]{64}$/)}).strict(),
+  'skills.invoke': z.object({requestId:z.string().regex(/^[A-Za-z0-9._-]{8,128}$/),developerId:z.string().regex(/^[A-Za-z0-9._-]{8,128}$/),skillIds:z.array(z.string().regex(/^[a-z0-9-]{2,100}$/)).min(1).max(8),planSha256:z.string().regex(/^[a-f0-9]{64}$/),nonce:z.string().regex(/^[a-f0-9]{64}$/)}).strict(),
   'device.files.read': z.object({ path: z.string().min(1).max(1024) }).strict(),
   'device.files.info': z.object({ path: z.string().min(1).max(1024) }).strict(),
   'device.files.read_multiple': z.object({ paths: z.array(z.string().min(1).max(1024)).min(1).max(8) }).strict(),
