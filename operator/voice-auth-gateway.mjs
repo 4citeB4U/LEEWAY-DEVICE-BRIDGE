@@ -14,7 +14,7 @@ import http from 'node:http';
 import {randomBytes,scryptSync,timingSafeEqual,createHash} from 'node:crypto';
 
 const FRONTEND='https://4citeb4u.github.io';
-const ROUTES=Object.freeze({login:'/v1/voice/login',session:'/v1/voice/session',turn:'/v1/voice/turn',pairStart:'/v1/voice/pair/start',pairClaim:'/v1/voice/pair/claim',capabilities:'/v1/voice/capabilities',synthesize:'/v1/voice/synthesize',synthesisStatus:'/v1/voice/synthesis-status'});
+const ROUTES=Object.freeze({login:'/v1/voice/login',session:'/v1/voice/session',turn:'/v1/voice/turn',pairStart:'/v1/voice/pair/start',pairClaim:'/v1/voice/pair/claim',capabilities:'/v1/voice/capabilities',synthesize:'/v1/voice/synthesize',synthesisStatus:'/v1/voice/synthesis-status',canonicalVoice:'/v1/voice/canonical-binding'});
 const now=()=>Date.now();
 const sha=data=>createHash('sha256').update(data).digest('hex');
 const equal=(a,b)=>{const x=Buffer.from(String(a)),y=Buffer.from(String(b));return x.length===y.length&&timingSafeEqual(x,y)};
@@ -31,6 +31,7 @@ const boundedBody=async(req)=>{
 export function createVoiceAuthGateway({
  passwordHash,passwordSalt,fetchImpl=fetch,pairing=null,
  registeredApps={'leeway.voice.studio':FRONTEND},sessionDurationMs=30*60*1000,
+ voiceOwnerId=null,readCanonicalVoice=null,
  upstream='http://127.0.0.1:5173/__leeway/voice-turn',clock=now
 }={}){
  if(!/^[a-f0-9]{128}$/.test(passwordHash||'')||!(/^[a-f0-9]{32,128}$/.test(passwordSalt||'')))
@@ -115,6 +116,25 @@ export function createVoiceAuthGateway({
    return json(res,200,{schema:'leeway.voice.session.v1',authenticated:true,
     authority:'LEEWAY_DEVICE_BRIDGE_VOICE',csrfToken:session.csrf,
     appId:session.appId||'owner',scope:session.scope||'voice:turn:readonly'},headers);
+  }
+  // Owner-pinned read-only canonical Voice Fabric binding. Never accept an owner
+  // or identity selector from an HTTP request. Startup must enroll the owner
+  // and supply a trusted readback callback; no route to owner publication.
+  if(route===ROUTES.canonicalVoice&&method==='GET'){
+   if(!session)return deny(res,401,'VOICE_SESSION_REQUIRED');
+   if(session.scope&&session.scope!=='voice:turn:readonly')return deny(res,403,'VOICE_SCOPE_DENIED');
+   if(typeof voiceOwnerId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(voiceOwnerId)||
+      typeof readCanonicalVoice!=='function')return deny(res,503,'CANONICAL_VOICE_OWNER_UNBOUND');
+   try{
+    const binding=await readCanonicalVoice({ownerId:voiceOwnerId,appId:session.appId||'owner'});
+    if(binding?.authority!=='LEEWAY_VOICE_FABRIC'||
+       !/^kokoro-(?:af|am|bf|bm)_[a-z0-9]+$/.test(binding?.voicePackageId||'')||
+       typeof binding?.revision!=='string'||!/^[a-f0-9]{64}$/.test(binding.revision))
+      return deny(res,503,'CANONICAL_VOICE_READBACK_UNVERIFIED');
+    return json(res,200,{schema:'leeway.voice-consumer.v1',authority:'LEEWAY_VOICE_FABRIC',
+     binding:{voicePackageId:binding.voicePackageId},recordRevision:binding.revision,
+     publication:'OWNER_STUDIO_AUTHORIZED_ONLY',deviceExecutionAuthorized:false},headers);
+   }catch{return deny(res,503,'CANONICAL_VOICE_READBACK_UNAVAILABLE')}
   }
   if(route===ROUTES.synthesisStatus&&method==='GET'){
    if(!session)return deny(res,401,'VOICE_SESSION_REQUIRED');
