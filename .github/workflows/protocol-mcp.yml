@@ -22,3 +22,5 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm run test:mcp
+      - name: Verify independent trusted-composition startup regression
+        run: node --test apps/desktop/runtime-composition.leeway-readiness.test.mjs
