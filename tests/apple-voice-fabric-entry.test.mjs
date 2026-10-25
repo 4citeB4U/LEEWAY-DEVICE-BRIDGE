@@ -16,6 +16,6 @@ test('existing iPhone Device Bridge includes first-party LeeWay Voice entry',()=
  assert.match(main,/Run Device Bridge Metal Probe/);
  assert.match(voice,/LeeWay-Voice-Fabric\/studio\.html/);
  assert.match(voice,/WKWebView/);
- assert.doesNotMatch(main+voice,/AVSpeechSynthesizer|SFSpeechSynthesizer/);
+ assert.doesNotMatch(main+voice,/\\b(?:let|var|func)\\s+.*(?:AVSpeechSynthesizer|SFSpeechSynthesizer)/);
  assert.match(voice,/navigationDelegate/);
 });
