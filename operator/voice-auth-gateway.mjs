@@ -14,7 +14,7 @@ import http from 'node:http';
 import {randomBytes,scryptSync,timingSafeEqual,createHash} from 'node:crypto';
 
 const FRONTEND='https://4citeb4u.github.io';
-const ROUTES=Object.freeze({login:'/v1/voice/login',session:'/v1/voice/session',turn:'/v1/voice/turn',pairStart:'/v1/voice/pair/start',pairClaim:'/v1/voice/pair/claim',capabilities:'/v1/voice/capabilities'});
+const ROUTES=Object.freeze({login:'/v1/voice/login',session:'/v1/voice/session',turn:'/v1/voice/turn',pairStart:'/v1/voice/pair/start',pairClaim:'/v1/voice/pair/claim',capabilities:'/v1/voice/capabilities',synthesize:'/v1/voice/synthesize',synthesisStatus:'/v1/voice/synthesis-status'});
 const now=()=>Date.now();
 const sha=data=>createHash('sha256').update(data).digest('hex');
 const equal=(a,b)=>{const x=Buffer.from(String(a)),y=Buffer.from(String(b));return x.length===y.length&&timingSafeEqual(x,y)};
@@ -115,6 +115,34 @@ export function createVoiceAuthGateway({
    return json(res,200,{schema:'leeway.voice.session.v1',authenticated:true,
     authority:'LEEWAY_DEVICE_BRIDGE_VOICE',csrfToken:session.csrf,
     appId:session.appId||'owner',scope:session.scope||'voice:turn:readonly'},headers);
+  }
+  if(route===ROUTES.synthesisStatus&&method==='GET'){
+   if(!session)return deny(res,401,'VOICE_SESSION_REQUIRED');
+   try{
+    const reply=await fetchImpl('http://127.0.0.1:8877/api/local/status',{signal:AbortSignal.timeout(5000),redirect:'error'});
+    if(!reply.ok)return deny(res,503,'KOKORO_UNAVAILABLE');
+    const state=await reply.json();
+    return json(res,200,{schema:'leeway.voice.synthesis-status.v1',ready:state?.kokoro?.ready===true,voices:state?.kokoro?.voices||[]},headers);
+   }catch{return deny(res,503,'KOKORO_UNAVAILABLE')}
+  }
+  if(route===ROUTES.synthesize&&method==='POST'){
+   if(!session)return deny(res,401,'VOICE_SESSION_REQUIRED');
+   if(session.scope&&session.scope!=='voice:turn:readonly')return deny(res,403,'VOICE_SCOPE_DENIED');
+   if(!equal(req.headers['x-leeway-voice-csrf']||'',session.csrf))return deny(res,403,'VOICE_CSRF_DENIED');
+   if(!(req.headers['content-type']||'').startsWith('application/json'))return deny(res,415,'JSON_REQUIRED');
+   let data;try{data=await boundedBody(req)}catch{return deny(res,400,'VOICE_BODY_INVALID')}
+   if(data?.schema!=='leeway.voice.synthesize.v1'||!/^kokoro-(?:af|am|bf|bm)_[a-z0-9]+$/.test(data.voicePackageId||'')||typeof data.text!=='string'||!data.text.trim()||data.text.length>1200)
+    return deny(res,422,'VOICE_SYNTHESIS_INVALID');
+   try{
+    const reply=await fetchImpl('http://127.0.0.1:8877/api/local/synthesize',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({voicePackageId:data.voicePackageId,text:data.text}),signal:AbortSignal.timeout(90000),redirect:'error'});
+    if(!reply.ok)return deny(res,503,'KOKORO_SYNTHESIS_UNAVAILABLE');
+    const size=Number(reply.headers?.get?.('content-length')||0);
+    if(size>24000000)return deny(res,502,'KOKORO_AUDIO_TOO_LARGE');
+    const raw=await reply.text();if(raw.length>24000000)return deny(res,502,'KOKORO_AUDIO_TOO_LARGE');
+    const audio=JSON.parse(raw);
+    if(typeof audio.audioContent!=='string'||audio.audioContent.length>23000000||!/^[A-Za-z0-9+/=]+$/.test(audio.audioContent)||!Number.isFinite(audio.sampleRate))return deny(res,502,'KOKORO_AUDIO_INVALID');
+    return json(res,200,{schema:'leeway.voice.synthesis-result.v1',audioContent:audio.audioContent,sampleRate:audio.sampleRate},headers);
+   }catch{return deny(res,503,'KOKORO_SYNTHESIS_UNAVAILABLE')}
   }
   if(route===ROUTES.turn&&method==='POST'){
    if(!session)return deny(res,401,'VOICE_SESSION_REQUIRED');
