@@ -27,7 +27,7 @@ The service refuses startup if those values are missing or malformed. It binds o
 The voice gateway never exposes device-control capabilities or GPU authorization. Machine replies require verified Machine Consciousness evidence; explicit Qwen replies are marked `GENERATED_NOT_VERITAS_VERIFIED`, `verified:false`, `gpuInferenceVerified:false`. The upstream is the existing owner-local Edge RTC `/__leeway/voice-turn` endpoint (must be healthy first).
 
 ### Browser contract
-- `POST /v1/voice/login`: user-supplied passphrase over approved HTTPS; response sets HttpOnly Secure `__Host-leeway-voice` cookie and returns a CSRF nonce. 
+- `POST /v1/voice/login`: user-supplied passphrase over approved HTTPS; response sets HttpOnly Secure `__Host-leeway-voice` cookie and returns a CSRF nonce.
 - `GET /v1/voice/session`: requires active cookie and returns `schema=leeway.voice.session.v1`, `authenticated:true`, `authority=LEEWAY_DEVICE_BRIDGE_VOICE`, `csrfToken`.
 - `POST /v1/voice/turn`: requires active cookie and `x-leeway-voice-csrf`. Validates final text, mode (`machine` or `llm`) and `allowDeviceActions:false`. No auto-execution.
 - Default request origins other than `https://4citeb4u.github.io` are denied; the user-supplied password is never stored in the static browser app.
