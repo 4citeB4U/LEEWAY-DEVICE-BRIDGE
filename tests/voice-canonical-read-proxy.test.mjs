@@ -15,7 +15,7 @@ async function harness(config,run){
  const passwordHash=scryptSync(pass,Buffer.from(salt,'hex'),64).toString('hex');
  const g=await startVoiceAuthGateway({port:0,passwordHash,passwordSalt:salt,...config});
  const base='http://127.0.0.1:'+g.port;
- const req=(url,init={})=>fetch(base+url,{headers:{origin,...init.headers},...init});
+ const req=(url,init={})=>fetch(base+url,{...init,headers:{origin,...init.headers}});
  try{await run({req,pass});}finally{await new Promise(r=>g.server.close(r));}
 }
 test('denies anonymous, wrong origin and unbound owner',()=>harness({},async({req,pass})=>{
