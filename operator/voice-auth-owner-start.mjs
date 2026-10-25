@@ -32,7 +32,19 @@ let registeredApps;
 try{registeredApps=await loadVoiceAppRegistry(path.join(approvalDir,'registered-apps.json'))}
 catch(error){if(error.code!=='ENOENT')throw error;registeredApps=DEFAULT_VOICE_APPS}
 const pairing=createVoicePairing({root:path.join(approvalDir,'requests'),approvalKey,registeredApps});
+// Reuse the existing owner Voice Fabric -> Edge RTC read-only binding.
+// Trusted loopback source; never forward owner session data or accept request owner IDs.
+const canonicalUrl='http://127.0.0.1:5173/__leeway/voice-binding';
+const readCanonicalVoice=async()=>{
+ const response=await fetch(canonicalUrl,{method:'GET',headers:{accept:'application/json'},
+  signal:AbortSignal.timeout(3500),redirect:'error',cache:'no-store'});
+ if(!response.ok)throw Error('OWNER_CANONICAL_READBACK_UNAVAILABLE');
+ const body=await response.json();
+ return {authority:body.authority,voicePackageId:body.binding?.voicePackageId,
+  revision:body.recordRevision};
+};
 const result=await startVoiceAuthGateway({pairing,registeredApps,
+  voiceOwnerId:'agent-lee',readCanonicalVoice,
   host:'127.0.0.1',port:5332,passwordHash:data.passwordHash,
   passwordSalt:data.passwordSalt,
 });
