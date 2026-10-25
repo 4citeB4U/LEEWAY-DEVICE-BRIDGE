@@ -11,7 +11,10 @@
     "observe:iloader": "node scripts/observe-windows-iloader.mjs",
     "test:cli": "node --test tests/cli/*.test.mjs",
     "bridge": "node operator/device-bridge-cli.mjs",
-    "mcp": "node apps/desktop/mcp-server.mjs"
+    "mcp": "node apps/desktop/mcp-server.mjs",
+    "voice:owner-start": "node operator/voice-auth-owner-start.mjs",
+    "voice:owner-approve": "node operator/voice-owner-approval-desktop.mjs",
+    "test:voice-auth": "node --test tests/voice-auth-gateway.test.mjs tests/voice-passwordless-pairing.test.mjs tests/voice-app-registry.test.mjs"
   },
   "engines": { "node": ">=22" }
 }
