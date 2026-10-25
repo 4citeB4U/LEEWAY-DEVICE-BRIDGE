@@ -1,0 +1,45 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.DEVICE_BRIDGE.GPU_INFERENCE_STARTUP_FAIL_CLOSED_CI
+# TAG: LEEWAY_SOVEREIGN_PRIVATE_RUNTIME_UNAVAILABLE_CI_GUARD
+# WHO: Owner-authorized LeeWay engineering.
+# WHAT: Validate trusted source guard and service route without cross-repo tokens.
+# WHEN: 2026-10-24. WHERE: GitHub CI.
+# WHY: Runtime Fabric private repo cannot be fetched using Device Bridge GITHUB_TOKEN.
+# HOW: Fail-closed self-contained tests run on every OS; actual cross-repo integration
+#      runs in owner-controlled environment with verified source checkout roots.
+# AUTHORITY: DIAGNOSTIC_ONLY. No fixtures represented as production authority.
+name: LeeWay trusted GPU inference startup
+on:
+  pull_request:
+    paths:
+      - 'packages/leeway-gpu-service/trusted-startup.mjs'
+      - 'packages/leeway-gpu-service/trusted-startup.test.mjs'
+      - 'packages/leeway-gpu-service/TRUSTED-INFERENCE-STARTUP.md'
+      - '.github/workflows/leeway-gpu-trusted-inference-startup.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/leeway-gpu-service/trusted-startup.mjs'
+      - 'packages/leeway-gpu-service/trusted-startup.test.mjs'
+      - '.github/workflows/leeway-gpu-trusted-inference-startup.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  startup-source-and-denial-contract:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, ubuntu-24.04, macos-15]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check safe owner-only binding startup
+        run: node --check packages/leeway-gpu-service/trusted-startup.mjs
+      - name: Deny unauthorized startup; private Runtime/GPU integration skipped here
+        run: node --test packages/leeway-gpu-service/trusted-startup.test.mjs
+      - name: Assert existing HTTP inference route protections
+        run: node --test packages/leeway-gpu-service/inference-routes.test.mjs packages/leeway-gpu-service/service.test.mjs
