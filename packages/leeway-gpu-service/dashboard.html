@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LeeWay GPU — Control Center</title>
+<style>
+:root{color-scheme:dark;font-family:Segoe UI,system-ui,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 80% -15%,#173b60,#09111c 60%);color:#edf7ff}
+main{max-width:910px;margin:auto;padding:35px 26px}
+small{color:#98bcd8;letter-spacing:.14em}h1{font-size:clamp(38px,6vw,60px);margin:8px 0 4px}
+p{color:#bbd1e2;line-height:1.6}.warning{padding:9px 13px;background:#553618;border:1px solid #b27b2c;border-radius:12px;color:#ffdea5}
+.control{margin-top:22px;padding:24px;background:#102940;border:1px solid #497c9f;border-radius:20px}
+.control-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.control h2{margin:0 0 7px;font-size:24px}
+#gpu-switch{cursor:pointer;border:1px solid #7a96ab;border-radius:30px;padding:12px 26px;min-width:180px;
+ background:#233848;color:white;font-size:18px;font-weight:700}
+#gpu-switch[aria-checked=true]{background:#0d6e79;border-color:#78dfea}
+#gpu-switch:disabled{opacity:.6;cursor:wait}#mode{font-size:16px;color:#d7e9f6}
+.flow{display:flex;gap:8px;flex-wrap:wrap;margin:24px 0}
+.flow span{border:1px solid #376284;padding:12px;border-radius:10px;background:#112a40}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+article{background:#101f32;border:1px solid #31506a;padding:17px;border-radius:16px;min-height:76px}
+article b{display:block;font-size:12px;letter-spacing:.08em;color:#82badd;margin-bottom:10px}
+article span{overflow-wrap:anywhere}footer{padding:26px 0;font-size:13px;color:#bad0e1}
+.inference{margin-top:18px;padding:22px;background:#0d2234;border:1px solid #34728a;border-radius:18px}
+.api-info{margin-top:20px;padding:15px;background:#071521;border:1px solid #31506a;border-radius:12px}
+.api-info code{color:#9fe6e8;overflow-wrap:anywhere}
+.inference label{display:block;margin:12px 0 6px;color:#b9d5e5}
+.inference select,.inference textarea,.inference input{width:100%;background:#071521;color:#effaff;border:1px solid #41647d;border-radius:9px;padding:11px;font:inherit}
+.inference textarea{min-height:110px;resize:vertical}.inference button{margin-top:12px;border:0;border-radius:9px;padding:11px 17px;background:#24a1aa;color:#06171b;font-weight:700;cursor:pointer}
+.inference button:disabled{opacity:.55;cursor:wait}.preview-warning{color:#ffd695}.result{white-space:pre-wrap;overflow-wrap:anywhere;background:#071521;padding:14px;border-radius:10px;min-height:48px}
+</style></head><body><main>
+<small>LEEWAY INDUSTRIES / DEVICE BRIDGE / RUNTIME FABRIC</small>
+<h1>LeeWay GPU</h1>
+<p>Choose whether participating applications should request LeeWay GPU processing.</p>
+<div class="warning">Production dispatch is locked until canonical authorization, memory, persistence and Veritas gates pass.</div>
+<section class="control">
+ <div class="control-head"><div><h2>Use LeeWay GPU</h2><div id="mode" role="status" aria-live="polite">Reading preference…</div></div>
+ <button id="gpu-switch" type="button" role="switch" aria-label="Request LeeWay GPU" aria-checked="false" disabled>OFF</button></div>
+ <p>ON saves your preference. It does not override security controls or change other applications' graphics drivers.</p>
+</section>
+<div class="flow">
+<span>Formula</span><span>→</span><span>LDWMD</span><span>→</span>
+<span>Continuum</span><span>→</span><span>Native GPU</span><span>→</span><span>Veritas</span>
+</div>
+<section class="grid" id="data"><article><b>STATUS</b><span>Checking local service…</span></article></section>
+<section class="inference">
+ <h2>Run a model on this LeeWay GPU workstation</h2>
+ <p class="preview-warning">GPU inference preview: the workstation calls its local CUDA model runtime and accepts a result only when Ollama reports VRAM residency. This path is not yet admitted by Formula, LDWMD, Continuum or Veritas and does not create a canonical Receipt or Learning Ledger entry.</p>
+ <label for="gpu-model">Installed model</label><select id="gpu-model"><option value="qwen3.5:4b">Qwen 3.5 4B</option><option value="qwen2.5:0.5b">Qwen 2.5 0.5B</option></select>
+ <label for="gpu-prompt">Prompt</label><textarea id="gpu-prompt" maxlength="8192" placeholder="Ask the LeeWay GPU workstation to run a bounded inference…"></textarea>
+ <label for="gpu-max-tokens">Maximum output tokens</label><input id="gpu-max-tokens" type="number" min="1" max="1024" value="128">
+ <button id="gpu-infer" type="button" disabled>Run on LeeWay GPU</button>
+ <p id="gpu-infer-status" role="status" aria-live="polite">Checking preview runtime…</p>
+ <div id="gpu-infer-result" class="result" aria-live="polite"></div>
+ <div class="api-info"><strong>Connect a compatible app</strong>
+  <p>Apps that support an OpenAI-compatible custom endpoint can use <code>http://127.0.0.1:4178/v1</code> and the model listed above. This provides text inference through the paired workstation preview. It does not install a Windows GPU device or intercept Direct3D/Vulkan work.</p>
+ </div>
+</section>
+<footer>Windows: D3D12 • Android / Linux: Vulkan. Unmodified external applications will not be intercepted without a separately qualified integration layer or driver.</footer>
+<script>
+let token=null;let selected=false;const toggle=document.getElementById('gpu-switch');
+const mode=document.getElementById('mode');
+function render(status){
+ selected=status.requestedEnabled===true;
+ toggle.setAttribute('aria-checked',String(selected));toggle.textContent=selected?'ON — REQUESTED':'OFF';
+ mode.textContent=selected?(status.active?'Active LeeWay GPU':'Preference saved — awaiting authorization'):'Preference off — native GPU unchanged';
+ const labels={backend:'Platform backend',authorization:'Runtime Fabric issuer',formula:'Formula policy',
+ ldwmd:'Physical allocation',continuum:'Continuum authority',veritas:'Independent Veritas',supportedConsumers:'Client integration'};
+ const cards=Object.entries(labels).map(([key,label])=>{
+  const card=document.createElement('article');const b=document.createElement('b');
+  const text=document.createElement('span');b.textContent=label.toUpperCase();text.textContent=status[key]??'Unavailable';
+  card.append(b,text);return card;
+ });
+ document.getElementById('data').replaceChildren(...cards);
+}
+async function init(){
+ try{
+  const res=await fetch('/v1/control',{cache:'no-store'});
+  if(!res.ok)throw Error('SERVICE_UNAVAILABLE');
+  const data=await res.json();token=data.csrfToken;render(data);toggle.disabled=false;
+  await refreshInferenceStatus();
+ }catch{mode.textContent='Control unavailable; no preference changed';}
+}
+toggle.addEventListener('click',async()=>{
+ if(!token)return;
+ toggle.disabled=true;mode.textContent='Saving preference…';
+ try{
+  const res=await fetch('/v1/control',{method:'POST',headers:{'content-type':'application/json','x-leeway-csrf':token},
+   body:JSON.stringify({requestedEnabled:!selected})});
+  if(!res.ok)throw Error('PREFERENCE_REJECTED');
+  render(await res.json());
+ }catch{mode.textContent='Preference update failed; current mode unchanged';}
+ finally{toggle.disabled=false;}
+});
+const inferButton=document.getElementById('gpu-infer');
+async function refreshInferenceStatus(){
+ const status=document.getElementById('gpu-infer-status');
+ try{
+  const response=await fetch('/v1/inference/status',{cache:'no-store'});
+  const data=await response.json();
+  if(!response.ok||data.availableOk===false||data.available===false){status.textContent='GPU inference is not configured on this device.';return;}
+  if(Array.isArray(data.available)&&data.available.length){
+   const select=document.getElementById('gpu-model');
+   select.replaceChildren(...data.available.map(name=>{const option=document.createElement('option');option.value=name;option.textContent=name;return option;}));
+  }
+  status.textContent=data.mode==='REMOTE_GPU_PREVIEW'
+   ? `Paired to ${data.target}; the remote GPU is checked when you run a request.`
+   : `${data.mode||'GPU preview'} ready to attempt. VRAM residency is verified on each result.`;
+  inferButton.disabled=false;
+ }catch{status.textContent='GPU inference service is unavailable.';}
+}
+inferButton.addEventListener('click',async()=>{
+ const prompt=document.getElementById('gpu-prompt').value;
+ const model=document.getElementById('gpu-model').value;
+ const maxTokens=Number(document.getElementById('gpu-max-tokens').value);
+ const status=document.getElementById('gpu-infer-status');
+ const output=document.getElementById('gpu-infer-result');
+ if(!token||!prompt.trim()){status.textContent='Enter a prompt before running inference.';return;}
+ inferButton.disabled=true;output.textContent='';status.textContent='Submitting bounded inference request to LeeWay GPU…';
+ try{
+  const response=await fetch('/v1/inference/preview',{method:'POST',headers:{'content-type':'application/json','x-leeway-csrf':token},
+   body:JSON.stringify({requestId:crypto.randomUUID(),model,prompt,maxTokens})});
+  const data=await response.json();
+  if(!response.ok)throw Error(data.code||'GPU_PREVIEW_EXECUTION_FAILED');
+  status.textContent=`PASS — ${data.backend}; ${data.device}; ${(data.vramBytes/1024/1024).toFixed(0)} MiB VRAM; ${data.elapsedMs} ms. UNADMITTED PREVIEW.`;
+  output.textContent=data.response;
+ }catch(error){status.textContent=`GPU inference did not complete: ${error.message}. No CPU fallback was used.`;}
+ finally{inferButton.disabled=false;}
+});
+init();
+</script></main></body></html>

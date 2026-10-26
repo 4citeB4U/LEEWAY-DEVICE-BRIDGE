@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0.0",
+  "entryId": "LDB-C3-LEARNING-SEVEN-STAGE-EXECUTION-1792025080444",
+  "state": "CANONICAL_LEARNING_PHYSICAL_EXECUTION_VERIFIED",
+  "learnedStatement": "Universal Device Bridge governed read-only execution verified through Runtime Fabric real ingress, sovereign carrier consent, centralized Golden Formula evaluation, Veritas pre/post attestation, and physical readback on Apple iPhone 11 (00008030000C718C0E33402E).",
+  "evidence": {
+    "taskRunnerCorrelationId": "C3-PROD-ORIGIN-IPHONE11-1792025079327",
+    "targetId": "phone-iphone11",
+    "platform": "ios",
+    "carrierIssuer": "leeway.runtime.carrier.v1",
+    "carrierKeyId": "carrier-ed25519-key-001",
+    "carrierTokenNonce": "tok-gov-1dcf4e60-c00",
+    "formulaHealthStatus": "LEEWAY_FORMULA_V1_PASS",
+    "formulaReceiptSha256": "3d562aff55dd4673276c4c65295b21c9ec88880f8bf24b01d0a9226404dc81ca",
+    "formulaResultHash": "89b22679d3a6293ff58eee296ea4c79d3fec27c14c152679d18ba517574439d5",
+    "veritasPreReceiptId": "adceddbe-2de5-4c44-9f08-2911bb5c8732",
+    "veritasPostReceiptId": "105d2b3d-5927-4e18-b7a8-21166ee7b019",
+    "veritasComplianceScore": 1,
+    "nativeObservationSha256": "733ed3e5509e0fdee36c3f544b36acb936f3bae9c5654d4149756df8bea2507e",
+    "independentTruthSha256": "e03cad92752042b2db47de952ce67c277bd97b800ab841d8cdc8856e1c3442c2",
+    "finalReceiptSha256": "fa6098930ffd1603ed2655a1bedc019a83e71f2c2488a36bfb8804086aff010b"
+  },
+  "promotionBoundary": "Governed read-only physical device execution verified. Write and mutation capabilities remain subject to explicit human consent and individual capability qualification.",
+  "formulaMutation": false
+}

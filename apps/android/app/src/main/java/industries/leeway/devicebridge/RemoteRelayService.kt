@@ -35,6 +35,7 @@ class RemoteRelayService : Service() {
 
     @Volatile private var webSocket: WebSocket? = null
     @Volatile private var connecting = false
+    @Volatile private var authenticatedSocket: WebSocket? = null
     private var reconnectDelayMs = 1_000L
     private val seenCommandIds = Collections.synchronizedSet(mutableSetOf<String>())
     private val workstationKeeperTick = object : Runnable {
@@ -76,6 +77,7 @@ class RemoteRelayService : Service() {
         handler.removeCallbacksAndMessages(null)
         webSocket?.close(1000, "service stopped")
         webSocket = null
+        authenticatedSocket = null
         connecting = false
         RemoteRelayState.setConnection(this, false, "SERVICE_STOPPED")
         client.dispatcher.executorService.shutdown()
@@ -86,6 +88,7 @@ class RemoteRelayService : Service() {
     private fun connect() {
         if (!RemoteRelayState.enabled(this) || connecting || webSocket != null) return
         connecting = true
+        authenticatedSocket = null
         RemoteRelayState.setConnection(this, false, "FETCHING_PAGES_RELAY_CONFIG")
 
         val request = Request.Builder()
@@ -143,7 +146,7 @@ class RemoteRelayService : Service() {
                 handleMessage(ws, text)
             }
             override fun onClosed(ws: WebSocket, code: Int, reason: String) {
-                if (webSocket === ws) webSocket = null
+                if (webSocket === ws) { webSocket = null; authenticatedSocket = null }
                 connecting = false
                 RemoteRelayState.setConnection(
                     this@RemoteRelayService,
@@ -154,7 +157,7 @@ class RemoteRelayService : Service() {
             }
 
             override fun onFailure(ws: WebSocket, t: Throwable, response: Response?) {
-                if (webSocket === ws) webSocket = null
+                if (webSocket === ws) { webSocket = null; authenticatedSocket = null }
                 connecting = false
                 RemoteRelayState.setConnection(
                     this@RemoteRelayService,
@@ -170,6 +173,8 @@ class RemoteRelayService : Service() {
         val msg = runCatching { JSONObject(text) }.getOrNull() ?: return
         when (msg.optString("type")) {
             "hello-ack" -> {
+                if (webSocket !== ws) return
+                authenticatedSocket = ws
                 reconnectDelayMs = 1_000L
                 RemoteRelayState.setConnection(this, true, "AUTHENTICATED")
                 updateNotification("LeeWay remote bridge connected")
@@ -180,9 +185,11 @@ class RemoteRelayService : Service() {
                     "Permanent relay authenticated"
                 )
             }
-            "command" -> executeRemoteCommand(ws, msg)
-            "pong" -> RemoteRelayState.setConnection(this, true, "PONG")
+            "command" -> if (webSocket === ws && authenticatedSocket === ws) executeRemoteCommand(ws, msg)
+            "pong" -> if (webSocket === ws && authenticatedSocket === ws) RemoteRelayState.setConnection(this, true, "PONG")
             "error" -> {
+                if (webSocket !== ws) return
+                authenticatedSocket = null
                 RemoteRelayState.setConnection(
                     this,
                     false,
@@ -194,6 +201,8 @@ class RemoteRelayService : Service() {
 
     private fun executeRemoteCommand(ws: WebSocket, command: JSONObject) {
         Thread {
+            // Fail closed if the socket loses authority while waiting for its worker.
+            if (webSocket !== ws || authenticatedSocket !== ws || !RemoteRelayState.enabled(this)) return@Thread
             val id = command.optString("id")
             val capability = command.optString("capability")
             val args = command.optJSONObject("arguments") ?: JSONObject()

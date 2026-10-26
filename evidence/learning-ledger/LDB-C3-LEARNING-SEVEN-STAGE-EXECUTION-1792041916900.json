@@ -1,0 +1,42 @@
+{
+  "entryId": "LDB-C3-LEARNING-SEVEN-STAGE-EXECUTION-1792041916900",
+  "learnedStatement": "Universal Device Bridge governed read-only execution verified through Runtime Fabric real ingress, authentic owner authorization (owner:human:leona), centralized Golden Formula evaluation, Veritas pre/post attestation, and physical readback. Platform Android executed via local USB ADB shell (RFCX70LNT7X / SM-F956U). Native on-device iOS execution remains pending developer-mode pairing.",
+  "executionTier": "ANDROID_ADB_LOCATOR_AND_SHELL_EXECUTION",
+  "transport": "LOCAL_USB_ADB",
+  "nativeIosExecution": "N_A",
+  "evidence": {
+    "taskRunnerCorrelationId": "C3-RACE-TASK-1-1792041916353",
+    "targetId": "phone-fold6",
+    "platform": "android",
+    "carrierIssuer": "leeway.runtime.carrier.v1",
+    "carrierKeyId": "carrier-ed25519-key-001",
+    "carrierTokenNonce": "tok-gov-40e6067c-60c",
+    "formulaHealthStatus": "LEEWAY_FORMULA_V1_PASS",
+    "formulaReceiptSha256": "4ea3a0e567a1d2af87b8ab5ed8ddf81737135f63f4dd2fb5113693b739e3bdd8",
+    "formulaResultHash": "be457865a101bc111343a7c98844935ee475c9ce9620a9782eb522c887cc2de5",
+    "formulaHostTraceId": "479f1099-9e3a-4bcb-9c7c-d6a2bb9798cb",
+    "veritasPreReceiptId": "ced3916b-ff4b-4249-a5c0-6c4076f98acd",
+    "veritasPostReceiptId": "3d82f37e-eb52-479b-8c0d-b436ee5a527b",
+    "veritasPreDecisionReceiptSha256": "bf86eeb50a1d874c6fc378d7669e4345baa8cd0cf9a3a625292b78861cb4e84b",
+    "veritasPostDecisionReceiptSha256": "612dba4da54b72dd0897ae1649c0292529e9ca805f57ac8301c375d181c0f84b",
+    "veritasComplianceScore": 1,
+    "nativeObservationSha256": "11864e4b7a8b297edd349d58281c6e5cadc6585bbb58e49445c3bd7c95df9e2c",
+    "independentTruthSha256": "1950617a4216499026535488bf0c0d624e251a8d65106f15244ba3b3d2e9d62a",
+    "finalReceiptSha256": "d02ea24c12fb8ec86072e0baf9044f08bdb25678ba15c95bde565dcf3c27f015"
+  },
+  "promotionBoundary": "Governed read-only physical device execution verified. Write and mutation capabilities remain subject to explicit human consent and individual capability qualification. Higher-tier Golden Package C3 approval remains WITHHELD.",
+  "formulaMutation": false,
+  "permissionExpansion": false,
+  "schemaVersion": "leeway.learning-ledger.v1",
+  "admittedAt": "2026-10-15T05:25:16.900Z",
+  "governanceStatus": "C3_APPROVAL_WITHHELD",
+  "learningState": "RETAINED_CANDIDATE_OBSERVATION",
+  "receiptAuthority": {
+    "veritasReceiptId": "3d82f37e-eb52-479b-8c0d-b436ee5a527b",
+    "formulaReceiptSha256": "4ea3a0e567a1d2af87b8ab5ed8ddf81737135f63f4dd2fb5113693b739e3bdd8",
+    "finalReceiptSha256": "d02ea24c12fb8ec86072e0baf9044f08bdb25678ba15c95bde565dcf3c27f015",
+    "verifiedAt": "2026-10-15T05:25:16.900Z"
+  },
+  "provenance": "Runtime Fabric task runner: C3-RACE-TASK-1-1792041916353",
+  "entrySha256": "c88ccd1fc5ab58fd2c60893ec69b8965d6a189a9f81a0f05c24501df54019445"
+}

@@ -9,7 +9,7 @@ const execFileAsync = promisify(execFile);
 // Bounded workspace files and explicitly allowlisted process execution. Never invokes a shell.
 export class DesktopAdapter {
   constructor(root) { this.root = path.resolve(root); this.jobs = new Map(); }
-  async discover() { await fs.access(this.root); return ['device.health','device.info','device.files.read','device.files.write','device.directories.list','device.directories.create','device.search.files','device.process.list','device.process.terminate','device.process.execute','device.job.start','device.job.status','device.job.stop']; }
+  async discover() { await fs.access(this.root); return ['device.health','device.info','device.files.read','device.files.info','device.files.read_multiple','device.files.write','device.directories.list','device.directories.create','device.search.files','device.search.content','device.process.list','device.process.terminate','device.process.execute','device.job.start','device.job.status','device.job.stop']; }
   async safePath(relative, writing = false) {
     if (path.isAbsolute(relative) || relative.includes(':') || relative.includes('\0')) throw new Error('PATH_OUTSIDE_WORKSPACE');
     const parts = relative.replaceAll('\\', '/').split('/');
@@ -106,6 +106,42 @@ export class DesktopAdapter {
     const walk=async dir=>{for(const e of await fs.readdir(dir,{withFileTypes:true})){if(matches.length>=args.limit)return;const full=path.join(dir,e.name);if(e.isSymbolicLink?.())continue;if(e.name.toLowerCase().includes(q))matches.push(path.relative(root,full)||e.name);if(e.isDirectory())await walk(full);}};
     await walk(root); return {matches,truncated:matches.length>=args.limit};
   }
+  async searchContent(args) {
+    const base = await this.safeDirectory(args.path);
+    const query = args.query.toLowerCase();
+    const matches = [];
+    let filesScanned = 0, bytesScanned = 0, truncated = false;
+    const visit = async (directory, depth) => {
+      if (truncated) return;
+      const entries = await fs.readdir(directory, { withFileTypes: true });
+      for (const entry of entries) {
+        if (matches.length >= args.limit || filesScanned >= 128 || bytesScanned >= 2097152) { truncated = true; return; }
+        const full = path.join(directory, entry.name);
+        const stat = await fs.lstat(full).catch(() => null);
+        if (!stat || stat.isSymbolicLink()) continue;
+        if (stat.isDirectory()) {
+          if (depth < 6) await visit(full, depth + 1);
+          else truncated = true;
+          continue;
+        }
+        if (!stat.isFile() || stat.nlink !== 1 || stat.size > 65536) continue;
+        filesScanned++;
+        bytesScanned += stat.size;
+        if (bytesScanned > 2097152) { truncated = true; return; }
+        const contents = await fs.readFile(full, 'utf8');
+        if (contents.includes('\0')) continue;
+        const lines = contents.split(/\r?\n/);
+        for (let n = 0; n < lines.length; n++) {
+          if (matches.length >= args.limit) { truncated = true; return; }
+          if (lines[n].toLowerCase().includes(query)) {
+            matches.push({ path: path.relative(base, full), line: n + 1, excerpt: lines[n].slice(0, 240) });
+          }
+        }
+      }
+    };
+    await visit(base, 0);
+    return { matches, filesScanned, bytesScanned, truncated };
+  }
   async listProcesses(args) {
     const command=process.platform==='win32'?'powershell.exe':'ps';
     const argv=process.platform==='win32'?['-NoProfile','-Command','Get-Process | Select-Object -First '+args.limit+' Id,ProcessName | ConvertTo-Json -Compress']:['-eo','pid=,comm='];
@@ -134,12 +170,30 @@ export class DesktopAdapter {
     if (capability === 'device.directories.list') return this.listDirectory(args);
     if (capability === 'device.directories.create') return this.createDirectory(args);
     if (capability === 'device.search.files') return this.searchFiles(args);
+    if (capability === 'device.search.content') return this.searchContent(args);
     if (capability === 'device.process.list') return this.listProcesses(args);
     if (capability === 'device.process.terminate') return this.terminateProcess(args);
     if (capability === 'device.job.start') return this.startJob(args);
     if (capability === 'device.job.status') return this.jobView(args.jobId);
     if (capability === 'device.job.stop') { const j=this.jobs.get(args.jobId); if(!j)throw new Error('UNKNOWN_JOB'); if(j.child){j.state='STOPPING';j.child.kill();} return this.jobView(args.jobId); }
     if (capability === 'device.process.execute') return this.executeProcess(args);
+    if (capability === 'device.files.info') {
+      const filename = await this.safePath(args.path);
+      const stat = await fs.stat(filename);
+      return { path: args.path, type: 'file', sizeBytes: stat.size, modifiedUtc: stat.mtime.toISOString(), createdUtc: stat.birthtime.toISOString(), mode: stat.mode & 0o777 };
+    }
+    if (capability === 'device.files.read_multiple') {
+      if (!Array.isArray(args.paths) || args.paths.length < 1 || args.paths.length > 8) throw new Error('INVALID_BATCH_SIZE');
+      const results = [];
+      let total = 0;
+      for (const filePath of args.paths) {
+        const result = await this.execute('device.files.read', { path: filePath });
+        total += Buffer.byteLength(result.text, 'utf8');
+        if (total > 131072) throw new Error('BATCH_OUTPUT_TOO_LARGE');
+        results.push({ path: filePath, text: result.text });
+      }
+      return { files: results, totalBytes: total };
+    }
     if (capability === 'device.files.read') {
       const handle = await fs.open(await this.safePath(args.path), 'r');
       try {

@@ -95,8 +95,8 @@ class PocketCommandService : Service() {
         var after: String? = null
         repeat(15) { if(after == null || (target != null && after != target)) { Thread.sleep(100); after = foreground() } }
         val verified = target != null && after == target
-        return JSONObject().put("ok", true).put("action", action).put("label", label)
-            .put("state", if(target != null) "LAUNCH_REQUESTED" else "ACTION_ACCEPTED")
+        return JSONObject().put("ok", verified).put("action", action).put("label", label)
+            .put("state", if(target != null) "LAUNCH_REQUESTED" else "ACTION_ACCEPTED_UNVERIFIED")
             .put("verification", if(verified) "FOREGROUND_PACKAGE_MATCH" else "OUTCOME_NOT_VERIFIED")
             .put("observedPackage", after ?: JSONObject.NULL)
             .put("targetPackage", target ?: JSONObject.NULL)

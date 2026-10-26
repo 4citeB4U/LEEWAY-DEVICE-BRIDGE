@@ -41,7 +41,9 @@ class PocketBridgeActivity : Activity() {
         val capability = intent?.getStringExtra("leeway_capability").orEmpty()
         val rawArgs = intent?.getStringExtra("leeway_arguments").orEmpty()
 
-        if (caller != "industries.leeway.pocket") {
+        val callerSignerMatches = caller == "industries.leeway.pocket" &&
+            packageManager.checkSignatures(caller, packageName) == android.content.pm.PackageManager.SIGNATURE_MATCH
+        if (!callerSignerMatches) {
             finishBlocked("CALLER_NOT_AUTHORIZED", caller)
             return
         }

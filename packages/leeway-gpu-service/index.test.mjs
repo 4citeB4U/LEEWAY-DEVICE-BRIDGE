@@ -1,0 +1,7 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {describeGpuService,requireGovernedGpuExecution} from './index.mjs';
+test('official product identity stays distinct from the platform backend',()=>{const windows=describeGpuService({platform:'win32'});const android=describeGpuService({platform:'android'});const linux=describeGpuService({platform:'linux'});assert.equal(windows.productName,'LeeWay GPU');assert.equal(windows.backendName,'LeeWay GPU — D3D12');assert.equal(android.backendName,'LeeWay GPU — Vulkan');assert.equal(linux.backendName,'LeeWay GPU — Vulkan');assert.match(linux.status,/REQUIRES/);});
+test('unknown platform blocked',()=>assert.throws(()=>requireGovernedGpuExecution({platform:'darwin'}),/NOT_SUPPORTED/));
+test('absent authority blocked',()=>assert.throws(()=>requireGovernedGpuExecution({platform:'win32',request:{requestId:'r',workloadHash:'h',backend:'D3D12',deviceId:'d',adapterId:'a',memoryBytes:4096}}),/UNVERIFIED/));
+test('requires all six correlated gates',()=>{const request={requestId:'r',workloadHash:'h',backend:'D3D12',deviceId:'d',adapterId:'a',memoryBytes:4096};const verified=Object.fromEntries(['runtimeFabric','formula','ldwmd','continuum','gpu','veritas'].map(k=>[k,{requestId:'r',workloadHash:'h',verified:true}]));assert.throws(()=>requireGovernedGpuExecution({platform:'win32',request,verified}),/GPU_CANONICAL_EXECUTION_AUTHORITY_NOT_CONNECTED/);delete verified.ldwmd;assert.throws(()=>requireGovernedGpuExecution({platform:'win32',request,verified}),/UNVERIFIED/);});

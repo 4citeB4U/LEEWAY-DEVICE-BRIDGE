@@ -1,0 +1,42 @@
+{
+  "entryId": "LDB-C3-LEARNING-SEVEN-STAGE-EXECUTION-1792041000040",
+  "learnedStatement": "Universal Device Bridge governed read-only execution verified through Runtime Fabric real ingress, authentic owner authorization (owner:human:leona), centralized Golden Formula evaluation, Veritas pre/post attestation, and physical readback. Platform Apple observed via Windows host PnP CIM query on USB bus (00008030000C718C0E33402E). Native on-device iOS execution remains pending developer-mode pairing.",
+  "executionTier": "WINDOWS_HOST_USB_PNP_OBSERVATION",
+  "transport": "WINDOWS_PNP_CIM_USB_BUS",
+  "nativeIosExecution": "NOT_PERFORMED_HOST_USB_OBSERVATION_ONLY",
+  "evidence": {
+    "taskRunnerCorrelationId": "C3-PROD-ORIGIN-IPHONE11-1792040998254",
+    "targetId": "phone-iphone11",
+    "platform": "ios",
+    "carrierIssuer": "leeway.runtime.carrier.v1",
+    "carrierKeyId": "carrier-ed25519-key-001",
+    "carrierTokenNonce": "tok-gov-037bb39b-7e2",
+    "formulaHealthStatus": "LEEWAY_FORMULA_V1_PASS",
+    "formulaReceiptSha256": "f86b8547176af5988085539a106137d1a0194c0753debb4215ab36e385618e89",
+    "formulaResultHash": "03b1528469bc8ca92ee59eb47813b1beb1678a88955abb6275ba0f6a86af113b",
+    "formulaHostTraceId": "361a856c-b35d-4fc9-8dfe-a0dbc6785c27",
+    "veritasPreReceiptId": "a5f26b64-e76a-40a6-aca5-6aa0c1e1c0bf",
+    "veritasPostReceiptId": "a7cec632-17f8-4bbf-bda6-87b6cbf6f80c",
+    "veritasPreDecisionReceiptSha256": "0da9ca97fa0474bbc6b2d75a881ced7c63e00aad0da7c0bbc5658d220d1203ec",
+    "veritasPostDecisionReceiptSha256": "8b96d8d3a1aff861409253c239743abb9d19eb0df807fce5055c9e6ae44dc74f",
+    "veritasComplianceScore": 1,
+    "nativeObservationSha256": "baf2759f943f1aa2dcb4a009c63355b7fccbc969ca95d06ebd8e0d57b61353f6",
+    "independentTruthSha256": "8c3763ebb0be82f7a40d71025ced8f928e3b66a580f0ef90e0187d4718cf274f",
+    "finalReceiptSha256": "90cba0e3d082b17332a57adcb90c709e72767ed45efd0896ae2f43505b04d466"
+  },
+  "promotionBoundary": "Governed read-only physical device execution verified. Write and mutation capabilities remain subject to explicit human consent and individual capability qualification. Higher-tier Golden Package C3 approval remains WITHHELD.",
+  "formulaMutation": false,
+  "permissionExpansion": false,
+  "schemaVersion": "leeway.learning-ledger.v1",
+  "admittedAt": "2026-10-15T05:10:00.040Z",
+  "governanceStatus": "C3_APPROVAL_WITHHELD",
+  "learningState": "RETAINED_CANDIDATE_OBSERVATION",
+  "receiptAuthority": {
+    "veritasReceiptId": "a7cec632-17f8-4bbf-bda6-87b6cbf6f80c",
+    "formulaReceiptSha256": "f86b8547176af5988085539a106137d1a0194c0753debb4215ab36e385618e89",
+    "finalReceiptSha256": "90cba0e3d082b17332a57adcb90c709e72767ed45efd0896ae2f43505b04d466",
+    "verifiedAt": "2026-10-15T05:10:00.040Z"
+  },
+  "provenance": "Runtime Fabric task runner: C3-PROD-ORIGIN-IPHONE11-1792040998254",
+  "entrySha256": "91bd0d843629d6cbe0f7aff1478c88bd49a7599e4af95572113f407c191a0128"
+}

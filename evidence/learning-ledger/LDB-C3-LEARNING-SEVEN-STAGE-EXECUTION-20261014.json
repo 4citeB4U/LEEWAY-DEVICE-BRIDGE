@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0.0",
+  "entryId": "LDB-C3-LEARNING-SEVEN-STAGE-EXECUTION-20261014",
+  "state": "CANDIDATE_LEARNING_PHYSICAL_EXPERIMENT_OBSERVED",
+  "learnedStatement": "Universal Device Bridge physical discovery and read-only observations advance via ADB (Fold 6 SM-F956U) and Windows PnP (iPhone 11), while fail-closed admission protects the local production startup. Full canonical Golden Package execution remains unfinished until Runtime Fabric ingress, centralized Golden Formula, and production Veritas device-command services are connected.",
+  "evidence": {
+    "receiptId": "LDB-C3-CANONICAL-EXECUTION-QUALIFICATION-20261014",
+    "physicalAndroidSerial": "RFCX70LNT7X",
+    "physicalAndroidModel": "SM-F956U",
+    "physicalAppleHardwareId": "00008030000C718C0E33402E",
+    "candidateGates": "11/11 PASS in local test harness",
+    "formulaLaw": "Fire = T * G * prod(C)",
+    "receiptChainLength": 4
+  },
+  "promotionBoundary": "Candidate assessment only. Canonical approval explicitly withheld. Do not promote to permanent Learning Ledger until request originates from Agent Lee's actual production request path with real Runtime Fabric Formula and Veritas pre/post governance.",
+  "formulaMutation": false
+}

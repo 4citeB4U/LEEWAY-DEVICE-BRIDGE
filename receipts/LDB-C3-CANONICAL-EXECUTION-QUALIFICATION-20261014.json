@@ -1,0 +1,16 @@
+{
+  "receiptId": "LDB-C3-CANONICAL-EXECUTION-QUALIFICATION-20261014",
+  "timestamp": "2026-10-14T23:49:36.000Z",
+  "deviceId": "samsung-fold6-live,apple-iphone11-live,pc-primary",
+  "capability": "c3.seven-stage.candidate-execution",
+  "authorizationBasis": "Contributor local test harness with development carrier key, local Boolean Formula function, and physical USB observations",
+  "preGate": "Candidate harness executed; dev-key signature verified; local Formula disposition EXECUTE; Veritas Core V-01..V-07 PASS; physical ADB communication to SM-F956U online; physical WMI descriptor for iPhone 11 verified",
+  "result": "CANDIDATE_OBSERVED_NOT_CANONICALLY_APPROVED",
+  "postGate": "Physical Android device.info (SM-F956U) and device.apps.list (147 packages) observed; physical iPhone 11 descriptor observed. Canonical Runtime Fabric ingress, centralized Golden Formula evaluation, and live owner consent remain unintegrated.",
+  "evidenceHashes": [
+    "7B6A73B119554FA630067F70F5A98A8B61040D778D1271E38078713A91A469EE",
+    "9E643AFA5CB68FBDA5A2E4057679EA27BADEAD4B9168D5B0B6801C131A6C2A6E",
+    "392340E8FDDCDDE43E8983CFB7F3236A7AF21B56C5E28E1117B5BBB5FF061676",
+    "5E591B3FD6B58C5B823790A48062AA4186D75B66C06628BEBB63BD8220DF3E54"
+  ]
+}
