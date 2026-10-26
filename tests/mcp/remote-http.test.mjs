@@ -55,6 +55,8 @@ test('real SDK HTTP initializes and advertises only canonical discovery tools af
     }),
   });
   assert.equal((await rpc('initialize', 1, false)).status, 401);
+  const originDenied = await fetch(url, { method: 'POST', headers: { origin: 'https://untrusted.example', authorization: 'Bearer fixture-owner-token', 'content-type': 'application/json' }, body: '{}' });
+  assert.equal(originDenied.status, 403);
   const initialize = await rpc('initialize', 2);
   assert.equal(initialize.status, 200);
   assert.equal((await initialize.json()).result.serverInfo.name, 'leeway-device-bridge');
