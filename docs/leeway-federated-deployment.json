@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "leeway-device-bridge-federated-deployment",
+  "authorityRegistry": "https://raw.githubusercontent.com/4citeB4U/LeeWay-Standards/main/standards/leeway-ecosystem-authority.v1.json",
+  "publicEntry": "https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/",
+  "participants": [
+    {
+      "id": "leeway-live",
+      "repository": "4citeB4U/Leeway-live",
+      "pages": "https://4citeb4u.github.io/Leeway-live/",
+      "role": "agent-client"
+    },
+    {
+      "id": "federate-web",
+      "repository": "4citeB4U/Leeway-Federate-Web",
+      "pages": "https://4citeb4u.github.io/Leeway-Federate-Web/",
+      "role": "discovery-transport"
+    },
+    {
+      "id": "device-bridge",
+      "repository": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+      "pages": "https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/",
+      "role": "device-execution"
+    },
+    {
+      "id": "runtime-fabric",
+      "repository": "4citeB4U/Leeway-Runtime-Fabric",
+      "role": "persistent-execution"
+    },
+    {
+      "id": "formula-live",
+      "repository": "4citeB4U/Leeway-formula-live",
+      "role": "math-authority"
+    },
+    {
+      "id": "agent-skills",
+      "repository": "4citeB4U/LeeWay-Agent-Skills",
+      "pages": "https://4citeb4u.github.io/LeeWay-Agent-Skills/",
+      "role": "capabilities"
+    },
+    {
+      "id": "edge-gpu",
+      "repository": "4citeB4U/LeeWay-Edge-GPU",
+      "role": "compute"
+    },
+    {
+      "id": "continuum",
+      "repository": "4citeB4U/Leeway-Runtime-Fabric",
+      "source": "machine-consciousness/continuum",
+      "role": "durable-memory"
+    }
+  ],
+  "routing": {
+    "browser": {
+      "origin": "GitHub Pages",
+      "mode": "published-client"
+    },
+    "compute": {
+      "authority": "runtime-fabric",
+      "executor": "edge-gpu",
+      "admission": "formula-live"
+    },
+    "device": {
+      "authority": "device-bridge",
+      "requires": "authenticated client device adapter"
+    },
+    "memory": {
+      "authority": "continuum",
+      "requires": "owner-authorized storage provider"
+    },
+    "mcp": {
+      "source": "apps/desktop/remote-mcp-http.mjs",
+      "mode": "authenticated-endpoint",
+      "endpoint": null,
+      "reason": "No public endpoint confirmed by deployment"
+    }
+  },
+  "verification": {
+    "sourceDiscovery": "SOURCE_REFERENCES_ONLY",
+    "liveBackend": "UNCONFIRMED",
+    "physicalDeviceAccess": "UNCONFIRMED"
+  }
+}
