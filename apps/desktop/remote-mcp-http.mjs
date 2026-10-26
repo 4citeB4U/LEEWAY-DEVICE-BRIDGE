@@ -47,6 +47,10 @@ export function createRemoteMcpHttpServer({ bridge, authenticate, host = '127.0.
   }
   return http.createServer(async (req, res) => {
     if (req.url !== '/mcp') return send(res, 404, 'NOT_FOUND');
+    // Reject browser-origin calls: no browser origin is authorized by this
+    // loopback-only service. Host-level OAuth verification is still required
+    // before any public deployment or reverse proxy may be qualified.
+    if (typeof req.headers.origin === 'string') return send(res, 403, 'ORIGIN_NOT_AUTHORIZED');
     let approved = false;
     try { approved = (await authenticate(req)) === true; }
     catch { approved = false; }
