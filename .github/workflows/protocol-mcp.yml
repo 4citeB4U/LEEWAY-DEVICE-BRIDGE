@@ -22,5 +22,7 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm run test:mcp
+      - name: Qualify CLI real MCP probe and fail-closed command path
+        run: npm run test:cli
       - name: Verify independent trusted-composition startup regression
         run: node --test apps/desktop/runtime-composition.leeway-readiness.test.mjs
