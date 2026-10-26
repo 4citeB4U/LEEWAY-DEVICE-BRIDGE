@@ -80,7 +80,7 @@ export function createProductionAdmission(devices, providers = {}) {
   });
 }
 
-export async function start(configPath, runtimeInput = null) {
+export async function createConfiguredBridge(configPath, runtimeInput = null) {
   if (!configPath) throw new Error('CONFIG_REQUIRED');
   const runtimeComposition = runtimeInput === null ? null : requireTrustedRuntimeComposition(runtimeInput);
   const config = z.object({ devices: z.array(deviceSchema).min(1).max(32), receipts: z.string().min(1).optional() }).strict().parse(JSON.parse(await fs.readFile(configPath, 'utf8')));
@@ -99,6 +99,11 @@ export async function start(configPath, runtimeInput = null) {
     admission,
     receiptSink: runtimeComposition?.receiptSink ?? (evidence => fs.appendFile(receiptPath, JSON.stringify(evidence) + '\n', { mode: 0o600 })),
   });
+  return bridge;
+}
+
+export async function start(configPath, runtimeInput = null) {
+  const bridge = await createConfiguredBridge(configPath, runtimeInput);
   const server = createServer(bridge);
   await server.connect(new StdioServerTransport());
   return server;
