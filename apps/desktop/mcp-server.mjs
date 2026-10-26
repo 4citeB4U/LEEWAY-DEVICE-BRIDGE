@@ -33,14 +33,14 @@ function screenResult(value) {
   ] };
 }
 
-export function createServer(bridge) {
+export function createServer(bridge, { discoveryOnly = false } = {}) {
   const server = new McpServer({ name: 'leeway-device-bridge', version: '0.1.0' });
   const result = value => ({ content: [{ type: 'text', text: JSON.stringify(value) }], ...(value.ok === false ? { isError: true } : {}) });
   server.registerTool('bridge_devices', { description: 'List configured device IDs. Configuration does not prove connectivity.', inputSchema: {} }, async () => result({ devices: [...bridge.devices.keys()] }));
   server.registerTool('bridge_capabilities', { description: 'Discover current capabilities for one device; grants and verification are distinct.', inputSchema: { deviceId: z.string().min(1).max(128) } }, async ({ deviceId }) => {
     try { return result(await bridge.discover(deviceId)); } catch { return result({ ok: false, error: 'DISCOVERY_FAILED' }); }
   });
-  for (const [capability, schema] of Object.entries(schemas)) {
+  if (!discoveryOnly) for (const [capability, schema] of Object.entries(schemas)) {
     server.registerTool(capability.replaceAll('.', '_'), {
       description: `Invoke ${capability} on an explicitly granted device. Availability is checked for each call; unsupported platforms fail closed.`,
       inputSchema: { deviceId: z.string().min(1).max(128), arguments: schema },
