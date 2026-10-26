@@ -24,13 +24,14 @@
   requires trusted providers; it does not generate owner keys or enroll itself.
   Runtime's binding retries failed cleanup in-process, while fresh-process
   cleanup recovery still needs durable owner records and qualification.
-- The current Device Bridge draft PR hardens startup, keeps voice routed only
+- The current Device Bridge source hardens startup, keeps voice routed only
   through LeeWay Voice Fabric, and adds compare-and-swap file editing, checked
-  moves and bounded job input. Its previous Android and portable protocol/MCP CI
-  pair passed after removing a stale voice-package reference. The latest
-  portable protocol/MCP run also passes on Windows, Linux and macOS after fixing
-  direct adapter batch bounds and aligning the same-path move assertion. The
-  Android build passes on the current PR head.
+  moves, journaled append recovery and bounded job input. PR #60 commit
+  `94a7cb7703abe98ec82b87fbbcc338feadb405a7` passed the Android Build workflow
+  (run `40134361817`) and protocol/MCP workflow (run `40134361826`) on Windows,
+  Linux and macOS.
+  Android unit tests and package assembly passed; its artifact is attached to
+  the PR run and was not published to GitHub Pages.
 - Device Bridge PR #56 now carries bounded binary range reads, create-only
   binary writes, resumable chunk append, exact text edits, hash-checked moves,
   directory paging, interactive jobs/sessions and paged search. The 39-test
@@ -38,8 +39,13 @@
   adapter contracts, not production authority or physical cross-device parity.
 - Android source already contains the owner-granted Accessibility adapter,
   screen/UI routes, Voice Fabric boundary and local model/Agent Lee routes.
-  Its file picker stores an owner-granted Storage Access Framework tree, but
-  the remote router does not yet expose the same binary file operations.
+  This checkout now wires the owner-picked Storage Access Framework tree to
+  bounded read/write/hash/transfer/move/edit/directory routes and reports current
+  grants in the device passport. Append, move and edit persist recovery journals.
+  The PR #60 Android build and unit tests pass;
+  physical owner-tree/provider behavior and live relay execution remain
+  unqualified. This is an additive change to the existing Android app, not a
+  second bridge application.
 
 ## Manifest and source identity
 
@@ -73,7 +79,8 @@ separate track from portable LeeWay GPU execution:
 - Device Bridge PR #58 exposed that renderer through the standalone service and
   dashboard for diagnostics. Its historical run returned
   `PASS_DIAGNOSTIC_ONLY`; canonical `/v1/execute` remained denied. The service
-  is not currently listening on ports 4178–4180.
+  current reachability is unknown; sandbox socket restrictions prevented a
+  fresh local check.
 
 These merged deliverables remain part of the product. The Windows UMD work is a
 platform-specific adapter milestone. The portable LeeWay GPU service binds its
@@ -102,18 +109,22 @@ proof is that production binds those authorities to the same protected request
 and correlates the request through device observation, Veritas PRE/POST, and
 both ledgers. Retained governed-run evidence stopped before protected inference
 because production Veritas and canonical Learning Ledger admission providers
-were unregistered. The native Windows run is diagnostic-only, and the service
-was not observed listening during this review. No same-request protected
-production execution is evidenced by the reviewed artifacts.
+were unregistered. The native Windows run is diagnostic-only. Current Runtime
+endpoint reachability is unknown because local socket inspection was denied by
+the sandbox. No same-request protected production execution is evidenced by the
+reviewed artifacts.
 
 ### Gate 4 — Production service activation
 
-**Not passed.** Ports 4178, 4179 and 4180 are not listening now. The latest
-retained phone observation recorded a connected device without the LeeWay
-Device Bridge package and with Accessibility inactive; the current ADB daemon
-could not start, so that phone state was not refreshed. Android requires the
-device owner to enable Accessibility in system settings. The governed MCP
-production composition has not been observed running with its real providers.
+**Not passed.** Runtime port reachability remains unknown because local socket
+inspection was denied by the sandbox. A live, read-only ADB check on 2026-10-24
+found the existing LeeWay Device Bridge app installed as `0.9.8-pocket-rc8`
+(version code 23). No app service was running; relay enablement, Agent Access,
+and SAF read/write grants were unset. Android Accessibility is enabled at the
+system level, but LeeWay's Device Operator service is not enabled. The governed
+MCP production composition has not been observed running with its real
+providers. No separate bridge app is needed; the existing app still needs its
+owner-controlled setup.
 
 ### Gate 5 — Desktop Commander parity
 
@@ -121,10 +132,14 @@ production composition has not been observed running with its real providers.
 open.** PR #56 now implements and tests bounded binary transfer, hash-checked
 moves and edits, interactive job/session I/O, directory paging and search on
 Windows, Linux and macOS. Android screen/UI routes and model/Agent Lee routes
-already exist behind the native relay and owner authority, but the Android
-Accessibility service is inactive and these routes have not been proven live
-end to end. Android remote file transfer is not exposed. Desktop screen/UI
-operations are not advertised. Interactive and search sessions are
+already exist behind the native relay and owner authority, but the live check
+found LeeWay Accessibility and the relay inactive. These routes have not been
+proven live end to end. The installed app predates PR #60 and has no persisted
+SAF tree grants. Android SAF file routes are implemented in the PR #60
+candidate; Android CI passed, but the routes remain unqualified on a real
+owner-granted tree. This is an update to the existing app, not a second bridge
+application. Desktop
+screen/UI operations are not advertised. Interactive and search sessions are
 process-local, so restart recovery is not qualified.
 
 ## Acceptance evidence still required
@@ -137,14 +152,17 @@ process-local, so restart recovery is not qualified.
    Veritas PRE/POST, Receipt Ledger and Learning Ledger. Correlate every record
    to that same request.
 3. Activate the governed service with its real owner providers; verify startup,
-   reconnect, STOP, restart recovery and failure handling. Install the
-   appropriate Android build and have the device owner enable Accessibility
-   through Android settings.
-4. Complete Android SAF-backed remote file capability binding, then test it on
-   a real owner-granted document tree. Install and activate the phone relay and
-   Accessibility service through device-owner actions. Verify authenticated
-   model/Agent Lee access with a live paired device. Qualify process restart
-   recovery and implement desktop screen/UI operations before claiming those
+   reconnect, STOP, restart recovery and failure handling. Use the installed
+   Android app and have the device owner enable LeeWay Accessibility through
+   Android settings.
+4. Test the Android SAF-backed remote file routes on a real owner-granted
+   document tree. PR #60 adds routes to the existing Device Bridge app; its
+   source is not yet in the installed build. Update that app only to test these
+   new routes; do not install a second bridge. The device owner must choose the
+   folder, activate the phone relay and enable LeeWay Accessibility. Verify
+   authenticated model/Agent Lee access with a live
+   paired device. Qualify process restart recovery and implement desktop
+   screen/UI operations before claiming those
    parity items.
 
 No release or execution claim should advance from fixture tests or the

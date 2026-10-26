@@ -1,12 +1,12 @@
 # Portable device contract and MCP foundation
 
-This is an additive monorepo foundation. `apps/android` remains the existing Android implementation. No package migration or competing relay is required.
+This is an additive monorepo foundation. `apps/android` remains the existing Android Device Bridge app; PR #60 adds SAF-backed file routes to that app. No package migration or competing relay is required.
 
 | Path | Implemented responsibility |
 | --- | --- |
 | `packages/protocol` | Common capability argument schemas, admission boundary, per-device grants, evidence hashes |
 | `packages/agent-relay` | Client for the existing production WebSocket relay protocol |
-| `apps/android` | Existing Device Bridge app; unchanged by this foundation |
+| `apps/android` | Existing Device Bridge app, extended by PR #60 with owner-scoped SAF file routes |
 | `apps/desktop` | Node stdio MCP host, bounded local workspace file operations and interactive process pipes |
 | `apps/web` | Browser capability boundary documentation; no browser-control adapter yet |
 
@@ -58,7 +58,7 @@ Every dispatched operation must first persist an ADMITTED receipt. Completion pe
 
 The desktop adapter supports bounded UTF-8 create/read, compare-and-swap file replacement, hash-checked moves, and interactive stdin/stdout pipes for allowlisted long-running processes. Text file writes are limited to 64 KiB. A file replacement requires the SHA-256 read from the current version; it prefers same-directory rename and uses an in-place recovery path when the OS denies that rename. A move requires the expected source SHA and refuses an existing destination; it copies to an exclusively created destination, verifies source and destination bytes, then removes the source. An interrupted move may leave both paths, so inspect state after an uncertain result before retrying. Interactive jobs are pipes, not pseudo-terminals, so full-screen terminal programs and terminal resize/key semantics are not provided. These controls remain bounded to the configured workspace and explicit process allowlist.
 
-The desktop adapter still has no native screen capture, mouse/keyboard control or browser control. Android screen/UI operations require the owner-enabled Accessibility service; the relay only advertises capabilities the phone reports. This change does not implement file operations through Android's authorized storage tree, mobile permission bypass, background daemon installation, automatic pairing, WebRTC or universal platform support. Windows Node 24 is the only platform tested for these changes; macOS/Linux portability is a design goal pending platform testing. Android relay compatibility is tested against a local mock of the source-observed production wire contract, not a live Fold or production relay.
+The desktop adapter still has no native screen capture, mouse/keyboard control or browser control. Android screen/UI operations require the owner-enabled Accessibility service; the relay only advertises capabilities the phone reports. PR #60 routes bounded file/directory operations through the exact owner-selected Storage Access Framework tree in the existing Android app. Append, move, and edit retain journals for restart reconciliation. Android Build passed `testDebugUnitTest assembleDebug` at commit `94a7cb7703abe98ec82b87fbbcc338feadb405a7` (run `40134361817`); the build artifact is attached to the PR workflow, not published. Protocol/MCP passed on Windows, Linux, and macOS at that commit (run `40134361826`). Physical owner-tree/provider behavior and live phone relay execution remain unqualified. This adds no second bridge app, permission bypass, background daemon, automatic pairing, WebRTC, or universal platform support.
 
 Run `npm run test:mcp` for a real official SDK stdio roundtrip, file read/write, capability denial, missing admission, failed receipt persistence, changed capabilities, traversal/link/file-size defenses, relay authentication, nested execution errors, timeout and malformed response checks. Run `npm audit` for dependency findings.
 

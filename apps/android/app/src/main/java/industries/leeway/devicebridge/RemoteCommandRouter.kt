@@ -10,6 +10,10 @@ object RemoteCommandRouter {
         "device.bluetooth.list-bonded", "device.network.discover", "device.receipts",
         "device.screen.capture", "device.ui.snapshot", "device.ui.back", "device.ui.home", "device.ui.recents",
         "device.ui.tap", "device.ui.swipe", "device.ui.text",
+        "device.files.read", "device.files.read_multiple", "device.files.info", "device.files.write",
+        "device.files.hash", "device.files.read_binary", "device.files.write_binary", "device.files.append_binary",
+        "device.files.move", "device.files.edit", "device.directories.list", "device.directories.page",
+        "device.directories.create",
         "device.apps.list", "device.apps.launch", "device.apps.install.status", "device.apps.install",
         "device.media.scan", "device.media.delete.request",
         "model.status", "model.install", "model.inference", "voice.status", "voice.speak", "agent.chat"
@@ -23,6 +27,13 @@ object RemoteCommandRouter {
             arguments.optString("prompt")
         ) else arguments.optString("prompt").trim()
         val text = arguments.optString("text").trim()
+        val fileWrite = capability in fileWriteCapabilities
+        val fileRead = capability in fileReadCapabilities
+        val fileGrantReady = when {
+            fileWrite -> FileAccess.canWrite(context)
+            fileRead -> FileAccess.canRead(context)
+            else -> true
+        }
         val capabilityPrecondition = when (capability) {
             "model.inference", "agent.chat" -> prompt.isNotEmpty()
             "voice.speak" -> text.isNotEmpty()
@@ -34,7 +45,7 @@ object RemoteCommandRouter {
             "device.media.delete.request" -> arguments.optJSONArray("uris")?.length()?.let { it > 0 } == true
             "device.apps.install" -> arguments.optString("url").startsWith("https://") &&
                 arguments.optString("sha256").matches(Regex("^[A-Fa-f0-9]{64}$"))
-            else -> true
+            else -> fileGrantReady
         }
         val gate = FormulaF8Gate.evaluate(
             trigger = true,
@@ -45,7 +56,12 @@ object RemoteCommandRouter {
             )
         )
         if (!gate.optBoolean("fire")) return JSONObject().apply {
-            put("ok", false); put("error", "LOCAL_ELIGIBILITY_HOLD"); put("capability", capability); put("gate", gate); put("formulaAuthority", FormulaF8Gate.FORMULA_AUTHORITY); put("canonicalFormulaState", "NOT_EXECUTED")
+            val fileScopeError = when {
+                (fileRead || fileWrite) && !FileAccess.canRead(context) -> "OWNER_FILE_READ_SCOPE_REQUIRED"
+                fileWrite && !FileAccess.canWrite(context) -> "OWNER_FILE_WRITE_SCOPE_REQUIRED"
+                else -> "LOCAL_ELIGIBILITY_HOLD"
+            }
+            put("ok", false); put("error", fileScopeError); put("capability", capability); put("gate", gate); put("formulaAuthority", FormulaF8Gate.FORMULA_AUTHORITY); put("canonicalFormulaState", "NOT_EXECUTED")
         }
         return try {
             val value = when (capability) {
@@ -72,6 +88,7 @@ object RemoteCommandRouter {
                     arguments.optLong("durationMs", 300L)
                 )
                 "device.ui.text" -> DeviceOperatorAccessibilityService.setFocusedText(text)
+                in fileReadCapabilities, in fileWriteCapabilities -> FileAccess.execute(context, capability, arguments)
                 "device.apps.list" -> AppOperator.listLaunchable(context)
                 "device.apps.launch" -> AppOperator.launch(context, arguments.getString("packageName"))
                 "device.apps.install.status" -> PackageInstallBroker.status(context)
@@ -170,8 +187,19 @@ object RemoteCommandRouter {
 
     internal fun qualifiedCapabilities(): JSONArray = JSONArray(remoteQualified.toList())
 
+    private val fileReadCapabilities = setOf(
+        "device.files.read", "device.files.read_multiple", "device.files.info", "device.files.hash",
+        "device.files.read_binary", "device.directories.list", "device.directories.page"
+    )
+
+    private val fileWriteCapabilities = setOf(
+        "device.files.write", "device.files.write_binary", "device.files.append_binary",
+        "device.files.move", "device.files.edit", "device.directories.create"
+    )
+
     private fun capabilities(context: Context): JSONObject {
-        val passport = BootstrapStore.loadPassport(context) ?: DevicePassport.capture(context)
+        val passport = DevicePassport.capture(context)
+        BootstrapStore.savePassport(context, passport)
         return JSONObject().apply {
             put("capabilities", passport.optJSONArray("capabilityClaims"))
             put("remoteQualified", qualifiedCapabilities())
