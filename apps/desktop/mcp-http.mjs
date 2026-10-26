@@ -21,7 +21,7 @@ const reply = (res, status, error) => {
  * resolveBridge must return a fresh, principal-scoped Bridge with owner providers.
  * This factory issues no credentials and infers no authority from an OS or device name.
  */
-export function createRemoteMcpHandler({ authenticate, resolveBridge, allowedHosts, allowedOrigins = [] } = {}) {
+export function createRemoteMcpHandler({ authenticate, resolveBridge, allowedHosts, allowedOrigins = [], discoveryOnly = false } = {}) {
   if (typeof authenticate !== 'function' || typeof resolveBridge !== 'function' ||
       !Array.isArray(allowedHosts) || !allowedHosts.length ||
       allowedHosts.some(x => typeof x !== 'string' || !x.trim() || x.includes('*')) ||
@@ -72,7 +72,7 @@ export function createRemoteMcpHandler({ authenticate, resolveBridge, allowedHos
           typeof bridge.receiptSink !== 'function') {
         return reply(res, 503, 'TRUSTED_BRIDGE_UNAVAILABLE');
       }
-      server = createServer(bridge);
+      server = createServer(bridge, { discoveryOnly });
       const transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: undefined,
         enableJsonResponse: true,
