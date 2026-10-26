@@ -33,11 +33,11 @@ class BootstrapDenialUiTest {
                 putExtra("leeway_nonce", nonce)
             }
             context.startActivity(intent)
-            val deny = device.wait(Until.findObject(By.text("DENY")), 5000)
-            assertNotNull("Untrusted-style intent must ask owner, not arm silently", deny)
+            val deny = device.wait(Until.findObject(By.text("DENY")), 1200)
+            assertNull("Caller without an authenticated identity must not reach approval", deny)
             assertFalse("Access must be disabled while waiting for consent", LocalAuthority.agentAccessEnabled(context))
-            deny!!.click()
-            device.wait(Until.gone(By.text("DENY")), 3000)
+            // No consent control must be available to this unauthenticated caller.
+            // Access remains disabled without authorization.
             assertFalse("Denial must leave agent access disabled", LocalAuthority.agentAccessEnabled(context))
             if (!LocalBridgeServer.isRunning()) LocalBridgeServer.start(context)
             Socket("127.0.0.1", LocalBridgeServer.PORT).use { socket ->

@@ -556,9 +556,12 @@ class MainActivity : AppCompatActivity() {
                 // because an external caller supplied a syntactically valid nonce.
                 // Keep the established Termux flow behind explicit owner approval.
                 val nonceValid = nonce.matches(Regex("^[A-Za-z0-9_-]{32,128}$"))
-                if (!nonceValid) {
-                    ReceiptStore.record(this, "device.owner.bootstrap", "BLOCKED", "INVALID_BOOTSTRAP_NONCE")
-                    output.text = "Termux bootstrap blocked: invalid request."
+                val caller = callingPackage.orEmpty()
+                val callerTrusted = caller.isNotBlank() &&
+                    packageManager.checkSignatures(caller, packageName) == PackageManager.SIGNATURE_MATCH
+                if (!nonceValid || !callerTrusted) {
+                    ReceiptStore.record(this, "device.owner.bootstrap", "BLOCKED", "UNAUTHENTICATED_BOOTSTRAP_CALLER_OR_INVALID_NONCE")
+                    output.text = "External bootstrap blocked: caller not authenticated. Use owner pairing inside Device Bridge."
                 } else {
                     android.app.AlertDialog.Builder(this)
                         .setTitle("Authorize LeeWay Termux bootstrap")

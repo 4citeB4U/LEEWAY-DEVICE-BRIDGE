@@ -67,7 +67,7 @@ object LocalBridgeServer {
         return JSONObject().apply {
             put("ok", true)
             put("deviceId", identity.optString("deviceId"))
-            put("pairingToken", BridgeSecret.ensure(context))
+            put("credentialDelivery", "NOT_AVAILABLE_OVER_LOOPBACK")
             put("relayUrl", RemoteRelayState.relayUrl(context))
             put("authority", "OWNER_LOCAL_LOOPBACK_BOOTSTRAP")
         }
