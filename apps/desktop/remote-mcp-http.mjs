@@ -16,6 +16,11 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { createServer } from './mcp-server.mjs';
 
 const MAX_BODY_BYTES = 128 * 1024;
+const asUrl = value => new URL(value);
+const jsonResponse = (res, status, payload) => {
+  res.writeHead(status, { 'content-type': 'application/json', 'cache-control': 'no-store' });
+  res.end(JSON.stringify(payload));
+};
 const send = (res, status, message) => {
   res.writeHead(status, { 'content-type': 'application/json', 'cache-control': 'no-store' });
   res.end(JSON.stringify({ error: message }));
@@ -37,7 +42,7 @@ async function readBody(req) {
  * Loopback-only by default; public deployment requires approved OAuth resource
  * validation at the hosting boundary before calling this handler.
  */
-export function createRemoteMcpHttpServer({ bridge, authenticate, host = '127.0.0.1' } = {}) {
+export function createRemoteMcpHttpServer({ bridge, authenticate, host = '127.0.0.1', resourceUrl, authorizationServerUrl } = {}) {
   if (!bridge || !(bridge.devices instanceof Map) || typeof bridge.discover !== 'function') {
     throw new Error('CANONICAL_BRIDGE_REQUIRED');
   }
@@ -45,7 +50,16 @@ export function createRemoteMcpHttpServer({ bridge, authenticate, host = '127.0.
   if (host !== '127.0.0.1' && host !== '::1') {
     throw new Error('REMOTE_PUBLIC_BIND_NOT_QUALIFIED');
   }
+  // OAuth-protected public resources require the exact registered HTTPS URL.
+  const publicResource = resourceUrl ? asUrl(resourceUrl) : null;
+  const issuerUrl = authorizationServerUrl ? asUrl(authorizationServerUrl) : null;
+  if ((publicResource === null) !== (issuerUrl === null)) throw new Error('OAUTH_METADATA_CONFIGURATION_INCOMPLETE');
+  if (publicResource && (publicResource.protocol !== 'https:' || issuerUrl.protocol !== 'https:' || publicResource.search || publicResource.hash || issuerUrl.search || issuerUrl.hash)) throw new Error('OAUTH_METADATA_HTTPS_REQUIRED');
+  if (publicResource && publicResource.pathname !== '/mcp') throw new Error('OAUTH_RESOURCE_PATH_REQUIRED');
+  const publicResourceId = publicResource?.href;
   return http.createServer(async (req, res) => {
+    if (publicResource && req.url === '/.well-known/oauth-protected-resource') return jsonResponse(res, 200, { resource: publicResourceId, authorization_servers: [issuerUrl.href.replace(/\/$/, '')], scopes_supported: ['device.bridge.read'], bearer_methods_supported: ['header'] });
+    if (publicResource && req.url === '/.well-known/oauth-protected-resource/mcp') return jsonResponse(res, 200, { resource: publicResourceId, authorization_servers: [issuerUrl.href.replace(/\/$/, '')], scopes_supported: ['device.bridge.read'], bearer_methods_supported: ['header'] });
     if (req.url !== '/mcp') return send(res, 404, 'NOT_FOUND');
     // Reject browser-origin calls: no browser origin is authorized by this
     // loopback-only service. Host-level OAuth verification is still required
@@ -54,7 +68,10 @@ export function createRemoteMcpHttpServer({ bridge, authenticate, host = '127.0.
     let approved = false;
     try { approved = (await authenticate(req)) === true; }
     catch { approved = false; }
-    if (!approved) return send(res, 401, 'UNAUTHORIZED');
+    if (!approved) {
+      if (publicResource) res.setHeader('www-authenticate', `Bearer resource_metadata="${publicResource.origin}/.well-known/oauth-protected-resource/mcp", scope="device.bridge.read"`);
+      return send(res, 401, 'UNAUTHORIZED');
+    }
     if (req.method !== 'POST') {
       res.setHeader('allow', 'POST');
       return send(res, 405, 'METHOD_NOT_ALLOWED');
