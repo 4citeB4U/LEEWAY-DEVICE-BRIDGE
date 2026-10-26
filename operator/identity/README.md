@@ -34,7 +34,13 @@ LICENSE: MIT
 
 ## Deployment boundary
 
-Vercel `leeway-device-bridge` is linked to the canonical GitHub repository, but no public MCP handler, OAuth environment values, or Pocket ID deployment has been verified. **Do not run SQLite inside an ephemeral Vercel Function**. Host Pocket ID on the durable owner-controlled host and expose the issuer using owner-approved HTTPS; Vercel may serve a separate MCP gateway only after token verification and safe connectivity to the actual Device Bridge are demonstrated.
+The desktop distribution's MCP server remains loopback-only and discovery-only unless separately paired and configured. It is not made publicly reachable by deploying this repository to Vercel.
+
+The Vercel project can host a separate, stateless MCP ingress at `/mcp`. That ingress is a transport proxy: it validates request shape, requires a bearer token to reach the upstream, and forwards the OAuth challenge and MCP session headers. It does **not** itself validate Pocket ID JWT signatures, own devices, provide Continuum, or authorize device execution. Its upstream must be an independently authenticated Runtime Fabric MCP service at an explicit HTTPS `/mcp` URL.
+
+Configure `LEEWAY_MCP_UPSTREAM`, `LEEWAY_MCP_AUTH_ISSUER`, and `LEEWAY_MCP_AUDIENCE` only in the Vercel project environment, never in Git. The audience is the exact client-facing Device Bridge URL ending in `/mcp`; the same audience and issuer must be accepted by the upstream Runtime Fabric validator. The public protected-resource metadata is path-scoped at `/.well-known/oauth-protected-resource/mcp`. Verify ordinary TLS for the issuer and upstream; do not disable certificate validation.
+
+The current Vercel deployment remains SSO-protected, and its production environment values and live authenticated MCP path have not been verified. The manual workflow `Public MCP OAuth discovery qualification` checks the unauthenticated challenge, protected-resource metadata, live Pocket ID OIDC discovery, and issuer-origin JWKS at explicitly supplied HTTPS endpoints. A pass does not prove an authenticated call, device connection, or device execution. **Do not run SQLite inside an ephemeral Vercel Function**. Host Pocket ID on durable owner-controlled infrastructure and expose the issuer through owner-approved HTTPS. Leave the existing Vercel SSO policy intact unless an exact access-policy change is separately approved.
 
 The trusted Ed25519 consent-issuer registry and voice-owner-auth sessions are **not** substitutes for Pocket ID access tokens. Even with a valid OAuth token, no device execution is authorized until the independent canonical Runtime Fabric admission/receipt controls qualify it.
 
