@@ -1,0 +1,19 @@
+<!doctype html>
+<!-- LEEWAY HEADER — DO NOT REMOVE
+REGION: LEEWAY.DEVICE.BRIDGE.PUBLIC
+TAG: LEEWAY-MCP-CONNECTION-PAGE-V1
+WHO: LeeWay Industries
+WHAT: Public connection information for the canonical private MCP integration
+WHEN: 2026-10-26
+WHERE: docs/mcp-connection.html
+WHY: Provide a device-agnostic operational entrypoint without publishing secrets or advertising fictitious live connectivity
+HOW: Static GitHub Pages and Vercel-compatible HTML; read-only links; no runtime credentials
+AUTHORITY: Informational only; not an MCP resource, OAuth provider, or device execution grant
+LICENSE: MIT
+-->
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark"><title>LeeWay Device Bridge · MCP connection</title>
+<style>body{background:#0b1018;color:#eef5fc;font:16px/1.6 system-ui,Segoe UI,sans-serif;margin:0}main{max-width:870px;margin:auto;padding:4rem 1.5rem}h1{font-size:clamp(2rem,6vw,3rem);line-height:1.12}h2{margin-top:2rem}a{color:#9bd9ff}section{border:1px solid #354658;border-radius:14px;padding:1.2rem;margin:1rem 0;background:#14202c}.muted{color:#b9c6d2}.warning{border-left:4px solid #e4a45e;padding-left:1rem}code{overflow-wrap:anywhere;color:#b5e6ff}li{margin:.7rem 0}</style></head><body><main><p class="muted">LEEWAY INDUSTRIES / DEVICE BRIDGE</p><h1>Private MCP connection</h1><p>Canonical source in GitHub. Device access is through a separately running, authenticated MCP service using a secure tunnel—not through this static website.</p>
+<section><h2>Deployment boundaries</h2><ul><li><strong>GitHub Pages / Vercel:</strong> public documentation, device interfaces, deployment descriptors, static assets.</li><li><strong>Pocket ID:</strong> a stateful OIDC identity server that must run on persistent private infrastructure.</li><li><strong>LeeWay MCP:</strong> local canonical Node runtime on the authorized device, with protected read-only discovery tools.</li><li><strong>ChatGPT:</strong> private plugin using the approved secure tunnel and Pocket ID OAuth.</li></ul></section>
+<section><h2>Current verification</h2><p class="warning">Live readiness is not asserted by this static page. Last confirmed: Pocket ID healthy on local port 1411; its previous public Tailscale Funnel endpoint became unavailable; Device Bridge MCP port 4271 and tunnel-client were not running. GitHub code and tests passed, but end-to-end access remains unverified.</p><p>No keys, user identities, live tokens, or device information are published here.</p></section>
+<section><h2>Operator connection checks</h2><ol><li>Confirm the existing Pocket ID deployment is reachable through a stable HTTPS issuer.</li><li>Start <code>operator/identity/start-pocket-id-mcp.mjs</code> with the actual resource identifier, owner subject, and the local canonical device configuration.</li><li>Confirm <code>http://127.0.0.1:4271/.well-known/oauth-protected-resource/mcp</code> describes the exact registered MCP resource.</li><li>Run the approved <code>tunnel-client</code> next to the local MCP server, then complete OAuth authorization in the private ChatGPT plugin.</li><li>Verify authenticated <code>bridge_capabilities</code> returns actual live device discovery; discovery is not command authorization.</li></ol></section>
+<p><a href="./index.html">Device Bridge home</a> · <a href="https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE">Canonical GitHub source</a></p></main></body></html>
