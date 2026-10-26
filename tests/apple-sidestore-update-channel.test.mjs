@@ -19,13 +19,15 @@ test("Apple package carries an update-compatible bundle version and build", () =
   assert.match(qualification, /CFBundleShortVersionString/);
 });
 
-test("GitHub publishes a stable SideStore source after a qualified main build", () => {
+test("GitHub publishes stable Apple package metadata after a qualified main build", () => {
   assert.match(publish, /workflow_run:/);
   assert.match(publish, /head_branch == 'main'/);
   assert.match(publish, /apple-latest/);
   assert.match(publish, /sidestore-source\.json/);
   assert.match(publish, /bundleIdentifier/);
   assert.match(publish, /versions/);
-  assert.match(pwa, /sidestore:\/\/source\?url=/);
+  assert.match(pwa, /OPEN APPLE PACKAGE/);
+  assert.match(pwa, /Direct iLoader update/);
+  assert.doesNotMatch(pwa, /sidestore:\/\/source\?url=/);
   assert.match(pwa, /releases\/tag\/apple-latest/);
 });

@@ -9,14 +9,14 @@ const gradle=fs.readFileSync("apps/android/app/build.gradle.kts","utf8");
 
 assert.doesNotMatch(voice,/TextToSpeech/);
 assert.match(voice,/LEEWAY_VOICE_FABRIC/);
-assert.match(voice,/agent-lee-voice-one/);
-assert.match(voice,/fallbackAllowed/);
 assert.match(voice,/VOICE_UNAVAILABLE/);
+assert.match(voice,/fallbackAllowed", false/);
+assert.doesNotMatch(voice,/agent-lee-voice-one|kokoro-am_michael|fallbackProvider/);
 assert.match(voice,/openVoiceFabric/);
 assert.match(router,/"voice\.speak"/);
 assert.match(router,/"agent\.chat"/);
 assert.match(router,/VoiceRuntime\.speak/);
-assert.match(activity,/OPEN AGENT LEE VOICE ONE/);
+assert.match(activity,/OPEN LEEWAY VOICE FABRIC/);
 assert.match(activity,/VoiceRuntime\.openVoiceFabric/);
 assert.match(manifest,/RECORD_AUDIO/);
 assert.match(gradle,/versionName = "0\.9\.8-pocket-rc8"/);

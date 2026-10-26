@@ -245,7 +245,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
         val speakTest = Button(this).apply {
-            text = "OPEN AGENT LEE VOICE ONE"
+            text = "OPEN LEEWAY VOICE FABRIC"
             setOnClickListener {
                 output.text = VoiceRuntime.openVoiceFabric(this@MainActivity).toString(2)
             }
