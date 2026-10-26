@@ -70,3 +70,24 @@ test('real SDK HTTP initializes and advertises only canonical discovery tools af
   // The request lacks a tool name and therefore cannot execute anything.
   assert.equal(devices.size, 1);
 });
+
+test('OAuth discovery publishes the exact public resource and unauthenticated bearer challenge', async t => {
+  const resource = 'https://bridge.example.test/mcp';
+  const issuer = 'https://identity.example.test:10000';
+  const bridge = { devices: new Map(), discover: async () => ({}) };
+  const server = createRemoteMcpHttpServer({ bridge, authenticate: async () => false, resourceUrl: resource, authorizationServerUrl: issuer });
+  server.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  const base = 'http://127.0.0.1:' + server.address().port;
+  const metadata = await fetch(base + '/.well-known/oauth-protected-resource/mcp');
+  assert.equal(metadata.status, 200);
+  const body = await metadata.json();
+  assert.equal(body.resource, resource);
+  assert.deepEqual(body.authorization_servers, [issuer]);
+  assert.deepEqual(body.scopes_supported, ['device.bridge.read']);
+  const denied = await fetch(base + '/mcp', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+  assert.equal(denied.status, 401);
+  assert.match(denied.headers.get('www-authenticate'), /oauth-protected-resource\/mcp/);
+  assert.throws(() => createRemoteMcpHttpServer({ bridge, authenticate: async () => false, resourceUrl: resource }), /OAUTH_METADATA_CONFIGURATION_INCOMPLETE/);
+});
