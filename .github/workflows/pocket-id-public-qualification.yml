@@ -1,0 +1,51 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.DEVICE.BRIDGE.IDENTITY.RECOVERY
+# TAG: LEEWAY.IDENTITY.PUBLIC-QUALIFICATION.V1
+# WHO: LeeWay Industries
+# WHAT: External issuer availability and metadata qualification
+# WHEN: 2026-10-26
+# WHERE: .github/workflows/pocket-id-public-qualification.yml
+# WHY: Reuse GitHub CI to independently test a deployed OAuth issuer, without treating CI or Vercel as a persistent SQLite host
+# HOW: Explicit issuer URL from repository variable; no keys or private database; fail closed
+# AUTHORITY: Public health observation only; not enrollment, production OAuth approval, or migration authorization
+# LICENSE: MIT
+name: Pocket ID Public Issuer Qualification
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "37 6 * * *"
+permissions:
+  contents: read
+jobs:
+  verify-issuer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      EXPECTED_ISSUER: ${{ vars.LEEWAY_POCKET_ID_PUBLIC_ISSUER }}
+    steps:
+      - name: Qualify issuer over public HTTPS
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, os, ssl, sys, urllib.request
+          from urllib.parse import urlparse
+          issuer = os.environ.get('EXPECTED_ISSUER','').rstrip('/')
+          u = urlparse(issuer)
+          if u.scheme != 'https' or not u.hostname or u.username or u.password or u.query or u.fragment:
+              sys.exit('BLOCKED: set repository variable LEEWAY_POCKET_ID_PUBLIC_ISSUER to the approved HTTPS issuer')
+          url = issuer + '/.well-known/openid-configuration'
+          try:
+              with urllib.request.urlopen(urllib.request.Request(url, headers={'Accept':'application/json'}), context=ssl.create_default_context(), timeout=12) as r:
+                  if r.status != 200: sys.exit('BLOCKED: issuer HTTP status is not 200')
+                  d = json.load(r)
+          except Exception as exc:
+              sys.exit('BLOCKED: public issuer is unavailable or untrusted: ' + type(exc).__name__)
+          if d.get('issuer') != issuer: sys.exit('BLOCKED: issuer mismatch')
+          for key in ('authorization_endpoint','token_endpoint','jwks_uri'):
+              val = d.get(key,'')
+              if urlparse(val).scheme != 'https': sys.exit('BLOCKED: invalid '+key)
+          print('PUBLIC_OIDC_DISCOVERY_PASS')
+          print('Issuer:',issuer)
+          print('JWKS:',d['jwks_uri'])
+          print('Discovery only; no token or owner authentication was performed.')
+          PY
