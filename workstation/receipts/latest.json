@@ -1,15 +1,15 @@
 {
   "schemaVersion": "1.0.0",
   "evidenceType": "LEEWAY_PHONE_WORKSTATION_REMOTE_EXECUTION",
-  "workflowRunId": "36969736609",
-  "workflowSha": "69df43bf2d623fcf0b2615bb6b89322f0e1a1040",
-  "observedAt": "2026-10-02T05:40:35.467Z",
+  "workflowRunId": "40261643008",
+  "workflowSha": "b8f353ad401edd1ae1375e0bdb031141411cf5fc",
+  "observedAt": "2026-10-26T03:00:36.438Z",
   "pcRequired": false,
   "usbRequired": false,
   "result": {
     "ok": false,
     "error": "PHONE_RESULT_TIMEOUT",
-    "id": "03f37f09-ad5e-4a8b-a1f4-d325b20b84e5",
-    "capability": "workstation.health"
+    "id": "3a068207-8d71-480b-801d-a49ee81beaa6",
+    "capability": "device.health"
   }
 }
