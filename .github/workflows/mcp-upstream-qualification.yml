@@ -1,38 +1,46 @@
 # LEEWAY HEADER — DO NOT REMOVE
 # REGION: LEEWAY.DEVICE.BRIDGE.DEPLOYMENT.QUALIFICATION
-# TAG: LEEWAY.MCP.UPSTREAM.DISCOVERY.V1
+# TAG: LEEWAY.MCP.VERCEL.PUBLIC_OAUTH_DISCOVERY.V2
 # WHO: LeeWay Industries
-# WHAT: Qualify an existing LeeWay HTTPS MCP upstream without credentials
+# WHAT: Qualify an explicitly supplied Vercel public MCP /mcp endpoint and its Pocket ID metadata
 # WHEN: 2026-10-26
 # WHERE: .github/workflows/mcp-upstream-qualification.yml
-# WHY: Keep source-advertised endpoints separate from authenticated production authority
-# HOW: Network DNS/TLS and safe unauthenticated JSON-RPC refusal checks
-# AUTHORITY: Discovery-only diagnostic; never enrolls or advertises authority
+# WHY: Remove the retired Fly target and prevent warnings/SSO pages from becoming green qualification
+# HOW: Manual, credential-free initialize refusal plus exact path-scoped OAuth metadata checks
+# AUTHORITY: Discovery only; does not prove authenticated tool execution or device authority
 # LICENSE: MIT
-name: MCP upstream qualification
+name: Public MCP OAuth discovery qualification
+
 on:
   workflow_dispatch:
-  push:
-    paths: [.github/workflows/mcp-upstream-qualification.yml]
+    inputs:
+      endpoint:
+        description: "Authorized public Vercel Device Bridge URL ending in /mcp"
+        required: true
+        type: string
+      expected_issuer:
+        description: "Exact HTTPS issuer advertised by Pocket ID discovery"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
 jobs:
-  candidate:
+  qualify:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Check registered candidate connectivity without credentials
-        shell: bash
-        run: |
-          set -euo pipefail
-          endpoint=https://leeway-runtime-fabric.fly.dev/mcp
-          echo "Candidate: $endpoint"
-          status=$(curl --silent --show-error --location-trusted --max-time 12 --output /tmp/response --write-out '%{http_code}' --max-redirs 0 "$endpoint" || true)
-          echo "Unauthenticated GET status: $status"
-          # Authentication refusal (401/403/405) can be consistent with a protected MCP service,
-          # but is never proof of a configured owner provider or working tool execution.
-          if [[ "$status" == 000 ]]; then
-            echo "::warning::Registered endpoint unreachable; do not set LEEWAY_MCP_UPSTREAM"
-          elif [[ "$status" == 401 || "$status" == 403 || "$status" == 405 ]]; then
-            echo "Protected service candidate seen; provider identity and scope remain unqualified."
-          else
-            echo "::warning::Endpoint returned status $status; manual identity and origin qualification required."
-          fi
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify public MCP OAuth discovery
+        env:
+          LEEWAY_PUBLIC_MCP_ENDPOINT: ${{ inputs.endpoint }}
+          LEEWAY_MCP_EXPECTED_ISSUER: ${{ inputs.expected_issuer }}
+        run: node operator/identity/qualify-public-mcp-endpoint.mjs
