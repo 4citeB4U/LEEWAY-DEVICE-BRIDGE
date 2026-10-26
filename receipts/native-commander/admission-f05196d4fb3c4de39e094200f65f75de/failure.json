@@ -1,0 +1,6 @@
+{
+  "rollback": "NOT_NEEDED",
+  "at": "2026-10-06T04:01:36.4322032Z",
+  "status": "FAIL",
+  "failure": "MethodInvocationException: E:\\LeeWay-Work\\p7-g3-native-commander\\scripts\\Admit-NativeCommanderBinding.ps1:74\r\nLine |\r\n  74 |   [IO.File]::Replace($temp,$BindingFile,$null);$changed=$true\r\n     |   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\r\n     | Exception calling \"Replace\" with \"3\" argument(s): \"The path is empty. (Parameter 'path')\"\r\n\r\n"
+}

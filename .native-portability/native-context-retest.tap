@@ -1,0 +1,192 @@
+TAP version 13
+# Subtest: native portability: startup and host information require no filesystem root or device id
+    # Subtest: provider identity is unchanged and logical scopes are empty
+    ok 1 - provider identity is unchanged and logical scopes are empty
+      ---
+      duration_ms: 0.897
+      type: 'test'
+      ...
+    # Subtest: native host information works without a workspace
+    ok 2 - native host information works without a workspace
+      ---
+      duration_ms: 9.6919
+      type: 'test'
+      ...
+    # Subtest: unbound filesystem access fails closed instead of preventing startup
+    ok 3 - unbound filesystem access fails closed instead of preventing startup
+      ---
+      duration_ms: 1.6786
+      type: 'test'
+      ...
+    # Subtest: unknown capability does not inherit an object prototype method
+    ok 4 - unknown capability does not inherit an object prototype method
+      ---
+      duration_ms: 1.4542
+      type: 'test'
+      ...
+    # Subtest: no default app paths are inferred
+    ok 5 - no default app paths are inferred
+      ---
+      duration_ms: 1.1529
+      type: 'test'
+      ...
+    # Subtest: browser-origin requests are denied
+    ok 6 - browser-origin requests are denied
+      ---
+      duration_ms: 0.7871
+      type: 'test'
+      ...
+    # Subtest: spoofed host headers are denied
+    ok 7 - spoofed host headers are denied
+      ---
+      duration_ms: 7.4985
+      type: 'test'
+      ...
+    # Subtest: non-JSON body rejected
+    ok 8 - non-JSON body rejected
+      ---
+      duration_ms: 1.0931
+      type: 'test'
+      ...
+    # Subtest: oversized body rejected
+    ok 9 - oversized body rejected
+      ---
+      duration_ms: 1.7149
+      type: 'test'
+      ...
+    # Subtest: malformed argument types rejected
+    ok 10 - malformed argument types rejected
+      ---
+      duration_ms: 1.2682
+      type: 'test'
+      ...
+    # Subtest: unsupported platform adapters are reported separately
+    ok 11 - unsupported platform adapters are reported separately
+      ---
+      duration_ms: 0.0901
+      type: 'test'
+      ...
+    1..11
+ok 1 - native portability: startup and host information require no filesystem root or device id
+  ---
+  duration_ms: 119.2444
+  type: 'test'
+  ...
+# Subtest: native portability: logical resources relocate without changing source or request
+    # Subtest: relative resource read is bound by the target runtime
+    ok 1 - relative resource read is bound by the target runtime
+      ---
+      duration_ms: 5.9919
+      type: 'test'
+      ...
+    # Subtest: unknown scope cannot fall back to a physical path
+    ok 2 - unknown scope cannot fall back to a physical path
+      ---
+      duration_ms: 1.9654
+      type: 'test'
+      ...
+    # Subtest: traversal outside the bound root is rejected
+    ok 3 - traversal outside the bound root is rejected
+      ---
+      duration_ms: 1.5717
+      type: 'test'
+      ...
+    # Subtest: ambiguous dual selectors fail closed
+    ok 4 - ambiguous dual selectors fail closed
+      ---
+      duration_ms: 0.8379
+      type: 'test'
+      ...
+    # Subtest: URI selectors are not filesystem grants
+    ok 5 - URI selectors are not filesystem grants
+      ---
+      duration_ms: 0.7733
+      type: 'test'
+      ...
+    # Subtest: hash equals independent SHA-256
+    ok 6 - hash equals independent SHA-256
+      ---
+      duration_ms: 1.1349
+      type: 'test'
+      ...
+    # Subtest: legacy explicit in-scope path remains compatible
+    ok 7 - legacy explicit in-scope path remains compatible
+      ---
+      duration_ms: 1.0688
+      type: 'test'
+      ...
+    # Subtest: invalid read limit is rejected
+    ok 8 - invalid read limit is rejected
+      ---
+      duration_ms: 0.8657
+      type: 'test'
+      ...
+    # Subtest: single-link file policy rejects aliases
+    ok 9 - single-link file policy rejects aliases
+      ---
+      duration_ms: 1.5615
+      type: 'test'
+      ...
+    # Subtest: directory listing retains typed entries
+    ok 10 - directory listing retains typed entries
+      ---
+      duration_ms: 1.4116
+      type: 'test'
+      ...
+    # Subtest: terminal syntax check really runs through native capability
+    ok 11 - terminal syntax check really runs through native capability
+      ---
+      duration_ms: 50.2832
+      type: 'test'
+      ...
+    # Subtest: script tests require explicit owner-confirmed execution
+    ok 12 - script tests require explicit owner-confirmed execution
+      ---
+      duration_ms: 1.2288
+      type: 'test'
+      ...
+    # Subtest: confirmed scoped test executes without an external Commander implementation
+    ok 13 - confirmed scoped test executes without an external Commander implementation
+      ---
+      duration_ms: 99.8728
+      type: 'test'
+      ...
+    # Subtest: shell-chain syntax never reaches a shell
+    ok 14 - shell-chain syntax never reaches a shell
+      ---
+      duration_ms: 1.0681
+      type: 'test'
+      ...
+    # Subtest: identical logical request follows the new authorized binding
+    ok 15 - identical logical request follows the new authorized binding
+      ---
+      duration_ms: 5.8553
+      type: 'test'
+      ...
+    1..15
+ok 2 - native portability: logical resources relocate without changing source or request
+  ---
+  duration_ms: 342.9618
+  type: 'test'
+  ...
+# Subtest: native portability: host-bound app identifier needs no workspace root
+ok 3 - native portability: host-bound app identifier needs no workspace root
+  ---
+  duration_ms: 85.9061
+  type: 'test'
+  ...
+# Subtest: native portability: no embedded drive, home, device label or filesystem default
+ok 4 - native portability: no embedded drive, home, device label or filesystem default
+  ---
+  duration_ms: 0.5435
+  type: 'test'
+  ...
+1..4
+# tests 30
+# suites 0
+# pass 30
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 619.3957

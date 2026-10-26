@@ -1,0 +1,32 @@
+{
+  "rollback": "Restore exact binding bytes and restart same loader",
+  "owner": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "oldPid": 40056,
+  "globalBootFabricChanged": false,
+  "oldBindingHash": "F1A4A357BC7AA62ABB5FB988E43129FD4C15DFB51E8FDE344143B893146036C7",
+  "health": {
+    "status": "PASS",
+    "provider": "LEEWAY_NATIVE_HOST_COMMANDER",
+    "root": "E:\\LeeWay-Work",
+    "bodyId": "pc-primary",
+    "deviceAuthority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+    "transport": "LOOPBACK_ONLY",
+    "remotePairingQualified": false,
+    "capabilities": {
+      "leeway.files.list": "READ",
+      "leeway.files.read": "READ",
+      "leeway.files.hash": "READ",
+      "leeway.process.inspect": "READ",
+      "leeway.service.inspect": "READ",
+      "leeway.display.inspect": "READ",
+      "leeway.host.info": "READ",
+      "leeway.app.open": "OPERATE",
+      "leeway.terminal.execute": "OPERATE"
+    }
+  },
+  "scope": "EXISTING_LOOPBACK_SERVICE_ONLY",
+  "candidateCommit": "4087dae37e81db0629033a0256b232dd9c0914d1",
+  "provider": "LEEWAY_NATIVE_HOST_COMMANDER",
+  "authorization": "Creator explicitly approved admission through existing boot/transport binding",
+  "loaderSha256": "E3B6632CF07C310C23B58D8F4C9231E804AD0C996FEBABBCE89571AD12B17C88"
+}

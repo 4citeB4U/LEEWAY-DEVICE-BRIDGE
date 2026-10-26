@@ -1,0 +1,6 @@
+{
+  "providers/desktop-commander/native-host/server.mjs": "a4ccee4b1d7c6894075dd279431c96968c9e03fecd086f51d80b3d77d4ab46c0",
+  "providers/desktop-commander/native-host/command-policy.mjs": "091b09323077f09b3168f2d9401d632542313ce0b8be04d218c5fa69fb0c6649",
+  "tests/native-commander-portability.test.mjs": "da9a0f8c8856c45d09dbfd1b6cba6d933a8021f46eb64fee0fe567168e4c4eb6",
+  "scripts/Invoke-NativeCommanderPortabilityGate.ps1": "b3d465a4801ac58f0537c513f3ee1c9da7c4a5e5f2f0e2be0338d5ffd38c0538"
+}

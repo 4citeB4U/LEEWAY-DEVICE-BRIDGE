@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "LeeWay Agent Lee Verified Cursor Event v1",
+  "description": "A post-execution visual projection only. This is not a command or a proof of execution by itself.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["agentId","authority","device","requestId","actionId","action","ownerApproved","cancelled","timestamp","execution","observation"],
+  "properties": {
+    "agentId": {"const":"agent-lee"},
+    "authority": {"const":"4citeB4U/LEEWAY-DEVICE-BRIDGE"},
+    "device": {"enum":["pc","android"]},
+    "requestId": {"type":"string","pattern":"^[A-Za-z0-9][A-Za-z0-9._:-]{11,127}$"},
+    "actionId": {"type":"string","pattern":"^[A-Za-z0-9][A-Za-z0-9._:-]{11,127}$"},
+    "action": {"enum":["move","click","double-click","scroll","type","tap","swipe"]},
+    "ownerApproved": {"const":true},
+    "cancelled": {"const":false},
+    "timestamp": {"type":"integer","minimum":0},
+    "x": {"type":"number","minimum":0,"maximum":32768},
+    "y": {"type":"number","minimum":0,"maximum":32768},
+    "execution": {
+      "type":"object", "additionalProperties":false,
+      "required":["requestId","actionId","device","provider","state","receiptHash"],
+      "properties":{
+        "requestId":{"type":"string"},"actionId":{"type":"string"},"device":{"enum":["pc","android"]},
+        "provider":{"const":"LEEWAY_DEVICE_BRIDGE"},"state":{"const":"EXECUTED"},
+        "receiptHash":{"type":"string","pattern":"^[a-fA-F0-9]{64}$"}
+      }
+    },
+    "observation":{
+      "type":"object","additionalProperties":false,
+      "required":["requestId","actionId","postStateVerified","receiptHash"],
+      "properties":{"requestId":{"type":"string"},"actionId":{"type":"string"},"postStateVerified":{"const":true},"receiptHash":{"type":"string","pattern":"^[a-fA-F0-9]{64}$"}}
+    }
+  }
+}

@@ -1,0 +1,7 @@
+import assert from 'node:assert/strict';
+import {planWindowsInput as plan} from './windows-input-plan.mjs';
+const base={ownerApproved:true,requestId:'request-case-12345',action:'move',x:100,y:150},bounds={width:1920,height:1080};
+let n=0;const test=(name,value,expected)=>{assert.equal(plan(value,bounds).admitted,expected,name);n++;};
+test('approved move',base,true);test('not approved',{...base,ownerApproved:false},false);test('cancelled',{...base,cancelled:true},false);test('out of screen',{...base,x:4000},false);test('negative',{...base,y:-1},false);test('wrong action',{...base,action:'launch-shell'},false);test('no requestId',{...base,requestId:'x'},false);test('allowed click',{...base,action:'click'},true);test('allowed double click',{...base,action:'double-click'},true);test('scroll bounded',{...base,action:'scroll',delta:120},true);test('scroll excessive',{...base,action:'scroll',delta:9999},false);test('type short',{...base,action:'type',text:'Agent Lee'},true);test('type too long',{...base,action:'type',text:'x'.repeat(257)},false);test('unknown',{...base,action:null},false);
+assert.equal(plan(base,bounds).executionState,'PLAN_ONLY_NOT_EXECUTED');
+console.log('WINDOWS_INPUT_PLAN_PASS '+n+'/14; NO WINDOWS INPUT INJECTED');

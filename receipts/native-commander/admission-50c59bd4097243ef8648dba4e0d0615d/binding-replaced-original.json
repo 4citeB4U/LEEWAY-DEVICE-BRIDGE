@@ -1,0 +1,13 @@
+﻿{
+    "schemaVersion":  "leeway.commander.binding.v1",
+    "owner":  "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+    "provider":  "LEEWAY_NATIVE_HOST_COMMANDER",
+    "bodyId":  "pc-primary",
+    "port":  8891,
+    "workspaceRoot":  "E:\\LeeWay-Work",
+    "sourcePath":  "E:\\LeeWay-Work\\hardening-run-20261005\\device\\providers\\desktop-commander\\native-host\\server.mjs",
+    "sourceSha256":  "AACD3FEE1626A25EC2A7ADEBA38B4797B8297428933F6096E07A8FFC53F53D79",
+    "policyPath":  "E:\\LeeWay-Work\\hardening-run-20261005\\device\\providers\\desktop-commander\\native-host\\command-policy.mjs",
+    "policySha256":  "091B09323077F09B3168F2D9401D632542313CE0B8BE04D218C5FA69FB0C6649",
+    "remoteExposure":  false
+}

@@ -1,0 +1,11 @@
+{
+  "liveSourceModified": false,
+  "purpose": "Repair exact bound provider in isolation; not another provider identity",
+  "policySha256": "091B09323077F09B3168F2D9401D632542313CE0B8BE04D218C5FA69FB0C6649",
+  "serverSha256": "AACD3FEE1626A25EC2A7ADEBA38B4797B8297428933F6096E07A8FFC53F53D79",
+  "liveBindingModified": false,
+  "sourceIdentity": "PINNED_LIVE_UNCOMMITTED_SOURCE",
+  "at": "2026-10-06T03:21:50.0931656Z",
+  "owner": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "sourceBaseCommit": "42d785b76aa4f2dade27544188b8ab424d5abb81"
+}
