@@ -23,7 +23,7 @@ test('Pocket ID API JWT requires valid issuer, audience, owner and permission', 
   const now = 1792987200000;
   const fetchImpl = async url => ({
     ok: true,
-    json: async () => url.endsWith('openid-configuration')
+    json: async () => String(url).endsWith('openid-configuration')
       ? { issuer, jwks_uri: issuer + '/.well-known/jwks.json' }
       : { keys: [{ ...publicKey.export({ format: 'jwk' }), kid: 'fixture-key', alg: 'RS256', use: 'sig' }] },
   });
