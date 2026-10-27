@@ -10,7 +10,7 @@ WHERE = operator/notebook/notebook-capability-adapter.mjs.
 WHEN = 2026-10-27.
 HOW = Injected authorized executor with host-specific session and operation admission; no duplicate server.
 LICENSE: MIT.
-AUTHORITY: Additive source contract only. Physical NotebookLM/Chrome connection not qualified.
+AUTHORITY: Additive source contract only. Physical NotebookLM/Chrome/Edge connections not qualified.
 */
 const OPERATIONS = Object.freeze({
   'notebook.status': {mutates:false},
@@ -18,6 +18,7 @@ const OPERATIONS = Object.freeze({
   'notebook.studio.capture': {mutates:true},
   'notebook.studio.generate': {mutates:true}
 });
+const BROWSERS = new Set(['chrome','edge']);
 const STUDIO_TYPES = new Set(['infographic','slide_deck','data_table','mind_map','report','audio','video']);
 export const NOTEBOOK_CAPABILITY_VERSION='leeway.device.notebook.v1';
 export const NOTEBOOK_ALLOWED_OPERATIONS=Object.freeze(Object.keys(OPERATIONS));
@@ -38,17 +39,17 @@ export function createNotebookCapabilityAdapter({authorize,execute,sessionBindin
       if(operation==='notebook.studio.generate' && !STUDIO_TYPES.has(args.type))
         throw new Error('NOTEBOOK_ARTIFACT_TYPE_INVALID');
       const session=await sessionBinding({notebookId,operation,requestId});
-      if(!session||session.verified!==true||session.notebookId!==notebookId)
+      if(!session||session.verified!==true||session.notebookId!==notebookId||!BROWSERS.has(session.browser)||typeof session.profileId!=='string'||!session.profileId.trim()||session.origin!=='https://notebook.google.com')
         throw new Error('NOTEBOOK_SESSION_NOT_VERIFIED');
       // Approval tokens and credentials remain behind host/runtime; do not serialize them to GitHub.
-      const authorized=await authorize({operation,notebookId,requestId,mutates,approval,session});
+      const authorized=await authorize({operation,notebookId,requestId,mutates,approval,session,browser:session.browser,profileId:session.profileId});
       if(authorized!==true)throw new Error('NOTEBOOK_ACTION_NOT_AUTHORIZED');
       if(mutates && (!approval||approval.authorized!==true||approval.notebookId!==notebookId))
         throw new Error('NOTEBOOK_OWNER_APPROVAL_REQUIRED');
-      const result=await execute({operation,notebookId,requestId,arguments:args,session});
+      const result=await execute({operation,notebookId,requestId,arguments:args,session,browser:session.browser,profileId:session.profileId});
       if(!result||result.executed!==true)throw new Error('NOTEBOOK_EXECUTION_NOT_OBSERVED');
       return {
-        capability:NOTEBOOK_CAPABILITY_VERSION,operation,notebookId,requestId,
+        capability:NOTEBOOK_CAPABILITY_VERSION,operation,notebookId,requestId,browser:session.browser,
         state:'EXECUTION_OBSERVED_UNVERIFIED',evidence:result.evidence??null,
         veritas:'NOT_RUN',receipt:'NOT_VERIFIED'
       };
