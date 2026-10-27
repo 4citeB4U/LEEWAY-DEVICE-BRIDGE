@@ -1,0 +1,149 @@
+{
+  "schemaVersion": "1.0.0",
+  "evidenceId": "LDB-PR77-OWNER-SCOPED-MCP-ENGINEERING-20261027",
+  "recordClass": "ENGINEERING_SOURCE_CI_EVIDENCE",
+  "createdFor": "2026-10-27 source and CI retrospective",
+  "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "status": "SOURCE_CI_VERIFIED_PRODUCTION_BLOCKED",
+  "source": {
+    "baseCommit": "d76e97d775e82645b1fda746c8189074fd241e94",
+    "testedPullRequestHead": "a3d14d82a52e788f2f2c5c725a729c3b4e3dc4d0",
+    "pullRequest": 77,
+    "branch": "repair/owner-scoped-mcp-execution-20261027",
+    "repoUrl": "https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE",
+    "pullRequestUrl": "https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/pull/77",
+    "changeScope": [
+      "apps/desktop/mcp-http.mjs",
+      "operator/identity/create-pocket-id-universal-handler.mjs",
+      "operator/identity/start-universal-pocket-id-mcp.mjs",
+      "tests/mcp/pocket-id-owner-execution.test.mjs",
+      "operator/identity/README.md"
+    ]
+  },
+  "investigation": {
+    "expected": "Authenticated owner-scoped MCP exposes canonical Device Bridge tools through trusted Runtime composition and independently governed admission; read scope stays discovery-only.",
+    "observed": "Pocket ID universal handler hard-coded discoveryOnly true; startup created Bridge without trusted Runtime providers; public Runtime Fabric upstream exposes only runtime_health.",
+    "failureBoundary": "Local MCP tool exposure and host Runtime composition, plus separate public upstream device execution provider gap.",
+    "unprovenRuntimeClaims": [
+      "Public authenticated device command",
+      "Independent Veritas PRE/POST",
+      "Same-request canonical Receipt Ledger and Learning Ledger admission"
+    ]
+  },
+  "implementation": {
+    "scope": "Local owner command exposure behind separately signed execute scope and trusted host Runtime input; no public deployment or broadened read scope.",
+    "isolatedBranch": true,
+    "mainModified": false,
+    "publicMcpUpstreamModified": false,
+    "productionCredentialsChanged": false
+  },
+  "verification": {
+    "matrix": {
+      "workflowName": "Portable protocol and MCP",
+      "runId": 40573634995,
+      "url": "https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/actions/runs/40573634995",
+      "headSha": "a3d14d82a52e788f2f2c5c725a729c3b4e3dc4d0",
+      "jobs": [
+        {
+          "jobId": 122434124849,
+          "platform": "ubuntu-latest",
+          "result": "PASS",
+          "steps": [
+            "npm ci --ignore-scripts",
+            "npm run test:mcp",
+            "npm run test:cli",
+            "trusted-composition startup regression"
+          ]
+        },
+        {
+          "jobId": 122434125061,
+          "platform": "windows-latest",
+          "result": "PASS",
+          "steps": [
+            "npm ci --ignore-scripts",
+            "npm run test:mcp",
+            "npm run test:cli",
+            "trusted-composition startup regression"
+          ]
+        },
+        {
+          "jobId": 122434125335,
+          "platform": "macos-latest",
+          "result": "PASS",
+          "steps": [
+            "npm ci --ignore-scripts",
+            "npm run test:mcp",
+            "npm run test:cli",
+            "trusted-composition startup regression"
+          ]
+        }
+      ]
+    },
+    "android": {
+      "workflowName": "Android Build",
+      "runId": 40573635053,
+      "url": "https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/actions/runs/40573635053",
+      "headSha": "a3d14d82a52e788f2f2c5c725a729c3b4e3dc4d0",
+      "jobId": 122434124980,
+      "result": "PASS",
+      "evidence": "Gradle build, source/contracts, package hash measurement and artifact upload steps succeeded",
+      "publication": "SKIPPED"
+    },
+    "testScope": [
+      "Signed test RSA token issuer/audience/owner/scope checks",
+      "Read-only token cannot list mutation tools",
+      "Separate execute scope lists canonical tools when explicitly enabled",
+      "Synthetic fixture command allowed only by injected test admission callback",
+      "Unauthorized file-write fixture rejected before execution",
+      "Untrusted host startup configuration rejected"
+    ],
+    "limitations": [
+      "CI runs predate this retrospective evidence artifact; they qualify tested PR source SHA only.",
+      "No physical target was executed by the test fixtures.",
+      "No current production owner/Veritas/Formula/receipt provider invocation was observed.",
+      "No independent Veritas production PASS issued.",
+      "No current ChatGPT live device action was verified."
+    ]
+  },
+  "engineeringLoop": {
+    "INVESTIGATE": "EVIDENCED",
+    "DIAGNOSE": "EVIDENCED",
+    "PLAN": "EVIDENCED",
+    "IMPLEMENT": "EVIDENCED",
+    "TEST": "PASS_SOURCE_CI",
+    "VALIDATE": "PASS_SOURCE_CI_ONLY",
+    "REPAIR": "NOT_TRIGGERED_NO_FAILED_TEST_OBSERVED",
+    "RETEST": "PASS_MATRIX_POST_IMPLEMENTATION",
+    "VERIFY": "SOURCE_CI_VERIFIED_PRODUCTION_BLOCKED",
+    "EVIDENCE": "THIS_SOURCE_RECORD"
+  },
+  "release": {
+    "pullRequestDraft": true,
+    "mainMerge": "NOT_PERFORMED",
+    "productionDeploy": "NOT_PERFORMED",
+    "liveDevice": "NOT_EXECUTED",
+    "independentVeritas": "NOT_EXECUTED",
+    "receiptLedger": "NOT_UPDATED",
+    "learningLedger": "NOT_UPDATED",
+    "learningCandidateState": "PENDING_CANONICAL_ADMISSION_NOT_AUTHORIZED"
+  },
+  "learningCandidates": [
+    {
+      "classification": "OBSERVED_SOURCE",
+      "lesson": "A hardened gateway may expose only discovery even when the canonical dispatcher implements mutation; inspect every ingress and tool factory separately.",
+      "verification": "Code diff plus signed-token test matrix"
+    },
+    {
+      "classification": "OBSERVED_SOURCE",
+      "lesson": "Different read and execute OAuth scopes prevent automatic promotion of read-only access; host execution still needs independent runtime admission.",
+      "verification": "Source tests; production effect not established"
+    },
+    {
+      "classification": "OPEN_RISK",
+      "lesson": "Public Vercel Runtime Fabric health-only MCP cannot establish real remote device command execution.",
+      "verification": "Reviewed upstream service source; production execution not observed"
+    }
+  ],
+  "nextGate": "Verify exact live Runtime Fabric production provider registration, independent Veritas PRE/POST and canonical ledger correlation on a real owner-authorized non-destructive request.",
+  "canonicalReceiptCreated": false
+}
