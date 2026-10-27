@@ -20,7 +20,7 @@ const base={operation:'notebook.status',notebookId:id,requestId:'notebook-test-0
 const factories=(overrides={})=>{
   let executions=0;
   const adapter=createNotebookCapabilityAdapter({
-    sessionBinding:async()=>({verified:true,notebookId:id}),
+    sessionBinding:async()=>({verified:true,notebookId:id,browser:'chrome',profileId:'owner-profile',origin:'https://notebook.google.com'}),
     authorize:async()=>true,
     execute:async()=>{executions++;return {executed:true,evidence:{class:'SYNTHETIC'}}},
     ...overrides
@@ -83,4 +83,21 @@ test('unknown Studio output and empty prompt are rejected before host calls',asy
 test('unobserved downstream execution never receives success envelope',async()=>{
   const f=factories({execute:async()=>({executed:false})});
   await assert.rejects(f.adapter.invoke(base),/NOTEBOOK_EXECUTION_NOT_OBSERVED/);
+});
+
+test('Chrome and Edge both admit only verified browser-profile scope',async()=>{
+ for(const browser of ['chrome','edge']){
+   const f=factories({sessionBinding:async()=>({verified:true,notebookId:id,browser,profileId:'trusted-profile',origin:'https://notebook.google.com'})});
+   const out=await f.adapter.invoke(base);
+   assert.equal(out.browser,browser);
+   assert.equal(f.executions,1);
+ }
+});
+test('unapproved browser family, origin or profile is rejected before action',async()=>{
+ for(const patch of [{browser:'untrusted'},{origin:'https://evil.example'},{profileId:''},{browser:undefined}]){
+   const session={verified:true,notebookId:id,browser:'edge',profileId:'trusted-profile',origin:'https://notebook.google.com',...patch};
+   const f=factories({sessionBinding:async()=>session});
+   await assert.rejects(f.adapter.invoke(base),/NOTEBOOK_SESSION_NOT_VERIFIED/);
+   assert.equal(f.executions,0);
+ }
 });
