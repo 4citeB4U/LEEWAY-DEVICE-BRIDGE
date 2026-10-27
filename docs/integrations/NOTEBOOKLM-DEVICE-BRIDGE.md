@@ -15,6 +15,12 @@ LICENSE: MIT.
 
 **State: SOURCE ADAPTER ONLY — NO LIVE HOST ROUTE, NO CHROME/EDGE INSTALLATION, NO VERIFIED NOTEBOOK WRITE.**
 
+## Recovered historical evidence — do not erase prior success
+
+The original Notebook bridge **did operate historically**: LeeWay Intellectual Estate contains dated GitHub-persisted NotebookLM prompt/response exchanges and a scoped exact-restoration PPTX crypto test. A separate LeeWay Engineering notebook was directly observed with completed Studio visuals and data table, later corroborated by the Creator. See [2026-10-27 historical evidence dossier](NOTEBOOKLM-HISTORICAL-EVIDENCE-20261027.md) for immutable commit links and distinct claim levels.
+
+The leading `SOURCE ADAPTER ONLY` label describes the **new Device Bridge registration**, not the original Chrome bridge's entire operational history. Treat baseline capability as `HISTORICALLY_OPERATIONAL` and current migration as `CURRENT_HOST_BINDING_NOT_QUALIFIED`. Preserve prior evidence and advance through **incremental** security, Chrome/Edge parity and Independent Veritas gates.
+
 ## Reuse and source
 The existing Chromium MV3 extension, relay, artifact promotion and local Boot Fabric source remain at [LeeWay Intellectual Estate](https://github.com/4citeB4U/LEEWAY-INTELLECTUAL-ESTATE/tree/main/tools/notebook-direct-git-bridge). Do not destroy, copy secrets from or falsely claim migration of the live installation.
 
