@@ -55,7 +55,7 @@ async function boundedJson(response){
  try{return JSON.parse(new TextDecoder().decode(bytes));}
  catch{fail('MCP_QUALIFIER_INVALID_JSON');}
 }
-export async function qualifyAuthenticatedBridgeTools({endpoint,expectedResource,accessToken,fetchImpl=globalThis.fetch}={}){
+export async function qualifyAuthenticatedBridgeTools({endpoint,expectedResource,accessToken,expectedDeviceId,fetchImpl=globalThis.fetch}={}){
  const target=parseResource(endpoint,'MCP_QUALIFIER_ENDPOINT_INVALID');
  const expected=parseResource(expectedResource,'MCP_QUALIFIER_RESOURCE_INVALID');
  if(target!==expected)fail('MCP_QUALIFIER_RESOURCE_MISMATCH');
@@ -93,11 +93,42 @@ export async function qualifyAuthenticatedBridgeTools({endpoint,expectedResource
  if(!names.every(x=>typeof x==='string')||new Set(names).size!==names.length)fail('MCP_QUALIFIER_TOOL_NAMES_INVALID');
  if(!REQUIRED.every(x=>names.includes(x)))fail('MCP_QUALIFIER_BRIDGE_DISCOVERY_UNBOUND');
  if(!names.every(x=>ALLOWED.has(x)))fail('MCP_QUALIFIER_UNAUTHORIZED_TOOL_EXPOSURE');
+ let deviceEvidence={deviceConnectivity:'NOT_PROBED'};
+ if(expectedDeviceId!==undefined){
+  if(typeof expectedDeviceId!=='string'||!/^[A-Za-z0-9_.:@/-]{1,128}$/.test(expectedDeviceId)){
+   fail('MCP_QUALIFIER_TARGET_DEVICE_INVALID');
+  }
+  function toolJson(body,code){
+   if(body?.isError===true||!Array.isArray(body?.content)||typeof body.content[0]?.text!=='string'){
+    fail(code);
+   }
+   try{return JSON.parse(body.content[0].text);}catch{fail(code);}
+  }
+  const listed=toolJson(await request(3,'tools/call',{name:'bridge_devices',arguments:{}}),'MCP_QUALIFIER_DEVICES_RESPONSE_INVALID');
+  if(!Array.isArray(listed?.devices)||!listed.devices.every(x=>typeof x==='string')||
+     new Set(listed.devices).size!==listed.devices.length||!listed.devices.includes(expectedDeviceId)){
+   fail('MCP_QUALIFIER_TARGET_DEVICE_NOT_CONFIGURED');
+  }
+  const capability=toolJson(await request(4,'tools/call',{
+   name:'bridge_capabilities',arguments:{deviceId:expectedDeviceId}
+  }),'MCP_QUALIFIER_CAPABILITIES_RESPONSE_INVALID');
+  if(capability?.deviceId!==expectedDeviceId||!Array.isArray(capability.capabilities)||
+     !capability.capabilities.every(x=>typeof x?.name==='string'&&typeof x?.granted==='boolean'&&typeof x?.verified==='boolean')){
+   fail('MCP_QUALIFIER_CAPABILITIES_INVALID');
+  }
+  deviceEvidence={
+   deviceConnectivity:'CONFIGURED_DISCOVERY_ONLY',
+   expectedDeviceId,
+   configuredDeviceCount:listed.devices.length,
+   capabilityCount:capability.capabilities.length,
+   physicallyVerifiedCapabilities:capability.capabilities.filter(x=>x.verified===true).length
+  };
+ }
  return Object.freeze({
-  status:'AUTHENTICATED_READONLY_DISCOVERY_TOOLS_OBSERVED',
+  status:expectedDeviceId===undefined?'AUTHENTICATED_READONLY_DISCOVERY_TOOLS_OBSERVED':'AUTHENTICATED_DEVICE_CONFIGURATION_OBSERVED',
   resource:target,
   tools:names.slice().sort(),
-  deviceConnectivity:'NOT_PROBED',
+  ...deviceEvidence,
   continuumReadback:'NOT_PROBED',
   runtimeExecution:'NOT_AUTHORIZED',
   veritas:'NOT_PROBED',
@@ -109,7 +140,8 @@ if(process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href===import
  qualifyAuthenticatedBridgeTools({
   endpoint:process.env.LEEWAY_PUBLIC_MCP_ENDPOINT,
   expectedResource:process.env.LEEWAY_MCP_AUDIENCE,
-  accessToken:process.env.LEEWAY_MCP_OWNER_ACCESS_TOKEN
+  accessToken:process.env.LEEWAY_MCP_OWNER_ACCESS_TOKEN,
+  expectedDeviceId:process.env.LEEWAY_TARGET_DEVICE_ID||undefined
  }).then(result=>console.log(JSON.stringify(result,null,2)))
   .catch(error=>{
    // Never print token or raw upstream response.
