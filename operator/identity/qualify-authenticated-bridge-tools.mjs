@@ -33,8 +33,25 @@ async function boundedJson(response){
  if(len>MAX_BYTES)fail('MCP_QUALIFIER_RESPONSE_TOO_LARGE');
  const contentType=response.headers.get('content-type')||'';
  if(!/^application\/json(?:\s*;|$)/i.test(contentType))fail('MCP_QUALIFIER_JSON_REQUIRED');
- const bytes=new Uint8Array(await response.arrayBuffer());
- if(bytes.length>MAX_BYTES)fail('MCP_QUALIFIER_RESPONSE_TOO_LARGE');
+ const reader=response.body?.getReader?.();
+ if(!reader)fail('MCP_QUALIFIER_RESPONSE_STREAM_REQUIRED');
+ const chunks=[];
+ let size=0;
+ try{
+  while(true){
+   const {done,value}=await reader.read();
+   if(done)break;
+   size+=value.byteLength;
+   if(size>MAX_BYTES){
+    await reader.cancel();
+    fail('MCP_QUALIFIER_RESPONSE_TOO_LARGE');
+   }
+   chunks.push(value);
+  }
+ }finally{reader.releaseLock();}
+ const bytes=new Uint8Array(size);
+ let offset=0;
+ for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength;}
  try{return JSON.parse(new TextDecoder().decode(bytes));}
  catch{fail('MCP_QUALIFIER_INVALID_JSON');}
 }
