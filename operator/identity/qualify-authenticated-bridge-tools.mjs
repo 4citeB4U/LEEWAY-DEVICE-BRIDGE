@@ -95,7 +95,7 @@ export async function qualifyAuthenticatedBridgeTools({endpoint,expectedResource
  if(!names.every(x=>ALLOWED.has(x)))fail('MCP_QUALIFIER_UNAUTHORIZED_TOOL_EXPOSURE');
  let deviceEvidence={deviceConnectivity:'NOT_PROBED'};
  if(expectedDeviceId!==undefined){
-  if(typeof expectedDeviceId!=='string'||!/^[A-Za-z0-9_.:@/-]{1,128}$/.test(expectedDeviceId)){
+  if(typeof expectedDeviceId!=='string'||!/^[A-Za-z0-9_.:@-]{1,128}$/.test(expectedDeviceId)){
    fail('MCP_QUALIFIER_TARGET_DEVICE_INVALID');
   }
   function toolJson(body,code){
