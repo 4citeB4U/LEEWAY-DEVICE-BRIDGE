@@ -1,0 +1,50 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.DEVICE.BRIDGE.DEPLOYMENT.QUALIFICATION
+# TAG: LEEWAY.THREE_PART.CONTINUUM_SOURCE_GATE.CI.V1
+# WHO: LeeWay Industries / owner-authorized maintainers
+# WHAT: Verify GitHub/Vercel source routes and canonical Continuum database/storage inventory
+# WHEN: 2026-10-28
+# WHERE: .github/workflows/three-part-continuum-source-gate.yml
+# WHY: Enforce PR #58 without confusing source tests with live identity or execution admission
+# HOW: Read-only checkout of Device Bridge and canonical Continuum; run deterministic Node source qualification
+# AUTHORITY: Source-only CI; no external credentials, owner data, or production promotion
+# LICENSE: MIT
+name: Three-part Continuum source qualification
+
+on:
+  pull_request:
+    paths:
+      - "api/**"
+      - "operator/identity/**"
+      - "tests/mcp/three-part-sources.test.mjs"
+      - "vercel.json"
+      - ".github/workflows/three-part-continuum-source-gate.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-qualification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Check out Device Bridge source
+        uses: actions/checkout@v4
+        with:
+          path: bridge
+      - name: Check out independent canonical Continuum topology
+        uses: actions/checkout@v4
+        with:
+          repository: 4citeB4U/LeeWay-Continuum
+          ref: main
+          path: continuum
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Reject invalid source contracts
+        run: node bridge/operator/identity/qualify-three-part-sources.mjs --vercel bridge/vercel.json --topology continuum/config/storage-topology.candidate.json
+      - name: Test fail-closed source classification
+        run: node --test bridge/tests/mcp/three-part-sources.test.mjs
