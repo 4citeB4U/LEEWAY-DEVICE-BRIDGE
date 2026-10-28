@@ -47,4 +47,4 @@ jobs:
       - name: Reject invalid source contracts
         run: node bridge/operator/identity/qualify-three-part-sources.mjs --vercel bridge/vercel.json --topology continuum/config/storage-topology.candidate.json
       - name: Test fail-closed source classification
-        run: node --test bridge/tests/mcp/three-part-sources.test.mjs
+        run: node --test bridge/tests/mcp/three-part-sources.test.mjs bridge/tests/mcp/continuum-readback-qualification.test.mjs
