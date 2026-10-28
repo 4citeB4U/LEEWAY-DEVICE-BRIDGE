@@ -79,3 +79,45 @@ test('invalid JSON-RPC response cannot claim authenticated tools',async()=>{
   return Response.json({jsonrpc:'2.0',id:body.id,result:null});
  }),/MCP_QUALIFIER_INVALID_RESPONSE/);
 });
+
+test('owner token can prove configured target device and capabilities without claiming physical connectivity',async()=>{
+ const calls=[];
+ const fetchImpl=async(_url,init)=>{
+  const body=JSON.parse(init.body);
+  calls.push(body);
+  if(body.method==='initialize')return ok(1,{serverInfo:{name:'fixture',version:'1'},protocolVersion:'2025-03-26',capabilities:{}});
+  if(body.method==='tools/list')return ok(2,{tools:[{name:'bridge_devices'},{name:'bridge_capabilities'}]});
+  if(body.method==='tools/call'&&body.params.name==='bridge_devices')return ok(3,{
+   content:[{type:'text',text:JSON.stringify({devices:['windows-main','android-fold']})}]
+  });
+  if(body.method==='tools/call'&&body.params.name==='bridge_capabilities')return ok(4,{
+   content:[{type:'text',text:JSON.stringify({deviceId:'windows-main',capabilities:[
+    {name:'device.health',granted:true,verified:false}
+   ]})}]
+  });
+  throw Error('UNEXPECTED');
+ };
+ const result=await run(fetchImpl,{expectedDeviceId:'windows-main'});
+ assert.equal(result.status,'AUTHENTICATED_DEVICE_CONFIGURATION_OBSERVED');
+ assert.equal(result.deviceConnectivity,'CONFIGURED_DISCOVERY_ONLY');
+ assert.equal(result.configuredDeviceCount,2);
+ assert.equal(result.physicallyVerifiedCapabilities,0);
+ assert.equal(result.runtimeExecution,'NOT_AUTHORIZED');
+ assert.equal(calls.length,4);
+ assert.deepEqual(calls[3].params.arguments,{deviceId:'windows-main'});
+});
+
+test('configured target absent, unverified capability fields, or illegal ID fail closed',async()=>{
+ const f=fixture();
+ await assert.rejects(run(f.fetchImpl,{expectedDeviceId:'../bad'}),/MCP_QUALIFIER_TARGET_DEVICE_INVALID/);
+ const fetchImpl=async(_url,init)=>{
+  const body=JSON.parse(init.body);
+  if(body.method==='initialize')return ok(1,{});
+  if(body.method==='tools/list')return ok(2,{tools:[{name:'bridge_devices'},{name:'bridge_capabilities'}]});
+  if(body.params?.name==='bridge_devices')return ok(3,{
+   content:[{type:'text',text:JSON.stringify({devices:['android-only']})}]
+  });
+  return ok(4,{content:[]});
+ };
+ await assert.rejects(run(fetchImpl,{expectedDeviceId:'windows-main'}),/MCP_QUALIFIER_TARGET_DEVICE_NOT_CONFIGURED/);
+});
