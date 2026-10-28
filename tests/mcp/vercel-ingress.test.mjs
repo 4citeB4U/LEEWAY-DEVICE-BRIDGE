@@ -215,3 +215,25 @@ test("Vercel OAuth metadata function fails closed when issuer bindings are missi
 test("default Vercel handler and source gates use the same canonical ingress contract", () => {
   assert.equal(typeof ingressFunction, "function");
 });
+
+
+test("owner-only bridge discovery scope is opt-in and never inferred from mere hosting",async t=>{
+  const {BRIDGE_READ_SCOPE}=await import("../../operator/identity/public-mcp-resource-config.mjs");
+  for(const value of [undefined,"","true","read-only","device.bridge.read","admin"]){
+    const scopedEnv={...env};
+    if(value!==undefined)scopedEnv.LEEWAY_MCP_DISCOVERY_AUTHORIZED=value;
+    const cfg=resolvePublicMcpResourceConfig(scopedEnv);
+    assert.deepEqual(cfg.scopes,[RUNTIME_READ_SCOPE]);
+  }
+  const ownerScoped={...env,LEEWAY_MCP_DISCOVERY_AUTHORIZED:"owner-read-only"};
+  const cfg=resolvePublicMcpResourceConfig(ownerScoped);
+  assert.deepEqual(cfg.scopes,[RUNTIME_READ_SCOPE,BRIDGE_READ_SCOPE]);
+  const base=await startServer(createOAuthProtectedResourceHandler({env:ownerScoped}),t);
+  const resp=await fetch(base+PUBLIC_MCP_METADATA_PATH);
+  assert.equal(resp.status,200);
+  const metadata=await resp.json();
+  assert.deepEqual(metadata.scopes_supported,[RUNTIME_READ_SCOPE,BRIDGE_READ_SCOPE]);
+  assert.equal(metadata.resource,RESOURCE);
+  assert.deepEqual(metadata.authorization_servers,[ISSUER]);
+  assert.equal(metadata.bearer_methods_supported[0],"header");
+});
