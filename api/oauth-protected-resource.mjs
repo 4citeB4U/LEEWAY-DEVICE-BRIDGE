@@ -11,8 +11,7 @@ AUTHORITY: Metadata only; Pocket ID issues tokens and Runtime Fabric verifies th
 LICENSE: MIT
 */
 import {
-  resolvePublicMcpResourceConfig,
-  RUNTIME_READ_SCOPE
+  resolvePublicMcpResourceConfig
 } from "../operator/identity/public-mcp-resource-config.mjs";
 
 const CORS_HEADERS = {
@@ -52,7 +51,7 @@ export function createOAuthProtectedResourceHandler({ env = process.env } = {}) 
     sendJson(res, 200, {
       resource: config.audience,
       authorization_servers: [config.issuer],
-      scopes_supported: [RUNTIME_READ_SCOPE],
+      scopes_supported: config.scopes,
       bearer_methods_supported: ["header"]
     });
   };
