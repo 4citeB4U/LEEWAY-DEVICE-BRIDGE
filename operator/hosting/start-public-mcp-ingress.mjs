@@ -62,7 +62,12 @@ function configuredUpstream(env) {
  * Railway terminates external HTTPS and forwards HTTP to this PORT.
  */
 export function createPublicMcpHttpServer({ env = process.env, fetchImpl = globalThis.fetch } = {}) {
-  const ingress = createMcpIngressHandler({ env, fetchImpl });
+  // Never forward tokens into our own public resource, even if misconfigured.
+  const guardedFetch = (target, options) => {
+    if (!configuredUpstream(env)) throw new Error('PUBLIC_MCP_UPSTREAM_UNQUALIFIED');
+    return fetchImpl(target, options);
+  };
+  const ingress = createMcpIngressHandler({ env, fetchImpl: guardedFetch });
   const metadata = createOAuthProtectedResourceHandler({ env });
   const server = createServer(async (req, res) => {
     res.setHeader('x-content-type-options', 'nosniff');
