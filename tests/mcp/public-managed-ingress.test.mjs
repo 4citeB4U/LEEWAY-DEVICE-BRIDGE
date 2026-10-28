@@ -149,3 +149,18 @@ test('public process health does not treat same-resource upstream as bound',asyn
  assert.equal(h.runtimeUpstream,'UNBOUND');
  assert.equal(h.deviceControl,'NOT_AUTHORIZED');
 });
+
+test('even valid-shaped bearer cannot be forwarded to a self-referential public audience',async t=>{
+ let calls=0;
+ const base=await fixture(t,{
+  env:{...env,LEEWAY_MCP_UPSTREAM:AUDIENCE},
+  fetchImpl:async()=>{calls++;throw Error('SELF_FORWARD_FORBIDDEN');}
+ });
+ const response=await fetch(base+'/mcp',{
+  method:'POST',
+  headers:{authorization:'Bearer owner-test-token','content-type':'application/json'},
+  body:JSON.stringify({jsonrpc:'2.0',id:7,method:'tools/list'})
+ });
+ assert.equal(response.status,502);
+ assert.equal(calls,0);
+});
