@@ -1,0 +1,35 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.DEVICE.BRIDGE.MCP.LIVE_STAGING.CI
+# TAG: LEEWAY.MCP.RENDER_LIVE_TRANSPORT_READBACK.CI.V1
+# DISCOVERY_PIPELINE: Voice -> Intent -> Location -> Vertical -> Ranking -> Render
+# 5WH:
+# WHAT = Verify actual public Render HTTPS transport and its unbound fail-closed behavior.
+# WHY = Separate live reachability evidence from build logs, real OAuth authorization and device operations.
+# WHO = LeeWay Device Bridge release and independent review agents.
+# WHERE = .github/workflows/render-managed-mcp-live-qualification.yml
+# WHEN = 2026-10-28
+# HOW = Node 22 network fixture probe against exact qualifying Render domain with no tokens or private data.
+# AUTHORITY: Live transport test only, no production admission or device access.
+# LICENSE: MIT
+name: Device Bridge Render public HTTPS transport acceptance
+on:
+  pull_request:
+    paths:
+      - 'scripts/qualify-public-mcp-staging.mjs'
+      - '.github/workflows/render-managed-mcp-live-qualification.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  live-staging-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify no privileged tokens and exact staging URL
+        run: node --check scripts/qualify-public-mcp-staging.mjs
+      - name: Remote unauthenticated HTTPS readback and denial matrix
+        run: node scripts/qualify-public-mcp-staging.mjs

@@ -1,0 +1,31 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.DEVICE.BRIDGE.HOSTING.RAILWAY.CI
+# TAG: LEEWAY.PUBLIC_MCP_MANAGED_INGRESS.SOURCE_GATE.V1
+# 5WH: WHAT=Validate managed Node ingress; WHY=No Vercel or local PC dependency; WHO=LeeWay maintainers; WHERE=.github/workflows/public-managed-ingress-source.yml; WHEN=2026-10-28; HOW=Read-only CI with Node test fixtures.
+# AUTHORITY: Source gate only. No Railway deployment or Veritas/Receipt grant.
+# LICENSE: MIT
+name: Managed MCP ingress source qualification
+on:
+  pull_request:
+    paths:
+      - 'operator/hosting/start-public-mcp-ingress.mjs'
+      - 'tests/mcp/public-managed-ingress.test.mjs'
+      - 'docs/deployment/RAILWAY-MCP-INGRESS-QUALIFICATION.md'
+      - 'package.json'
+      - '.github/workflows/public-managed-ingress-source.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  managed-mcp-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check managed Node gateway syntax
+        run: node --check operator/hosting/start-public-mcp-ingress.mjs
+      - name: Test managed host and existing OAuth forwarding
+        run: node --test tests/mcp/public-managed-ingress.test.mjs tests/mcp/vercel-ingress.test.mjs
