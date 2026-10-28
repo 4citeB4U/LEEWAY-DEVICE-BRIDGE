@@ -19,6 +19,22 @@ LICENSE: MIT
 - No Dockerfile, Docker Compose, or owner-local Docker dependency is introduced. **Railway itself uses internally managed container images**; this should not be misrepresented as a container-free infrastructure.
 - New Railway projects should use supported Infrastructure as Code (.railway/railway.ts) or service settings rather than legacy railway.json / railway.toml, deprecated for new projects in October 2026.
 
+## Actual Render managed ingress and remaining OAuth configuration (2026-10-28)
+
+The originally Railway-oriented adapter was also deployed **unchanged to Render**, proving the transport is host-agnostic:
+
+- Render service: leeway-device-bridge-mcp-qual; ID srv-dbh4vv6k1f9s73efipv0; published staging origin https://leeway-device-bridge-mcp-qual.onrender.com .
+- Original deployment dep-dbh4vvmk1f9s73efir50 marked LIVE; Node listener BOUND and 9/9 gateway tests passed. External GitHub Actions source workflow #40757747029 subsequently passed a real, read-only HTTPS /healthz and fail-closed /mcp test from a GitHub runner. This **does not** qualify user OAuth or native device tools.
+- Exact public audience is explicitly bound in Render as LEEWAY_MCP_AUDIENCE = https://leeway-device-bridge-mcp-qual.onrender.com/mcp . The managed service triggers a restart on environment update; compare the new deployment status before making claims about the latest binary.
+- LEEWAY_MCP_AUTH_ISSUER and LEEWAY_MCP_UPSTREAM remain **UNBOUND** until the original Pocket ID service and original Runtime Fabric MCP resource pass owner-approved live verification. Never substitute an example issuer or a different trust root.
+- Runtime Fabric managed MCP source is proposed in PR #118 and CI PASS; it could not be cloned by Render while private GitHub repository access remained unapproved. Owner approval to Render's GitHub integration or authorized reuse of original Vercel project is required.
+- Runtime Fabric read-only native-device discovery from PR #117 requires owner-delegated `device.bridge.read` in addition to `read:runtime`. The public gateway **defaults to advertising only** read:runtime. Only after real issuer, Runtime Fabric/native read-only upstream and owner subject grant qualify, set LEEWAY_MCP_DISCOVERY_AUTHORIZED exactly to **owner-read-only** to advertise both. This variable only updates OAuth metadata; it cannot issue permission, bypass JWT auth, or enable tools in Runtime Fabric. An unsupported value must leave scope unadvertised.
+- Do not attempt to publish device mutation tools or client-facing ChatGPT connector until actual owner authorization, provider pairing, Formula/Veritas/Receipt/Learning and original Continuum readback are complete.
+
+### Staging external network test
+
+Run `node scripts/qualify-public-mcp-staging.mjs` from a network-capable approved release runner while gateway bindings are absent. It demands live HTTPS /healthz 200, unbound metadata 503, a denied synthetic bearer request, hidden internal API path and exact controlled origin. It **must fail** once real auth is enrolled until updated to a new **authenticated** test with real owner consent. This is intentional: source qualification cannot silently become a production authorization assertion.
+
 ## Managed-service configuration (secrets in Railway, never GitHub)
 | Variable | Binding |
 | --- | --- |
