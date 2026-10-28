@@ -12,6 +12,7 @@ LICENSE: MIT
 */
 
 export const RUNTIME_READ_SCOPE = "read:runtime";
+export const BRIDGE_READ_SCOPE = "device.bridge.read";
 export const PUBLIC_MCP_METADATA_PATH = "/.well-known/oauth-protected-resource/mcp";
 
 function secureHttpsUrl(value) {
@@ -53,6 +54,10 @@ export function resolvePublicMcpResourceConfig(env = process.env) {
     issuer,
     audience,
     metadataUrl,
-    scopes: Object.freeze([RUNTIME_READ_SCOPE])
+    // This is permission *advertisement* only. Pocket ID must separately grant
+    // actual owner-delegated scopes, Runtime Fabric must verify the token, and
+    // native device availability remains unproven until independently measured.
+    scopes: Object.freeze(env.LEEWAY_MCP_DISCOVERY_AUTHORIZED === "owner-read-only"
+      ? [RUNTIME_READ_SCOPE, BRIDGE_READ_SCOPE] : [RUNTIME_READ_SCOPE])
   });
 }
