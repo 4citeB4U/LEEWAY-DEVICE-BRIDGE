@@ -83,6 +83,7 @@ class MainActivity : AppCompatActivity() {
                 "OFF"
             }
             runtimeState.text =
+                "AGENT LEE: " + BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ")\\n" +
                 "LOCAL MODEL: " + modelLabel + "\\nREMOTE RELAY: " + remoteLabel + "\\nDEVICE: " + remote.optString("deviceId")
         }
         refreshRuntimeState()
@@ -185,6 +186,21 @@ class MainActivity : AppCompatActivity() {
             text = "LOCAL MODEL STATUS"
             setOnClickListener {
                 output.text = ModelRuntime.status(this@MainActivity).toString(2)
+            }
+        }
+
+        val agentUpdate = Button(this).apply {
+            text = "UPDATE AGENT LEE"
+            setOnClickListener {
+                output.text = "Checking for Agent Lee update...\nCurrent: " +
+                    BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ")"
+                Thread {
+                    val result = AgentLeeUpdate.checkAndInstall(this@MainActivity)
+                    runOnUiThread {
+                        output.text = result.toString(2)
+                        refreshRuntimeState()
+                    }
+                }.start()
             }
         }
 
@@ -476,7 +492,7 @@ class MainActivity : AppCompatActivity() {
             addView(pairingPanel)
             listOf(
                 discover, diagnostics, files, authorizeDeviceOperator, authorizeMediaOperator, receipts, authorizeBluetooth, bluetooth, networkDiscovery,
-                modelStatus, modelDownload, modelTest, speakTest, talkToLee, enableSideMic,
+                agentUpdate, modelStatus, modelDownload, modelTest, speakTest, talkToLee, enableSideMic,
                 authorizeWorkstationKeeper, enableSecondaryWorkstation, remoteEnable, remoteStatus, remoteDisable,
                 enable, startBridge, selfTest, showToken, stopBridge, stop
             ).forEach { addView(it) }
