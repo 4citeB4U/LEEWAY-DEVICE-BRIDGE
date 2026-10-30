@@ -30,6 +30,11 @@ obs(){ printf '[LeeWay][OBSERVED] %s\n' "$*"; }
 blocked(){ printf '[LeeWay][BLOCKED] %s\n' "$*"; }
 fail(){ printf '[LeeWay][FAIL] %s\n' "$*" >&2; }
 
+# Direct am-start supplies no authenticated calling package to Device Bridge.
+# Fail closed rather than waiting for a pairing credential that this route cannot issue.
+blocked "Automatic Termux pairing requires a separately verified authenticated IPC adapter."
+printf 'Open LeeWay Device Bridge and use explicit owner pairing instead.\n'
+exit 6
 mkdir -p "$WORK_ROOT" "$EVIDENCE_DIR"
 chmod 700 "$WORK_ROOT"
 
@@ -185,6 +190,7 @@ else
   obs "Local loopback server is not listening; the remote phone path will still be tested."
 fi
 
+
 say "Starting owner-authorized Termux bootstrap."
 BOOTSTRAP_NONCE="$(node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))")"
 
@@ -218,11 +224,9 @@ if [ -z "$BOOTSTRAP_JSON" ]; then
   exit 6
 fi
 
-printf '%s\n' "$BOOTSTRAP_JSON" > "$EVIDENCE_DIR/owner-bootstrap.json"
-
-eval "$(node - "$EVIDENCE_DIR/owner-bootstrap.json" <<'NODE_BOOTSTRAP'
-const fs=require('fs');
-const v=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+# Credential response is processed in memory only; never write it to evidence.
+eval "$(LEEWAY_BOOTSTRAP_RESPONSE="$BOOTSTRAP_JSON" node - <<'NODE_BOOTSTRAP'
+const v=JSON.parse(process.env.LEEWAY_BOOTSTRAP_RESPONSE||'{}');
 if(v.ok!==true) process.exit(20);
 const q=s=>JSON.stringify(String(s||""));
 console.log("LEEWAY_PAIRING_TOKEN="+q(v.pairingToken));
