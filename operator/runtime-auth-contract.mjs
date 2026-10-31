@@ -156,7 +156,7 @@ export function createBridgeRuntimeGuard({
     }
     return {
       ok: true,
-      status: 'LEEWAY_AUTHORIZED',
+      status: 'LEEWAY_RUNTIME_AUTH_SHAPE_VALID_ONLY',
       validation,
       runtimeAuth: card,
       context,
