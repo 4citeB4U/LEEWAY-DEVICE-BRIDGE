@@ -26,3 +26,9 @@ One Device Bridge contract, replaceable platform adapters. Do not create competi
 Native UI is a human control and evidence surface, not authority.
 
 Never bypass Apple, Android, Samsung, store, OS, legal, privacy, or Creator authority.
+
+## Engineering evidence and learning handoff
+
+For substantive development or repair, use the existing [engineering-loop evidence procedure](docs/qualification/ENGINEERING-LOOP-EVIDENCE-PROTOCOL.md). Before claiming completion, preserve a scope-specific source/CI record in `docs/qualification/` with inspected source identity, expected/observed state, exact failure, smallest repair, rollback, all ten engineering-loop stages, actual tests, skipped/failed steps, and production acceptance limits.
+
+Archive independently inspectable outcomes in `evidence/` where appropriate. Preserve *both* PASS and FAIL lessons with uncertainty and counterexamples; promotion into the canonical Learning Ledger occurs only after its actual post-receipt admission/readback. Never manufacture Veritas PRE/POST, Formula execution, receipt IDs, a repair/retest that did not happen, or a learning update. A source CI pass is not a real-device production PASS. Report the next unmet gate and do not silently drop completed work.

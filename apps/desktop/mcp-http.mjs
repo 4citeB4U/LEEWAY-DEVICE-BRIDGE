@@ -26,7 +26,8 @@ export function createRemoteMcpHandler({ authenticate, resolveBridge, allowedHos
       !Array.isArray(allowedHosts) || !allowedHosts.length ||
       allowedHosts.some(x => typeof x !== 'string' || !x.trim() || x.includes('*')) ||
       !Array.isArray(allowedOrigins) ||
-      allowedOrigins.some(x => typeof x !== 'string' || !x.startsWith('https://') || x.includes('*'))) {
+      allowedOrigins.some(x => typeof x !== 'string' || !x.startsWith('https://') || x.includes('*')) ||
+      (typeof discoveryOnly !== 'boolean' && typeof discoveryOnly !== 'function')) {
     throw Error('TRUSTED_MCP_HTTP_CONFIGURATION_REQUIRED');
   }
   const hosts = new Set(allowedHosts);
@@ -72,7 +73,14 @@ export function createRemoteMcpHandler({ authenticate, resolveBridge, allowedHos
           typeof bridge.receiptSink !== 'function') {
         return reply(res, 503, 'TRUSTED_BRIDGE_UNAVAILABLE');
       }
-      server = createServer(bridge, { discoveryOnly });
+      // A trusted host policy, not request JSON, determines tool exposure per principal.
+      const principalDiscoveryOnly = typeof discoveryOnly === 'function'
+        ? await discoveryOnly(principal)
+        : discoveryOnly;
+      if (typeof principalDiscoveryOnly !== 'boolean') {
+        return reply(res, 503, 'TRUSTED_MCP_TOOL_POLICY_REQUIRED');
+      }
+      server = createServer(bridge, { discoveryOnly: principalDiscoveryOnly });
       const transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: undefined,
         enableJsonResponse: true,

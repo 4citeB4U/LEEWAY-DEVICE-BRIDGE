@@ -45,3 +45,44 @@ The current Vercel deployment remains SSO-protected, and its production environm
 The trusted Ed25519 consent-issuer registry and voice-owner-auth sessions are **not** substitutes for Pocket ID access tokens. Even with a valid OAuth token, no device execution is authorized until the independent canonical Runtime Fabric admission/receipt controls qualify it.
 
 References: https://pocket-id.org/docs/setup/installation and https://pocket-id.org/docs/guides/apis
+
+## Governed owner-command mode (source candidate, not production enabled)
+
+The canonical Device Bridge has more capabilities than discovery. The reusable
+`apps/desktop/mcp-server.mjs` tool factory exposes schema-backed file,
+process, job, session, search, native UI and other adapter commands. These
+tools route through the original `Bridge.call()` contract; a tool appearing
+in an MCP list is **not** an execution grant.
+
+The local universal Pocket ID host retains its safe read-only default.
+There are two separate owner-scoped token permissions:
+
+- `device.bridge.read`: device IDs and capability discovery, never command tools.
+- `device.bridge.execute`: may publish the canonical tool factory **only if**
+  the trusted host has explicitly enabled command exposure and injected the
+  canonical Runtime Fabric admission plus durable receipt composition.
+
+`startUniversalPocketIdMcp({ ..., enableExecution: true, runtimeInput })`
+requires a trusted, validated Runtime composition. This option must be set
+by owner-controlled host code and **never** by a user request, tool arguments,
+browser state, or device-supplied configuration. The native server remains
+loopback-only. Any command still requires registered device capability,
+owner grant and, as applicable, signed consent, Formula evaluation,
+independent Veritas pre-gate and durable pre-execution evidence. Command
+success is not independently certified until Veritas POST and canonical
+ledgers also admit the same request.
+
+Do not add the execute permission to existing read-only clients or
+automatically promote read tokens. Do not configure the production host
+using a synthetic admission callback. Enroll the exact Pocket ID resource,
+owner subject and permission only through its approved administrative flow,
+and prove a real authenticated deny-path and one scoped physical operation.
+
+**The public Vercel `/mcp` ingress remains a transport proxy to Runtime
+Fabric's separately authenticated `/mcp` service.** Its currently
+qualified upstream exposes `runtime_health` only; it does not forward
+commands to this loopback host. Publishing owner-command mode publicly
+requires a separately authorized Runtime Fabric execution-provider
+binding, independent Veritas PRE/POST and ledger qualification. Do not
+switch `LEEWAY_MCP_UPSTREAM` to an unqualified device endpoint, change
+Vercel SSO, or treat this source change as proof of production execution.
