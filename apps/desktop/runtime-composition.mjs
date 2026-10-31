@@ -3,7 +3,7 @@
 // direct mode is reserved for a Runtime Fabric callback that already owns that complete gate.
 const COMPOSITION_KEYS = new Set([
   'admission', 'receiptSink', 'formulaPreGate', 'veritasPreGate', 'consentProvider',
-  'deviceRegistry', 'adapterRegistry', 'trustedIssuerRegistry', 'replayGuard',
+  'deviceRegistry', 'adapterRegistry', 'trustedIssuerRegistry', 'replayGuard', 'complianceCardGate',
 ]);
 
 function ownDataValue(input, key) {
@@ -25,10 +25,13 @@ export function requireTrustedRuntimeComposition(input = {}) {
   if (typeof values.receiptSink !== 'function') {
     throw new Error('TRUSTED_RUNTIME_COMPOSITION_REQUIRED');
   }
+  if (typeof values.complianceCardGate !== 'function') {
+    throw new Error('TRUSTED_RUNTIME_COMPOSITION_REQUIRED');
+  }
 
   const direct = typeof values.admission === 'function';
   const c3 = typeof values.formulaPreGate === 'function' && typeof values.veritasPreGate === 'function';
-  const directHasProviderFields = Object.keys(values).some(key => !['admission', 'receiptSink'].includes(key));
+  const directHasProviderFields = Object.keys(values).some(key => !['admission', 'receiptSink', 'complianceCardGate'].includes(key));
   if (direct === c3 || (direct && directHasProviderFields) ||
       (!direct && !c3) ||
       ['formulaPreGate', 'veritasPreGate', 'consentProvider'].some(key =>
