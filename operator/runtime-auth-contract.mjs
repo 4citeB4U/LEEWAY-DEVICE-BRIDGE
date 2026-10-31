@@ -144,16 +144,8 @@ export function createBridgeRuntimeGuard({
 } = {}) {
   return function bridgeRuntimeGuard(runtimeAuth, context = {}) {
     const card = normalizeRuntimeCard(runtimeAuth) || {};
-    const normalized = buildRuntimeAuth({
-      ...card,
-      rootObjectId: card.rootObjectId || ROOT_OBJECT_ID,
-      channelObjectId: card.channelObjectId || defaultChannelObjectId,
-      sourceObjectId: card.sourceObjectId || defaultSourceObjectId,
-      governancePolicy: card.governancePolicy || DEFAULT_GOVERNANCE_POLICY,
-      telemetryKey: card.telemetryKey || DEFAULT_TELEMETRY_KEY,
-      verificationMode: card.verificationMode || DEFAULT_VERIFICATION_MODE,
-    });
-    const validation = validateRuntimeAuth(normalized);
+    // Caller omissions are never repaired using runtime defaults.
+    const validation = validateRuntimeAuth(card);
     if (!validation.valid) {
       return {
         ok: false,
@@ -166,8 +158,32 @@ export function createBridgeRuntimeGuard({
       ok: true,
       status: 'LEEWAY_AUTHORIZED',
       validation,
-      runtimeAuth: normalized,
+      runtimeAuth: card,
       context,
     };
   };
+}
+
+
+/** Validate an independently issued Runtime scope. Shape-only cards cannot authorize execution.
+ * The verifier is supplied solely by trusted host composition and MUST validate signature,
+ * issuer enrollment, owner, expiration, bounded command and durable anti-replay custody.
+ */
+export async function verifyScopedRuntimeAuth({runtimeAuth,deviceId,capability,argsDigest,verifyRuntimeAuthorization}={}) {
+  const validation=validateRuntimeAuth(runtimeAuth);
+  const card=normalizeRuntimeCard(runtimeAuth);
+  if (!validation.valid || typeof verifyRuntimeAuthorization!=='function' || !card ||
+      card.deviceId!==deviceId || card.capability!==capability ||
+      card.argsSha256!==argsDigest || !/^[a-f0-9]{64}$/.test(String(argsDigest)) ||
+      typeof card.authorizationId!=='string' || card.authorizationId.length<12 ||
+      typeof card.signature!=='string' || card.signature.length<32 ||
+      !Number.isSafeInteger(card.expiresAt) || card.expiresAt<=Date.now() ||
+      card.expiresAt>Date.now()+300000) return false;
+  try {
+    const proof=await verifyRuntimeAuthorization(Object.freeze({...card}),Object.freeze({deviceId,capability,argsSha256:argsDigest}));
+    return proof?.verified===true && proof?.issuer==='LEEWAY_RUNTIME_FABRIC' &&
+      proof?.authorizationId===card.authorizationId && proof?.ownerAuthorized===true &&
+      proof?.replayConsumed===true && proof?.deviceId===deviceId &&
+      proof?.capability===capability && proof?.argsSha256===argsDigest;
+  } catch {return false;}
 }
