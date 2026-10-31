@@ -23,35 +23,59 @@ test('real SDK stdio tools/list and tools/call fail-closed without canonical C3 
   await client.connect(transport);
   const listing = await client.listTools();
   assert.ok(listing.tools.some(x => x.name === 'device_files_write' && x.inputSchema.properties.deviceId));
+  assert.ok(listing.tools.find(x => x.name === 'device_files_write').inputSchema.required.includes('complianceCard'));
   const invoke = async (name, args) => {
     const r = await client.callTool({ name, arguments: args });
     return { ...JSON.parse(r.content[0].text), isError: r.isError };
   };
   const scope = { deviceId: 'test-host' };
+  const executionScope = { ...scope, complianceCard: { taskId: 'mcp-test-card', action: 'tool.execution' } };
   const caps = await invoke('bridge_capabilities', scope);
   assert.equal(caps.capabilities.find(x => x.name === 'device.files.write').granted, true);
   assert.ok(!caps.capabilities.some(x => x.name === 'device.ui.tap'));
-  const written = await invoke('device_files_write', { ...scope, arguments: { path: 'proof.txt', text: 'device bridge proof' } });
+  const written = await invoke('device_files_write', { ...executionScope, arguments: { path: 'proof.txt', text: 'device bridge proof' } });
   assert.equal(written.ok, false);
-  assert.equal(written.error, 'ADMISSION_DENIED');
-  const read = await invoke('device_files_read', { ...scope, arguments: { path: 'proof.txt' } });
+  assert.equal(written.error, 'COMPLIANCE_CARD_INVALID');
+  const read = await invoke('device_files_read', { ...executionScope, arguments: { path: 'proof.txt' } });
   assert.equal(read.ok, false);
-  assert.equal(read.error, 'ADMISSION_DENIED');
+  assert.equal(read.error, 'COMPLIANCE_CARD_INVALID');
   const { sha256, ...body } = read.receipt;
   assert.equal(sha256, digest(body));
   assert.equal(read.receipt.formula, 'NOT_EVALUATED');
   await assert.rejects(fs.stat(path.join(root, 'workspace', 'proof.txt')), { code: 'ENOENT' });
-  assert.equal((await invoke('device_files_write', { ...scope, arguments: { path: 'proof.txt', text: 'overwrite' } })).error, 'ADMISSION_DENIED');
-  assert.equal((await invoke('device_files_read', { ...scope, arguments: { path: '../config.json' } })).ok, false);
-  assert.equal((await invoke('device_ui_tap', { ...scope, arguments: { x: 1, y: 1 } })).error, 'ADMISSION_DENIED');
-  assert.equal((await invoke('device_info', { ...scope, arguments: {} })).error, 'CAPABILITY_NOT_GRANTED');
-  assert.equal((await invoke('device_health', { deviceId: 'unknown', arguments: {} })).error, 'UNKNOWN_DEVICE');
-  const invalid = await client.callTool({ name: 'device_ui_tap', arguments: { ...scope, arguments: { x: -1, y: 1 } } });
+  assert.equal((await invoke('device_files_write', { ...executionScope, arguments: { path: 'proof.txt', text: 'overwrite' } })).error, 'COMPLIANCE_CARD_INVALID');
+  assert.equal((await invoke('device_files_read', { ...executionScope, arguments: { path: '../config.json' } })).ok, false);
+  assert.equal((await invoke('device_ui_tap', { ...executionScope, arguments: { x: 1, y: 1 } })).error, 'COMPLIANCE_CARD_INVALID');
+  assert.equal((await invoke('device_info', { ...executionScope, arguments: {} })).error, 'CAPABILITY_NOT_GRANTED');
+  assert.equal((await invoke('device_health', { ...executionScope, deviceId: 'unknown', arguments: {} })).error, 'UNKNOWN_DEVICE');
+  const invalid = await client.callTool({ name: 'device_ui_tap', arguments: { ...executionScope, arguments: { x: -1, y: 1 } } });
   assert.equal(invalid.isError, true);
   const records = (await fs.readFile(path.join(root, 'receipts.jsonl'), 'utf8')).trim().split('\n').map(JSON.parse);
   assert.ok(records.some(r => r.outcome === 'BLOCKED'));
   assert.ok(records.filter(r => r.outcome === 'PASS').every(r => records.some(p => p.sha256 === r.previousHash && p.outcome === 'ADMITTED')));
   assert.ok(!JSON.stringify(records).includes('device bridge proof'));
+});
+
+test('Bridge validates the supplied compliance card before adapter execution and binds only its digest to receipts', async () => {
+  let executions = 0;
+  let gateInput = null;
+  const card = { taskId: 'bridge-compliance-test', action: 'tool.execution' };
+  const bridge = new Bridge([{ id: 'host', grants: ['device.health'], adapter: {
+    discover: async () => ['device.health'],
+    execute: async () => { executions += 1; return { ok: true }; },
+  } }], {
+    admission: async () => true,
+    complianceCardGate: async input => { gateInput = input; return input.complianceCard?.taskId === card.taskId; },
+    receiptSink: async () => {},
+  });
+  const missing = await bridge.call('host', 'device.health', {});
+  assert.equal(missing.error, 'COMPLIANCE_CARD_INVALID');
+  assert.equal(executions, 0);
+  const accepted = await bridge.call('host', 'device.health', {}, { complianceCard: card });
+  assert.equal(accepted.ok, true);
+  assert.equal(executions, 1);
+  assert.deepEqual(gateInput.complianceCard, card);
+  assert.equal(accepted.receipt.complianceCardHash, digest(card));
 });
 
 test('admission denies by default, capability withdrawal and receipt failures do not execute', async () => {

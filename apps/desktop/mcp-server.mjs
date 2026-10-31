@@ -36,6 +36,7 @@ function screenResult(value) {
 export function createServer(bridge, { discoveryOnly = false } = {}) {
   const server = new McpServer({ name: 'leeway-device-bridge', version: '0.1.0' });
   const result = value => ({ content: [{ type: 'text', text: JSON.stringify(value) }], ...(value.ok === false ? { isError: true } : {}) });
+  const complianceCardSchema = z.object({}).passthrough();
   server.registerTool('bridge_devices', { description: 'List configured device IDs. Configuration does not prove connectivity.', inputSchema: {} }, async () => result({ devices: [...bridge.devices.keys()] }));
   server.registerTool('bridge_capabilities', { description: 'Discover current capabilities for one device; grants and verification are distinct.', inputSchema: { deviceId: z.string().min(1).max(128) } }, async ({ deviceId }) => {
     try { return result(await bridge.discover(deviceId)); } catch { return result({ ok: false, error: 'DISCOVERY_FAILED' }); }
@@ -43,9 +44,13 @@ export function createServer(bridge, { discoveryOnly = false } = {}) {
   if (!discoveryOnly) for (const [capability, schema] of Object.entries(schemas)) {
     server.registerTool(capability.replaceAll('.', '_'), {
       description: `Invoke ${capability} on an explicitly granted device. Availability is checked for each call; unsupported platforms fail closed.`,
-      inputSchema: { deviceId: z.string().min(1).max(128), arguments: schema },
-    }, async ({ deviceId, arguments: args }) => {
-      const value = await bridge.call(deviceId, capability, args);
+      inputSchema: {
+        deviceId: z.string().min(1).max(128),
+        ...(bridge.requiresComplianceCard ? { complianceCard: complianceCardSchema } : {}),
+        arguments: schema,
+      },
+    }, async ({ deviceId, arguments: args, complianceCard }) => {
+      const value = await bridge.call(deviceId, capability, args, { complianceCard });
       return capability === 'device.screen.capture' ? screenResult(value) || result(value) : result(value);
     });
   }
@@ -94,9 +99,13 @@ export async function createConfiguredBridge(configPath, runtimeInput = null) {
   const admission = runtimeComposition?.mode === 'direct'
     ? runtimeComposition.admission
     : createProductionAdmission(devices, runtimeComposition ?? {});
+  // No trusted Runtime composition means no execution authority. Discovery can
+  // still start, but every capability call must fail before adapter execution.
+  const complianceCardGate = runtimeComposition?.complianceCardGate ?? (async () => false);
   const bridge = new Bridge(devices, {
     // Without an injected Runtime composition, C3 deliberately denies all execution.
     admission,
+    complianceCardGate,
     receiptSink: runtimeComposition?.receiptSink ?? (evidence => fs.appendFile(receiptPath, JSON.stringify(evidence) + '\n', { mode: 0o600 })),
   });
   return bridge;
