@@ -43,9 +43,9 @@ export function createServer(bridge, { discoveryOnly = false } = {}) {
   if (!discoveryOnly) for (const [capability, schema] of Object.entries(schemas)) {
     server.registerTool(capability.replaceAll('.', '_'), {
       description: `Invoke ${capability} on an explicitly granted device. Availability is checked for each call; unsupported platforms fail closed.`,
-      inputSchema: { deviceId: z.string().min(1).max(128), arguments: schema },
-    }, async ({ deviceId, arguments: args }) => {
-      const value = await bridge.call(deviceId, capability, args);
+      inputSchema: { deviceId: z.string().min(1).max(128), arguments: schema, runtimeAuth: z.object({}).passthrough() },
+    }, async ({ deviceId, arguments: args, runtimeAuth }) => {
+      const value = await bridge.call(deviceId, capability, args, runtimeAuth);
       return capability === 'device.screen.capture' ? screenResult(value) || result(value) : result(value);
     });
   }
@@ -97,6 +97,7 @@ export async function createConfiguredBridge(configPath, runtimeInput = null) {
   const bridge = new Bridge(devices, {
     // Without an injected Runtime composition, C3 deliberately denies all execution.
     admission,
+    verifyRuntimeAuthorization: runtimeComposition?.verifyRuntimeAuthorization ?? null,
     receiptSink: runtimeComposition?.receiptSink ?? (evidence => fs.appendFile(receiptPath, JSON.stringify(evidence) + '\n', { mode: 0o600 })),
   });
   return bridge;
