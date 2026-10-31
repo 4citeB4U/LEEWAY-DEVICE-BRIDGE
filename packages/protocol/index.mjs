@@ -11,6 +11,7 @@ LICENSE: MIT
 */
 import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
+import { verifyScopedRuntimeAuth } from '../../operator/runtime-auth-contract.mjs';
 
 const empty = z.object({}).strict();
 const coordinate = z.number().finite().min(0).max(32768);
@@ -118,10 +119,11 @@ export function receipt({ deviceId, capability, args, outcome, result, error, pr
 }
 
 export class Bridge {
-  constructor(devices, { admission, receiptSink = async () => { throw new Error('RECEIPT_SINK_REQUIRED'); } } = {}) {
+  constructor(devices, { admission, verifyRuntimeAuthorization = null, receiptSink = async () => { throw new Error('RECEIPT_SINK_REQUIRED'); } } = {}) {
     this.devices = new Map(devices.map(d => [d.id, d]));
     if (this.devices.size !== devices.length) throw new Error('DUPLICATE_DEVICE');
     this.admission = admission;
+    this.verifyRuntimeAuthorization = verifyRuntimeAuthorization;
     this.receiptSink = receiptSink;
   }
   async discover(id) {
@@ -132,7 +134,7 @@ export class Bridge {
       name, supported: true, granted: d.grants.includes(name), verified: false,
     })) };
   }
-  async call(deviceId, capability, args = {}) {
+  async call(deviceId, capability, args = {}, runtimeAuth = null) {
     let value, error, outcome = 'BLOCKED';
     try {
       const d = this.devices.get(deviceId);
@@ -140,6 +142,7 @@ export class Bridge {
       if (!Object.hasOwn(schemas, capability)) throw new Error('UNKNOWN_CAPABILITY');
       args = schemas[capability].parse(args);
       if (!d.grants.includes(capability)) throw new Error('CAPABILITY_NOT_GRANTED');
+      if (!(await verifyScopedRuntimeAuth({runtimeAuth,deviceId,capability,argsDigest:digest(args),verifyRuntimeAuthorization:this.verifyRuntimeAuthorization}))) throw new Error('RUNTIME_AUTH_DENIED');
       if (!this.admission || await this.admission({ deviceId, capability, args }) !== true) throw new Error('ADMISSION_DENIED');
       if (!(await d.adapter.discover()).includes(capability)) throw new Error('CAPABILITY_UNAVAILABLE');
       // Durable pre-execution evidence failure prevents execution.
