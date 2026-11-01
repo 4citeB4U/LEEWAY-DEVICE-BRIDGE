@@ -142,6 +142,7 @@ test("MCP forwarding preserves bearer/session/protocol headers and excludes host
   assert.equal(headers.get("authorization"), "Bearer test-only-token");
   assert.equal(headers.get("mcp-session-id"), "session-test");
   assert.equal(headers.get("mcp-protocol-version"), "2025-03-26");
+  assert.equal(headers.get("mcp-method"), "tools/list");
   assert.equal(headers.get("last-event-id"), "event-test");
   assert.equal(headers.has("host"), false);
   assert.equal(headers.has("cookie"), false);
@@ -149,6 +150,68 @@ test("MCP forwarding preserves bearer/session/protocol headers and excludes host
   assert.equal(response.headers.get("mcp-session-id"), "session-test");
   assert.equal(response.headers.get("mcp-protocol-version"), "2025-03-26");
   assert.equal(response.headers.get("last-event-id"), "event-test");
+});
+
+test("MCP forwarding derives missing tool-call routing headers without rewriting mismatches", async t => {
+  let observed;
+  const mcpHandler = createMcpIngressHandler({
+    env,
+    fetchImpl: async (_url, init) => {
+      observed = { init };
+      return new Response('{"jsonrpc":"2.0","id":1,"result":{}}', {
+        status: 200,
+        headers: { "content-type": "application/json" }
+      });
+    }
+  });
+  const serverUrl = await startServer(mcpHandler, t);
+  const response = await fetch(`${serverUrl}/mcp`, {
+    method: "POST",
+    headers: {
+      authorization: "Bearer test-only-token",
+      "content-type": "application/json"
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "tools/call",
+      params: { name: "runtime_health", arguments: {} }
+    })
+  });
+  const headers = new Headers(observed.init.headers);
+  assert.equal(response.status, 200);
+  assert.equal(headers.get("mcp-method"), "tools/call");
+  assert.equal(headers.get("mcp-name"), "runtime_health");
+
+  let mismatchObserved;
+  const mismatchHandler = createMcpIngressHandler({
+    env,
+    fetchImpl: async (_url, init) => {
+      mismatchObserved = { init };
+      return new Response('{"jsonrpc":"2.0","id":2,"result":{}}', {
+        status: 200,
+        headers: { "content-type": "application/json" }
+      });
+    }
+  });
+  const mismatchServerUrl = await startServer(mismatchHandler, t);
+  await fetch(`${mismatchServerUrl}/mcp`, {
+    method: "POST",
+    headers: {
+      authorization: "Bearer test-only-token",
+      "content-type": "application/json",
+      "mcp-method": "tools/list"
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 2,
+      method: "tools/call",
+      params: { name: "runtime_health", arguments: {} }
+    })
+  });
+  const mismatchHeaders = new Headers(mismatchObserved.init.headers);
+  assert.equal(mismatchHeaders.get("mcp-method"), "tools/list");
+  assert.equal(mismatchHeaders.get("mcp-name"), "runtime_health");
 });
 
 test("upstream OAuth challenges are rewritten to the public metadata URL", async t => {

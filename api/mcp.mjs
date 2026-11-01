@@ -21,6 +21,8 @@ const REQUEST_HEADER_ALLOWLIST = [
   "content-type",
   "accept",
   "mcp-protocol-version",
+  "mcp-method",
+  "mcp-name",
   "mcp-session-id",
   "last-event-id"
 ];
@@ -156,12 +158,27 @@ async function readRequestBody(req) {
   return body;
 }
 
-function forwardedRequestHeaders(req) {
+function forwardedRequestHeaders(req, body) {
   const headers = {};
   for (const name of REQUEST_HEADER_ALLOWLIST) {
     const value = readHeader(req.headers, name);
     if (value !== undefined) headers[name] = value;
   }
+
+  // Preserve compatibility with clients that send MCP routing information in
+  // JSON-RPC only. Existing headers are never rewritten, so mismatches still
+  // reach the Runtime Fabric and fail closed there.
+  if (body && (!headers["mcp-method"] || !headers["mcp-name"])) {
+    const payload = JSON.parse(body.toString("utf8"));
+    if (!headers["mcp-method"]
+      && (payload?.method === "tools/list" || payload?.method === "tools/call")) {
+      headers["mcp-method"] = payload.method;
+    }
+    if (payload?.method === "tools/call" && payload?.params?.name && !headers["mcp-name"]) {
+      headers["mcp-name"] = payload.params.name;
+    }
+  }
+
   return headers;
 }
 
@@ -243,7 +260,7 @@ export function createMcpIngressHandler({ env = process.env, fetchImpl = globalT
     try {
       upstream = await fetchImpl(upstreamConfig.url, {
         method: req.method,
-        headers: forwardedRequestHeaders(req),
+        headers: forwardedRequestHeaders(req, body),
         ...(body !== undefined ? { body } : {}),
         redirect: "error",
         signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS)
