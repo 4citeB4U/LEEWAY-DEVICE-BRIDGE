@@ -11,10 +11,32 @@ import { pathToFileURL } from 'node:url';
 import { createConfiguredBridge } from '../../apps/desktop/mcp-server.mjs';
 import { createOidcMcpServer } from './create-oidc-mcp-server.mjs';
 
-export async function startOidcMcp({ configPath, issuer, resource, ownerSubject, projectId = '', roleKey = 'device.discovery.read', roleClaim = '', port = 4271 } = {}) {
+export async function startOidcMcp({
+  configPath,
+  issuer,
+  resource,
+  ownerSubject,
+  projectId = '',
+  roleKey = 'device.discovery.read',
+  roleClaim = '',
+  port = 4271,
+  runtimeInput = null,
+  readOnlyCapabilities = null,
+  complianceCardProvider = null,
+} = {}) {
   if (!Number.isInteger(port) || port < 1024 || port > 65535) throw Error('LOCAL_PORT_INVALID');
-  const bridge = await createConfiguredBridge(configPath);
-  const server = createOidcMcpServer({ bridge, issuer, resource, ownerSubject, projectId, roleKey, roleClaim });
+  const bridge = await createConfiguredBridge(configPath, runtimeInput);
+  const server = createOidcMcpServer({
+    bridge,
+    issuer,
+    resource,
+    ownerSubject,
+    projectId,
+    roleKey,
+    roleClaim,
+    readOnlyCapabilities,
+    complianceCardProvider,
+  });
   try {
     await new Promise((resolve, reject) => {
       server.once('error', reject);

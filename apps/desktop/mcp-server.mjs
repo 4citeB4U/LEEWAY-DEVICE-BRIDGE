@@ -33,7 +33,11 @@ function screenResult(value) {
   ] };
 }
 
-export function createServer(bridge, { discoveryOnly = false } = {}) {
+export function createServer(bridge, {
+  discoveryOnly = false,
+  readOnlyCapabilities = null,
+  complianceCardProvider = null,
+} = {}) {
   const server = new McpServer({ name: 'leeway-device-bridge', version: '0.1.0' });
   const result = value => ({ content: [{ type: 'text', text: JSON.stringify(value) }], ...(value.ok === false ? { isError: true } : {}) });
   const complianceCardSchema = z.object({}).passthrough();
@@ -41,16 +45,28 @@ export function createServer(bridge, { discoveryOnly = false } = {}) {
   server.registerTool('bridge_capabilities', { description: 'Discover current capabilities for one device; grants and verification are distinct.', inputSchema: { deviceId: z.string().min(1).max(128) } }, async ({ deviceId }) => {
     try { return result(await bridge.discover(deviceId)); } catch { return result({ ok: false, error: 'DISCOVERY_FAILED' }); }
   });
+  const exposedCapabilities = Array.isArray(readOnlyCapabilities) ? new Set(readOnlyCapabilities) : null;
   if (!discoveryOnly) for (const [capability, schema] of Object.entries(schemas)) {
+    if (exposedCapabilities && !exposedCapabilities.has(capability)) continue;
     server.registerTool(capability.replaceAll('.', '_'), {
       description: `Invoke ${capability} on an explicitly granted device. Availability is checked for each call; unsupported platforms fail closed.`,
       inputSchema: {
         deviceId: z.string().min(1).max(128),
-        ...(bridge.requiresComplianceCard ? { complianceCard: complianceCardSchema } : {}),
+        ...(bridge.requiresComplianceCard && typeof complianceCardProvider !== 'function'
+          ? { complianceCard: complianceCardSchema }
+          : {}),
         arguments: schema,
       },
     }, async ({ deviceId, arguments: args, complianceCard }) => {
-      const value = await bridge.call(deviceId, capability, args, { complianceCard });
+      let effectiveComplianceCard = complianceCard;
+      if (!effectiveComplianceCard && typeof complianceCardProvider === 'function') {
+        try {
+          effectiveComplianceCard = await complianceCardProvider({ deviceId, capability, args });
+        } catch {
+          return result({ ok: false, error: 'COMPLIANCE_CARD_PROVIDER_FAILED' });
+        }
+      }
+      const value = await bridge.call(deviceId, capability, args, { complianceCard: effectiveComplianceCard });
       return capability === 'device.screen.capture' ? screenResult(value) || result(value) : result(value);
     });
   }

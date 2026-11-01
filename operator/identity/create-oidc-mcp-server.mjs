@@ -8,7 +8,26 @@ AUTHORITY: Read-only discovery; no device execution enrollment.
 import { createRemoteMcpHttpServer } from '../../apps/desktop/remote-mcp-http.mjs';
 import { createOidcAuthenticator } from './oidc-access.mjs';
 
-export function createOidcMcpServer({ bridge, issuer, resource, ownerSubject, permission = 'device.bridge.read', roleKey = 'device.discovery.read', projectId = '', roleClaim = '', fetchImpl } = {}) {
+export function createOidcMcpServer({
+  bridge,
+  issuer,
+  resource,
+  ownerSubject,
+  permission = 'device.bridge.read',
+  roleKey = 'device.discovery.read',
+  projectId = '',
+  roleClaim = '',
+  fetchImpl,
+  readOnlyCapabilities = null,
+  complianceCardProvider = null,
+} = {}) {
   const authenticate = createOidcAuthenticator({ issuer, resource, ownerSubject, permission, roleKey, projectId, roleClaim, fetchImpl });
-  return createRemoteMcpHttpServer({ bridge, authenticate, resourceUrl: resource, authorizationServerUrl: issuer });
+  return createRemoteMcpHttpServer({
+    bridge,
+    authenticate,
+    resourceUrl: resource,
+    authorizationServerUrl: issuer,
+    readOnlyCapabilities,
+    complianceCardProvider,
+  });
 }

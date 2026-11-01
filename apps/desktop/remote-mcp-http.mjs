@@ -42,11 +42,20 @@ async function readBody(req) {
  * Loopback-only by default; public deployment requires approved OAuth resource
  * validation at the hosting boundary before calling this handler.
  */
-export function createRemoteMcpHttpServer({ bridge, authenticate, host = '127.0.0.1', resourceUrl, authorizationServerUrl } = {}) {
+export function createRemoteMcpHttpServer({
+  bridge,
+  authenticate,
+  host = '127.0.0.1',
+  resourceUrl,
+  authorizationServerUrl,
+  readOnlyCapabilities = null,
+  complianceCardProvider = null,
+} = {}) {
   if (!bridge || !(bridge.devices instanceof Map) || typeof bridge.discover !== 'function') {
     throw new Error('CANONICAL_BRIDGE_REQUIRED');
   }
   if (typeof authenticate !== 'function') throw new Error('AUTHENTICATION_PROVIDER_REQUIRED');
+  if (readOnlyCapabilities !== null && !Array.isArray(readOnlyCapabilities)) throw new Error('READ_ONLY_CAPABILITIES_INVALID');
   if (host !== '127.0.0.1' && host !== '::1') {
     throw new Error('REMOTE_PUBLIC_BIND_NOT_QUALIFIED');
   }
@@ -86,7 +95,11 @@ export function createRemoteMcpHttpServer({ bridge, authenticate, host = '127.0.
       sessionIdGenerator: undefined,
       enableJsonResponse: true,
     });
-    const mcp = createServer(bridge, { discoveryOnly: true });
+    const mcp = createServer(bridge, {
+      discoveryOnly: readOnlyCapabilities === null,
+      readOnlyCapabilities,
+      complianceCardProvider,
+    });
     try {
       await mcp.connect(transport);
       await transport.handleRequest(req, res, body);
