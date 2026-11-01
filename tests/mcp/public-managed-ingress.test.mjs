@@ -131,7 +131,7 @@ test('origin and unsupported methods deny public MCP ingress without upstream ca
   body:'{}'
  });
  assert.equal(wrongOrigin.status,403);
- assert.equal((await fetch(base+'/mcp',{method:'GET'})).status,405);
+ assert.equal((await fetch(base+'/mcp',{method:'GET'})).status,401);
  assert.equal(calls,0);
 });
 
@@ -150,7 +150,32 @@ test('approved ChatGPT origin is admitted while the origin is never forwarded up
   body:JSON.stringify({jsonrpc:'2.0',id:9,method:'tools/list'})
  });
  assert.equal(response.status,200);
+ assert.equal(response.headers.get('access-control-allow-origin'),'https://chatgpt.com');
  assert.equal(observed.headers.origin,undefined);
+});
+
+test('approved browser preflight is answered and streamable GET is forwarded',async t=>{
+ let observed;
+ const base=await fixture(t,{
+  env,
+  fetchImpl:async(_url,init)=>{
+   observed=init;
+   return new Response('data: {"jsonrpc":"2.0"}\n\n',{status:200,headers:{'content-type':'text/event-stream'}});
+  }
+ });
+ const preflight=await fetch(base+'/mcp',{
+  method:'OPTIONS',
+  headers:{origin:'https://chatgpt.com','access-control-request-method':'POST'}
+ });
+ assert.equal(preflight.status,204);
+ assert.equal(preflight.headers.get('access-control-allow-origin'),'https://chatgpt.com');
+ const stream=await fetch(base+'/mcp',{
+  method:'GET',
+  headers:{authorization:'Bearer fake-owner-token',origin:'https://chatgpt.com',accept:'text/event-stream'}
+ });
+ assert.equal(stream.status,200);
+ assert.equal(observed.method,'GET');
+ assert.equal(observed.body,undefined);
 });
 
 test('configured origin allowlist replaces defaults and still fails closed',async t=>{

@@ -45,6 +45,18 @@ function jsonResponse(res, status, body, extraHeaders = {}) {
   res.end(JSON.stringify(body));
 }
 
+function corsHeaders(originHeader) {
+  if (typeof originHeader !== "string") return {};
+  return {
+    "access-control-allow-origin": originHeader,
+    "access-control-allow-methods": "GET, POST, OPTIONS",
+    "access-control-allow-headers": [...REQUEST_HEADER_ALLOWLIST, "origin"].join(", "),
+    "access-control-expose-headers": ["www-authenticate", ...RESPONSE_HEADER_ALLOWLIST].join(", "),
+    "access-control-max-age": "600",
+    "vary": "Origin"
+  };
+}
+
 function readHeader(headers, name) {
   const value = headers?.[name];
   return typeof value === "string" ? value : undefined;
@@ -174,66 +186,78 @@ function forwardedResponseHeaders(upstream, resourceConfig) {
 
 export function createMcpIngressHandler({ env = process.env, fetchImpl = globalThis.fetch } = {}) {
   return async function handleMcpIngress(req, res) {
-    if (req.method !== "POST") {
-      return jsonResponse(res, 405, { error: "METHOD_NOT_ALLOWED" }, { allow: "POST" });
-    }
-    if (!isAdmittedOrigin(readHeader(req.headers, "origin"), env)) {
+    const origin = readHeader(req.headers, "origin");
+    if (!isAdmittedOrigin(origin, env)) {
       return jsonResponse(res, 403, { error: "BROWSER_ORIGIN_NOT_ADMITTED" });
+    }
+    const originHeaders = corsHeaders(origin);
+    const respond = (status, body, extraHeaders = {}) =>
+      jsonResponse(res, status, body, { ...originHeaders, ...extraHeaders });
+
+    if (req.method === "OPTIONS") {
+      res.writeHead(204, originHeaders);
+      return res.end();
+    }
+    if (req.method !== "POST" && req.method !== "GET") {
+      return respond(405, { error: "METHOD_NOT_ALLOWED" }, { allow: "GET, POST, OPTIONS" });
     }
 
     const resourceConfig = resolvePublicMcpResourceConfig(env);
     if (!resourceConfig.configured) {
-      return jsonResponse(res, 503, { error: resourceConfig.reason });
+      return respond(503, { error: resourceConfig.reason });
     }
 
     const authorization = readHeader(req.headers, "authorization");
     if (!authorization || !/^Bearer [A-Za-z0-9_~+./=-]+$/.test(authorization)) {
-      return jsonResponse(res, 401, { error: "BEARER_REQUIRED" }, {
+      return respond(401, { error: "BEARER_REQUIRED" }, {
         "www-authenticate": bearerChallenge(resourceConfig.metadataUrl)
       });
     }
 
-    if (!String(readHeader(req.headers, "content-type") || "").toLowerCase().startsWith("application/json")) {
-      return jsonResponse(res, 415, { error: "JSON_REQUIRED" });
+    if (req.method === "POST"
+      && !String(readHeader(req.headers, "content-type") || "").toLowerCase().startsWith("application/json")) {
+      return respond(415, { error: "JSON_REQUIRED" });
     }
 
     let body;
-    try {
-      body = await readRequestBody(req);
-    } catch (error) {
-      const tooLarge = error instanceof Error && error.message === "MCP_BODY_TOO_LARGE";
-      return jsonResponse(res, tooLarge ? 413 : 400, {
-        error: tooLarge ? "MCP_BODY_TOO_LARGE" : "MCP_BODY_INVALID"
-      });
+    if (req.method === "POST") {
+      try {
+        body = await readRequestBody(req);
+      } catch (error) {
+        const tooLarge = error instanceof Error && error.message === "MCP_BODY_TOO_LARGE";
+        return respond(tooLarge ? 413 : 400, {
+          error: tooLarge ? "MCP_BODY_TOO_LARGE" : "MCP_BODY_INVALID"
+        });
+      }
     }
 
     const upstreamConfig = resolveUpstreamUrl(env);
     if (!upstreamConfig.configured) {
-      return jsonResponse(res, 503, { error: upstreamConfig.reason });
+      return respond(503, { error: upstreamConfig.reason });
     }
     if (typeof fetchImpl !== "function") {
-      return jsonResponse(res, 503, { error: "FETCH_UNAVAILABLE" });
+      return respond(503, { error: "FETCH_UNAVAILABLE" });
     }
 
     let upstream;
     try {
       upstream = await fetchImpl(upstreamConfig.url, {
-        method: "POST",
+        method: req.method,
         headers: forwardedRequestHeaders(req),
-        body,
+        ...(body !== undefined ? { body } : {}),
         redirect: "error",
         signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS)
       });
     } catch {
-      return jsonResponse(res, 502, { error: "LEEWAY_RUNTIME_UPSTREAM_UNAVAILABLE" });
+      return respond(502, { error: "LEEWAY_RUNTIME_UPSTREAM_UNAVAILABLE" });
     }
 
     const contentType = upstream.headers.get("content-type") || "application/json";
     if (!/^(application\/json|text\/event-stream)(?:\s*;|$)/i.test(contentType)) {
-      return jsonResponse(res, 502, { error: "UPSTREAM_CONTENT_TYPE_INVALID" });
+      return respond(502, { error: "UPSTREAM_CONTENT_TYPE_INVALID" });
     }
 
-    res.writeHead(upstream.status, forwardedResponseHeaders(upstream, resourceConfig));
+    res.writeHead(upstream.status, { ...forwardedResponseHeaders(upstream, resourceConfig), ...originHeaders });
     const sizeGuard = new Transform({
       transform(chunk, _encoding, callback) {
         this.bytes = (this.bytes || 0) + chunk.length;
