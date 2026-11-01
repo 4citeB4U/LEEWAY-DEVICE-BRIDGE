@@ -2,12 +2,12 @@
 REGION: LEEWAY.DEVICE.BRIDGE.PUBLIC.INGRESS
 TAG: LEEWAY.VERCEL.MCP.AUTHENTICATED.FORWARDER.V2
 WHO: LeeWay Industries
-WHAT: Route public Vercel MCP requests to the Pocket ID-protected Runtime Fabric resource
+WHAT: Route public Vercel MCP requests to the ZITADEL OIDC-protected Runtime Fabric resource
 WHY: Keep the public OAuth resource identity and upstream MCP path consistent without duplicating execution authority
 WHERE: api/mcp.mjs
 WHEN: 2026-10-26
 HOW: Validate explicit HTTPS bindings; preserve bounded MCP/auth headers; reject redirects; stream bounded responses
-AUTHORITY: Transport only; Runtime Fabric verifies JWT/scope and owns the read-only tool
+AUTHORITY: Transport only; Runtime Fabric verifies OIDC JWT/scope and owns the read-only tool
 LICENSE: MIT
 */
 import { Readable, Transform } from "node:stream";

@@ -1,8 +1,8 @@
 /* LEEWAY HEADER — DO NOT REMOVE
 REGION: LEEWAY.DEVICE.BRIDGE.IDENTITY.RESOURCE
-TAG: LEEWAY.POCKET_ID.PUBLIC_MCP_RESOURCE_CONFIG.V1
+TAG: LEEWAY.OIDC.PUBLIC_MCP_RESOURCE_CONFIG.V2
 WHO: LeeWay Industries
-WHAT: Resolve the client-facing Pocket ID resource metadata for the Vercel MCP ingress
+WHAT: Resolve the client-facing OIDC resource metadata for the Vercel MCP ingress
 WHEN: 2026-10-26
 WHERE: operator/identity/public-mcp-resource-config.mjs
 WHY: Keep OAuth resource identity exact across the public Device Bridge and Runtime Fabric
@@ -54,7 +54,7 @@ export function resolvePublicMcpResourceConfig(env = process.env) {
     issuer,
     audience,
     metadataUrl,
-    // This is permission *advertisement* only. Pocket ID must separately grant
+    // This is permission *advertisement* only. ZITADEL must separately grant
     // actual owner-delegated scopes, Runtime Fabric must verify the token, and
     // native device availability remains unproven until independently measured.
     scopes: Object.freeze(env.LEEWAY_MCP_DISCOVERY_AUTHORIZED === "owner-read-only"
