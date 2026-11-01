@@ -51,10 +51,14 @@ function tokenRoles(claims, projectId, roleClaim) {
 /**
  * No fallback to session cookies, ID tokens, unsigned tokens, or unqualified scopes.
  * Caller must supply resource + approved owner sub from actual enrollment.
+ * ZITADEL may issue the configured project ID as the access-token audience;
+ * that project ID is accepted only when the already-qualified project binding
+ * is present, matching the Runtime Fabric verifier's audience contract.
  */
 export function createOidcAuthenticator({ issuer, resource, ownerSubject, permission = 'device.bridge.read', roleKey = 'device.discovery.read', projectId = '', roleClaim = '', fetchImpl = fetch, now = () => Date.now() } = {}) {
   const expectedIssuer = requireHttps(issuer, 'ISSUER');
   const expectedResource = requireHttps(resource, 'RESOURCE');
+  const acceptedAudiences = new Set([expectedResource, ...(projectId ? [String(projectId)] : [])]);
   if (!ownerSubject || typeof ownerSubject !== 'string' || ownerSubject.length > 256) throw Error('OWNER_SUBJECT_REQUIRED');
   if (!/^[a-z][a-z0-9._:-]{2,127}$/.test(permission)) throw Error('PERMISSION_REQUIRED');
   const discoveryUrl = expectedIssuer + '/.well-known/openid-configuration';
@@ -70,7 +74,8 @@ export function createOidcAuthenticator({ issuer, resource, ownerSubject, permis
       const claims = parsePart(parts[1]);
       if (protectedHeader.alg !== 'RS256' || !protectedHeader.kid || protectedHeader.typ === 'JWT+UNSIGNED') return false;
       if (claims.iss !== expectedIssuer || claims.sub !== ownerSubject) return false;
-      if (!(Array.isArray(claims.aud) ? claims.aud.includes(expectedResource) : claims.aud === expectedResource)) return false;
+      const audiences = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
+      if (!audiences.some(value => acceptedAudiences.has(value))) return false;
       const seconds = Math.floor(now() / 1000);
       if (!Number.isSafeInteger(claims.exp) || claims.exp <= seconds || !Number.isSafeInteger(claims.iat) || claims.iat > seconds + 30) return false;
       if (claims.nbf !== undefined && (!Number.isSafeInteger(claims.nbf) || claims.nbf > seconds + 30)) return false;

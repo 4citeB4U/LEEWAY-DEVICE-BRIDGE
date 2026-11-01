@@ -55,6 +55,13 @@ test('OIDC API JWT requires valid issuer, audience, owner and permission', async
       'device.discovery.read': { 'owner-org': 'leeway.example' }
     }
   }))), true);
+  assert.equal(await roleAuth(req(token({
+    aud: 'project-roles',
+    scope: 'openid',
+    'urn:zitadel:iam:org:project:project-roles:roles': {
+      'device.discovery.read': { 'owner-org': 'leeway.example' }
+    }
+  }))), true);
   assert.equal(await auth(req(token({ iss: 'https://wrong.example.test' }))), false);
   assert.equal(await auth(req(token({ aud: 'https://wrong.example.test/mcp' }))), false);
   assert.equal(await auth(req(token({ sub: 'another-owner' }))), false);
