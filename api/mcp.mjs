@@ -30,6 +30,11 @@ const RESPONSE_HEADER_ALLOWLIST = [
   "last-event-id",
   "retry-after"
 ];
+const DEFAULT_ALLOWED_ORIGINS = Object.freeze([
+  "https://chatgpt.com",
+  "https://chat.openai.com",
+  "https://vscode.dev"
+]);
 
 function jsonResponse(res, status, body, extraHeaders = {}) {
   res.writeHead(status, {
@@ -43,6 +48,38 @@ function jsonResponse(res, status, body, extraHeaders = {}) {
 function readHeader(headers, name) {
   const value = headers?.[name];
   return typeof value === "string" ? value : undefined;
+}
+
+function resolveAllowedOrigins(env) {
+  const configured = String(env.LEEWAY_MCP_ALLOWED_ORIGINS || "")
+    .split(/[\n,]/)
+    .map(value => value.trim())
+    .filter(Boolean);
+  const candidates = configured.length ? configured : DEFAULT_ALLOWED_ORIGINS;
+  const origins = new Set();
+  for (const candidate of candidates) {
+    try {
+      const url = new URL(candidate);
+      if (url.origin === candidate && !url.username && !url.password && !url.pathname.includes("//")) {
+        origins.add(url.origin);
+      }
+    } catch {
+      // Invalid configured origins are ignored; an explicit Origin then fails closed.
+    }
+  }
+  return origins;
+}
+
+function isAdmittedOrigin(originHeader, env) {
+  // Non-browser MCP clients normally omit Origin and remain supported.
+  if (originHeader === undefined) return true;
+  try {
+    const origin = new URL(originHeader);
+    if (origin.origin !== originHeader || origin.username || origin.password) return false;
+    return resolveAllowedOrigins(env).has(origin.origin);
+  } catch {
+    return false;
+  }
 }
 
 function resolveUpstreamUrl(env) {
@@ -140,7 +177,7 @@ export function createMcpIngressHandler({ env = process.env, fetchImpl = globalT
     if (req.method !== "POST") {
       return jsonResponse(res, 405, { error: "METHOD_NOT_ALLOWED" }, { allow: "POST" });
     }
-    if (typeof readHeader(req.headers, "origin") === "string") {
+    if (!isAdmittedOrigin(readHeader(req.headers, "origin"), env)) {
       return jsonResponse(res, 403, { error: "BROWSER_ORIGIN_NOT_ADMITTED" });
     }
 

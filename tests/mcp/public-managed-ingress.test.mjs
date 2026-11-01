@@ -135,6 +135,45 @@ test('origin and unsupported methods deny public MCP ingress without upstream ca
  assert.equal(calls,0);
 });
 
+test('approved ChatGPT origin is admitted while the origin is never forwarded upstream',async t=>{
+ let observed;
+ const base=await fixture(t,{
+  env,
+  fetchImpl:async(_url,init)=>{
+   observed=init;
+   return new Response('{"jsonrpc":"2.0","id":9,"result":{}}',{status:200,headers:{'content-type':'application/json'}});
+  }
+ });
+ const response=await fetch(base+'/mcp',{
+  method:'POST',
+  headers:{authorization:'Bearer fake-owner-token','content-type':'application/json',origin:'https://chatgpt.com'},
+  body:JSON.stringify({jsonrpc:'2.0',id:9,method:'tools/list'})
+ });
+ assert.equal(response.status,200);
+ assert.equal(observed.headers.origin,undefined);
+});
+
+test('configured origin allowlist replaces defaults and still fails closed',async t=>{
+ let calls=0;
+ const base=await fixture(t,{env:{...env,LEEWAY_MCP_ALLOWED_ORIGINS:'https://approved.example'},fetchImpl:async()=>{
+  calls++;
+  return new Response('{"jsonrpc":"2.0","id":10,"result":{}}',{status:200,headers:{'content-type':'application/json'}});
+ }});
+ const approved=await fetch(base+'/mcp',{
+  method:'POST',
+  headers:{authorization:'Bearer fake-owner-token','content-type':'application/json',origin:'https://approved.example'},
+  body:'{}'
+ });
+ const denied=await fetch(base+'/mcp',{
+  method:'POST',
+  headers:{authorization:'Bearer fake-owner-token','content-type':'application/json',origin:'https://chatgpt.com'},
+  body:'{}'
+ });
+ assert.equal(approved.status,200);
+ assert.equal(denied.status,403);
+ assert.equal(calls,1);
+});
+
 test('listen port requires explicit valid unprivileged integer',()=>{
  assert.equal(resolvePublicMcpListenPort({}),3000);
  assert.equal(resolvePublicMcpListenPort({PORT:'8080'}),8080);
