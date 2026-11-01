@@ -157,7 +157,7 @@ export class Bridge {
         }
         if (decision !== true && decision?.valid !== true) throw new Error('COMPLIANCE_CARD_INVALID');
       }
-      if (!this.admission || await this.admission({ deviceId, capability, args }) !== true) throw new Error('ADMISSION_DENIED');
+      if (!this.admission || await this.admission({ deviceId, capability, args, complianceCard }) !== true) throw new Error('ADMISSION_DENIED');
       if (!(await d.adapter.discover()).includes(capability)) throw new Error('CAPABILITY_UNAVAILABLE');
       // Durable pre-execution evidence failure prevents execution.
       const pre = receipt({ deviceId, capability, args, outcome: 'ADMITTED', complianceCard });
