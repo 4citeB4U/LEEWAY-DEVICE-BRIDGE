@@ -10,9 +10,89 @@
   <link rel="apple-touch-icon" href="./leeway-official-logo.png">
   <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="./apple-pwa.css">
+  <link rel="stylesheet" href="./dashboard.css">
 </head>
 <body>
 <main class="shell">
+<!-- LEEWAY HEADER — DO NOT REMOVE
+REGION: LEEWAY.DEVICE.BRIDGE.PUBLIC
+TAG: LEEWAY-DEVICE-CONSOLE-V1
+WHO: LeeWay Industries
+WHAT: User-approved Device Bridge visual dashboard
+WHEN: 2026-11-02
+WHERE: docs/index.html
+WHY: Mobile-first console matching the approved dashboard reference
+HOW: Presentation shell with existing platform controls preserved in a details section
+AUTHORITY: UI only; not a device connection or command grant
+LICENSE: MIT
+-->
+<header class="db-top" id="overview">
+  <button class="db-mobile-menu" id="dbMenu" aria-label="Toggle navigation" aria-expanded="false" aria-controls="dbSidebar">☰</button>
+  <div class="db-brand"><span class="db-logo" aria-hidden="true">∞</span><span class="db-brand-name">LeeWay<small>™</small></span><span class="db-sep"></span><span class="db-brand-product">Device Bridge</span></div>
+  <div class="db-pills" aria-label="Connection information"><span class="db-pill db-pill-alert" id="dbConnection">● Discovery unverified</span><span class="db-pill" id="dbDeviceCount">◇ Devices: unknown</span><span class="db-pill" id="dbRuntime">▣ Runtime: not probed here</span></div>
+</header>
+<div class="db-layout">
+  <aside class="db-sidebar" id="dbSidebar" aria-label="Primary navigation">
+    <a class="db-nav active" href="#overview"><span class="db-symbol">⌂</span>Overview</a>
+    <a class="db-nav" href="#dbDevices"><span class="db-symbol">▣</span>Devices</a>
+    <a class="db-nav" href="#dbControls"><span class="db-symbol">☷</span>Controls</a>
+    <a class="db-nav" href="#dbRuntimePanel"><span class="db-symbol">◈</span>Runtime</a>
+    <a class="db-nav" href="#dbDiagnostics"><span class="db-symbol">⌁</span>Diagnostics</a>
+    <a class="db-nav" href="#dbActions"><span class="db-symbol">▷</span>Automation</a>
+    <a class="db-nav" href="#dbPolicies"><span class="db-symbol">◇</span>Policies</a>
+    <a class="db-nav" href="#dbLogs"><span class="db-symbol">▤</span>Activity Logs</a>
+    <a class="db-nav" href="#dbSettings"><span class="db-symbol">⚙</span>Settings</a>
+    <div class="db-sidebar-logo"><span class="db-logo">∞</span><span>LeeWay<br>Device Bridge</span></div>
+  </aside>
+  <div class="db-content">
+    <div class="db-overview">
+      <section class="db-panel db-visual" aria-label="Bridge network illustration">
+        <div class="db-connector" aria-hidden="true"></div><div class="db-cloud">☁ Cloud Runtime<small>Connection not checked</small></div>
+        <div class="db-hub"><span class="db-logo">∞</span><strong>LeeWay Device Bridge</strong><span class="db-caption">Governed Device Access</span></div>
+        <div class="db-node n1"><b>▣</b>Desktop<small>Unverified</small></div><div class="db-node n2"><b>▱</b>Laptop<small>Unverified</small></div><div class="db-node n3"><b>▯</b>Mobile<small>Unverified</small></div><div class="db-node n4"><b>⚙</b>IoT / Edge<small>Unverified</small></div><div class="db-node n5"><b>▤</b>Servers<small>Unverified</small></div><div class="db-node n6"><b>▧</b>Tablet<small>Unverified</small></div>
+      </section>
+      <div class="db-rightstack">
+        <section class="db-panel" id="dbControls"><h2><span class="db-symbol">◈</span> Device Controls</h2>
+          <div class="db-controls-grid">
+            <button class="db-control" disabled title="Requires authorized live device"><span class="db-symbol">▣</span>Remote View</button>
+            <button class="db-control" disabled title="Requires authorized live device"><span class="db-symbol">⌘</span>Open Shell</button>
+            <button class="db-control" disabled title="Requires authorized live device"><span class="db-symbol">▤</span>File Access</button>
+            <button class="db-control" disabled title="Requires authorized live device"><span class="db-symbol">▦</span>App Control</button>
+            <button class="db-control" disabled title="Requires authorized live device"><span class="db-symbol">⏻</span>Power</button>
+            <button class="db-control" disabled title="Requires authorized live device"><span class="db-symbol">⟳</span>Restart</button>
+            <button class="db-control" disabled title="Requires authorized live device"><span class="db-symbol">⏻</span>Shutdown</button>
+            <button class="db-control" disabled title="Requires authorized live device"><span class="db-symbol">◉</span>Wake</button>
+            <button class="db-control" disabled title="Requires authorized live device"><span class="db-symbol">⚙</span>Services</button>
+            <button class="db-control" disabled title="Requires authorized live device"><span class="db-symbol">⌁</span>Processes</button>
+            <button class="db-control" disabled title="Requires authorized live device"><span class="db-symbol">⬡</span>Install / Update</button>
+            <button class="db-control" disabled title="Requires authorized live device"><span class="db-symbol">ϟ</span>Execute Skill</button>
+          </div><p class="db-warning">Device controls stay disabled until device discovery, capabilities, and owner authorization are proven.</p>
+        </section>
+        <section class="db-panel" id="dbActions"><h2><span class="db-symbol">ϟ</span> Quick Actions</h2>
+          <div class="db-actions"><button class="db-action green" id="dbRunBrowserDiagnostics">Browser Diagnostics</button><button class="db-action" id="dbRefresh">Refresh Status</button><button class="db-action purple" disabled>Apply Policy</button><button class="db-action gold" disabled>Automate Task</button></div>
+        </section>
+      </div>
+    </div>
+    <section class="db-panel db-downloads" id="dbDownloads"><h2><span class="db-symbol">⇩</span> Workstation Downloads <span class="db-caption">Choose your platform — only verified packages are downloadable</span></h2>
+      <div class="db-download-row">
+        <article class="db-download-tile"><span aria-hidden="true">▣</span><strong>Windows Workstation</strong><a href="https://github.com/codespaces/new?hide_repo_select=true&amp;repo=1380304068" target="_blank" rel="noopener">Open Workstation</a><span class="db-unavailable">Native download not qualified on this page</span></article>
+        <article class="db-download-tile"><span aria-hidden="true">●</span><strong>Apple Workstation</strong><a href="https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/tag/apple-latest" target="_blank" rel="noopener">Apple Package</a><span class="db-unavailable">Native installation requires platform qualification</span></article>
+        <article class="db-download-tile"><span aria-hidden="true">◈</span><strong>Linux Workstation</strong><a href="https://github.com/codespaces/new?hide_repo_select=true&amp;repo=1380304068" target="_blank" rel="noopener">Open Workstation</a><span class="db-unavailable">Native download not qualified on this page</span></article>
+        <article class="db-download-tile"><span aria-hidden="true">▯</span><strong>Android Workstation</strong><a href="./downloads/leeway-device-bridge-android-latest-debug.apk" download>Download Extension</a><span class="db-unavailable">Android extension; verify signature before updating</span></article>
+      </div>
+    </section>
+    <div class="db-bottom">
+      <section class="db-panel" id="dbDevices"><h2><span class="db-symbol">▣</span> Devices <span class="db-caption">Owner-scoped inventory</span></h2>
+        <table class="db-table"><thead><tr><th>Device</th><th>Platform</th><th>Health</th><th>Status</th></tr></thead><tbody><tr><td colspan="4" class="db-pending">No live device inventory loaded. Browser discovery does not enumerate remote devices.</td></tr></tbody></table><p class="db-caption">Device inventory requires the authenticated Device Bridge discovery endpoint.</p>
+      </section>
+      <section class="db-panel" id="dbDiagnostics"><h2><span class="db-symbol">⌁</span> Diagnostics / Runtime</h2><div class="db-metric"><article><span class="db-caption">Health</span><strong>—</strong><span class="db-caption">Not measured</span></article><article><span class="db-caption">Uptime</span><strong>—</strong><span class="db-caption">Not measured</span></article><article><span class="db-caption">Latency</span><strong>—</strong><span class="db-caption">Not measured</span></article></div><p class="db-warning">No fabricated health, throughput, CPU, RAM, or connected-device counts.</p><a href="#appleBrowserAdapter">Apple browser diagnostic</a></section>
+      <section class="db-panel" id="dbLogs"><h2><span class="db-symbol">▤</span> Activity Logs</h2><div class="db-events" id="dbEventList"><p>Session opened — local dashboard only</p><p>No authenticated bridge event feed connected</p></div><p class="db-caption">Logs shown here are UI events, not execution receipts.</p></section>
+    </div>
+    <section class="db-footer" id="dbRuntimePanel"><span><strong>Bridge:</strong> Not checked in browser</span><span><strong>Runtime:</strong> Not measured</span><span><strong>Devices:</strong> Unknown</span><span id="dbPolicies">Policies: Requires owner approval</span><span id="dbSettings">Settings: Existing platform settings below</span></section>
+  </div>
+</div>
+<details class="db-disclosure" id="dbLegacy"><summary>Platform Workstations, Install Help & Existing Diagnostics</summary>
+
   <header class="hero">
     <p class="eyebrow">LEEWAY DEVICE BRIDGE</p>
     <h1>One bridge. Four device lanes.</h1>
@@ -75,7 +155,9 @@
   <section class="panel compact"><div class="panel-head"><div><p class="kicker">TECHNICAL INTERFACES</p><h2>Evidence and machine-readable contracts</h2></div><span class="badge">ON DEMAND</span></div><p class="muted">These records support engineering work. They are intentionally kept out of the daily platform controls.</p><p><a href="./llm-entrypoint.json">LLM entrypoint</a> · <a href="./provider-registry.json">Provider registry</a> · <a href="./runtime-contract.json">Runtime contract</a> · <a href="./DEVICE-OPERATOR.md">Platform architecture</a></p></section>
   <section class="status-grid" aria-label="System state"><article><span>PAGES</span><strong id="pagesState">LIVE</strong></article><article><span>DISCOVERY</span><strong id="discoveryState">READY</strong></article><article><span>APPLE PACKAGE</span><strong>QUALIFIED</strong></article></section>
   <footer>LeeWay Standards · platform-specific execution requires platform-specific evidence · observed ≠ verified</footer>
+</details>
 </main>
 <script type="module" src="./app.js"></script>
+<script type="module" src="./dashboard-ui.js"></script>
 </body>
 </html>
