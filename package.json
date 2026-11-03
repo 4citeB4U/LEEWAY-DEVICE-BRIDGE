@@ -23,6 +23,7 @@
     "voice:owner-approve": "node operator/voice-owner-approval-desktop.mjs"
   },
   "dependencies": {
+    "@upstash/redis": "1.41.0",
     "ws": "8.22.0"
   },
   "engines": {
