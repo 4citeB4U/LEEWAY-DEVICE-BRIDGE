@@ -8,7 +8,7 @@ WHY: Browser app mode cannot be the transparent, topmost desktop companion.
 HOW: Installed pywebview/WebView2, bounded geometry API, one process lock, native speech recognition.
 LICENSE: MIT
 """
-import argparse,ctypes,hashlib,json,math,os,pathlib,threading,time,urllib.request,urllib.parse,urllib.error,uuid,subprocess,sys
+import argparse,ctypes,hashlib,json,math,os,pathlib,threading,time,urllib.request,urllib.parse,urllib.error,uuid,subprocess,sys,shutil,re
 from ctypes import wintypes
 from contextlib import contextmanager
 import webview
@@ -21,6 +21,44 @@ origin=parts.scheme+'://'+parts.netloc
 with urllib.request.urlopen(origin+'/health',timeout=8) as r:health=json.load(r)
 assert health.get('identity')=='LEEWAY_MACHINE_CONSCIOUSNESS','CARRIER_IDENTITY_MISMATCH'
 output=pathlib.Path(a.evidence).resolve();output.mkdir(parents=True,exist_ok=True)
+
+# MEGA has no Continuum/OIDC client binding.  Its official Windows client is
+# therefore the only permitted provider-native sign-in boundary here.  These
+# helpers return classification only; stdout/stderr can contain account or
+# session material and is never copied into a receipt or browser result.
+def mega_root():
+ candidates=[]
+ local=os.environ.get('LOCALAPPDATA')
+ if local:candidates.append(pathlib.Path(local)/'MEGAcmd')
+ candidates.extend([pathlib.Path(r'C:\Program Files\MEGAcmd'),pathlib.Path(r'C:\Program Files\MEGA')])
+ for candidate in candidates:
+  if candidate.is_dir():return candidate
+ return None
+def mega_command(name):
+ root=mega_root()
+ if root:
+  candidate=root/name
+  if candidate.is_file():return candidate
+ path=shutil.which(name)
+ return pathlib.Path(path) if path else None
+def mega_session_state():
+ command=mega_command('mega-whoami.bat')
+ if command is None:return 'MEGA_NATIVE_CLIENT_UNAVAILABLE'
+ try:
+  completed=subprocess.run([str(command)],cwd=str(command.parent),capture_output=True,text=True,timeout=8,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0),shell=False)
+ except subprocess.TimeoutExpired:return 'MEGA_SESSION_PROBE_TIMEOUT'
+ except OSError:return 'MEGA_SESSION_PROBE_FAILED'
+ text=(completed.stdout+'\n'+completed.stderr).lower()
+ if completed.returncode==0 and not re.search(r'not\s+(logged|login)|no\s+user|not\s+connected',text):return 'MEGA_SESSION_OBSERVED'
+ return 'MEGA_SESSION_REQUIRED'
+def open_mega_shell():
+ shell=mega_command('MEGAcmdShell.exe')
+ if shell is None:return False
+ try:
+  flags=getattr(subprocess,'CREATE_NEW_CONSOLE',0)
+  subprocess.Popen([str(shell)],cwd=str(shell.parent),creationflags=flags,stdin=None,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,shell=False)
+  return True
+ except OSError:return False
 state_path=binding_path.parent/'agent-ui-geometry.json'
 user32=ctypes.windll.user32;kernel32=ctypes.windll.kernel32
 user32.SetThreadDpiAwarenessContext.argtypes=[ctypes.c_void_p]
@@ -557,6 +595,21 @@ class HostApi:
     provider=str(request.get('providerId',''))
     allowed={'local-continuum','google-drive','mega','pcloud','box','icedrive','internxt'}
     if provider not in allowed:raise ValueError('STORAGE_PROVIDER_NOT_ALLOWLISTED')
+    if provider=='mega':
+     state=mega_session_state()
+     if state=='MEGA_NATIVE_CLIENT_UNAVAILABLE':
+      receipt('CONTINUUM_PROVIDER_ONBOARDING_BLOCKED',{'providerId':provider,'reason':state})
+      return {'state':'BLOCKED','providerId':provider,'reason':state,'message':'The official MEGA client is not available on this host.'}
+     if state=='MEGA_SESSION_REQUIRED':
+      opened=open_mega_shell()
+      reason='MEGA_PROVIDER_SIGNIN_REQUIRED' if opened else 'MEGA_SIGNIN_SURFACE_UNAVAILABLE'
+      receipt('CONTINUUM_PROVIDER_ONBOARDING_PENDING',{'providerId':provider,'reason':reason,'nativeClientState':state,'shellOpened':opened})
+      return {'state':'PENDING','providerId':provider,'reason':reason,'message':'Complete sign-in in the official MEGA window, then press Connect again.'}
+     if state!='MEGA_SESSION_OBSERVED':
+      receipt('CONTINUUM_PROVIDER_ONBOARDING_BLOCKED',{'providerId':provider,'reason':state})
+      return {'state':'BLOCKED','providerId':provider,'reason':state,'message':'MEGA sign-in could not be verified. No storage was changed.'}
+     receipt('CONTINUUM_PROVIDER_SESSION_OBSERVED',{'providerId':provider,'state':'PENDING','nativeClientState':state,'archiveRoundtrip':'NOT_EXECUTED'})
+     return {'state':'PENDING','providerId':provider,'reason':'MEGA_CONTINUUM_ARCHIVE_ROUNDTRIP_REQUIRED','message':'MEGA sign-in is present. Continuum still requires its encrypted upload/download readback before this provider is accepted.'}
     if provider!='local-continuum':
      receipt('CONTINUUM_PROVIDER_ONBOARDING_BLOCKED',{'providerId':provider,'reason':'PROVIDER_AUTH_ADAPTER_UNBOUND'})
      return {'state':'BLOCKED','providerId':provider,'reason':'PROVIDER_AUTH_ADAPTER_UNBOUND'}
