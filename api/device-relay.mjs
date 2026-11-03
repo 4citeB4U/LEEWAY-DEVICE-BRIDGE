@@ -10,7 +10,6 @@ AUTHORITY: Transport only. The phone remains the execution and Formula boundary.
 import { createServer } from 'node:http';
 import { createHash, timingSafeEqual, randomUUID } from 'node:crypto';
 import { WebSocketServer, WebSocket } from 'ws';
-import { createRedisRelayStore } from './relay-store.mjs';
 
 const MAX_PAYLOAD_BYTES = 64 * 1024;
 const HELLO_TIMEOUT_MS = 10_000;
@@ -19,10 +18,6 @@ const MAX_CAPABILITY_LENGTH = 128;
 const MAX_DEVICE_ID_LENGTH = 128;
 const MAX_TOKEN_LENGTH = 512;
 const DELIVERY_MODE = 'VERCEL_FUNCTION_WEBSOCKET_V1';
-const DURABLE_DELIVERY_MODE = 'VERCEL_FUNCTION_WEBSOCKET_REDIS_POLL_V1';
-const INBOX_BATCH_SIZE = 32;
-const INBOX_POLL_MS = 250;
-const DURABLE_REQUIRED_IN_PRODUCTION = process.env.VERCEL_ENV === 'production';
 
 function json(res, status, value) {
   res.writeHead(status, {
@@ -54,12 +49,12 @@ function protocolError(ws, error) {
   ws.close(1008, error);
 }
 
-function helloAck(ws, role, room, durable) {
+function helloAck(ws, role, room) {
   ws.send(JSON.stringify({
     type: 'hello-ack',
     role,
-    deliveryMode: durable ? DURABLE_DELIVERY_MODE : DELIVERY_MODE,
-    volatileRoomState: !durable,
+    deliveryMode: DELIVERY_MODE,
+    volatileRoomState: true,
     authority: 'TRANSPORT_ONLY',
     deviceId: room.deviceId,
   }));
@@ -86,7 +81,7 @@ function closeReplaced(connection) {
   }
 }
 
-function createMemoryRelayServer({ rooms = new Map() } = {}) {
+function createRelayServer({ rooms = new Map() } = {}) {
   const server = createServer((req, res) => {
     if (req.method === 'GET' && (req.url === '/api/device-relay' || req.url === '/api/device-relay/')) {
       return json(res, 200, {
@@ -244,294 +239,7 @@ function createMemoryRelayServer({ rooms = new Map() } = {}) {
   return { server, wss, rooms };
 }
 
-function createDurableRelayServer({ store, requireDurable }) {
-  const nodeId = randomUUID();
-  const localConnections = new Map();
-  let pollTimer = null;
-  let polling = false;
-
-  const server = createServer((req, res) => {
-    if (req.method === 'GET' && (req.url === '/api/device-relay' || req.url === '/api/device-relay/')) {
-      if (!store && requireDurable) {
-        return json(res, 503, {
-          ok: false,
-          service: 'leeway-device-bridge-relay',
-          error: 'DURABLE_RELAY_STORE_REQUIRED',
-          deliveryMode: DURABLE_DELIVERY_MODE,
-          volatileRoomState: true,
-          supportsWebSocket: true,
-          truthBoundary: 'RUNTIME_OBSERVED_ONLY',
-        });
-      }
-      return json(res, 200, {
-        ok: true,
-        service: 'leeway-device-bridge-relay',
-        protocol: 'LEEWAY_DEVICE_RELAY_TOKEN_ROOM_WEBSOCKET_V1',
-        deliveryMode: DURABLE_DELIVERY_MODE,
-        volatileRoomState: false,
-        durableRoomState: true,
-        storage: store?.kind || 'UNAVAILABLE',
-        supportsWebSocket: true,
-        nodeId,
-        truthBoundary: 'RUNTIME_OBSERVED_ONLY',
-      });
-    }
-    return json(res, 404, { ok: false, error: 'NOT_FOUND' });
-  });
-
-  const wss = new WebSocketServer({ server, maxPayload: MAX_PAYLOAD_BYTES });
-
-  function ownerRole(role) {
-    return role === 'phone' ? 'phone' : 'client';
-  }
-
-  function localKey(deviceId, role) {
-    return `${deviceId}:${ownerRole(role)}`;
-  }
-
-  function localSocket(deviceId, role) {
-    const connection = localConnections.get(localKey(deviceId, role));
-    return connection?.ws?.readyState === WebSocket.OPEN ? connection : null;
-  }
-
-  async function forwardToNode(targetNodeId, message) {
-    if (!store || !targetNodeId) return;
-    await store.pushInbox(targetNodeId, {
-      ...message,
-      expiresAt: message.expiresAt || Date.now() + 30_000,
-    });
-  }
-
-  async function deliverInbox(message) {
-    if (!message || typeof message !== 'object') return;
-    if (message.expiresAt && message.expiresAt < Date.now()) return;
-    if (message.kind === 'close') {
-      const connection = localSocket(message.deviceId, message.role);
-      if (connection) connection.ws.close(4001, message.reason || 'REPLACED_BY_RECONNECT');
-      return;
-    }
-    if (message.kind !== 'forward') return;
-    const connection = localSocket(message.deviceId, message.role);
-    if (connection) {
-      connection.ws.send(JSON.stringify(message.payload));
-      return;
-    }
-    if (message.attempts >= 3) return;
-    await forwardToNode(nodeId, { ...message, attempts: (message.attempts || 0) + 1 });
-  }
-
-  async function pollInbox() {
-    if (polling || !store) return;
-    polling = true;
-    try {
-      for (let index = 0; index < INBOX_BATCH_SIZE; index += 1) {
-        const message = await store.popInbox(nodeId);
-        if (!message) break;
-        await deliverInbox(message);
-      }
-    } catch {
-      // The next poll retries after a transient provider failure. No secrets are logged.
-    } finally {
-      polling = false;
-      pollTimer = setTimeout(pollInbox, INBOX_POLL_MS);
-      pollTimer.unref?.();
-    }
-  }
-
-  async function closePreviousOwner(deviceId, role, previousOwner) {
-    if (!previousOwner || previousOwner === nodeId) {
-      closeReplaced(localConnections.get(localKey(deviceId, role)));
-      return;
-    }
-    await forwardToNode(previousOwner, {
-      kind: 'close',
-      deviceId,
-      role,
-      reason: 'REPLACED_BY_RECONNECT',
-    });
-  }
-
-  async function removeConnection(connection) {
-    if (!connection.authenticated || !store) return;
-    const role = ownerRole(connection.role);
-    await store.removeOwner(connection.deviceId, role, nodeId);
-    const key = localKey(connection.deviceId, role);
-    if (localConnections.get(key) === connection) localConnections.delete(key);
-  }
-
-  async function touchConnection(connection) {
-    if (connection.authenticated && store) {
-      await store.touch(connection.deviceId, ownerRole(connection.role));
-    }
-  }
-
-  async function authenticateHello(connection, message) {
-    const role = text(message.role, 32);
-    const deviceId = text(message.deviceId, MAX_DEVICE_ID_LENGTH);
-    const token = text(message.token, MAX_TOKEN_LENGTH);
-    if (!['phone', 'client', 'workstation'].includes(role) || !deviceId || !token) {
-      return protocolError(connection.ws, 'HELLO_INVALID');
-    }
-
-    const digest = tokenDigest(token).toString('hex');
-    const owner = ownerRole(role);
-    if (role === 'phone') {
-      if (!await store.claimToken(deviceId, digest)) {
-        return protocolError(connection.ws, 'PAIRING_TOKEN_REJECTED');
-      }
-    } else if (!await store.tokenMatches(deviceId, digest) || !await store.getOwner(deviceId, 'phone')) {
-      return protocolError(connection.ws, 'PAIRING_REQUIRED');
-    }
-
-    const previousOwner = await store.getOwner(deviceId, owner);
-    await closePreviousOwner(deviceId, owner, previousOwner);
-    await store.setOwner(deviceId, owner, nodeId);
-    connection.role = role;
-    connection.deviceId = deviceId;
-    connection.authenticated = true;
-    localConnections.set(localKey(deviceId, role), connection);
-    clearTimeout(connection.helloTimer);
-    helloAck(connection.ws, role, { deviceId }, true);
-  }
-
-  async function routeCommand(connection, message) {
-    if (connection.role !== 'client' && connection.role !== 'workstation') {
-      return protocolError(connection.ws, 'ROLE_CANNOT_COMMAND');
-    }
-    const id = text(message.id, MAX_ID_LENGTH);
-    const capability = text(message.capability, MAX_CAPABILITY_LENGTH);
-    if (!id || !capability || !validArguments(message.arguments)) {
-      return protocolError(connection.ws, 'COMMAND_INVALID');
-    }
-    const phoneOwner = await store.getOwner(connection.deviceId, 'phone');
-    if (!phoneOwner) return protocolError(connection.ws, 'PHONE_NOT_CONNECTED');
-
-    const payload = {
-      type: 'command',
-      id,
-      capability,
-      arguments: message.arguments,
-    };
-    const claimed = await store.claimPending(connection.deviceId, id, {
-      capability,
-      clientNodeId: nodeId,
-      message: payload,
-      issuedAt: Date.now(),
-    });
-    if (!claimed) return protocolError(connection.ws, 'DUPLICATE_COMMAND_ID');
-
-    const phone = localSocket(connection.deviceId, 'phone');
-    if (phoneOwner === nodeId && phone) {
-      phone.ws.send(JSON.stringify(payload));
-      return;
-    }
-    await forwardToNode(phoneOwner, {
-      kind: 'forward',
-      role: 'phone',
-      deviceId: connection.deviceId,
-      payload,
-      attempts: 0,
-    });
-  }
-
-  async function routeResult(connection, message) {
-    if (connection.role !== 'phone') return protocolError(connection.ws, 'ROLE_CANNOT_RESULT');
-    const id = text(message.id, MAX_ID_LENGTH);
-    const capability = text(message.capability, MAX_CAPABILITY_LENGTH);
-    if (!id || !capability || !Object.hasOwn(message, 'ok')) {
-      return protocolError(connection.ws, 'RESULT_INVALID');
-    }
-    const pending = await store.takePending(connection.deviceId, id);
-    if (!pending || pending.capability !== capability) {
-      return protocolError(connection.ws, 'UNKNOWN_COMMAND_ID');
-    }
-    await store.markCompleted(connection.deviceId, id);
-    const result = {
-      type: 'result',
-      id,
-      capability,
-      ok: message.ok === true,
-      ...(message.ok === true && Object.hasOwn(message, 'result') ? { result: message.result } : {}),
-      ...(message.ok !== true ? { error: text(message.error, 256) || 'REMOTE_COMMAND_FAILED' } : {}),
-    };
-    const client = localSocket(connection.deviceId, 'client');
-    if (pending.clientNodeId === nodeId && client) {
-      client.ws.send(JSON.stringify(result));
-      return;
-    }
-    await forwardToNode(pending.clientNodeId, {
-      kind: 'forward',
-      role: 'client',
-      deviceId: connection.deviceId,
-      payload: result,
-      attempts: 0,
-    });
-  }
-
-  async function handleMessage(connection, raw) {
-    let message;
-    try {
-      message = JSON.parse(raw.toString('utf8'));
-    } catch {
-      return protocolError(connection.ws, 'JSON_INVALID');
-    }
-    if (!message || typeof message !== 'object' || Array.isArray(message)) {
-      return protocolError(connection.ws, 'MESSAGE_INVALID');
-    }
-
-    if (!connection.authenticated) {
-      if (message.type !== 'hello') return protocolError(connection.ws, 'HELLO_REQUIRED');
-      return authenticateHello(connection, message);
-    }
-
-    await touchConnection(connection);
-    if (message.type === 'command') return routeCommand(connection, message);
-    if (message.type === 'result') return routeResult(connection, message);
-    if (message.type === 'ping') {
-      if (connection.ws.readyState === WebSocket.OPEN) connection.ws.send(JSON.stringify({ type: 'pong' }));
-      return;
-    }
-    protocolError(connection.ws, 'MESSAGE_TYPE_UNSUPPORTED');
-  }
-
-  wss.on('connection', (ws) => {
-    const connection = { ws, role: null, deviceId: null, authenticated: false, helloTimer: null, touchTimer: null };
-    if (!store && requireDurable) {
-      protocolError(ws, 'DURABLE_RELAY_STORE_REQUIRED');
-      return;
-    }
-    connection.helloTimer = setTimeout(() => protocolError(ws, 'HELLO_TIMEOUT'), HELLO_TIMEOUT_MS);
-    connection.touchTimer = setInterval(() => { void touchConnection(connection); }, 20_000);
-    connection.touchTimer.unref?.();
-
-    ws.on('message', (raw) => {
-      void handleMessage(connection, raw).catch(() => protocolError(ws, 'RELAY_PROVIDER_ERROR'));
-    });
-    ws.on('close', () => {
-      clearTimeout(connection.helloTimer);
-      clearInterval(connection.touchTimer);
-      void removeConnection(connection);
-    });
-    ws.on('error', () => {
-      clearTimeout(connection.helloTimer);
-      clearInterval(connection.touchTimer);
-      void removeConnection(connection);
-    });
-  });
-
-  if (store) void pollInbox();
-  return { server, wss, store, nodeId, localConnections };
-}
-
-function createRelayServer(options = {}) {
-  const store = options.store === undefined ? createRedisRelayStore() : options.store;
-  const requireDurable = options.requireDurable ?? DURABLE_REQUIRED_IN_PRODUCTION;
-  if (store || requireDurable) return createDurableRelayServer({ store, requireDurable });
-  return createMemoryRelayServer(options);
-}
-
 const defaultRelay = createRelayServer();
 export const relayRooms = defaultRelay.rooms;
 export const createDeviceRelayServer = createRelayServer;
-export const createDeviceRelayStore = createRedisRelayStore;
 export default defaultRelay.server;
