@@ -129,6 +129,7 @@ class RemoteRelayService : Service() {
                     put("type", "hello")
                     put("role", "phone")
                     put("deviceId", identity.optString("deviceId"))
+                    put("installationName", DevicePassport.installationName(this@RemoteRelayService))
                     put("token", BridgeSecret.ensure(this@RemoteRelayService))
                 }
                 ws.send(hello.toString())

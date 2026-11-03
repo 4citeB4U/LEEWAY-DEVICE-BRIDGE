@@ -27,7 +27,12 @@ export class RelayAdapter {
     const value = await this.execute('device.capabilities', {});
     return parseRemoteQualified(value?.remoteQualified);
   }
-  execute(capability, args) {
+  async identify() {
+    // Identity enrichment is optional discovery metadata; an offline device
+    // must not stall bridge_devices for the full command timeout.
+    return this.execute('device.info', {}, { timeoutMs: Math.min(this.timeoutMs, 5_000) });
+  }
+  execute(capability, args, { timeoutMs = this.timeoutMs } = {}) {
     return new Promise((resolve, reject) => {
       const id = randomUUID();
       const socket = new WebSocket(this.url, { maxPayload: 8 * 1024 * 1024, handshakeTimeout: this.timeoutMs, followRedirects: false });
@@ -39,7 +44,7 @@ export class RelayAdapter {
         socket.terminate();
         error ? reject(new Error(error)) : resolve(result);
       };
-      const timer = setTimeout(() => done('RELAY_TIMEOUT'), this.timeoutMs);
+      const timer = setTimeout(() => done('RELAY_TIMEOUT'), timeoutMs);
       socket.on('open', () => socket.send(JSON.stringify({ type: 'hello', role: 'client', deviceId: this.deviceId, token: this.token })));
       socket.on('message', raw => {
         let msg;

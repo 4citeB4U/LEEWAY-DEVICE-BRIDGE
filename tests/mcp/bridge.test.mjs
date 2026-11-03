@@ -56,6 +56,39 @@ test('real SDK stdio tools/list and tools/call fail-closed without canonical C3 
   assert.ok(!JSON.stringify(records).includes('device bridge proof'));
 });
 
+test('bridge_devices preserves passport IDs and exposes provider-observed installation names', async () => {
+  const bridge = new Bridge([{
+    id: 'passport-device-id',
+    type: 'relay',
+    platform: 'android',
+    grants: ['device.info'],
+    adapter: {
+      discover: async () => ['device.info'],
+      identify: async () => ({
+        installationName: 'samsung-sm-f956u-8ca6e3a',
+        manufacturer: 'samsung',
+        model: 'SM-F956U',
+        identity: { deviceId: 'passport-device-id', publicKeyDerBase64: 'must-not-leak' },
+      }),
+      execute: async () => ({ ok: true }),
+    },
+  }], { admission: async () => true, receiptSink: async () => {} });
+  const server = createServer(bridge);
+  const client = new Client({ name: 'identity-name-test', version: '1' });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+  const response = await client.callTool({ name: 'bridge_devices', arguments: {} });
+  const body = JSON.parse(response.content[0].text);
+  assert.deepEqual(body.devices, ['passport-device-id']);
+  assert.equal(body.deviceRecords[0].deviceId, 'passport-device-id');
+  assert.equal(body.deviceRecords[0].displayName, 'samsung-sm-f956u-8ca6e3a');
+  assert.equal(body.deviceRecords[0].identitySource, 'PROVIDER_OBSERVED');
+  assert.equal(body.deviceRecords[0].identityVerified, false);
+  assert.ok(!response.content[0].text.includes('must-not-leak'));
+  await client.close();
+  await server.close();
+});
+
 test('Bridge validates the supplied compliance card before adapter execution and binds only its digest to receipts', async () => {
   let executions = 0;
   let gateInput = null;

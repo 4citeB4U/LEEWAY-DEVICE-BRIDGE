@@ -8,8 +8,24 @@ import android.os.StatFs
 import android.util.DisplayMetrics
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.Locale
 
 object DevicePassport {
+    fun installationName(context: Context): String {
+        val identity = DeviceIdentity.ensure(context)
+        val base = listOf(Build.MANUFACTURER, Build.MODEL)
+            .map { it.trim().replace(Regex("[^A-Za-z0-9]+"), "-").trim('-') }
+            .filter { it.isNotBlank() }
+            .joinToString("-")
+            .ifBlank { "android-device" }
+        val suffix = identity.optString("deviceId")
+            .removePrefix("LDB-")
+            .replace(Regex("[^A-Za-z0-9]"), "")
+            .takeLast(8)
+            .ifBlank { "install" }
+        return ("$base-$suffix").lowercase(Locale.US)
+    }
+
     fun capture(context: Context): JSONObject {
         val activity = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
         val memory = ActivityManager.MemoryInfo().also(activity::getMemoryInfo)
@@ -21,6 +37,7 @@ object DevicePassport {
             put("schemaVersion", "0.1.0")
             put("identity", DeviceIdentity.ensure(context))
             put("authority", "NATIVE_ANDROID_OBSERVED")
+            put("installationName", installationName(context))
             put("manufacturer", Build.MANUFACTURER)
             put("brand", Build.BRAND)
             put("model", Build.MODEL)

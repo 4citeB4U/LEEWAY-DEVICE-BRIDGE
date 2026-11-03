@@ -41,7 +41,13 @@ export function createServer(bridge, {
   const server = new McpServer({ name: 'leeway-device-bridge', version: '0.1.0' });
   const result = value => ({ content: [{ type: 'text', text: JSON.stringify(value) }], ...(value.ok === false ? { isError: true } : {}) });
   const complianceCardSchema = z.object({}).passthrough();
-  server.registerTool('bridge_devices', { description: 'List configured device IDs. Configuration does not prove connectivity.', inputSchema: {} }, async () => result({ devices: [...bridge.devices.keys()] }));
+  server.registerTool('bridge_devices', { description: 'List canonical device IDs plus provider-observed installation names. IDs remain the authenticated passport identity.', inputSchema: {} }, async () => {
+    const devices = [...bridge.devices.keys()];
+    const deviceRecords = typeof bridge.describeAll === 'function'
+      ? await bridge.describeAll()
+      : devices.map(deviceId => ({ deviceId, displayName: deviceId, installationName: null, identitySource: 'REGISTRY_FALLBACK', identityVerified: false, state: 'UNAVAILABLE' }));
+    return result({ devices, deviceRecords });
+  });
   server.registerTool('bridge_capabilities', { description: 'Discover current capabilities for one device; grants and verification are distinct.', inputSchema: { deviceId: z.string().min(1).max(128) } }, async ({ deviceId }) => {
     try { return result(await bridge.discover(deviceId)); } catch { return result({ ok: false, error: 'DISCOVERY_FAILED' }); }
   });

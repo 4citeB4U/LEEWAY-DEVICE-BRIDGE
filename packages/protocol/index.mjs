@@ -106,6 +106,32 @@ export function canonical(value) {
 }
 export const digest = value => createHash('sha256').update(canonical(value)).digest('hex');
 
+function safeIdentityText(value) {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().replace(/\s+/g, ' ');
+  if (!normalized || normalized.length > 128) return null;
+  return normalized;
+}
+
+// Device IDs remain the authenticated passport identity. The display name is
+// only provider-observed presentation metadata and never becomes authority.
+export function summarizeDeviceIdentity(identity, fallbackId) {
+  const source = identity && typeof identity === 'object' && !Array.isArray(identity) ? identity : {};
+  const manufacturer = safeIdentityText(source.manufacturer);
+  const model = safeIdentityText(source.model);
+  const installationName = safeIdentityText(source.installationName);
+  const observedName = installationName || [manufacturer, model].filter(Boolean).join(' ') || null;
+  return {
+    displayName: observedName || fallbackId,
+    installationName: observedName,
+    manufacturer,
+    model,
+    platform: safeIdentityText(source.platform),
+    identitySource: observedName ? 'PROVIDER_OBSERVED' : 'REGISTRY_FALLBACK',
+    identityVerified: false,
+  };
+}
+
 // Hashes bind evidence, but are not device signatures or Formula attestations.
 export function receipt({ deviceId, capability, args, outcome, result, error, previousHash = null, complianceCard = null }) {
   const body = {
@@ -138,6 +164,24 @@ export class Bridge {
     return { deviceId: id, capabilities: Object.keys(schemas).filter(c => supported.includes(c)).map(name => ({
       name, supported: true, granted: d.grants.includes(name), verified: false,
     })) };
+  }
+  async describe(id) {
+    const d = this.devices.get(id);
+    if (!d) throw new Error('UNKNOWN_DEVICE');
+    let identity = null;
+    if (d.grants.includes('device.info') && typeof d.adapter.identify === 'function') {
+      try { identity = await d.adapter.identify(); } catch { identity = null; }
+    }
+    return {
+      deviceId: id,
+      configuredType: d.type || null,
+      configuredPlatform: d.platform || null,
+      ...summarizeDeviceIdentity(identity, id),
+      state: identity ? 'OBSERVED' : 'UNAVAILABLE',
+    };
+  }
+  async describeAll() {
+    return Promise.all([...this.devices.keys()].map(id => this.describe(id)));
   }
   async call(deviceId, capability, args = {}, context = {}) {
     let value, error, outcome = 'BLOCKED';
