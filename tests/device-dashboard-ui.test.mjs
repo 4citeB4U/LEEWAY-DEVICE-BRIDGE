@@ -30,7 +30,9 @@ test("preserves working legacy PWA platform and native adapter hooks",()=>{
   for(const p of ["dashboard.css","dashboard-ui.js","styles.css","app.js"])assert.ok(sw.includes('"./'+p+'"'),p);
 });
 test("no invented remote execution, devices or package bundle",()=>{
-  assert.ok((page.match(/class="db-control" disabled/g)||[]).length>=12);
+  assert.ok((page.match(/class="db-control" type="button"/g)||[]).length>=12);
+  assert.match(js,/capabilityMap/);
+  assert.match(page,/id="dbControlDetails"/);
   assert.match(page,/bundle not yet verified/);
   assert.match(page,/id="dbInventoryRows"/);
   assert.match(js,/navigator\.hardwareConcurrency/);
