@@ -551,6 +551,25 @@ class HostApi:
     if relative!='/ui?ownerSurface=authority':raise PermissionError('PERMISSIONS_SURFACE_REQUIRED')
     os.startfile('ms-settings:privacy')
     return {'state':'WINDOWS_SETTINGS_OPEN_REQUESTED'}
+  def startStorageOnboarding(self,request):
+   if relative!='/continuum-ui/index.html':raise PermissionError('CONTINUUM_SURFACE_REQUIRED')
+   if not isinstance(request,dict) or set(request)!= {'providerId'}:raise ValueError('STORAGE_ONBOARDING_REQUEST_INVALID')
+   provider=str(request.get('providerId',''))
+   allowed={'local-continuum','google-drive','mega','pcloud','box','icedrive','internxt'}
+   if provider not in allowed:raise ValueError('STORAGE_PROVIDER_NOT_ALLOWLISTED')
+   if provider!='local-continuum':
+    receipt('CONTINUUM_PROVIDER_ONBOARDING_BLOCKED',{'providerId':provider,'reason':'PROVIDER_AUTH_ADAPTER_UNBOUND'})
+    return {'state':'BLOCKED','providerId':provider,'reason':'PROVIDER_AUTH_ADAPTER_UNBOUND'}
+   try:
+    with urllib.request.urlopen(origin+'/api/continuum/status',timeout=8) as response:
+     payload=json.load(response);http_status=response.status
+    observed=payload.get('result',payload) if isinstance(payload,dict) and payload.get('ok') is True else payload
+    if http_status==200 and isinstance(observed,dict) and observed.get('state')=='CONNECTED' and observed.get('initialized') is True:
+     receipt('CONTINUUM_LOCAL_ONBOARDING_OBSERVED',{'providerId':provider,'state':'CONNECTED','runtimeStatusRead':True})
+     return {'state':'CONNECTED','providerId':provider}
+   except Exception as error:
+    receipt('CONTINUUM_LOCAL_ONBOARDING_BLOCKED',{'providerId':provider,'errorType':type(error).__name__})
+   return {'state':'BLOCKED','providerId':provider,'reason':'LOCAL_PROVIDER_STATUS_UNAVAILABLE'}
    def round_box_geometry(self,edge,dx,dy):
     if relative not in ('/round-box-leeway.html','/vision-ui/index.html'):raise ValueError('WIDGET_GEOMETRY_SURFACE_REQUIRED')
     if edge not in ('move','w','e','n','s','se','scale'):raise ValueError('INVALID_EDGE')
