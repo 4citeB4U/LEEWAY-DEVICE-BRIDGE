@@ -138,11 +138,10 @@ async function checkGateway(){
     eventLog("Gateway discovery unavailable: "+String(error.message||error).slice(0,120));
   }
   q("#dbDeviceCount").textContent="◇ Devices: not discovered";
-  q("#dbAutomationState").textContent="Automation activity feed not exposed to this browser. No jobs claimed active.";
   renderInventory();
 }
-q("#dbRefresh")?.addEventListener("click",checkGateway);
-q("#dbShowAutomation")?.addEventListener("click",()=>{expand("dbActions");eventLog("Opened automation viewer; no authenticated job feed available")});
+q("#dbRefresh")?.addEventListener("click",()=>{checkGateway();loadAutomationFeed()});
+q("#dbShowAutomation")?.addEventListener("click",()=>{expand("dbActions");loadAutomationFeed()});
 q("#dbShowPolicies")?.addEventListener("click",()=>{
   q("#dbAutomationState").textContent="Policy state is not exposed to this browser; no policy was applied.";
   expand("dbActions");eventLog("Viewed policy connection state; no mutation requested");
@@ -170,7 +169,53 @@ async function verifyDownloads(){
     }
   }catch(error){eventLog("Package manifest unavailable: "+String(error.message||error))}
 }
+
+async function loadAutomationFeed(){
+  const target=q("#dbAutomationState");if(!target)return;
+  target.textContent="Checking GitHub Actions workflow activity (not the LeeWay workforce task feed)…";
+  try{
+    const response=await fetch("https://api.github.com/repos/4citeB4U/LEEWAY-DEVICE-BRIDGE/actions/runs?per_page=6",{
+      headers:{accept:"application/vnd.github+json"},cache:"no-store",signal:AbortSignal.timeout(9000)
+    });
+    if(!response.ok)throw new Error("GitHub HTTP "+response.status);
+    const payload=await response.json();
+    if(!Array.isArray(payload.workflow_runs))throw new Error("Unexpected workflow response");
+    target.replaceChildren();
+    const heading=document.createElement("strong");
+    heading.textContent="Live GitHub Actions — repository workflows only";
+    target.append(heading);
+    if(!payload.workflow_runs.length){
+      const empty=document.createElement("p");empty.textContent="No recent GitHub workflow runs were returned.";
+      target.append(empty);return;
+    }
+    for(const run of payload.workflow_runs){
+      const row=document.createElement("div");row.className="db-workflow-row";
+      const label=document.createElement("span");
+      label.textContent=String(run.name||"Workflow")+" — "+String(run.status||"Unknown")+
+        (run.conclusion?" / "+run.conclusion:"");
+      row.append(label);
+      if(typeof run.html_url==="string"){
+        const url=new URL(run.html_url);
+        if(url.protocol==="https:"&&url.hostname==="github.com"){
+          const link=document.createElement("a");link.href=url.href;link.target="_blank";link.rel="noopener noreferrer";link.textContent="View run";
+          row.append(link);
+        }
+      }
+      target.append(row);
+    }
+    const note=document.createElement("small");
+    note.textContent="Runtime Fabric, workforce agents and externally scheduled automations are not included until their authorized feeds are connected.";
+    target.append(note);
+    eventLog("Read public GitHub Actions workflow status");
+  }catch(error){
+    target.textContent="GitHub Actions feed unavailable: "+String(error.message||error)+
+      ". Runtime workforce automations remain unconnected.";
+    eventLog("Workflow feed lookup failed");
+  }
+}
+
 renderInventory();
 eventLog("Dashboard initialized: device and automation feeds require authenticated service");
 verifyDownloads();
 checkGateway();
+loadAutomationFeed();
