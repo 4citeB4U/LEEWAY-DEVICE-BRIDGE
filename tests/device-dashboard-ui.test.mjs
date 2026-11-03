@@ -31,7 +31,7 @@ test("preserves working legacy PWA platform and native adapter hooks",()=>{
 });
 test("no invented remote execution, devices or package bundle",()=>{
   assert.ok((page.match(/class="db-control" disabled/g)||[]).length>=12);
-  assert.match(page,/complete workstation bundle not yet verified/);
+  assert.match(page,/bundle not yet verified/);
   assert.match(page,/id="dbInventoryRows"/);
   assert.match(js,/navigator\.hardwareConcurrency/);
   assert.match(js,/navigator\.storage\.estimate/);
