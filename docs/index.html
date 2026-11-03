@@ -41,19 +41,19 @@ LICENSE: MIT
       <div class="db-rightstack">
         <section class="db-panel" id="dbControls"><button class="db-expand" type="button" data-expand="dbControls" aria-label="Expand device controls" title="Expand">⛶</button><h2><span class="db-symbol">◈</span> Device Controls</h2>
           <div class="db-controls-grid">
-            <button class="db-control" disabled title="Requires authorized live device"><span class="db-symbol">▣</span>Remote View</button>
-            <button class="db-control" disabled title="Requires authorized live device"><span class="db-symbol">⌘</span>Open Shell</button>
-            <button class="db-control" disabled title="Requires authorized live device"><span class="db-symbol">▤</span>File Access</button>
-            <button class="db-control" disabled title="Requires authorized live device"><span class="db-symbol">▦</span>App Control</button>
-            <button class="db-control" disabled title="Requires authorized live device"><span class="db-symbol">⏻</span>Power</button>
-            <button class="db-control" disabled title="Requires authorized live device"><span class="db-symbol">⟳</span>Restart</button>
-            <button class="db-control" disabled title="Requires authorized live device"><span class="db-symbol">⏻</span>Shutdown</button>
-            <button class="db-control" disabled title="Requires authorized live device"><span class="db-symbol">◉</span>Wake</button>
-            <button class="db-control" disabled title="Requires authorized live device"><span class="db-symbol">⚙</span>Services</button>
-            <button class="db-control" disabled title="Requires authorized live device"><span class="db-symbol">⌁</span>Processes</button>
-            <button class="db-control" disabled title="Requires authorized live device"><span class="db-symbol">⬡</span>Install / Update</button>
-            <button class="db-control" disabled title="Requires authorized live device"><span class="db-symbol">ϟ</span>Execute Skill</button>
-          </div><p class="db-warning">Device controls stay disabled until device discovery, capabilities, and owner authorization are proven.</p>
+            <button class="db-control" type="button" title="Inspect required capability and connection status"><span class="db-symbol">▣</span>Remote View</button>
+            <button class="db-control" type="button" title="Inspect required capability and connection status"><span class="db-symbol">⌘</span>Open Shell</button>
+            <button class="db-control" type="button" title="Inspect required capability and connection status"><span class="db-symbol">▤</span>File Access</button>
+            <button class="db-control" type="button" title="Inspect required capability and connection status"><span class="db-symbol">▦</span>App Control</button>
+            <button class="db-control" type="button" title="Inspect required capability and connection status"><span class="db-symbol">⏻</span>Power</button>
+            <button class="db-control" type="button" title="Inspect required capability and connection status"><span class="db-symbol">⟳</span>Restart</button>
+            <button class="db-control" type="button" title="Inspect required capability and connection status"><span class="db-symbol">⏻</span>Shutdown</button>
+            <button class="db-control" type="button" title="Inspect required capability and connection status"><span class="db-symbol">◉</span>Wake</button>
+            <button class="db-control" type="button" title="Inspect required capability and connection status"><span class="db-symbol">⚙</span>Services</button>
+            <button class="db-control" type="button" title="Inspect required capability and connection status"><span class="db-symbol">⌁</span>Processes</button>
+            <button class="db-control" type="button" title="Inspect required capability and connection status"><span class="db-symbol">⬡</span>Install / Update</button>
+            <button class="db-control" type="button" title="Inspect required capability and connection status"><span class="db-symbol">ϟ</span>Execute Skill</button>
+          </div><p class="db-warning">Select a control to inspect its permission and connection requirements. Remote execution remains unavailable until owner-bound discovery and admission are verified.</p><div id="dbControlDetails" class="db-selected" aria-live="polite">Choose a control to see its actual capability state.</div>
         </section>
         <section class="db-panel" id="dbActions"><button class="db-expand" type="button" data-expand="dbActions" aria-label="Expand automations" title="Expand">⛶</button><h2><span class="db-symbol">ϟ</span> Quick Actions</h2>
           <div class="db-actions"><button class="db-action green" id="dbRunBrowserDiagnostics">Run Diagnostics</button><button class="db-action" id="dbRefresh">Refresh Status</button><button class="db-action purple" id="dbShowPolicies">View Policies</button><button class="db-action gold" id="dbShowAutomation">View Automations</button></div><div class="db-data-state" id="dbAutomationState">Automation execution feed not connected. No tasks are claimed active.</div><div class="db-data-state" id="dbProviderState">Checking registered automation providers…</div>
