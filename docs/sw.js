@@ -1,9 +1,11 @@
-const CACHE = "leeway-device-bridge-v16";
+const CACHE = "leeway-device-bridge-v17-console";
 const ASSETS = [
   "./",
   "./index.html",
   "./refresh.html",
   "./styles.css",
+  "./dashboard.css",
+  "./dashboard-ui.js",
   "./apple-pwa.css",
   "./app.js",
   "./apple-pwa-diagnostics.js",
