@@ -120,7 +120,7 @@ async function checkGateway(){
   // Only public OIDC protected-resource metadata. Never send OAuth tokens from this page.
   q("#dbConnection").textContent="● Checking public gateway";
   try{
-    const response=await fetch("/.well-known/oauth-protected-resource/mcp",{cache:"no-store",headers:{accept:"application/json"},signal:AbortSignal.timeout(8000)});
+    const response=await fetch(location.hostname==="4citeb4u.github.io" ? "https://leeway-device-bridge.vercel.app/.well-known/oauth-protected-resource/mcp" : "/.well-known/oauth-protected-resource/mcp",{cache:"no-store",headers:{accept:"application/json"},signal:AbortSignal.timeout(8000)});
     const contentType=response.headers.get("content-type")||"";
     if(response.ok&&contentType.includes("json")){
       const meta=await response.json();
@@ -132,7 +132,7 @@ async function checkGateway(){
       }else throw new Error("Invalid OAuth resource metadata");
     }else throw new Error("Gateway metadata HTTP "+response.status);
   }catch(error){
-    q("#dbConnection").textContent="● Bridge session not connected";
+    q("#dbConnection").textContent="● Browser bridge session unverified";
     q("#dbRuntime").textContent="▣ Runtime unverified here";
     q("#dbConnection").classList.add("db-pill-alert");
     eventLog("Gateway discovery unavailable: "+String(error.message||error).slice(0,120));
@@ -151,9 +151,29 @@ q("#dbOpenSettings")?.addEventListener("click",()=>{
   legacy?.scrollIntoView({behavior:"smooth",block:"start"});
   eventLog("Opened existing platform setup controls");
 });
+const capabilityMap={
+ "Remote View":"device.screen.capture (native adapter and consent required)",
+ "Open Shell":"device.process.execute (explicit governed command admission required)",
+ "File Access":"device.files.read / device.files.write (scoped filesystem grant required)",
+ "App Control":"device.app.* (native platform provider and grant required)",
+ "Power":"device.power.* (native platform provider and grant required)",
+ "Restart":"device.power.restart (explicit high-impact consent required)",
+ "Shutdown":"device.power.shutdown (explicit high-impact consent required)",
+ "Wake":"device.power.wake (platform and network support required)",
+ "Services":"device.service.* (native adapter required)",
+ "Processes":"device.process.* (device adapter and owner grant required)",
+ "Install / Update":"device.package.* (signed and verified package required)",
+ "Execute Skill":"agent skill dispatch (governed admission required)"
+};
 qa(".db-control").forEach(button=>{
-  // These buttons remain disabled until an independently verified authorization adapter exists.
-  button.title="Requires verified device identity, capabilities, owner grant, and governed admission";
+  const name=button.textContent.trim();
+  button.addEventListener("click",()=>{
+    const details=q("#dbControlDetails");
+    const selected=state.selectedDevice?.name||"No verified device selected";
+    details.textContent=name+" — "+(capabilityMap[name]||"Device capability required")+
+      ". Device: "+selected+". Remote action NOT EXECUTED. Owner-bound discovery and command admission must pass first.";
+    eventLog("Inspected "+name+" capability; no device command executed");
+  });
 });
 async function verifyDownloads(){
   try{
