@@ -22,6 +22,9 @@
     "voice:owner-start": "node operator/voice-auth-owner-start.mjs",
     "voice:owner-approve": "node operator/voice-owner-approval-desktop.mjs"
   },
+  "dependencies": {
+    "ws": "8.22.0"
+  },
   "engines": {
     "node": ">=22"
   }
