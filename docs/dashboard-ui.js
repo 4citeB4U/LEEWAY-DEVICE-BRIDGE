@@ -141,7 +141,7 @@ async function checkGateway(){
   renderInventory();
 }
 q("#dbRefresh")?.addEventListener("click",()=>{checkGateway();loadAutomationFeed()});
-q("#dbShowAutomation")?.addEventListener("click",()=>{expand("dbActions");loadAutomationFeed()});
+q("#dbShowAutomation")?.addEventListener("click",()=>{expand("dbActions");loadAutomationFeed();loadRegisteredProviders()});
 q("#dbShowPolicies")?.addEventListener("click",()=>{
   q("#dbAutomationState").textContent="Policy state is not exposed to this browser; no policy was applied.";
   expand("dbActions");eventLog("Viewed policy connection state; no mutation requested");
@@ -168,6 +168,31 @@ async function verifyDownloads(){
       eventLog("Published Android extension manifest read; full workstation bundle not asserted");
     }
   }catch(error){eventLog("Package manifest unavailable: "+String(error.message||error))}
+}
+
+
+async function loadRegisteredProviders(){
+  const target=q("#dbProviderState");if(!target)return;
+  try{
+    const response=await fetch("./provider-registry.json",{cache:"no-store",signal:AbortSignal.timeout(8000)});
+    if(!response.ok)throw new Error("Provider registry HTTP "+response.status);
+    const registry=await response.json();
+    if(!Array.isArray(registry.providers))throw new Error("Registry format invalid");
+    const providers=registry.providers.filter(item=>item.class==="automation");
+    target.replaceChildren();
+    const heading=document.createElement("strong");heading.textContent="Registered automation providers (source declarations, not live jobs)";
+    target.append(heading);
+    if(!providers.length){const row=document.createElement("p");row.textContent="No automation providers declared";target.append(row);}
+    for(const provider of providers){
+      const row=document.createElement("div");row.className="db-workflow-row";
+      const name=document.createElement("span");
+      name.textContent=String(provider.id||"Unnamed")+" — "+String(provider.status||"UNVERIFIED");
+      row.append(name);target.append(row);
+    }
+    const note=document.createElement("small");
+    note.textContent="Registered capabilities do not prove current execution, runtime health, or owner authorization.";
+    target.append(note);
+  }catch(error){target.textContent="Provider registry unavailable: "+String(error.message||error)}
 }
 
 async function loadAutomationFeed(){
@@ -219,3 +244,4 @@ eventLog("Dashboard initialized: device and automation feeds require authenticat
 verifyDownloads();
 checkGateway();
 loadAutomationFeed();
+loadRegisteredProviders();
