@@ -10,7 +10,7 @@ AUTHORIZED_ROLES: Target-local trusted controller; remote pairing is not provide
 LICENSE: MIT
 */
 import http from 'node:http';
-import {spawn} from 'node:child_process';
+import {spawn,spawnSync} from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import crypto from 'node:crypto';
@@ -101,6 +101,59 @@ if(process.env.LEEWAY_HOST_COMMANDER_APPS_JSON){
   if(!/^[a-z][a-z0-9.-]{0,63}$/.test(id)||!v||typeof v.executable!=='string'||!v.executable||/[\x00-\x1f]/.test(v.executable)||!Array.isArray(v.args??[])||(v.args??[]).length>64||(v.args??[]).some(a=>typeof a!=='string'||a.length>8192||a.includes('\0')))throw Error('COMMANDER_APP_BINDING_INVALID');
   APPS[id]=Object.freeze({executable:v.executable,args:Object.freeze(v.args??[])});
  }
+}
+const PROVIDER_IDS=new Set(['google-drive','mega','pcloud','box','icedrive','internxt']);
+function megaRoot(){
+ const candidates=[];
+ if(process.env.LOCALAPPDATA)candidates.push(path.join(process.env.LOCALAPPDATA,'MEGAcmd'));
+ candidates.push('C:\\Program Files\\MEGAcmd','C:\\Program Files\\MEGA');
+ return candidates.find(value=>fs.existsSync(value)&&fs.statSync(value).isDirectory())||null;
+}
+function megaCommand(name){
+ const root=megaRoot();
+ if(root&&fs.existsSync(path.join(root,name)))return path.join(root,name);
+ return null;
+}
+function megaSessionState(){
+ const command=megaCommand('mega-whoami.bat');
+ if(!command)return 'MEGA_NATIVE_CLIENT_UNAVAILABLE';
+ try{
+  const result=spawnSync('cmd.exe',['/d','/c',`call "${command}"`],{cwd:path.dirname(command),encoding:'utf8',timeout:8000,windowsHide:true,shell:false});
+  const text=String(result.stdout||'')+'\n'+String(result.stderr||'');
+  if(result.status===0&&!/not\s+(logged|login)|no\s+user|not\s+connected/i.test(text))return 'MEGA_SESSION_OBSERVED';
+  return 'MEGA_SESSION_REQUIRED';
+ }catch(error){return error?.code==='ETIMEDOUT'?'MEGA_SESSION_PROBE_TIMEOUT':'MEGA_SESSION_PROBE_FAILED';}
+}
+function openMegaShell(){
+ const shell=megaCommand('MEGAcmdShell.exe');
+ if(!shell)return false;
+ try{const child=spawn(shell,[],{cwd:path.dirname(shell),detached:true,stdio:'ignore',windowsHide:false});child.unref();return true;}catch{return false;}
+}
+async function readJsonBody(req,maxBytes=8192){
+ const chunks=[];let size=0;
+ for await(const chunk of req){size+=chunk.length;if(size>maxBytes)throw Error('PROVIDER_REQUEST_TOO_LARGE');chunks.push(chunk);}
+ const value=JSON.parse(Buffer.concat(chunks).toString('utf8')||'{}');
+ if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).length!==1||typeof value.providerId!=='string'||!PROVIDER_IDS.has(value.providerId))throw Error('PROVIDER_ONBOARDING_REQUEST_INVALID');
+ return value;
+}
+async function providerOnboarding(req,res){
+ if(req.method!=='POST')return json(res,405,{error:'PROVIDER_ONBOARDING_POST_REQUIRED'});
+ if(!String(req.headers['content-type']||'').toLowerCase().startsWith('application/json'))return json(res,415,{error:'JSON_REQUIRED'});
+ try{
+  const {providerId}=await readJsonBody(req);
+  if(providerId==='mega'){
+   const nativeClientState=megaSessionState();
+   if(nativeClientState==='MEGA_NATIVE_CLIENT_UNAVAILABLE')return json(res,503,{state:'BLOCKED',providerId,reason:nativeClientState,message:'The official MEGA client is not available on this host.'});
+   if(nativeClientState==='MEGA_SESSION_REQUIRED'){
+    const shellOpened=openMegaShell();
+    return json(res,200,{state:'PENDING',providerId,reason:shellOpened?'MEGA_PROVIDER_SIGNIN_REQUIRED':'MEGA_SIGNIN_SURFACE_UNAVAILABLE',message:shellOpened?'Complete sign-in in the official MEGA window, then press Connect again.':'The official MEGA sign-in surface could not be opened.'});
+   }
+   if(nativeClientState!=='MEGA_SESSION_OBSERVED')return json(res,503,{state:'BLOCKED',providerId,reason:nativeClientState,message:'MEGA sign-in could not be verified. No storage was changed.'});
+   return json(res,200,{state:'PENDING',providerId,reason:'MEGA_CONTINUUM_ARCHIVE_ROUNDTRIP_REQUIRED',message:'MEGA sign-in is present. Continuum still requires its encrypted upload/download readback before this provider is accepted.'});
+  }
+  const reason=providerId==='google-drive'||providerId==='pcloud'||providerId==='box'?'PROVIDER_OAUTH_CLIENT_UNBOUND':'PROVIDER_AUTH_ADAPTER_UNBOUND';
+  return json(res,200,{state:'BLOCKED',providerId,reason,message:'This provider has no approved client registration and vault binding on this host. No account was contacted.'});
+ }catch(error){return json(res,400,{error:error.message});}
 }
 const CAPABILITIES=Object.freeze({
  'leeway.files.list':'READ','leeway.files.read':'READ','leeway.files.hash':'READ',
@@ -210,6 +263,7 @@ const server=http.createServer(async(req,res)=>{try{
  if(req.headers.origin||!['127.0.0.1:'+port,'localhost:'+port].includes(req.headers.host))return json(res,403,{error:'LOCAL_NATIVE_CALLER_REQUIRED'});
  const u=new URL(req.url,'http://127.0.0.1');
  if(req.method==='GET'&&u.pathname==='/health')return json(res,200,{status:'PASS',healthScope:'LISTENER_AND_PROVIDER_IDENTITY_NOT_ALL_CAPABILITIES',provider:'LEEWAY_NATIVE_HOST_COMMANDER',root:ROOT,bodyId:BODY,deviceAuthority:'4citeB4U/LEEWAY-DEVICE-BRIDGE',transport:'LOOPBACK_ONLY',remotePairingQualified:false,logicalScopes:ROOT?['workspace']:[],capabilities:CAPABILITIES,capabilityStates:Object.fromEntries(Object.keys(CAPABILITIES).map(c=>[c,qualified(c)])),visibleBrowser:visibleBrowser.describe(),portability:{fixedRootRequired:false,fixedDeviceRequired:false,hostInformationBackend:'node:os',platform:process.platform}});
+ if(u.pathname==='/provider-onboarding')return providerOnboarding(req,res);
  if(req.method==='POST'&&u.pathname==='/execute'){
   if(!String(req.headers['content-type']||'').toLowerCase().startsWith('application/json'))return json(res,415,{error:'JSON_REQUIRED'});
   let chunks=[],size=0;for await(const chunk of req){size+=chunk.length;if(size>65536)return json(res,413,{error:'REQUEST_TOO_LARGE'});chunks.push(chunk);}
