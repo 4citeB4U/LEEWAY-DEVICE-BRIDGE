@@ -14,9 +14,10 @@ import { requireTrustedRuntimeComposition } from './runtime-composition.mjs';
 
 const receiptSink = async () => {};
 const allow = async () => true;
+const complianceCardGate = async () => true;
 
 test('trusted owner C3 composition retains Formula and Veritas callbacks', () => {
-  const input = { receiptSink, formulaPreGate: allow, veritasPreGate: allow };
+  const input = { receiptSink, formulaPreGate: allow, veritasPreGate: allow, complianceCardGate };
   const actual = requireTrustedRuntimeComposition(input);
   assert.equal(actual.mode, 'c3');
   assert.equal(actual.formulaPreGate, allow);
@@ -27,7 +28,7 @@ test('trusted owner C3 composition retains Formula and Veritas callbacks', () =>
 
 test('trusted direct Runtime Fabric admission uses one callback owner', () => {
   const admission = async () => true;
-  const actual = requireTrustedRuntimeComposition({ receiptSink, admission });
+  const actual = requireTrustedRuntimeComposition({ receiptSink, admission, complianceCardGate });
   assert.equal(actual.mode, 'direct');
   assert.equal(actual.admission, admission);
 });
