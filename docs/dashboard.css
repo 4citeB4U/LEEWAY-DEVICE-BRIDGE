@@ -62,3 +62,9 @@ body.db-modal-open{overflow:hidden}.db-expanded.db-visual{min-height:84vh}
 
 .db-platform-icon.db-white-logo{filter:invert(1);object-fit:contain}
 .db-filter-row .db-filter-active{border-color:#39f2ff;box-shadow:0 0 9px #04d9ee7a}
+
+.db-workflow-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 3px;border-bottom:1px solid #1b526a;font-size:12px}
+.db-workflow-row span{overflow-wrap:anywhere}
+.db-workflow-row a{white-space:nowrap;color:#64ebf8}
+.db-data-state>strong{display:block;margin-bottom:7px}
+.db-data-state>small{display:block;margin-top:12px;color:#93b1c0}
