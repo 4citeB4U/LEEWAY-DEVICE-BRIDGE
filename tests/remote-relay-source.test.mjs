@@ -19,6 +19,10 @@ const boot=fs.readFileSync(
   "utf8"
 );
 const manifest=fs.readFileSync(base+"/AndroidManifest.xml","utf8");
+const nodeRelay=fs.readFileSync("packages/agent-relay/index.mjs","utf8");
+const nodeClient=fs.readFileSync("clients/remote-controller/client.mjs","utf8");
+const phoneWorker=fs.readFileSync("clients/phone-workstation/worker.mjs","utf8");
+const relayConfig=fs.readFileSync("docs/remote-relay.json","utf8");
 
 assert.match(service,/START_STICKY/);
 assert.match(service,/WebSocketListener/);
@@ -28,8 +32,15 @@ assert.match(service,/scheduleReconnect/);
 assert.match(service,/hello-ack/);
 assert.match(service,/RemoteCommandRouter\.execute/);
 assert.match(service,/seenCommandIds/);
-assert.match(state,/agent-lee-x\.vercel\.app/);
+assert.doesNotMatch(state,/wss:\/\/agent-lee-x\.vercel\.app/);
+assert.match(service,/RELAY_ENDPOINT_NOT_CONFIGURED/);
 assert.match(state,/github\.io\/LEEWAY-DEVICE-BRIDGE\/docs\/remote-relay\.json/);
+assert.match(nodeRelay,/RELAY_ENDPOINT_REQUIRED/);
+assert.match(nodeRelay,/LEGACY_RELAY_ENDPOINT_REJECTED/);
+assert.match(nodeClient,/LEEWAY_RELAY_URL is required/);
+assert.match(phoneWorker,/RELAY_ENDPOINT_REQUIRED/);
+assert.match(relayConfig,/UNCONFIGURED_CANONICAL_ENDPOINT_REQUIRED/);
+assert.doesNotMatch(relayConfig,/agent-lee-x\.vercel\.app/);
 assert.match(router,/FormulaF8Gate\.evaluate/);
 assert.match(router,/LOCAL_ELIGIBILITY_HOLD/);
 assert.match(router,/canonicalFormulaState/);

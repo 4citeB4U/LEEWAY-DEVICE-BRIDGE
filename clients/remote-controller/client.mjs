@@ -1,12 +1,25 @@
 import WebSocket from "ws";
 import crypto from "node:crypto";
 
-const relay=process.env.LEEWAY_RELAY_URL ||
-  "wss://agent-lee-x.vercel.app/api/device-relay";
+const relay=String(process.env.LEEWAY_RELAY_URL||'').trim();
 const deviceId=process.env.LEEWAY_DEVICE_ID;
 const token=process.env.LEEWAY_PAIRING_TOKEN;
 const capability=process.argv[2] || "device.health";
 const args=process.argv[3] ? JSON.parse(process.argv[3]) : {};
+
+if(!relay){
+  console.error("LEEWAY_RELAY_URL is required; no legacy relay default is available.");
+  process.exit(2);
+}
+try{
+  if(new URL(relay).hostname === 'agent-lee-x.vercel.app'){
+    console.error("The retired Agent Lee X relay is not an approved endpoint.");
+    process.exit(2);
+  }
+}catch{
+  console.error("LEEWAY_RELAY_URL must be a valid wss:// endpoint.");
+  process.exit(2);
+}
 
 if(!deviceId || !token){
   console.error("LEEWAY_DEVICE_ID and LEEWAY_PAIRING_TOKEN are required.");

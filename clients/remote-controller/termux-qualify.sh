@@ -10,7 +10,7 @@
 set -euo pipefail
 
 DEVICE_ID="${LEEWAY_DEVICE_ID:-f30a80a743592e7d9cbe4b3113ef896db30bd80434df0afcb8591c04dbb84861}"
-RELAY_URL="${LEEWAY_RELAY_URL:-wss://agent-lee-x.vercel.app/api/device-relay}"
+RELAY_URL="${LEEWAY_RELAY_URL:-}"
 PINNED_SHA="81703f27bf6968909ef844863518bde73cde5323"
 BASE_RAW="https://raw.githubusercontent.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/${PINNED_SHA}"
 WORK_ROOT="${HOME}/.leeway/device-bridge-controller"
@@ -19,6 +19,11 @@ EVIDENCE_DIR="${HOME}/leeway-evidence/device-bridge-${STAMP}"
 
 say(){ printf '\n[LeeWay] %s\n' "$*"; }
 fail(){ printf '\n[LeeWay][FAIL] %s\n' "$*" >&2; exit 1; }
+
+[ -n "$RELAY_URL" ] || fail "LEEWAY_RELAY_URL is required; no legacy relay default is available."
+case "$RELAY_URL" in
+  *agent-lee-x.vercel.app*) fail "The retired Agent Lee X relay is not an approved endpoint." ;;
+esac
 
 say "Termux direct-phone qualification starting."
 say "No pairing token will be printed or written to the evidence files."

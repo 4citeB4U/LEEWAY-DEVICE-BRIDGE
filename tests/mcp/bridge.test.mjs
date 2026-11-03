@@ -141,6 +141,12 @@ test('relay timeout and malformed envelope reject without hanging', async t => {
   await assert.rejects(relay.discover(), /INVALID_RELAY_RESPONSE/);
 });
 
+test('relay clients require an explicit approved endpoint and reject the retired host', () => {
+  const base = { deviceId: 'test', token: 'test' };
+  assert.throws(() => new RelayAdapter(base), /RELAY_ENDPOINT_REQUIRED/);
+  assert.throws(() => new RelayAdapter({ ...base, url: 'wss://agent-lee-x.vercel.app/api/device-relay' }), /LEGACY_RELAY_ENDPOINT_REJECTED/);
+});
+
 test('existing relay wire contract, authentication failure, capability discovery and nested denial', async t => {
   const server = new WebSocketServer({ host: '127.0.0.1', port: 0 });
   await new Promise(resolve => server.once('listening', resolve));

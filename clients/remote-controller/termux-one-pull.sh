@@ -12,7 +12,7 @@
 set -uo pipefail
 
 PKG="industries.leeway.devicebridge"
-RELAY_URL="wss://agent-lee-x.vercel.app/api/device-relay"
+RELAY_URL="${LEEWAY_RELAY_URL:-}"
 WORK_ROOT="${HOME}/.leeway/device-bridge-one-pull"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 EVIDENCE_DIR="${HOME}/leeway-evidence/device-bridge-${STAMP}"
@@ -29,6 +29,17 @@ pass(){ printf '[LeeWay][PASS] %s\n' "$*"; }
 obs(){ printf '[LeeWay][OBSERVED] %s\n' "$*"; }
 blocked(){ printf '[LeeWay][BLOCKED] %s\n' "$*"; }
 fail(){ printf '[LeeWay][FAIL] %s\n' "$*" >&2; }
+
+if [ -z "$RELAY_URL" ]; then
+  fail "LEEWAY_RELAY_URL is required; no legacy relay default is available."
+  exit 2
+fi
+case "$RELAY_URL" in
+  *agent-lee-x.vercel.app*)
+    fail "The retired Agent Lee X relay is not an approved endpoint."
+    exit 2
+    ;;
+esac
 
 mkdir -p "$WORK_ROOT" "$EVIDENCE_DIR"
 chmod 700 "$WORK_ROOT"

@@ -8,7 +8,7 @@ import WebSocket from "ws";
 const execFileAsync=promisify(execFile);
 const ROOT=process.env.LEEWAY_WORKSTATION_ROOT || path.join(os.homedir(),".leeway","workstation");
 const CREDS=JSON.parse(fs.readFileSync(path.join(ROOT,"credentials.json"),"utf8"));
-const RELAY=CREDS.relay || "wss://agent-lee-x.vercel.app/api/device-relay";
+const RELAY=String(CREDS.relay || process.env.LEEWAY_RELAY_URL || "").trim();
 const DEVICE_ID=CREDS.deviceId;
 const TOKEN=CREDS.token;
 const RECEIPTS=path.join(ROOT,"receipts.jsonl");
@@ -17,6 +17,14 @@ const MAX_OUTPUT=512*1024;
 const MAX_FILE=1024*1024;
 const MAX_TIMEOUT=120000;
 let reconnectMs=1000;
+
+if(!RELAY) throw new Error("RELAY_ENDPOINT_REQUIRED");
+try{
+  if(new URL(RELAY).hostname === "agent-lee-x.vercel.app") throw new Error("LEGACY_RELAY_ENDPOINT_REJECTED");
+}catch(error){
+  if(error?.message === "LEGACY_RELAY_ENDPOINT_REJECTED") throw error;
+  throw new Error("INVALID_RELAY_ENDPOINT");
+}
 
 const insideAllowed=(p)=>{
   const resolved=path.resolve(p);

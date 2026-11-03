@@ -68,7 +68,7 @@ object LocalBridgeServer {
             put("ok", true)
             put("deviceId", identity.optString("deviceId"))
             put("pairingToken", BridgeSecret.ensure(context))
-            put("relayUrl", RemoteRelayState.relayUrl(context))
+            put("relayUrl", RemoteRelayState.relayUrl(context) ?: JSONObject.NULL)
             put("authority", "OWNER_LOCAL_LOOPBACK_BOOTSTRAP")
         }
     }

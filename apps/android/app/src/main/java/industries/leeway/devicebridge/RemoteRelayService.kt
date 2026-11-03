@@ -114,9 +114,15 @@ class RemoteRelayService : Service() {
         })
     }
 
-    private fun openRelay(relayUrl: String) {
+    private fun openRelay(relayUrl: String?) {
         if (!RemoteRelayState.enabled(this)) {
             connecting = false
+            return
+        }
+        if (relayUrl.isNullOrBlank()) {
+            connecting = false
+            RemoteRelayState.setConnection(this, false, "RELAY_ENDPOINT_NOT_CONFIGURED")
+            scheduleReconnect()
             return
         }
 

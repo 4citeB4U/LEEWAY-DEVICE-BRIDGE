@@ -15,13 +15,16 @@ export function parseRemoteQualified(raw) {
   return [...new Set(names)].filter(name => Object.hasOwn(schemas, name));
 }
 
-// Client adapter for the existing owner-token relay. No new relay/server authority.
+// Client adapter for an owner-approved relay. No new relay/server authority.
 export class RelayAdapter {
-  constructor({ deviceId, token, url = 'wss://agent-lee-x.vercel.app/api/device-relay', timeoutMs = 30000, allowLoopbackTest = false }) {
-    const parsed = new URL(url);
+  constructor({ deviceId, token, url, timeoutMs = 30000, allowLoopbackTest = false }) {
+    const relayUrl = typeof url === 'string' ? url.trim() : '';
+    if (!relayUrl) throw new Error('RELAY_ENDPOINT_REQUIRED');
+    const parsed = new URL(relayUrl);
+    if (parsed.hostname === 'agent-lee-x.vercel.app') throw new Error('LEGACY_RELAY_ENDPOINT_REJECTED');
     if (parsed.protocol !== 'wss:' && !(allowLoopbackTest && parsed.protocol === 'ws:' && ['127.0.0.1', '[::1]'].includes(parsed.hostname))) throw new Error('TLS_REQUIRED');
     if (!deviceId || !token) throw new Error('MISSING_RELAY_IDENTITY');
-    Object.assign(this, { deviceId, token, url, timeoutMs });
+    Object.assign(this, { deviceId, token, url: relayUrl, timeoutMs });
   }
   async discover() {
     const value = await this.execute('device.capabilities', {});

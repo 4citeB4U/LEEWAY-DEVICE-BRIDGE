@@ -1,7 +1,10 @@
 # LeeWay Device Bridge Remote Pairing
 
 GitHub Pages remains the canonical discovery, configuration and package authority.
-The permanent online relay is transport-only and has no device execution authority.
+The online relay is transport-only and has no device execution authority. The
+historical `agent-lee-x` endpoint has been retired and is not an approved
+transport. This document will only advertise a relay after an owner-approved
+canonical endpoint is enrolled in `remote-relay.json`.
 
 ## Phone
 
@@ -22,7 +25,11 @@ A trusted client needs two owner-provided values:
 - the owner pairing token
 
 These values are not published by GitHub Pages.
-Connect to the relay URL from `remote-relay.json` and send:
+Connect to the owner-approved relay URL from `remote-relay.json` and send. If
+that document has `relayStatus` set to
+`UNCONFIGURED_CANONICAL_ENDPOINT_REQUIRED`, remote pairing is intentionally
+blocked; use the phone-local bridge only until the canonical transport is
+restored. Do not substitute the retired endpoint.
 
 ```json
 {"type":"hello","role":"client","deviceId":"<device-id>","token":"<owner-token>"}

@@ -23,18 +23,14 @@ Install Node 22 or newer, then run `npm ci --ignore-scripts`. Make an owner-cont
       "platform": "windows",
       "workspace": "workspace",
       "grants": ["device.health", "device.info", "device.files.read", "device.files.write"]
-    },
-    {
-      "id": "REPLACE_WITH_PAIRED_DEVICE_ID",
-      "type": "relay",
-      "platform": "android",
-      "tokenEnv": "LEEWAY_PAIRING_TOKEN",
-      "url": "wss://agent-lee-x.vercel.app/api/device-relay",
-      "grants": ["device.health", "model.status"]
     }
   ]
 }
 ```
+
+For a relay device, add an explicit owner-approved `wss://` URL in the
+configuration. There is no default relay endpoint; a missing or retired
+endpoint fails closed.
 
 Trusted startup passes callbacks from its existing LeeWay owner adapters directly to the process API: `start(configPath, { admission, receiptSink })`. Here `admission` is the already-composed Runtime/C3 gate; or pass the existing `formulaPreGate` and `veritasPreGate` providers with `receiptSink` to have this host compose the canonical C3 gate. Device registry, adapter registry, trusted issuer registry, replay guard, and consent provider can be supplied by the same trusted host composition. These values are never read from request JSON or device configuration. The `receiptSink` must target the authorized durable LeeWay receipt provider for production. The local JSONL sink is a controller-observation fallback only and cannot qualify a production ledger.
 
