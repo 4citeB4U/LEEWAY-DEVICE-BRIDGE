@@ -113,7 +113,10 @@ test('CLI entrypoint serves real MCP tools and command remains fail-closed', asy
   assert.ok(listed.tools.some(t => t.name === 'device_process_execute'));
   const deviceList = await client.callTool({ name: 'bridge_devices', arguments: {} });
   assert.deepEqual(JSON.parse(deviceList.content[0].text).devices, ['cli-host']);
-  const response = await client.callTool({ name: 'device_files_write', arguments: { deviceId: 'cli-host', arguments: { path: 'unapproved.txt', text: 'no' } } });
-  assert.equal(JSON.parse(response.content[0].text).error, 'ADMISSION_DENIED');
+  const response = await client.callTool({ name: 'device_files_write', arguments: {
+    deviceId: 'cli-host', complianceCard: {}, arguments: { path: 'unapproved.txt', text: 'no' }
+  } });
+  assert.equal(response.isError, true);
+  assert.equal(JSON.parse(response.content[0].text).error, 'COMPLIANCE_CARD_INVALID');
   await assert.rejects(fs.access(path.join(dir, 'workspace/unapproved.txt')));
 });
