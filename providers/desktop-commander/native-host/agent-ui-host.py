@@ -598,8 +598,8 @@ class HostApi:
     if provider=='mega':
      state=mega_session_state()
      if state=='MEGA_NATIVE_CLIENT_UNAVAILABLE':
-      receipt('CONTINUUM_PROVIDER_ONBOARDING_BLOCKED',{'providerId':provider,'reason':state})
-      return {'state':'BLOCKED','providerId':provider,'reason':state,'message':'The official MEGA client is not available on this host.'}
+      receipt('CONTINUUM_PROVIDER_ONBOARDING_PENDING',{'providerId':provider,'reason':'MEGA_WEB_SIGNIN_REQUIRED','nativeClientState':state,'archiveRoundtrip':'NOT_EXECUTED'})
+      return {'state':'PENDING','providerId':provider,'reason':'MEGA_WEB_SIGNIN_REQUIRED','redirectUrl':'https://mega.nz/login','message':'No MEGAcmd download is required for sign-in. The official MEGA web sign-in surface is opening; Continuum still needs an approved MEGA SDK or web-session adapter and encrypted readback before storage can connect.'}
      if state=='MEGA_SESSION_REQUIRED':
       opened=open_mega_shell()
       reason='MEGA_PROVIDER_SIGNIN_REQUIRED' if opened else 'MEGA_SIGNIN_SURFACE_UNAVAILABLE'

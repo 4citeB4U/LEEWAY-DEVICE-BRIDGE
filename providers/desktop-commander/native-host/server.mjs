@@ -151,7 +151,7 @@ async function providerOnboarding(req,res){
   const {providerId}=await readJsonBody(req);
   if(providerId==='mega'){
    const nativeClientState=megaSessionState();
-   if(nativeClientState==='MEGA_NATIVE_CLIENT_UNAVAILABLE')return json(res,503,{state:'BLOCKED',providerId,reason:nativeClientState,message:'The official MEGA client is not available on this host.'});
+   if(nativeClientState==='MEGA_NATIVE_CLIENT_UNAVAILABLE')return json(res,200,{state:'PENDING',providerId,reason:'MEGA_WEB_SIGNIN_REQUIRED',redirectUrl:PROVIDER_SIGNIN_URLS.mega,message:'No MEGAcmd download is required for sign-in. The official MEGA web sign-in surface is opening; Continuum still needs an approved MEGA SDK or web-session adapter and encrypted readback before storage can connect.'});
    if(nativeClientState==='MEGA_SESSION_REQUIRED'){
     const shellOpened=openMegaShell();
     return json(res,200,{state:'PENDING',providerId,reason:shellOpened?'MEGA_PROVIDER_SIGNIN_REQUIRED':'MEGA_SIGNIN_SURFACE_UNAVAILABLE',redirectUrl:PROVIDER_SIGNIN_URLS.mega,message:shellOpened?'The official MEGA sign-in surface was requested. If it is not visible, use the official MEGA sign-in page, then press Connect again.':'The official MEGA sign-in surface could not be opened; use the official MEGA sign-in page.'});
