@@ -59,6 +59,22 @@ def open_mega_shell():
   subprocess.Popen([str(shell)],cwd=str(shell.parent),creationflags=flags,stdin=None,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,shell=False)
   return True
  except OSError:return False
+def provider_onboarding_via_carrier(provider):
+ payload=json.dumps({'providerId':provider}).encode('utf-8')
+ request=urllib.request.Request(
+  origin+'/api/continuum/provider-onboarding',
+  data=payload,
+  headers={'Content-Type':'application/json','X-Continuum-Provider-Onboarding':'owner-connect','Origin':origin},
+  method='POST')
+ try:
+  with urllib.request.urlopen(request,timeout=8) as response:
+   result=json.load(response)
+  observed=result.get('result',result) if isinstance(result,dict) and result.get('ok') is True else result
+  if isinstance(observed,dict) and observed.get('state') in ('CONNECTED','PENDING','BLOCKED'):
+   return observed
+ except (urllib.error.HTTPError,urllib.error.URLError,TimeoutError,ValueError,OSError):
+  pass
+ return {'state':'BLOCKED','providerId':provider,'reason':'PROVIDER_ONBOARDING_UNAVAILABLE','message':'The canonical Continuum provider handoff is unavailable. No storage was changed.'}
 state_path=binding_path.parent/'agent-ui-geometry.json'
 user32=ctypes.windll.user32;kernel32=ctypes.windll.kernel32
 user32.SetThreadDpiAwarenessContext.argtypes=[ctypes.c_void_p]
@@ -611,8 +627,9 @@ class HostApi:
      receipt('CONTINUUM_PROVIDER_SESSION_OBSERVED',{'providerId':provider,'state':'PENDING','nativeClientState':state,'archiveRoundtrip':'NOT_EXECUTED'})
      return {'state':'PENDING','providerId':provider,'reason':'MEGA_CONTINUUM_ARCHIVE_ROUNDTRIP_REQUIRED','message':'MEGA sign-in is present. Continuum still requires its encrypted upload/download readback before this provider is accepted.'}
     if provider!='local-continuum':
-     receipt('CONTINUUM_PROVIDER_ONBOARDING_BLOCKED',{'providerId':provider,'reason':'PROVIDER_AUTH_ADAPTER_UNBOUND'})
-     return {'state':'BLOCKED','providerId':provider,'reason':'PROVIDER_AUTH_ADAPTER_UNBOUND'}
+     observed=provider_onboarding_via_carrier(provider)
+     receipt('CONTINUUM_PROVIDER_ONBOARDING_DELEGATED',{'providerId':provider,'state':observed.get('state'),'reason':observed.get('reason')})
+     return observed
     try:
      with urllib.request.urlopen(origin+'/api/continuum/status',timeout=8) as response:
       payload=json.load(response);http_status=response.status
