@@ -103,6 +103,14 @@ if(process.env.LEEWAY_HOST_COMMANDER_APPS_JSON){
  }
 }
 const PROVIDER_IDS=new Set(['google-drive','mega','pcloud','box','icedrive','internxt']);
+const PROVIDER_SIGNIN_URLS=Object.freeze({
+ 'google-drive':'https://drive.google.com/drive/my-drive',
+ 'pcloud':'https://my.pcloud.com/#/login',
+ 'box':'https://account.box.com/login',
+ 'icedrive':'https://icedrive.net/login',
+ 'internxt':'https://drive.internxt.com/login',
+ 'mega':'https://mega.nz/login'
+});
 function megaRoot(){
  const candidates=[];
  if(process.env.LOCALAPPDATA)candidates.push(path.join(process.env.LOCALAPPDATA,'MEGAcmd'));
@@ -146,13 +154,13 @@ async function providerOnboarding(req,res){
    if(nativeClientState==='MEGA_NATIVE_CLIENT_UNAVAILABLE')return json(res,503,{state:'BLOCKED',providerId,reason:nativeClientState,message:'The official MEGA client is not available on this host.'});
    if(nativeClientState==='MEGA_SESSION_REQUIRED'){
     const shellOpened=openMegaShell();
-    return json(res,200,{state:'PENDING',providerId,reason:shellOpened?'MEGA_PROVIDER_SIGNIN_REQUIRED':'MEGA_SIGNIN_SURFACE_UNAVAILABLE',message:shellOpened?'Complete sign-in in the official MEGA window, then press Connect again.':'The official MEGA sign-in surface could not be opened.'});
+    return json(res,200,{state:'PENDING',providerId,reason:shellOpened?'MEGA_PROVIDER_SIGNIN_REQUIRED':'MEGA_SIGNIN_SURFACE_UNAVAILABLE',redirectUrl:PROVIDER_SIGNIN_URLS.mega,message:shellOpened?'The official MEGA sign-in surface was requested. If it is not visible, use the official MEGA sign-in page, then press Connect again.':'The official MEGA sign-in surface could not be opened; use the official MEGA sign-in page.'});
    }
    if(nativeClientState!=='MEGA_SESSION_OBSERVED')return json(res,503,{state:'BLOCKED',providerId,reason:nativeClientState,message:'MEGA sign-in could not be verified. No storage was changed.'});
    return json(res,200,{state:'PENDING',providerId,reason:'MEGA_CONTINUUM_ARCHIVE_ROUNDTRIP_REQUIRED',message:'MEGA sign-in is present. Continuum still requires its encrypted upload/download readback before this provider is accepted.'});
   }
-  const reason=providerId==='google-drive'||providerId==='pcloud'||providerId==='box'?'PROVIDER_OAUTH_CLIENT_UNBOUND':'PROVIDER_AUTH_ADAPTER_UNBOUND';
-  return json(res,200,{state:'BLOCKED',providerId,reason,message:'This provider has no approved client registration and vault binding on this host. No account was contacted.'});
+  const oauth=providerId==='google-drive'||providerId==='pcloud'||providerId==='box';
+  return json(res,200,{state:'PENDING',providerId,reason:oauth?'PROVIDER_OAUTH_CLIENT_UNBOUND':'PROVIDER_AUTH_ADAPTER_UNBOUND',redirectUrl:PROVIDER_SIGNIN_URLS[providerId],message:(oauth?'The official provider sign-in page is open. Continuum still needs its approved OAuth client and vault binding before it can connect storage.':'The official provider sign-in page is open. Continuum still needs an approved provider adapter before it can connect storage.')+' No storage was changed.'});
  }catch(error){return json(res,400,{error:error.message});}
 }
 const CAPABILITIES=Object.freeze({
