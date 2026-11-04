@@ -64,7 +64,7 @@ if($ts) {
   } catch {$Report.tailscaleFunnel='STATUS_QUERY_FAILED'}
 } else {$Report.tailscaleCommand='UNAVAILABLE'}
 if($IncludePublicDns -and $FunnelHost) {
-  if($FunnelHost -match '^[a-zA-Z0-9.-]+\\.ts\\.net$' -and $FunnelHost.Length -le 253){
+  if($FunnelHost -match '^[a-zA-Z0-9.-]+\.ts\.net$' -and $FunnelHost.Length -le 253){
     try {
       $records = @(Resolve-DnsName -Name $FunnelHost -Type A -Server '1.1.1.1' -ErrorAction Stop)
       $Report.publicDns = if(@($records | Where-Object {$_.Type -eq 'A'}).Count -gt 0){'RESOLVES_PUBLICLY'}else{'NO_PUBLIC_A_RECORD'}
