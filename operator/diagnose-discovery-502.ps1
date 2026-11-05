@@ -71,11 +71,14 @@ if($IncludePublicDns -and $FunnelHost) {
     } catch {$Report.publicDns='DNS_QUERY_FAILED'}
   } else {$Report.publicDns='INVALID_HOST_FORMAT'}
 }
-if($Report.listener -eq 'NOT_LISTENING') {
+if($Report.listener -eq 'NOT_LISTENING' -and $Report.loopbackTcp -ne 'CONNECTED') {
   $Report.interpretation = 'BLOCKED_NATIVE_MCP_NOT_LISTENING'
-  $Report.notes += 'Native MCP loopback listener absent; repair owner-authorized service startup before touching Funnel.'
+  $Report.notes += 'Native MCP loopback listener absent and TCP connect failed; repair owner-authorized service startup before touching Funnel.'
 } elseif($Report.loopbackTcp -eq 'CONNECTED' -and $Report.tailscaleFunnel -eq 'STATUS_QUERY_SUCCEEDED') {
-  $Report.interpretation = 'LOCAL_MCP_REACHABLE_FUNNEL_CONFIG_PRESENT_PUBLIC_PATH_UNVERIFIED'
+  $Report.interpretation = 'LOCAL_MCP_TCP_REACHABLE_FUNNEL_CONFIG_PRESENT_PUBLIC_PATH_UNVERIFIED'
+  if($Report.listener -eq 'NOT_LISTENING') {
+    $Report.notes += 'TCP connect succeeded although the listener table returned no row; application protocol and process identity remain unverified.'
+  }
 } else {
   $Report.interpretation = 'NEEDS_TARGETED_LOCAL_DIAGNOSIS'
 }
