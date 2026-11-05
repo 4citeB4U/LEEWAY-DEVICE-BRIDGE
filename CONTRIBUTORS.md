@@ -99,3 +99,8 @@ Fresh owner-scoped Runtime readback still does not advertise `model.hub.catalog`
 - **K2**: locate supported non-secret evidence for exact installed IPA identity, external verifier decision and Runtime Fabric/Learning Ledger handoff. Preserve previously verified local receipt and source IPA. Never invent a decision from folder presence or hash replay.
 - **K1/K2 shared**: record findings under [Issue #37](https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/issues/37) with paths, commit SHAs, PASS/FAIL/NOT_OBSERVED, and explicit K1 acknowledgment. Run or repeat an implementation/test **only for a proven gap**.
 - **No automatic installation**: signing, pairing, install, rollback, certificate and account mutations require separate qualified authority and owner consent. This record authorizes none.
+
+
+### K1 addendum — host binding scope check (2026-11-05)
+
+A fresh local environment-scope check found `LEEWAY_MODEL_HUB_URL` absent from Process, User, and Machine scopes. Local Model Hub HTTP health/catalog still respond, while local port 4271 is unreachable and Runtime's owner-scoped device capability list omits `model.hub.catalog`. This supports a missing host adapter binding as a concrete gap but does not identify the adapter service or authorize starting/reconfiguring one. The automatic-start Windows service named `AgentLee` is stopped; its ownership of the Device Bridge MCP listener is NOT_OBSERVED. The next action remains identify the authoritative Bridge process/lifecycle, then apply the binding through its supported LeeWay service configuration and requalify the live Runtime query.
