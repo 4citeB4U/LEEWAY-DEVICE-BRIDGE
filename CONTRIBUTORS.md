@@ -83,6 +83,16 @@ This reconciliation corrects the coordination gap after H-010. It records comple
 | H-015 | PARTIALLY BUILT | [Build-27 IPA acceptance](evidence/apple/G19-DIRECT-ILOADER-ACCEPTANCE-20261018.md): v0.1.27/build27 source IPA hash verified | Earlier physical receipt came from different IPA: exact build-27 device installation/lineage NOT VERIFIED | REVIEW REQUESTED |
 | H-016 | MISSING GLUE / NOT ESTABLISHED | [Receipt protocol](docs/APPLE-NATIVE-RECEIPT-PROTOCOL.md) defines external verifier handoff | Must locate existing canonical signed verifier decision, Runtime Fabric consumption, and Learning Ledger admission before implementing any integration | REVIEW REQUESTED |
 
+
+
+## K1 handoff — 2026-11-05 Model Hub-first search release and live boundary
+
+K1 merged Device Bridge PR #89 to `main` as `a0e2e0273bff5c202c7083891e3521c3c337a846` and Runtime Fabric PR #159 to `main` as `2bc2d76722f2d55ec94439931e4481e82cef0255`, following the Creator's direct-to-main instruction. Vercel production deployments are READY on those exact commits: Device Bridge deployment `dpl_Ct5XWoM6ZUAxUewD397v52pKCdnU`; Runtime Fabric deployment `dpl_FENrBkUg4iy6nK1yYRc3R4JKKRGw`. Pre-merge focused tests passed (Device Bridge 14/14; Runtime 16/16), and the recorded PR workflow checks passed. These establish source/CI/deployment status only.
+
+Fresh owner-scoped Runtime readback still does not advertise `model.hub.catalog` for `pc-primary`; discovery says `CONFIGURED_NOT_PHYSICALLY_PROBED`. Local read-only HTTP probes returned Model Hub `/health` 200, `/v1/catalog` with five entries, and Runtime carrier `/health` 200. The Runtime health projection reports Model Hub `UNAVAILABLE` and Device Bridge route `NOT_OBSERVED`; local Model Hub status reports no selected/active model, backend `OLLAMA`, and no qualified LeeWay GPU binding. Port 4271's previously used local Bridge health route was unreachable. The `AgentLee` Windows service is stopped/automatic, but its relation to the Device Bridge MCP listener is NOT_OBSERVED and must not be assumed.
+
+**Remaining acceptance boundary:** discover the canonical Bridge host service and its supported `LEEWAY_MODEL_HUB_URL` binding, update/restart only that proven service through the authorized LeeWay route, then require live capability discovery and an owner-scoped catalog query through Runtime with a device-bound receipt. No host environment change/restart, inference, Formula evaluation, independent Veritas decision, canonical execution receipt, or Learning Ledger admission occurred. LeeWay GPU-only inference and Continuum-backed model-asset admission remain separate gates. K1 records this handoff; live Model Hub-through-Bridge remains **NOT QUALIFIED**.
+
 ### Closure gates and evidence ownership
 
 - **K1**: review H-011–H-016 and reconcile upstream PR merges; validate canonical governance, Formula contract and independent receipt authority before marking shared gate complete.
