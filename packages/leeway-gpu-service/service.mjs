@@ -8,6 +8,7 @@ import {defaultPreferencesPath,readGpuPreference,setGpuPreference} from './prefe
 import {validateInferenceRequest} from '../gpu-inference/index.mjs';
 import {createInferenceRoutes} from './inference-routes.mjs';
 import {createNativeSoftwareGraphicsDiagnostic} from './software-graphics-diagnostic.mjs';
+import {createGpuTelemetryRoutes} from './telemetry-routes.mjs';
 
 export const API_VERSION='leeway.gpu.service.v1';
 const reply=(res,status,payload,extraHeaders={})=>{
@@ -62,10 +63,11 @@ export function publicStatus(platform=process.platform,{preferenceFile=defaultPr
    effectiveMode:requestedEnabled?'REQUESTED_NOT_AUTHORIZED':'OFF',previewInference:previewMode,
   supportedConsumers:'EXPLICIT_SDK_OR_IPC_INTEGRATION_REQUIRED'};
 }
-export function createGpuService({platform=process.platform,preferenceFile=defaultPreferencesPath(),previewProvider=null,inferenceProvider=null,authenticateClient,softwareGraphicsDiagnostic=null}={}){
+export function createGpuService({platform=process.platform,preferenceFile=defaultPreferencesPath(),previewProvider=null,inferenceProvider=null,authenticateClient,softwareGraphicsDiagnostic=null,telemetryProvider=null}={}){
  const csrf=randomBytes(32).toString('hex');
  const inference=createInferenceRoutes({provider:inferenceProvider,authenticateClient,reply,
   enabled:()=>readGpuPreference(preferenceFile).requestedEnabled});
+ const telemetry=createGpuTelemetryRoutes({reply,authenticateClient,telemetryProvider,inferenceProvider,platform});
  const status=async()=>{
   const base=publicStatus(platform,{preferenceFile,previewMode:previewProvider?.mode||'UNAVAILABLE'});
   let capability;try{capability=await inference.describe()}catch{capability={gpuVerified:false,status:'UNAVAILABLE'}}
@@ -78,6 +80,7 @@ export function createGpuService({platform=process.platform,preferenceFile=defau
    return reply(res,403,{code:'GPU_LOOPBACK_HOST_REQUIRED'});
   const url=new URL(req.url,'http://127.0.0.1');
   try{
+   if(await telemetry(req,res,url,host))return;
    if(await inference.handle(req,res,url,host))return;
    if(req.method==='GET'&&url.pathname==='/'){
     res.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'no-store',
@@ -193,6 +196,8 @@ export function createGpuService({platform=process.platform,preferenceFile=defau
      endpoint:'/v1/execute',discovery:'/v1/status',control:'/v1/control',
      compatiblePlatforms:['win32','linux','android','darwin','ios','ipados'],
      inference:{capabilities:'/v1/capabilities',activate:'/v1/models/activate',generate:'/v1/generate'},
+     telemetry:{health:'/v1/health',metrics:'/v1/metrics',
+      healthScope:'PROCESS_ONLY',metricsScope:'OWNER_AUTHENTICATED_TRUSTED_PROVIDER'},
      softwareGraphicsDiagnostic:{status:'/v1/diagnostics/software-graphics',
       run:'/v1/diagnostics/software-graphics/run',scope:'LAB_ONLY'},
      consumerMode:'explicit-registration',automaticSystemGpuReplacement:false,available:false});
@@ -205,9 +210,9 @@ export function createGpuService({platform=process.platform,preferenceFile=defau
   }
  });
 }
-export async function listenGpuService({port=0,host='127.0.0.1',platform=process.platform,preferenceFile,previewProvider=null,inferenceProvider=null,authenticateClient,softwareGraphicsDiagnostic=null}={}){
+export async function listenGpuService({port=0,host='127.0.0.1',platform=process.platform,preferenceFile,previewProvider=null,inferenceProvider=null,authenticateClient,softwareGraphicsDiagnostic=null,telemetryProvider=null}={}){
  if(host!=='127.0.0.1')throw Error('GPU_SERVICE_LOOPBACK_ONLY');
- const server=createGpuService({platform,preferenceFile,previewProvider,inferenceProvider,authenticateClient,softwareGraphicsDiagnostic});
+ const server=createGpuService({platform,preferenceFile,previewProvider,inferenceProvider,authenticateClient,softwareGraphicsDiagnostic,telemetryProvider});
  server.requestTimeout=30000;
  server.headersTimeout=10000;
  await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,host,resolve)});
