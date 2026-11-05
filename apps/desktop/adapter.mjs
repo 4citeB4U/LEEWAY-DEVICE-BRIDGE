@@ -26,8 +26,54 @@ const execFileAsync = promisify(execFile);
 
 // Bounded workspace files and explicitly allowlisted process execution. Never invokes a shell.
 export class DesktopAdapter {
-  constructor(root,{skillsRoot=null,receiptPath=null}={}) { this.root = path.resolve(root); this.jobs = new Map(); this.sessions = new DesktopSessions(this); this.searchSessions = new DesktopSearchSessions(this); this.skills=skillsRoot?new LeeWaySkillsCatalog(skillsRoot):null; this.receiptPath=receiptPath; }
-  async discover() { await fs.access(this.root); return [...(this.skills?['skills.list','skills.read']:[]),'device.health','device.info','device.documents.write_pdf','device.audit.recent','device.audit.usage','device.files.read','device.files.info','device.files.read_multiple','device.files.write','device.files.hash','device.files.read_binary','device.files.write_binary','device.files.append_binary','device.files.move','device.files.edit','device.directories.list','device.directories.page','device.directories.create','device.search.files','device.search.content','device.search.start','device.search.next','device.search.stop','device.search.list','device.process.list','device.process.terminate','device.process.execute','device.job.start','device.job.status','device.job.stop','device.session.start','device.session.read','device.session.input','device.session.stop','device.session.list']; }
+  constructor(root,{skillsRoot=null,receiptPath=null,modelHubUrl=process.env.LEEWAY_MODEL_HUB_URL||''}={}) { this.root = path.resolve(root); this.jobs = new Map(); this.sessions = new DesktopSessions(this); this.searchSessions = new DesktopSearchSessions(this); this.skills=skillsRoot?new LeeWaySkillsCatalog(skillsRoot):null; this.receiptPath=receiptPath; this.modelHubUrl=modelHubUrl; }
+  async discover() { await fs.access(this.root); return [...(this.skills?['skills.list','skills.read']:[]),...(this.modelHubUrl?['model.hub.catalog']:[]),'device.health','device.info','device.documents.write_pdf','device.audit.recent','device.audit.usage','device.files.read','device.files.info','device.files.read_multiple','device.files.write','device.files.hash','device.files.read_binary','device.files.write_binary','device.files.append_binary','device.files.move','device.files.edit','device.directories.list','device.directories.page','device.directories.create','device.search.files','device.search.content','device.search.start','device.search.next','device.search.stop','device.search.list','device.process.list','device.process.terminate','device.process.execute','device.job.start','device.job.status','device.job.stop','device.session.start','device.session.read','device.session.input','device.session.stop','device.session.list']; }
+  async readModelHubCatalog({query=''}) {
+    let endpoint;
+    try { endpoint = new URL('/v1/catalog', this.modelHubUrl); } catch { throw new Error('MODEL_HUB_ENDPOINT_INVALID'); }
+    const host = endpoint.hostname.toLowerCase();
+    if (endpoint.protocol !== 'http:' || !['127.0.0.1', 'localhost', '[::1]', '::1'].includes(host) || endpoint.username || endpoint.password)
+      throw new Error('MODEL_HUB_LOOPBACK_ENDPOINT_REQUIRED');
+    const response = await fetch(endpoint, { redirect: 'error', headers: { accept: 'application/json' }, signal: AbortSignal.timeout(5000) });
+    if (!response.ok) throw new Error('MODEL_HUB_CATALOG_UNAVAILABLE');
+    if (!/^application\/json(?:\s*;|$)/i.test(response.headers.get('content-type') || '')) throw new Error('MODEL_HUB_CATALOG_JSON_REQUIRED');
+    if (Number(response.headers.get('content-length') || 0) > 65536) throw new Error('MODEL_HUB_CATALOG_TOO_LARGE');
+    const reader = response.body?.getReader?.();
+    if (!reader) throw new Error('MODEL_HUB_CATALOG_BODY_UNAVAILABLE');
+    const chunks = []; let byteLength = 0;
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        byteLength += value.byteLength;
+        if (byteLength > 65536) throw new Error('MODEL_HUB_CATALOG_TOO_LARGE');
+        chunks.push(value);
+      }
+    } catch (error) { await reader.cancel().catch(() => {}); throw error; }
+    finally { reader.releaseLock(); }
+    const bytes = new Uint8Array(byteLength); let offset = 0;
+    for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+    let catalog;
+    try { catalog = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)); }
+    catch { throw new Error('MODEL_HUB_CATALOG_INVALID'); }
+    if (catalog?.schema !== 'leeway.model-hub.catalog.v1' || !Array.isArray(catalog.models) || catalog.models.length > 100)
+      throw new Error('MODEL_HUB_CATALOG_INVALID');
+    const ids = new Set();
+    const models = catalog.models.map(model => {
+      if (!model || !/^[a-z0-9][a-z0-9._-]{0,127}$/.test(model.id || '') || ids.has(model.id) ||
+        typeof model.displayName !== 'string' || model.displayName.length < 1 || model.displayName.length > 200)
+        throw new Error('MODEL_HUB_CATALOG_INVALID');
+      ids.add(model.id);
+      return Object.freeze({id:model.id,displayName:model.displayName,
+        family:typeof model.family==='string'&&model.family.length<=80?model.family:null,
+        license:typeof model.weightLicense==='string'&&model.weightLicense.length<=200?model.weightLicense:null});
+    });
+    const needle=query.trim().toLowerCase();
+    const matched=needle?models.filter(model=>[model.id,model.displayName,model.family||''].join(' ').toLowerCase().includes(needle)):models;
+    return Object.freeze({source:'LEEWAY_MODEL_HUB',catalogSchema:catalog.schema,query,models:matched,
+      totalCatalogModels:models.length,assetState:'NOT_ESTABLISHED_BY_CATALOG',
+      residencyState:'NOT_ESTABLISHED_BY_CATALOG',inferenceState:'NOT_REQUESTED'});
+  }
   async safePath(relative, writing = false) {
     if (path.isAbsolute(relative) || relative.includes(':') || relative.includes('\0')) throw new Error('PATH_OUTSIDE_WORKSPACE');
     const parts = relative.replaceAll('\\', '/').split('/');
@@ -185,6 +231,7 @@ export class DesktopAdapter {
   async execute(capability, args) {
     if (capability === 'device.health') return { ok: true, platform: process.platform, adapter: 'bounded-workspace', uiControl: false };
     if (capability === 'device.info') return { platform: process.platform, architecture: os.arch(), node: process.version, uiControl: false };
+    if (capability === 'model.hub.catalog' && this.modelHubUrl) return this.readModelHubCatalog(args);
     if (capability === 'skills.list' && this.skills) return this.skills.list(args);
     if (capability === 'skills.read' && this.skills) return this.skills.read(args);
     if (capability === 'device.documents.write_pdf') return writePdf(this,args);
@@ -253,3 +300,4 @@ export class DesktopAdapter {
     throw new Error('CAPABILITY_UNAVAILABLE');
   }
 }
+

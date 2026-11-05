@@ -87,6 +87,8 @@ export const schemas = Object.freeze({
   'device.apps.list': empty,
   'device.apps.launch': z.object({ packageName: z.string().regex(/^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z0-9_]+)+$/).max(255) }).strict(),
   'model.status': empty,
+  // Catalog membership does not imply admitted weights, residency, or inference authority.
+  'model.hub.catalog': z.object({query:z.string().max(128).default('')}).strict(),
   'model.inference': z.object({ prompt: z.string().min(1).max(8192) }).strict(),
   // GPU inference preview traffic uses an authenticated relay room plus an
   // application-level AES-GCM envelope. The relay must never receive prompts.
@@ -159,3 +161,4 @@ export class Bridge {
     }
   }
 }
+
