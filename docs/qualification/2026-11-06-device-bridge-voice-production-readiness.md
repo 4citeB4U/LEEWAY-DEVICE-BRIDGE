@@ -62,3 +62,12 @@ Fresh Vercel evidence:
 **Current gate:** Vercel public route and OAuth challenge/negative-auth behavior are OBSERVED PASS. A valid client-authorized POST /mcp exchange was not made through the public URL. The live Runtime connector separately verified OIDC and returned the read-only device list. Device physical reachability, delegated device scope, native device authorization, Continuum, independent Veritas, receipt and production execution remain unverified. Keep device control closed until the existing owner grant and end-to-end evidence are verified.
 
 **Next:** trace the existing ChatGPT/Runtime client registration and owner grant for the advertised LeeWay issuer, verify whether the current authenticated connector has the needed read-only Device Bridge scope, then invoke only a non-device-specific read-only capability through the live Vercel-backed integration. Do not change Vercel scopes, Render settings, or production credentials without the canonical grant.
+
+
+## Post-deployment and playback verification — 2026-11-06 00:27 America/Chicago (UTC−06:00)
+
+After the documentation commit, Vercel production again returned HTTP 200 for the protected-resource metadata and HTTP 401 BEARER_REQUIRED for an unauthenticated POST /mcp, with the expected resource_metadata challenge. The latest code deployment remained READY on main; these responses are expected protected-ingress behavior.
+
+The authorized LeeWay read-aloud adapter subsequently reported: “LeeWay Runtime Fabric selected-voice playback completed.” This upgrades the earlier synthesis-only observation to software playback completion for that prepared reply. It does not prove the user physically heard it, nor qualify live microphone/full-duplex C3.
+
+No source/runtime configuration or credentials were changed. Public valid-bearer exchange, delegated device capability, physical device health, Continuum, Veritas, and receipt gates remain open.
