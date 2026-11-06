@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { DesktopAdapter } from '../../apps/desktop/adapter.mjs';
+import { guardedMoveForTest } from '../../apps/desktop/file-parity.mjs';
 
 test('directories and filename search remain workspace bounded', async t=>{
  const root=await fs.mkdtemp(path.join(os.tmpdir(),'leeway-parity-')); t.after(()=>fs.rm(root,{recursive:true,force:true}));
@@ -50,14 +51,60 @@ test('file edit uses compare-and-swap and move never replaces an existing target
  await assert.rejects(a.execute('device.files.move',{from:'right/renamed.txt',to:'../escaped.txt',expectedSha256:digest}),/INVALID_PATH|PATH_OUTSIDE_WORKSPACE/);
 });
 
-test('large read-only file hashes stream beyond move limit while guarded move stays bounded',async t=>{
+test('hash and guarded move stream sparse files at the 64 MiB boundary and 720 MiB milestone',async t=>{
  const root=await fs.mkdtemp(path.join(os.tmpdir(),'leeway-large-hash-'));t.after(()=>fs.rm(root,{recursive:true,force:true}));
- const a=new DesktopAdapter(root);const filename=path.join(root,'large.bin');const size=64*1024*1024+1;
- const handle=await fs.open(filename,'w');try{await handle.truncate(size);}finally{await handle.close();}
- const digest=await a.execute('device.files.hash',{path:'large.bin'});
- assert.equal(digest.size,size);assert.match(digest.sha256,/^[a-f0-9]{64}$/);
- await assert.rejects(a.execute('device.files.move',{from:'large.bin',to:'moved.bin',expectedSha256:digest.sha256}),/FILE_EXCEEDS_MOVE_DIGEST_LIMIT/);
- assert.equal((await fs.stat(filename)).size,size);
+ const a=new DesktopAdapter(root);
+ for(const [name,size] of [['above-64m.bin',64*1024*1024+1],['milestone-720m.bin',720*1024*1024]]){
+  const filename=path.join(root,name);const handle=await fs.open(filename,'w');
+  try{await handle.truncate(size);}finally{await handle.close();}
+  const digest=await a.execute('device.files.hash',{path:name});
+  assert.equal(digest.size,size);assert.match(digest.sha256,/^[a-f0-9]{64}$/);
+  const moved=await a.execute('device.files.move',{from:name,to:`moved-${name}`,expectedSha256:digest.sha256});
+  assert.equal(moved.moved,true);assert.equal(moved.bytes,size);
+  assert.equal((await fs.stat(path.join(root,`moved-${name}`))).size,size);
+  await assert.rejects(fs.stat(filename),{code:'ENOENT'});
+ }
+});
+
+test('cross-device move interruption cleans staging and retry commits verified bytes without overwriting',async t=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'leeway-exdev-move-'));t.after(()=>fs.rm(root,{recursive:true,force:true}));
+ const adapter=new DesktopAdapter(root);await fs.writeFile(path.join(root,'source.bin'),Buffer.from('recovery payload'));
+ const digest=createHash('sha256').update('recovery payload').digest('hex');
+ const exdevLink=async(from,to)=>{
+  if(path.basename(from)==='source.bin'&&path.basename(to)==='target.bin'){
+   const error=Error('synthetic cross-device boundary');error.code='EXDEV';throw error;
+  }
+  return fs.link(from,to);
+ };
+ await assert.rejects(guardedMoveForTest(adapter,{from:'source.bin',to:'target.bin',expectedSha256:digest},
+  {link:exdevLink,afterChunk:()=>{throw Error('synthetic interruption');}}),/synthetic interruption/);
+ assert.equal(await fs.readFile(path.join(root,'source.bin'),'utf8'),'recovery payload');
+ await assert.rejects(fs.stat(path.join(root,'target.bin')),{code:'ENOENT'});
+ assert.deepEqual((await fs.readdir(root)).sort(),['source.bin']);
+ const moved=await guardedMoveForTest(adapter,{from:'source.bin',to:'target.bin',expectedSha256:digest},
+  {link:exdevLink});
+ assert.equal(moved.crossDevice,true);assert.equal(await fs.readFile(path.join(root,'target.bin'),'utf8'),'recovery payload');
+ await assert.rejects(fs.stat(path.join(root,'source.bin')),{code:'ENOENT'});
+ await fs.writeFile(path.join(root,'occupied.bin'),'preserve existing');
+ await assert.rejects(guardedMoveForTest(adapter,{from:'target.bin',to:'occupied.bin',expectedSha256:digest},
+  {link:async(from,to)=>{
+   if(path.basename(from)==='target.bin'&&path.basename(to)==='occupied.bin'){
+    const error=Error('cross device');error.code='EXDEV';throw error;
+   }
+   return fs.link(from,to);
+  }}),/TARGET_ALREADY_EXISTS/);
+ assert.equal(await fs.readFile(path.join(root,'occupied.bin'),'utf8'),'preserve existing');
+});
+
+test('cross-device move fails closed before copying when destination capacity is insufficient',async t=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'leeway-space-move-'));t.after(()=>fs.rm(root,{recursive:true,force:true}));
+ const adapter=new DesktopAdapter(root);await fs.writeFile(path.join(root,'source.bin'),'keep');
+ const digest=createHash('sha256').update('keep').digest('hex');let copyCalled=false;
+ const error=Object.assign(Error('synthetic cross-device boundary'),{code:'EXDEV'});
+ await assert.rejects(guardedMoveForTest(adapter,{from:'source.bin',to:'target.bin',expectedSha256:digest},
+  {link:async()=>{throw error;},statfs:async()=>({bavail:0n,bsize:4096n}),copy:async()=>{copyCalled=true;}}),/INSUFFICIENT_DESTINATION_SPACE/);
+ assert.equal(copyCalled,false);assert.equal(await fs.readFile(path.join(root,'source.bin'),'utf8'),'keep');
+ await assert.rejects(fs.stat(path.join(root,'target.bin')),{code:'ENOENT'});
 });
 
 test('interactive sessions accept bounded stdin and close input explicitly',async t=>{

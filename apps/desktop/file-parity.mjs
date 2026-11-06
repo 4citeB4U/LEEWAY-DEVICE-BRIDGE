@@ -18,9 +18,7 @@ const HEX=/^[a-f0-9]{64}$/;
 const BASE64=/^[A-Za-z0-9+/]*={0,2}$/;
 const EDIT_BYTES=65536;
 const CHUNK_BYTES=262144;
-const MAX_MOVE_BYTES=64*1024*1024;
-// Hashing is read-only and streams bounded chunks; move remains limited to
-// MAX_MOVE_BYTES because its guarded operation links and unlinks a source.
+const MAX_MOVE_BYTES=720*1024*1024;
 const MAX_HASH_BYTES=64*1024*1024*1024;
 async function checkedFile(adapter,filename){
   const target=await adapter.safePath(filename);
@@ -42,7 +40,7 @@ async function checkedDigest(filename,{maxBytes=MAX_MOVE_BYTES,limitError='FILE_
       if(!r.bytesRead)throw Error('INCOMPLETE_FILE_READ');
       digest.update(chunk.subarray(0,r.bytesRead));pos+=r.bytesRead;
     }
-    return {sha256:digest.digest('hex'),size:state.size,ino:state.ino};
+    return {sha256:digest.digest('hex'),size:state.size,ino:state.ino,dev:state.dev};
   }finally{await handle.close();}
 }
 export async function fileDigest(adapter,args){
@@ -78,7 +76,44 @@ export async function binaryCreate(adapter,args){
   await fs.writeFile(target,bytes,{flag:'wx',mode:0o600});
   return {created:true,bytes:bytes.length,sha256:digest};
 }
-export async function guardedMove(adapter,args){
+async function streamedCopy(source,target,expected,{afterChunk}={}){
+  const input=await fs.open(source,'r');
+  let output;
+  try{
+    const before=await input.stat();
+    if(!before.isFile()||before.nlink!==1||before.size!==expected.size||before.ino!==expected.ino||before.dev!==expected.dev)
+      throw Error('MOVE_SOURCE_CHANGED');
+    output=await fs.open(target,'wx',0o600);
+    const digest=createHash('sha256'),chunk=Buffer.alloc(CHUNK_BYTES);
+    let offset=0;
+    while(offset<before.size){
+      const read=await input.read(chunk,0,Math.min(chunk.length,before.size-offset),offset);
+      if(read.bytesRead<1)throw Error('MOVE_COPY_INCOMPLETE_READ');
+      const bytes=chunk.subarray(0,read.bytesRead);digest.update(bytes);
+      let written=0;
+      while(written<bytes.length){
+        const result=await output.write(bytes,written,bytes.length-written,offset+written);
+        if(result.bytesWritten<1)throw Error('MOVE_COPY_INCOMPLETE_WRITE');
+        written+=result.bytesWritten;
+      }
+      offset+=read.bytesRead;
+      if(afterChunk)await afterChunk(offset);
+    }
+    await output.sync();
+    const after=await input.stat();
+    const copied=await output.stat();
+    const sha256=digest.digest('hex');
+    if(after.ino!==before.ino||after.dev!==before.dev||after.size!==before.size||
+       copied.size!==before.size||copied.nlink!==1||sha256!==expected.sha256)
+      throw Error('MOVE_COPY_VERIFICATION_FAILED');
+    return {sha256,size:copied.size,ino:copied.ino,dev:copied.dev};
+  }finally{
+    if(output)await output.close();
+    await input.close();
+  }
+}
+
+async function guardedMoveWithOperations(adapter,args,operations={}){
   if(!HEX.test(args.expectedSha256))throw Error('SOURCE_DIGEST_REQUIRED');
   const {target:source,stat:initial}=await checkedFile(adapter,args.from);
   const destination=await adapter.safePath(args.to,true);
@@ -87,8 +122,12 @@ export async function guardedMove(adapter,args){
   if(pre.sha256!==args.expectedSha256||pre.ino!==initial.ino)throw Error('SOURCE_CHANGED');
   // link() is exclusive: unlike rename(), an existing destination is never replaced.
   // Both paths are in one checked workspace. A failed subsequent unlink retains source.
-  try{await fs.link(source,destination);}
-  catch(error){if(error?.code==='EEXIST')throw Error('TARGET_ALREADY_EXISTS');throw error;}
+  try{await (operations.link??fs.link)(source,destination);}
+  catch(error){
+    if(error?.code==='EEXIST')throw Error('TARGET_ALREADY_EXISTS');
+    if(error?.code!=='EXDEV')throw error;
+    return copyAndCommitMove(adapter,{args,source,destination,pre,operations});
+  }
   try{
     const linked=await fs.lstat(destination);
     const current=await fs.lstat(source);
@@ -107,6 +146,52 @@ export async function guardedMove(adapter,args){
     // Preserve the original source and its newly created destination for reconciliation.
     throw Error('MOVE_RECONCILIATION_REQUIRED');
   }
+}
+
+async function copyAndCommitMove(adapter,{args,source,destination,pre,operations}){
+  const directory=path.dirname(destination),temp=path.join(directory,`.${path.basename(destination)}.leeway-move-${randomUUID()}.partial`);
+  let destinationCommitted=false;
+  try{
+    const capacity=await (operations.statfs??fs.statfs)(directory,{bigint:true});
+    if(typeof capacity.bavail!=='bigint'||typeof capacity.bsize!=='bigint'||capacity.bavail*capacity.bsize<BigInt(pre.size))
+      throw Error('INSUFFICIENT_DESTINATION_SPACE');
+    const copied=operations.copy
+      ?await operations.copy(source,temp,pre)
+      :await streamedCopy(source,temp,pre,{afterChunk:operations.afterChunk});
+    if(copied.sha256!==pre.sha256||copied.size!==pre.size)throw Error('MOVE_COPY_VERIFICATION_FAILED');
+    const tempCheck=await checkedDigest(temp);
+    if(tempCheck.sha256!==pre.sha256||tempCheck.size!==pre.size||tempCheck.ino!==copied.ino)
+      throw Error('MOVE_COPY_VERIFICATION_FAILED');
+    const sourceCheck=await checkedDigest(source);
+    if(sourceCheck.sha256!==pre.sha256||sourceCheck.ino!==pre.ino)throw Error('MOVE_SOURCE_CHANGED');
+    try{await (operations.link??fs.link)(temp,destination);}
+    catch(error){if(error?.code==='EEXIST')throw Error('TARGET_ALREADY_EXISTS');throw error;}
+    destinationCommitted=true;
+    const committed=await fs.lstat(destination),staged=await fs.lstat(temp);
+    if(committed.ino!==staged.ino||committed.dev!==staged.dev||committed.size!==pre.size||
+       committed.nlink!==2||staged.nlink!==2)throw Error('MOVE_RECONCILIATION_REQUIRED');
+    await fs.unlink(temp);
+    const finalSource=await checkedDigest(source);
+    if(finalSource.sha256!==pre.sha256||finalSource.ino!==pre.ino)throw Error('MOVE_RECONCILIATION_REQUIRED');
+    await fs.unlink(source);
+    return {moved:true,from:args.from,to:args.to,sha256:pre.sha256,bytes:pre.size,crossDevice:true};
+  }catch(error){
+    if(destinationCommitted&&error?.message!=='MOVE_RECONCILIATION_REQUIRED')throw Error('MOVE_RECONCILIATION_REQUIRED');
+    throw error;
+  }finally{
+    // A handled interruption removes staging data; the verified source remains retryable.
+    await fs.rm(temp,{force:true}).catch(()=>{});
+  }
+}
+
+export async function guardedMove(adapter,args){
+  return guardedMoveWithOperations(adapter,args);
+}
+
+// Test-only seam for exercising EXDEV, insufficient-capacity, and interruption
+// paths without widening the governed MCP request schema.
+export async function guardedMoveForTest(adapter,args,operations){
+  return guardedMoveWithOperations(adapter,args,operations);
 }
 export async function exactEdit(adapter,args){
   if(!HEX.test(args.expectedSha256)||!args.oldText||
