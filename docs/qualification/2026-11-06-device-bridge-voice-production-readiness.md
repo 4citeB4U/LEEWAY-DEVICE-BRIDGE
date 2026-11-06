@@ -168,3 +168,20 @@ The Device Bridge implementation commit `c1144accd75961ab87b25aa6705dab09de39ee9
 ## 2026-11-06 12:24 America/Chicago (UTC−06:00) — Source verification and artifact gate
 
 After the scoped implementation, the full Device Bridge MCP suite passed 117/117 and Runtime discovery plus MCP scope suites passed 18/18; syntax checks and `git diff --check` passed. Formula health was read as canonical runtime diagnostics only, not as a Formula evaluation for this request. Veritas source requirements were consulted, but no independent task Veritas decision or canonical receipt was produced. Runtime health is AVAILABLE/OIDC verified; device discovery and fresh capability discovery remain HTTP 502. No directory or file operation was sent, so no experiment artifact has been located, read, or hashed. Continue at the authorized upstream lifecycle/recovery boundary, then obtain fresh grants and use only the registered Device Bridge read tools.
+# Fresh Runtime / Device Bridge probe — 2026-11-06 15:19 America/Chicago (UTC−06:00)
+
+A fresh read-only pass through the currently connected LeeWay Runtime / Device Bridge connector changed the immediate connectivity evidence:
+
+| Probe | Result | Evidence |
+|---|---|---|
+| Runtime Fabric | `AVAILABLE`; Streamable HTTP; OIDC access token verified | observed `2026-11-06T21:19:43.535Z` |
+| `bridge_devices` | `pc-primary`, configured but not physically probed by discovery | connector response |
+| `device.health(pc-primary)` | `PASS`; platform `win32`; adapter `bounded-workspace`; `uiControl:false` | receipt `47d4c7b0-c273-4d87-9403-e9ebc9289dc2`, `2026-11-06T21:19:44.657Z` |
+| `device.info(pc-primary)` | `PASS`; `win32`, `x64`, Node `v24.15.0`; `uiControl:false` | receipt `7c8b028a-0868-412a-9010-e01c9e0db4ec`, `2026-11-06T21:19:44.677Z` |
+| `device.directories.list(pc-primary, ".", 20)` | `PASS`; 20 workspace entries returned; truncated | receipt `3378fe64-a28d-47db-9dd2-5f88871ecba7`, `2026-11-06T21:19:50.347Z` |
+
+Each device receipt reports `authority: CONTROLLER_OBSERVATION` and `formula: NOT_EVALUATED`; health/info report `physicalProbe: EXECUTED_NOT_INDEPENDENTLY_VERIFIED`. These are real owner-scoped read-only connector executions, not an independent Veritas decision or production-admission result. Directory listing is metadata-only. The currently exposed connector tool inventory has no `device.files.read` or `device.files.move`; therefore the original experiment/model artifact content, hashing through the bridge, and 720 MiB move capability remain unverified through this live path.
+
+The connected Vercel inventory identifies project `leeway-device-bridge` (`prj_rm9s0Wsg3FoMFVYi1bMpvaKo7Ulw`). Its production deployment `dpl_E6FmCaQfQfUuArAA53LZi4tuzwCD`, state `READY`, is on canonical `main` commit `54e46dfd8ac37d3b2f8049f90d0c077a9646d48c`, which descends from the 720 MiB implementation commit `7193edbb13ef2ab86c9a0f0d6b698fb9288d82fc`. This proves the production Vercel project serves a deployment containing the source change. It does not prove the separately configured MCP upstream is running that code or that `device.files.move` is registered/admitted on the live connector.
+
+**Updated gate:** Runtime authentication plus three bounded read-only device probes are working now. This supersedes the earlier live-checkpoint statement that health was not registered, for this connector and observation time. It does not prove which deployed upstream/source revision served these calls, nor complete Device Bridge production qualification. Next: inspect the connected deployment/source identity using the authorized GitHub/Vercel evidence tools, then qualify file-read registration and a harmless authorized file read before any governed large-file mutation. Preserve the existing 720 MiB source implementation on main; do not repeat its local tests as a substitute for live execution.
