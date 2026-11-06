@@ -1,9 +1,9 @@
 # Device Bridge large-file operations — 720 MiB qualification
 
-**Checkpoint:** 2026-11-06 14:52 America/Chicago (UTC−06:00)
+**Checkpoint:** 2026-11-06 14:53 America/Chicago (UTC−06:00)
 **Canonical repository:** `4citeB4U/LEEWAY-DEVICE-BRIDGE`
 **Working branch:** `codex/device-bridge-streaming-hash-20261106`
-**Source lineage:** prior streaming-hash commit `4b1b34d640fea2384f490dbae57fb690a146fd5d`; merged current `origin/main` `baec293231789831ee155f6f669ff6481956be9c` before this implementation. Final implementation commit is recorded in Git after commit.
+**Source lineage:** prior streaming-hash commit `4b1b34d640fea2384f490dbae57fb690a146fd5d`; merged current `origin/main` `baec293231789831ee155f6f669ff6481956be9c` before implementation commit `7193edbb13ef2ab86c9a0f0d6b698fb9288d82fc`. That commit was pushed to canonical `main`. GitHub main readback confirmed the updated source; source blob SHA is `80d119be7fb27a9a5eb7856ae6dc4066a37dbecb`.
 
 ## Creator scope and acceptance
 
@@ -74,4 +74,4 @@ Rollback is a revert of the scoped implementation commit; the prior 64 MiB move 
 
 ## Checkpoint and next action
 
-The code and contributor handoff are ready for source review on the existing branch. Full MCP-suite validation passed. Next, commit the scoped source and evidence record and publish to main under the Creator's standing direct-to-main instruction if branch policy permits. Production qualification still requires an authorized release path, fresh governed Device Bridge execution, cross-volume physical validation, platform matrix review, and the existing independent Formula/Veritas/receipt gates where applicable. The 720 MiB result is a milestone, not an unrestricted transfer claim.
+Source and evidence commit `7193edb` is published on canonical `main` and was read back through the connected GitHub repository tool. The full MCP suite passed before publication. Next, qualify a real cross-volume operation and supported platform matrix, then use the authorized release path and fresh governed Device Bridge execution. Existing independent Formula/Veritas/receipt gates remain applicable to production acceptance. The 720 MiB result is a source-and-Windows-test milestone, not an unrestricted transfer claim.
