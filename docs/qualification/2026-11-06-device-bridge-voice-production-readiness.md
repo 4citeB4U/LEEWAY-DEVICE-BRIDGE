@@ -129,3 +129,11 @@ Hosting inventory found no accessible Render workspaces. The connected Railway a
 **Recovery decision:** retain the existing configured Tailscale MCP upstream and the published source fix; do not substitute the stale agent-lee-x route, create a new service without the canonical native binding/source, or repurpose the Railway database project. Full qualification remains **BLOCKED at upstream lifecycle access**.
 
 **Exact dependency to resume:** an authorized deploy/restart operation for the already configured upstream, or access to its canonical deploy project/repository and qualified owner-controlled release mechanism. After release, repeat health/info and continue Continuum, task Formula, independent Veritas, receipt and Learning Ledger gates. Evidence: Vercel adapter suite PASS; live relay/workstation probes HTTP 404; Render workspaces empty; Railway service inventory MySQL-only; Runtime health call still reports upstream health tool absent.
+
+## 2026-11-06 10:50 America/Chicago (UTC−06:00) — Canonical Tailscale authority checked
+
+The private `4citeB4U/Leeway-Tailscale` source was recovered and its `docs/initial-discovery.md` amended at commit `d055f6813ac25ceb7ced339b086128ae414e7e3b`. The record distinguishes the October 26 `NoState` snapshot from the November 6 authenticated Device Bridge observation: `device.info(pc-primary)` returned PASS receipt `e44809fb-624d-4d0a-aa4b-e282f6e01dea` (Windows x64, Node v24.15.0), while `device.health` returned `LEEWAY_BRIDGE_UPSTREAM_TOOL_NOT_REGISTERED`.
+
+The Tailscale repository README and service map define contracts only: default exposure is tailnet-private Serve, application is manual after local verification, route owner must be established, and no tailnet state or automatic deployment workflow is held in the repository. This confirms that source publication alone cannot release the active upstream and that no route/Serve/Funnel change is authorized by the source record. Keep the existing route unchanged until its node owner and lifecycle are positively identified.
+
+The active upstream release remains the immediate blocker. No inference, GPU operation, mutation, Tailscale command, route change, host restart or credential access was performed. Current qualification remains **NOT COMPLETE**.
