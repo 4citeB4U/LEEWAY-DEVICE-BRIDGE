@@ -81,7 +81,9 @@ export function createRemoteMcpHandler({ authenticate, resolveBridge, allowedHos
         return reply(res, 503, 'TRUSTED_MCP_TOOL_POLICY_REQUIRED');
       }
       server = createServer(bridge, { discoveryOnly: principalDiscoveryOnly,
-        readOnlyCapabilities: principalDiscoveryOnly && process.env.LEEWAY_MODEL_HUB_URL ? ['model.hub.catalog'] : [] });
+        readOnlyCapabilities: principalDiscoveryOnly
+          ? ['device.health', 'device.info', ...(process.env.LEEWAY_MODEL_HUB_URL ? ['model.hub.catalog'] : [])]
+          : [] });
       const transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: undefined,
         enableJsonResponse: true,

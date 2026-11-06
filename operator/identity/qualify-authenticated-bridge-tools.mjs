@@ -17,8 +17,8 @@ import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 
 const MAX_BYTES=128*1024;
-const ALLOWED=new Set(['bridge_devices','bridge_capabilities','runtime_health']);
-const REQUIRED=['bridge_devices','bridge_capabilities'];
+const ALLOWED=new Set(['bridge_devices','bridge_capabilities','device_health','device_info','runtime_health']);
+const REQUIRED=['bridge_devices','bridge_capabilities','device_health','device_info'];
 const fail=reason=>{throw Object.assign(new Error(reason),{code:reason});};
 function parseResource(value,reason){
  let url;
@@ -116,12 +116,33 @@ export async function qualifyAuthenticatedBridgeTools({endpoint,expectedResource
      !capability.capabilities.every(x=>typeof x?.name==='string'&&typeof x?.granted==='boolean'&&typeof x?.verified==='boolean')){
    fail('MCP_QUALIFIER_CAPABILITIES_INVALID');
   }
+  function probeReceipt(body,capabilityName){
+   const value=toolJson(body,'MCP_QUALIFIER_PHYSICAL_PROBE_INVALID');
+   const receipt=value?.receipt;
+   if(value?.ok!==true||!value.result||typeof value.result!=='object'||
+      receipt?.version!==1||receipt.deviceId!==expectedDeviceId||
+      receipt.capability!==capabilityName||receipt.outcome!=='PASS'||
+      typeof receipt.id!=='string'||receipt.id.length<1||receipt.id.length>128||
+      !/^[a-f0-9]{64}$/.test(receipt.previousHash||'')||
+      !/^[a-f0-9]{64}$/.test(receipt.sha256||'')){
+    fail('MCP_QUALIFIER_PHYSICAL_PROBE_INVALID');
+   }
+   return receipt.id;
+  }
+  const healthReceiptId=probeReceipt(await request(5,'tools/call',{
+   name:'device_health',arguments:{deviceId:expectedDeviceId,arguments:{}}
+  }),'device.health');
+  const infoReceiptId=probeReceipt(await request(6,'tools/call',{
+   name:'device_info',arguments:{deviceId:expectedDeviceId,arguments:{}}
+  }),'device.info');
   deviceEvidence={
-   deviceConnectivity:'CONFIGURED_DISCOVERY_ONLY',
+   deviceConnectivity:'PHYSICAL_READ_ONLY_PROBES_EXECUTED_NOT_INDEPENDENTLY_VERIFIED',
    expectedDeviceId,
    configuredDeviceCount:listed.devices.length,
    capabilityCount:capability.capabilities.length,
-   physicallyVerifiedCapabilities:capability.capabilities.filter(x=>x.verified===true).length
+   physicallyVerifiedCapabilities:capability.capabilities.filter(x=>x.verified===true).length,
+   healthReceiptId,
+   infoReceiptId
   };
  }
  return Object.freeze({

@@ -20,7 +20,7 @@ import {qualifyAuthenticatedBridgeTools} from '../../operator/identity/qualify-a
 const endpoint='https://bridge.example/mcp';
 const token='fixture-owner-token';
 const ok=(id,result)=>Response.json({jsonrpc:'2.0',id,result});
-function fixture(tools=['bridge_devices','bridge_capabilities']){
+function fixture(tools=['bridge_devices','bridge_capabilities','device_health','device_info']){
  const calls=[];
  return {
   calls,
@@ -28,18 +28,26 @@ function fixture(tools=['bridge_devices','bridge_capabilities']){
    calls.push({url:String(url),init});
    const body=JSON.parse(init.body);
    if(body.method==='initialize')return ok(1,{serverInfo:{name:'test',version:'1'},protocolVersion:'2025-03-26',capabilities:{}});
-   if(body.method==='tools/list')return ok(2,{tools:tools.map(name=>({name}))});
+   if(body.method==='tools/list')return ok(body.id,{tools:tools.map(name=>({name}))});
+   if(body.method==='tools/call'&&['device_health','device_info'].includes(body.params.name)){
+    const health=body.params.name==='device_health';
+    const capability=health?'device.health':'device.info';
+    return ok(body.id,{content:[{type:'text',text:JSON.stringify({ok:true,result:health?{status:'ok'}:{platform:'fixture'},receipt:{
+     version:1,id:health?'health-receipt':'info-receipt',deviceId:'windows-main',capability,outcome:'PASS',
+     previousHash:(health?'b':'a').repeat(64),sha256:(health?'a':'c').repeat(64)
+    }})}]});
+   }
    throw Error('UNEXPECTED_METHOD');
   }
  };
 }
 const run=(fetchImpl,extra={})=>qualifyAuthenticatedBridgeTools({endpoint,expectedResource:endpoint,accessToken:token,fetchImpl,...extra});
 
-test('authenticated exact-resource connection advertises only read-only Device Bridge discovery',async()=>{
+test('authenticated exact-resource connection advertises only owner-scoped read-only Device Bridge tools',async()=>{
  const f=fixture();
  const r=await run(f.fetchImpl);
  assert.equal(r.status,'AUTHENTICATED_READONLY_DISCOVERY_TOOLS_OBSERVED');
- assert.deepEqual(r.tools,['bridge_capabilities','bridge_devices']);
+ assert.deepEqual(r.tools,['bridge_capabilities','bridge_devices','device_health','device_info']);
  assert.equal(r.runtimeExecution,'NOT_AUTHORIZED');
  assert.equal(f.calls.length,2);
  assert.equal(f.calls.every(x=>x.url===endpoint&&x.init.redirect==='error'),true);
@@ -51,7 +59,7 @@ test('valid OAuth runtime_health alone does not count as connected Bridge',async
  await assert.rejects(run(f.fetchImpl),/MCP_QUALIFIER_BRIDGE_DISCOVERY_UNBOUND/);
 });
 test('tools list exposing any device command denies read-only qualification',async()=>{
- const f=fixture(['bridge_devices','bridge_capabilities','device_process_execute']);
+ const f=fixture(['bridge_devices','bridge_capabilities','device_health','device_info','device_process_execute']);
  await assert.rejects(run(f.fetchImpl),/MCP_QUALIFIER_UNAUTHORIZED_TOOL_EXPOSURE/);
 });
 test('duplicate names and unbound auth deny qualification',async()=>{
@@ -86,7 +94,7 @@ test('owner token can prove configured target device and capabilities without cl
   const body=JSON.parse(init.body);
   calls.push(body);
   if(body.method==='initialize')return ok(1,{serverInfo:{name:'fixture',version:'1'},protocolVersion:'2025-03-26',capabilities:{}});
-  if(body.method==='tools/list')return ok(2,{tools:[{name:'bridge_devices'},{name:'bridge_capabilities'}]});
+  if(body.method==='tools/list')return ok(2,{tools:[{name:'bridge_devices'},{name:'bridge_capabilities'},{name:'device_health'},{name:'device_info'}]});
   if(body.method==='tools/call'&&body.params.name==='bridge_devices')return ok(3,{
    content:[{type:'text',text:JSON.stringify({devices:['windows-main','android-fold']})}]
   });
@@ -95,16 +103,26 @@ test('owner token can prove configured target device and capabilities without cl
     {name:'device.health',granted:true,verified:false}
    ]})}]
   });
+  if(body.method==='tools/call'&&['device_health','device_info'].includes(body.params.name)){
+   const health=body.params.name==='device_health';
+   const capability=health?'device.health':'device.info';
+   return ok(body.id,{content:[{type:'text',text:JSON.stringify({ok:true,result:health?{status:'ok'}:{platform:'fixture'},receipt:{
+    version:1,id:health?'health-receipt':'info-receipt',deviceId:'windows-main',capability,outcome:'PASS',
+    previousHash:(health?'b':'a').repeat(64),sha256:(health?'a':'c').repeat(64)
+   }})}]});
+  }
   throw Error('UNEXPECTED');
  };
  const result=await run(fetchImpl,{expectedDeviceId:'windows-main'});
  assert.equal(result.status,'AUTHENTICATED_DEVICE_CONFIGURATION_OBSERVED');
- assert.equal(result.deviceConnectivity,'CONFIGURED_DISCOVERY_ONLY');
+ assert.equal(result.deviceConnectivity,'PHYSICAL_READ_ONLY_PROBES_EXECUTED_NOT_INDEPENDENTLY_VERIFIED');
  assert.equal(result.configuredDeviceCount,2);
  assert.equal(result.physicallyVerifiedCapabilities,0);
  assert.equal(result.runtimeExecution,'NOT_AUTHORIZED');
- assert.equal(calls.length,4);
+ assert.equal(calls.length,6);
  assert.deepEqual(calls[3].params.arguments,{deviceId:'windows-main'});
+ assert.equal(result.healthReceiptId,'health-receipt');
+ assert.equal(result.infoReceiptId,'info-receipt');
 });
 
 test('configured target absent, unverified capability fields, or illegal ID fail closed',async()=>{
@@ -113,7 +131,7 @@ test('configured target absent, unverified capability fields, or illegal ID fail
  const fetchImpl=async(_url,init)=>{
   const body=JSON.parse(init.body);
   if(body.method==='initialize')return ok(1,{});
-  if(body.method==='tools/list')return ok(2,{tools:[{name:'bridge_devices'},{name:'bridge_capabilities'}]});
+  if(body.method==='tools/list')return ok(2,{tools:[{name:'bridge_devices'},{name:'bridge_capabilities'},{name:'device_health'},{name:'device_info'}]});
   if(body.params?.name==='bridge_devices')return ok(3,{
    content:[{type:'text',text:JSON.stringify({devices:['android-only']})}]
   });

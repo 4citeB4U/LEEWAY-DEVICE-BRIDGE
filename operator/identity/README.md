@@ -30,7 +30,7 @@ LICENSE: MIT
 6. Register the ChatGPT client using the actual callback URL shown in ChatGPT, a supported client registration method and PKCE settings. Verify supported scopes and token audience against live Pocket ID metadata. Avoid exposing metadata-document clients to all users unless explicitly authorized.
 7. Bind an independently tested JWT/access-token validator to the canonical `createRemoteMcpHttpServer({ bridge, authenticate })` boundary. Validate signature against the issuer's JWKS, exact issuer, correct MCP resource audience, expiry, read-only permission, and an explicit owner-subject allowlist. Reject ID tokens used as API access tokens. Do not allow an unauthenticated fallback.
 8. Implement MCP protected-resource metadata from the **verified** issuer configuration; do not synthesize issuer, token, authorization or signing-key endpoints. Qualify public HTTPS routing separately from the loopback service.
-9. Test unauthenticated 401, wrong audience/issuer/scope/owner denial, valid owner initialization, tools/list restricted to `bridge_devices` and `bridge_capabilities`, and absence of all mutation tools. Use a real remote MCP client.
+9. Test unauthenticated 401, wrong audience/issuer/scope/owner denial, valid owner initialization, and a discovery-only tools/list containing `bridge_devices`, `bridge_capabilities`, `device_health`, and `device_info`, with no mutation tools. When a target device is supplied, execute the bounded health and info probes and verify their PASS receipts bind the target device and exact capability. Use a real remote MCP client.
 
 ## Deployment boundary
 
