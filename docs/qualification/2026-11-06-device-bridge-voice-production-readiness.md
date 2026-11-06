@@ -43,3 +43,22 @@ No source or production configuration was mutated. No restart, redeploy, provide
 
 **Veritas:** Production ingress acceptance BLOCKED by unbound identity/upstream and unprobed authenticated MCP/downstream providers. Voice synthesis request result OBSERVED HTTP 200; playback NOT VERIFIED; full C3 voice NOT QUALIFIED.  
 **Receipt:** No governed execution receipt created. Learning Ledger not updated.
+
+
+## Vercel production-path correction — 2026-11-06 00:25 America/Chicago (UTC−06:00)
+
+The earlier 00:15 check tested /healthz on Vercel, a route that is not configured. It correctly returned 404 but was the wrong readiness probe. Current main vercel.json maps POST /mcp to api/mcp and the protected-resource metadata path to api/oauth-protected-resource.
+
+Fresh Vercel evidence:
+- Project leeway-device-bridge latest production deployment dpl_BsxYBYEc6BvZERrxuBVXCDZABvWh is READY and built from exact Device Bridge main commit a2b8112bb67bdb52adedd005182cbc9a389868ed.
+- GET https://leeway-device-bridge.vercel.app/.well-known/oauth-protected-resource/mcp returned HTTP 200. It advertises resource https://leeway-device-bridge.vercel.app/mcp, LeeWay Zitadel issuer https://leeway-mcp-d3xoxh.us1.zitadel.cloud, and read:runtime scope.
+- POST /mcp with no bearer returned HTTP 401 BEARER_REQUIRED and the correct resource_metadata challenge.
+- A negative-auth POST with a deliberately invalid bearer returned HTTP 401 invalid_token with a Runtime challenge. This confirms the routed request reached the OIDC-protected upstream path and was rejected. No valid token or tool execution was used in this probe.
+- OIDC discovery returned the exact advertised issuer; the issuer JWKS endpoint returned two public RS256 signing keys.
+- Fresh Runtime Fabric health again reported AVAILABLE and OIDC_ACCESS_TOKEN_VERIFIED. An authenticated read-only bridge_devices tool call returned pc-primary as CONFIGURED_NOT_PHYSICALLY_PROBED. No device-specific probe, command, GPU route, or mutation occurred.
+
+**Correction:** Vercel is the current production MCP ingress path to qualify. The separate Render service remains a legacy/qualification service on its old integration branch; its process-only HTTP 200 and unbound configuration are not evidence that the Vercel ingress is unbound. No Render or Vercel settings were changed.
+
+**Current gate:** Vercel public route and OAuth challenge/negative-auth behavior are OBSERVED PASS. A valid client-authorized POST /mcp exchange was not made through the public URL. The live Runtime connector separately verified OIDC and returned the read-only device list. Device physical reachability, delegated device scope, native device authorization, Continuum, independent Veritas, receipt and production execution remain unverified. Keep device control closed until the existing owner grant and end-to-end evidence are verified.
+
+**Next:** trace the existing ChatGPT/Runtime client registration and owner grant for the advertised LeeWay issuer, verify whether the current authenticated connector has the needed read-only Device Bridge scope, then invoke only a non-device-specific read-only capability through the live Vercel-backed integration. Do not change Vercel scopes, Render settings, or production credentials without the canonical grant.
