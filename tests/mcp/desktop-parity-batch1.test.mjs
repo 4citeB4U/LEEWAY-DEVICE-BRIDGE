@@ -50,6 +50,16 @@ test('file edit uses compare-and-swap and move never replaces an existing target
  await assert.rejects(a.execute('device.files.move',{from:'right/renamed.txt',to:'../escaped.txt',expectedSha256:digest}),/INVALID_PATH|PATH_OUTSIDE_WORKSPACE/);
 });
 
+test('large read-only file hashes stream beyond move limit while guarded move stays bounded',async t=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'leeway-large-hash-'));t.after(()=>fs.rm(root,{recursive:true,force:true}));
+ const a=new DesktopAdapter(root);const filename=path.join(root,'large.bin');const size=64*1024*1024+1;
+ const handle=await fs.open(filename,'w');try{await handle.truncate(size);}finally{await handle.close();}
+ const digest=await a.execute('device.files.hash',{path:'large.bin'});
+ assert.equal(digest.size,size);assert.match(digest.sha256,/^[a-f0-9]{64}$/);
+ await assert.rejects(a.execute('device.files.move',{from:'large.bin',to:'moved.bin',expectedSha256:digest.sha256}),/FILE_EXCEEDS_MOVE_DIGEST_LIMIT/);
+ assert.equal((await fs.stat(filename)).size,size);
+});
+
 test('interactive sessions accept bounded stdin and close input explicitly',async t=>{
  const root=await fs.mkdtemp(path.join(os.tmpdir(),'leeway-job-input-'));t.after(()=>fs.rm(root,{recursive:true,force:true}));
  const a=new DesktopAdapter(root);

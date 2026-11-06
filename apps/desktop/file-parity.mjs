@@ -19,18 +19,21 @@ const BASE64=/^[A-Za-z0-9+/]*={0,2}$/;
 const EDIT_BYTES=65536;
 const CHUNK_BYTES=262144;
 const MAX_MOVE_BYTES=64*1024*1024;
+// Hashing is read-only and streams bounded chunks; move remains limited to
+// MAX_MOVE_BYTES because its guarded operation links and unlinks a source.
+const MAX_HASH_BYTES=64*1024*1024*1024;
 async function checkedFile(adapter,filename){
   const target=await adapter.safePath(filename);
   const stat=await fs.lstat(target);
   if(!stat.isFile()||stat.nlink!==1||stat.isSymbolicLink())throw Error('LINK_OR_NONFILE_REJECTED');
   return {target,stat};
 }
-async function checkedDigest(filename){
+async function checkedDigest(filename,{maxBytes=MAX_MOVE_BYTES,limitError='FILE_EXCEEDS_MOVE_DIGEST_LIMIT'}={}){
   const handle=await fs.open(filename,'r');
   try{
     const state=await handle.stat();
-    if(!state.isFile()||state.nlink!==1||state.size>MAX_MOVE_BYTES)
-      throw Error('FILE_EXCEEDS_MOVE_DIGEST_LIMIT');
+    if(!state.isFile()||state.nlink!==1||state.size>maxBytes)
+      throw Error(limitError);
     const digest=createHash('sha256');
     const chunk=Buffer.alloc(65536);
     let pos=0;
@@ -44,7 +47,7 @@ async function checkedDigest(filename){
 }
 export async function fileDigest(adapter,args){
   const {target}=await checkedFile(adapter,args.path);
-  return checkedDigest(target);
+  return checkedDigest(target,{maxBytes:MAX_HASH_BYTES,limitError:'FILE_EXCEEDS_HASH_DIGEST_LIMIT'});
 }
 export async function binaryRange(adapter,args){
   const {target,stat}=await checkedFile(adapter,args.path);
