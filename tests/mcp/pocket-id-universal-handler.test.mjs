@@ -37,5 +37,8 @@ test('discoveryOnly HTTP ingress uses canonical tool factory without advertising
  assert.ok(names.includes('bridge_devices'));
  assert.ok(names.includes('device_health'));
  assert.ok(names.includes('device_info'));
+ assert.ok(names.includes('device_directories_list'));
+ assert.ok(names.includes('device_files_read'));
+ assert.ok(!names.includes('device_files_write'));
  assert.ok(!names.includes('device_process_execute'));
 });

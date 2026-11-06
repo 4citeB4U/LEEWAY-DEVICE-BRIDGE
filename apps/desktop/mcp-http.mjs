@@ -82,7 +82,7 @@ export function createRemoteMcpHandler({ authenticate, resolveBridge, allowedHos
       }
       server = createServer(bridge, { discoveryOnly: principalDiscoveryOnly,
         readOnlyCapabilities: principalDiscoveryOnly
-          ? ['device.health', 'device.info', ...(process.env.LEEWAY_MODEL_HUB_URL ? ['model.hub.catalog'] : [])]
+          ? ['device.health', 'device.info', 'device.directories.list', 'device.files.read', ...(process.env.LEEWAY_MODEL_HUB_URL ? ['model.hub.catalog'] : [])]
           : [] });
       const transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: undefined,
