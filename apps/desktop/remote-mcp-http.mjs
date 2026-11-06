@@ -87,7 +87,8 @@ export function createRemoteMcpHttpServer({ bridge, authenticate, host = '127.0.
       enableJsonResponse: true,
     });
     const mcp = createServer(bridge, { discoveryOnly: true,
-      readOnlyCapabilities: process.env.LEEWAY_MODEL_HUB_URL ? ['model.hub.catalog'] : [] });
+      readOnlyCapabilities: ['device.health', 'device.info', 'device.directories.list', 'device.files.read',
+        ...(process.env.LEEWAY_MODEL_HUB_URL ? ['model.hub.catalog'] : [])] });
     try {
       await mcp.connect(transport);
       await transport.handleRequest(req, res, body);

@@ -92,8 +92,11 @@ test('owner Pocket ID scopes do not elevate discovery credentials', async t => {
   const execute = await f.connect(f.auth.token('device.bridge.execute'));
   const namesRead = (await read.listTools()).tools.map(x => x.name);
   const namesExecute = (await execute.listTools()).tools.map(x => x.name);
-  assert.deepEqual(namesRead.sort(), ['bridge_capabilities', 'bridge_devices']);
+  assert.deepEqual(namesRead.sort(), ['bridge_capabilities', 'bridge_devices', 'device_directories_list', 'device_files_read', 'device_health', 'device_info']);
   assert.ok(!namesRead.includes('device_files_write'));
+  assert.ok(!namesRead.includes('device_process_execute'));
+  assert.ok(namesExecute.includes('device_directories_list'));
+  assert.ok(namesExecute.includes('device_files_read'));
   assert.ok(namesExecute.includes('device_health'));
   assert.ok(namesExecute.includes('device_files_write'));
 
@@ -116,7 +119,7 @@ test('execution token cannot promote a discovery-only deployment', async t => {
   await assert.rejects(f.connect(f.auth.token('device.bridge.execute')));
   const read = await f.connect(f.auth.token('device.bridge.read'));
   assert.deepEqual((await read.listTools()).tools.map(x => x.name).sort(),
-    ['bridge_capabilities', 'bridge_devices']);
+    ['bridge_capabilities', 'bridge_devices', 'device_directories_list', 'device_files_read', 'device_health', 'device_info']);
   assert.equal(f.actions.length, 0);
 });
 test('wrong owner and unsigned permissions cannot authenticate', async t => {

@@ -43,7 +43,7 @@ export function createServer(bridge, { discoveryOnly = false, readOnlyCapabiliti
   const selectedCapabilities = discoveryOnly ? [...new Set(readOnlyCapabilities)] : Object.keys(schemas);
   for (const capability of selectedCapabilities) {
     const schema = schemas[capability];
-    if (!schema || (discoveryOnly && !['device.health', 'device.info', 'model.hub.catalog'].includes(capability)))
+    if (!schema || (discoveryOnly && !['device.health', 'device.info', 'device.directories.list', 'device.files.read', 'model.hub.catalog'].includes(capability)))
       throw new Error('DISCOVERY_READ_ONLY_CAPABILITY_DENIED');
     server.registerTool(capability.replaceAll('.', '_'), {
       description: `Invoke ${capability} on an explicitly granted device. Availability is checked for each call; unsupported platforms fail closed.`,

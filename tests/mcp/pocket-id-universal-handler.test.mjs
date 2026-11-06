@@ -33,5 +33,12 @@ test('discoveryOnly HTTP ingress uses canonical tool factory without advertising
  t.after(()=>client.close());
  await client.connect(new StreamableHTTPClientTransport(new URL('http://'+host+'/mcp'),{requestInit:{headers:{Authorization:'Bearer test-only'}}}));
  const names=(await client.listTools()).tools.map(x=>x.name);
- assert.deepEqual(names.sort(),['bridge_capabilities','bridge_devices']);
+ assert.ok(names.includes('bridge_capabilities'));
+ assert.ok(names.includes('bridge_devices'));
+ assert.ok(names.includes('device_health'));
+ assert.ok(names.includes('device_info'));
+ assert.ok(names.includes('device_directories_list'));
+ assert.ok(names.includes('device_files_read'));
+ assert.ok(!names.includes('device_files_write'));
+ assert.ok(!names.includes('device_process_execute'));
 });

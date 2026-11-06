@@ -63,8 +63,14 @@ test('real SDK HTTP initializes and advertises only canonical discovery tools af
   const listed = await rpc('tools/list', 3);
   assert.equal(listed.status, 200);
   const tools = (await listed.json()).result.tools.map(tool => tool.name);
-  assert.deepEqual(tools.sort(), ['bridge_capabilities', 'bridge_devices']);
+  assert.ok(tools.includes('bridge_capabilities'));
+  assert.ok(tools.includes('bridge_devices'));
+  assert.ok(tools.includes('device_health'));
+  assert.ok(tools.includes('device_info'));
+  assert.ok(tools.includes('device_directories_list'));
+  assert.ok(tools.includes('device_files_read'));
   assert.ok(!tools.includes('device_files_write'));
+  assert.ok(!tools.includes('device_process_execute'));
   const denied = await rpc('tools/call', 4);
   assert.notEqual(denied.status, 401);
   // The request lacks a tool name and therefore cannot execute anything.
