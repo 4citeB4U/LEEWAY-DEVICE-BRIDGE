@@ -150,6 +150,9 @@ jobs:
                   "note": "The Android app checks this manifest on foreground and reconnect, downloads the verified APK, and opens Android's owner-confirmed installer. It does not silently install or erase app data."
               }
           })
+          formula = package.setdefault("formulaQualification", {})
+          formula["measuredBytes"] = metadata["sizeBytes"]
+          formula["measuredSha256"] = metadata["sha256"]
           manifest["updatedAtUtc"] = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
           manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
           PY

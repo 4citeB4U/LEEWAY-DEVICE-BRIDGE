@@ -13,6 +13,9 @@ assert.equal(manifest.platformRoutes.ios.updateMode,"CHECK_PROMPT_AND_SIDESTORE"
 assert.equal(manifest.platformRoutes.linux.state,"SOURCE_ONLY");
 assert.ok(manifest.packages.some(p=>p.platform==="android"));
 assert.ok(manifest.packages.some(p=>p.platform==="ios"));
+const android=manifest.packages.find(p=>p.platform==="android");
+assert.equal(android.formulaQualification.measuredBytes,android.sizeBytes);
+assert.equal(android.formulaQualification.measuredSha256,android.sha256);
 assert.ok(manifest.packages.every(p=>p.nativeVerification===true));
 assert.ok(manifest.packages.every(p=>p.dockerRequired===false));
 
