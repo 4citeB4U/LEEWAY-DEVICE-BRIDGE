@@ -63,7 +63,7 @@ LICENSE: MIT
     <section class="db-panel db-downloads" id="dbDownloads"><h2><span class="db-symbol">⇩</span> Workstation Downloads <span class="db-caption">Existing release links only; complete Bridge + Runtime + Continuum + GPU + Tablet bundle not yet verified</span></h2>
       <div class="db-download-row">
         <article class="db-download-tile"><svg class="db-platform-icon" viewBox="0 0 24 24" aria-label="Windows logo" role="img"><path fill="#00a4ef" d="M1 4.2 10.5 2.9v8.4H1zm10.7-1.5L23 1v10.3H11.7zM1 12.5h9.5v8.6L1 19.8zm10.7 0H23V23l-11.3-1.6z"/></svg><strong>Windows Workstation</strong><a href="https://github.com/codespaces/new?hide_repo_select=true&amp;repo=1380304068" target="_blank" rel="noopener">Open Workstation</a><span class="db-unavailable">Native download not qualified on this page</span></article>
-        <article class="db-download-tile"><img class="db-platform-icon db-white-logo" src="https://cdn.jsdelivr.net/npm/simple-icons@15/icons/apple.svg" alt="Apple logo" loading="lazy"><strong>Apple Workstation</strong><a href="https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/tag/apple-latest" target="_blank" rel="noopener">Check Apple Release</a><span class="db-unavailable">No verified complete workstation bundle</span></article>
+        <article class="db-download-tile"><img class="db-platform-icon db-white-logo" src="https://cdn.jsdelivr.net/npm/simple-icons@15/icons/apple.svg" alt="Apple logo" loading="lazy"><strong>Apple iPhone / iPad</strong><a id="appleNativeDownload" data-apple-ipa-download href="https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/download/apple-latest/LeeWayDeviceBridge-unsigned.ipa" download="LeeWayDeviceBridge-unsigned.ipa">Download LeeWay Apple App (.IPA)</a><span class="db-unavailable" data-apple-package-status role="status">Official LeeWay native iOS IPA. Apple signing and approved installation are still required.</span></article>
         <article class="db-download-tile"><img class="db-platform-icon db-white-logo" src="https://cdn.jsdelivr.net/npm/simple-icons@15/icons/linux.svg" alt="Linux logo" loading="lazy"><strong>Linux Workstation</strong><a href="https://github.com/codespaces/new?hide_repo_select=true&amp;repo=1380304068" target="_blank" rel="noopener">Open Workstation</a><span class="db-unavailable">Native download not qualified on this page</span></article>
         <article class="db-download-tile"><svg class="db-platform-icon" viewBox="0 0 24 24" role="img" aria-label="Android logo"><g fill="#3ddc84"><path d="M5 9h14v10a2 2 0 0 1-2 2h-1v2h-2v-2H10v2H8v-2H7a2 2 0 0 1-2-2zM5 8a7 7 0 0 1 14 0z"/><rect x="2" y="9" width="2" height="10" rx="1"/><rect x="20" y="9" width="2" height="10" rx="1"/></g><path stroke="#3ddc84" stroke-width=".8" d="M7 1 9 4M17 1l-2 3"/><g fill="#062332"><circle cx="9" cy="6" r=".7"/><circle cx="15" cy="6" r=".7"/></g></svg><strong>Android Workstation</strong><a href="./downloads/leeway-device-bridge-android-latest-debug.apk" download>Download Extension</a><span class="db-unavailable">Native extension only — not a complete workstation bundle</span></article>
       </div>
@@ -100,8 +100,8 @@ LICENSE: MIT
     <article class="platform-card apple-card" id="appleLane">
       <p class="kicker">APPLE · IPHONE / IPAD / MAC</p><h2>Apple workspace and native Metal</h2>
       <p>Use the Home Screen app as the daily LeeWay front door. Use the native IPA only when direct Metal service is required.</p>
-      <div class="card-actions"><a class="action" href="https://github.com/codespaces/new?hide_repo_select=true&amp;repo=1380304068" target="_blank" rel="noopener">OPEN APPLE WORKSTATION</a><a class="action secondary" href="https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/tag/apple-latest" target="_blank" rel="noopener">OPEN APPLE PACKAGE</a></div>
-      <div class="card-links"><a href="#appleRuntime">Apple controls</a><a href="./APPLE-DIRECT-ILOADER-DELIVERY.md">Direct iLoader update</a><a href="./ILOADER-PERSISTENCE.md">iLoader saved setup</a></div>
+      <div class="card-actions"><a class="action" href="https://github.com/codespaces/new?hide_repo_select=true&amp;repo=1380304068" target="_blank" rel="noopener">OPEN APPLE WORKSTATION</a><a class="action secondary" data-apple-ipa-download href="https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/download/apple-latest/LeeWayDeviceBridge-unsigned.ipa" download="LeeWayDeviceBridge-unsigned.ipa">DOWNLOAD LEEWAY APP (.IPA)</a></div>
+      <div class="card-links"><a href="#appleRuntime">Apple controls</a><a href="https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/tag/apple-latest" target="_blank" rel="noopener">Release details</a><a href="./APPLE-DIRECT-ILOADER-DELIVERY.md">Direct iLoader update</a><a href="./ILOADER-PERSISTENCE.md">iLoader saved setup</a></div>
     </article>
     <article class="platform-card" id="androidLane">
       <p class="kicker">ANDROID · PHONE / TABLET</p><h2>Android workspace and native bridge</h2>
@@ -125,9 +125,9 @@ LICENSE: MIT
 
   <section class="panel" id="appleRuntime">
     <div class="panel-head"><div><p class="kicker">APPLE CONTROLS</p><h2>Use LeeWay on this Apple device</h2></div><span id="pwaState" class="badge">CHECKING</span></div>
-    <ol class="plain-steps"><li><strong>Daily LeeWay:</strong> launch the LeeWay icon from the iPhone Home Screen.</li><li><strong>Apple workstation:</strong> use <strong>OPEN APPLE WORKSTATION</strong> above when you need the editor, terminal, Git, or GitHub.</li><li><strong>Native Metal app:</strong> use <strong>OPEN APPLE PACKAGE</strong>, download the current IPA from GitHub, then import it through the existing iLoader installation.</li></ol>
+    <ol class="plain-steps"><li><strong>Daily LeeWay:</strong> launch the LeeWay icon from the iPhone Home Screen.</li><li><strong>Apple workstation:</strong> use <strong>OPEN APPLE WORKSTATION</strong> above when you need the editor, terminal, Git, or GitHub.</li><li><strong>Native Metal app:</strong> use <strong>DOWNLOAD LEEWAY APP (.IPA)</strong> to receive the actual LeeWay release file; verify its SHA-256, then use a trusted iLoader host to sign and install it on an approved iPhone or iPad.</li></ol>
     <div class="card-actions"><button class="action" id="installPwaBtn">SHOW APPLE APP STATUS</button><button class="action secondary" id="launchPwaBtn">REFRESH LEEWAY</button><button class="action secondary" id="beginAppleQualification">CHECK APPLE BROWSER</button></div>
-    <p id="pwaOutput" class="status-copy">Checking Apple Home Screen installation…</p>
+    <p id="pwaOutput" class="status-copy">Checking Apple Home Screen installation…</p><p class="package-meta" data-apple-package-status role="status">Checking the native LeeWay Apple package manifest. Downloading an unsigned IPA does not install it.</p>
     <div class="native-callout"><strong>Native Metal delivery:</strong> iLoader is the active Apple package installer. Keep <strong>Save Credentials</strong> checked, preserve the existing certificate and pairing record, and use <a href="./ILOADER-PERSISTENCE.md">the saved-setup guide</a>.</div>
   </section>
 
@@ -146,11 +146,12 @@ LICENSE: MIT
   </section>
 
   <section class="panel compact"><div class="panel-head"><div><p class="kicker">TECHNICAL INTERFACES</p><h2>Evidence and machine-readable contracts</h2></div><span class="badge">ON DEMAND</span></div><p class="muted">These records support engineering work. They are intentionally kept out of the daily platform controls.</p><p><a href="./llm-entrypoint.json">LLM entrypoint</a> · <a href="./provider-registry.json">Provider registry</a> · <a href="./runtime-contract.json">Runtime contract</a> · <a href="./DEVICE-OPERATOR.md">Platform architecture</a></p></section>
-  <section class="status-grid" aria-label="System state"><article><span>PAGES</span><strong id="pagesState">LIVE</strong></article><article><span>DISCOVERY</span><strong id="discoveryState">READY</strong></article><article><span>APPLE PACKAGE</span><strong>QUALIFIED</strong></article></section>
+  <section class="status-grid" aria-label="System state"><article><span>PAGES</span><strong id="pagesState">LIVE</strong></article><article><span>DISCOVERY</span><strong id="discoveryState">READY</strong></article><article><span>APPLE PACKAGE</span><strong id="applePackageVerifiedState">CHECKING</strong></article></section>
   <footer>LeeWay Standards · platform-specific execution requires platform-specific evidence · observed ≠ verified</footer>
 </details>
 </main>
 <script type="module" src="./app.js"></script>
+<script type="module" src="./apple-download.js"></script>
 <script type="module" src="./dashboard-ui.js"></script>
 </body>
 </html>
