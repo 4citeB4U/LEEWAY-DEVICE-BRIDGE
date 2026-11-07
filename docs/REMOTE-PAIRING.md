@@ -1,45 +1,24 @@
 # LeeWay Device Bridge Remote Pairing
 
-GitHub Pages remains the canonical discovery, configuration and package authority.
-The permanent online relay is transport-only and has no device execution authority.
+The Bridge manifest currently publishes no remote phone relay endpoint. The phone's
+local Device Bridge remains a separate capability; it does not imply that a cloud
+agent or remote client can reach it.
 
-## Phone
+## Current state
 
-1. Install the current Android package from the Pages package manifest.
-2. Open **LeeWay Device Bridge**.
-3. Tap **ENABLE LOCAL AGENT SESSION**.
-4. Tap **ENABLE ALWAYS-ON REMOTE BRIDGE**.
-5. Tap **SHOW PAIRING TOKEN** only when pairing a trusted client.
-6. Keep the foreground-service notification enabled for persistent reachability.
+- `docs/remote-relay.json` reports `relayUrl: null` and `relayDeployment: NOT_BOUND`.
+- The Android app clears a previously saved relay address when discovery returns no
+  approved endpoint, and reports `RELAY_ENDPOINT_UNBOUND` rather than reconnecting to
+  stale configuration.
+- Remote pairing, phone reachability, durable delivery, and remote capabilities are
+  therefore **NOT QUALIFIED** from this manifest.
 
-The phone reconnects automatically and restarts the remote messaging service after reboot
-when the owner has left the remote bridge enabled.
+## Binding a future remote endpoint
 
-## Client / LLM
+An owner-authorized LeeWay deployment must provide a WSS endpoint, its authentication
+and pairing contract, capability admission, and the canonical receipt route. A client
+may use that address only as an explicit deployment binding. The endpoint must not be
+embedded as a universal default in source, configuration, or onboarding scripts.
 
-A trusted client needs two owner-provided values:
-- the phone's LeeWay Device ID
-- the owner pairing token
-
-These values are not published by GitHub Pages.
-Connect to the relay URL from `remote-relay.json` and send:
-
-```json
-{"type":"hello","role":"client","deviceId":"<device-id>","token":"<owner-token>"}
-```
-
-After `hello-ack`, send a normalized capability:
-
-```json
-{"type":"command","id":"cmd-1","capability":"device.health","arguments":{}}
-```
-
-The relay only routes messages. The phone checks local Agent access and the
-RemoteCommandRouter capability allow-list before execution.
-
-## Current remote capability set
-
-Read/inference capabilities are qualified first:
-`device.health`, `device.info`, `device.capabilities`,
-`device.bluetooth.list-bonded`, `device.network.discover`,
-`device.receipts`, `model.status`, and `model.inference`.
+Until that binding is verified, omit relay devices from client configuration and use
+only locally available, individually authorized Device Bridge capabilities.

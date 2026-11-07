@@ -47,7 +47,7 @@ class RemoteRelayService : Service() {
     override fun onCreate() {
         super.onCreate()
         createChannel()
-        startAsForeground("Connecting to LeeWay relay")
+        startAsForeground("Checking owner-bound relay configuration")
         val workstation = WorkstationKeeper.ensure(this)
         ReceiptStore.record(
             this,
@@ -95,28 +95,51 @@ class RemoteRelayService : Service() {
 
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                openRelay(RemoteRelayState.relayUrl(this@RemoteRelayService))
+                RemoteRelayState.clearRelayUrl(this@RemoteRelayService)
+                connecting = false
+                RemoteRelayState.setConnection(this@RemoteRelayService, false, "RELAY_CONFIG_UNAVAILABLE")
+                updateNotification("Remote relay configuration unavailable")
+                scheduleReconnect()
             }
 
             override fun onResponse(call: Call, response: Response) {
-                response.use {
-                    val configured = runCatching {
-                        JSONObject(it.body?.string().orEmpty())
-                            .optString("relayUrl")
-                            .takeIf { url -> url.startsWith("wss://") }
+                val configured = response.use {
+                    if (!it.isSuccessful) return@use null
+                    runCatching {
+                        val value = JSONObject(it.body?.string().orEmpty()).opt("relayUrl")
+                        (value as? String)?.takeIf(String::isNotBlank)
                     }.getOrNull()
-                    if (!configured.isNullOrBlank()) {
-                        RemoteRelayState.setRelayUrl(this@RemoteRelayService, configured)
-                    }
+                }
+                if (configured.isNullOrBlank()) {
+                    RemoteRelayState.clearRelayUrl(this@RemoteRelayService)
+                    connecting = false
+                    RemoteRelayState.setConnection(this@RemoteRelayService, false, "RELAY_ENDPOINT_UNBOUND")
+                    updateNotification("Remote phone relay endpoint not bound")
+                    return
+                }
+                val accepted = runCatching {
+                    RemoteRelayState.setRelayUrl(this@RemoteRelayService, configured)
+                }.isSuccess
+                if (!accepted) {
+                    RemoteRelayState.clearRelayUrl(this@RemoteRelayService)
+                    connecting = false
+                    RemoteRelayState.setConnection(this@RemoteRelayService, false, "RELAY_ENDPOINT_INVALID")
+                    updateNotification("Remote phone relay endpoint invalid")
+                    return
                 }
                 openRelay(RemoteRelayState.relayUrl(this@RemoteRelayService))
             }
         })
     }
 
-    private fun openRelay(relayUrl: String) {
+    private fun openRelay(relayUrl: String?) {
         if (!RemoteRelayState.enabled(this)) {
             connecting = false
+            return
+        }
+        if (relayUrl.isNullOrBlank()) {
+            connecting = false
+            RemoteRelayState.setConnection(this, false, "RELAY_ENDPOINT_UNBOUND")
             return
         }
 
@@ -177,7 +200,7 @@ class RemoteRelayService : Service() {
                     this,
                     "device.remote.connect",
                     "PASS",
-                    "Permanent relay authenticated"
+                    "Owner-bound relay endpoint authenticated"
                 )
             }
             "command" -> executeRemoteCommand(ws, msg)

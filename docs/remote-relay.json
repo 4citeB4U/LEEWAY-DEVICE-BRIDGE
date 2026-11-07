@@ -1,11 +1,11 @@
 {
-  "schemaVersion": "0.1.0",
+  "schemaVersion": "0.2.0",
   "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
   "relayRole": "TRANSPORT_ONLY",
-  "relayUrl": "wss://agent-lee-x.vercel.app/api/device-relay",
-  "relaySource": "4citeB4U/AGENT_LEE_X/api/device-relay.ts",
-  "relayDeployment": "Vercel production durable relay",
-  "protocol": "LEEWAY_DEVICE_RELAY_TOKEN_ROOM_DURABLE_QUEUE_V2",
+  "relayUrl": null,
+  "relaySource": null,
+  "relayDeployment": "NOT_BOUND",
+  "protocol": "OWNER_BOUND_WEBSOCKET_RELAY",
   "phoneRole": "phone",
   "clientRole": "client",
   "requiresDeviceId": true,
@@ -13,27 +13,15 @@
   "phoneAutoReconnect": true,
   "phoneBootRestart": true,
   "relayAuthority": "NONE",
-  "remoteQualifiedCapabilities": [
-    "device.health",
-    "device.info",
-    "device.capabilities",
-    "device.bluetooth.list-bonded",
-    "device.network.discover",
-    "device.receipts",
-    "model.status",
-    "model.inference",
-    "voice.status",
-    "voice.speak",
-    "agent.chat"
-  ],
+  "remoteQualifiedCapabilities": [],
   "truthBoundary": {
-    "relaySourceBuild": "PASS",
-    "durableQueueRuntime": "PASS_SEND_THEN_RECEIVE",
-    "physicalFoldDurableReconnect": "PENDING_OWNER_RECONNECT_AND_TERMUX_E2E"
+    "relaySourceBuild": "SOURCE_ONLY",
+    "durableQueueRuntime": "NOT_VERIFIED",
+    "physicalPhoneDurableReconnect": "NOT_VERIFIED"
   },
   "formulaGate": "LW-F8_REQUIRED_QA69_EXECUTE_QA0_HOLD",
   "replayProtection": "COMMAND_ID_FIRST_SEEN_REQUIRED",
   "ownerStop": "DISABLES_AGENT_AUTHORITY_AND_REMOTE_RELAY",
-  "deliveryMode": "VERCEL_QUEUE_DURABLE_V1",
-  "volatileRoomState": false
+  "deliveryMode": "NOT_BOUND",
+  "volatileRoomState": null
 }

@@ -17,11 +17,17 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { createConfiguredBridge } from '../../apps/desktop/mcp-server.mjs';
+import { PhysicalAndroidAdapter, PhysicalAppleAdapter } from '../../operator/physical-adapters.mjs';
+
+test('physical USB adapters require an explicit device identity', () => {
+  assert.throws(() => new PhysicalAndroidAdapter(), /ANDROID_USB_SERIAL_REQUIRED/);
+  assert.throws(() => new PhysicalAppleAdapter(), /APPLE_USB_DEVICE_ID_REQUIRED/);
+});
 
 const galaxy = { id: 'fold6-usb-test', type: 'physical-android', platform: 'android', serial: 'TESTADB1234',
   grants: ['device.health', 'device.info', 'device.apps.list'] };
 const iphone = { id: 'iphone-usb-test', type: 'physical-apple', platform: 'ios',
-  hardwareId: '00008030000C718C0E33402E', grants: ['device.health', 'device.info'] };
+  hardwareId: '000000000000000000000000', grants: ['device.health', 'device.info'] };
 
 async function withConfig(devices, run) {
   const folder = await fs.mkdtemp(path.join(os.tmpdir(), 'leeway-physical-usb-'));

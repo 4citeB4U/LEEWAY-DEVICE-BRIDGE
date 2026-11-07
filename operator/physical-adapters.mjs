@@ -16,7 +16,10 @@ import { selectQualifiedAppleUsbDevice } from './physical-apple-usb.mjs';
 const execFileAsync = promisify(execFile);
 
 export class PhysicalAndroidAdapter {
-  constructor({ serial = "RFCX70LNT7X", timeoutMs = 15000 } = {}) {
+  constructor({ serial, timeoutMs = 15000 } = {}) {
+    if (typeof serial !== "string" || !/^[A-Za-z0-9._:-]{4,128}$/.test(serial)) {
+      throw new Error("ANDROID_USB_SERIAL_REQUIRED");
+    }
     this.serial = serial;
     this.timeoutMs = timeoutMs;
   }
@@ -77,7 +80,10 @@ export class PhysicalAndroidAdapter {
 }
 
 export class PhysicalAppleAdapter {
-  constructor({ deviceId = "00008030000C718C0E33402E", timeoutMs = 15000 } = {}) {
+  constructor({ deviceId, timeoutMs = 15000 } = {}) {
+    if (typeof deviceId !== "string" || !/^[0-9a-fA-F]{16,64}$/.test(deviceId)) {
+      throw new Error("APPLE_USB_DEVICE_ID_REQUIRED");
+    }
     this.deviceId = deviceId;
     this.timeoutMs = timeoutMs;
   }

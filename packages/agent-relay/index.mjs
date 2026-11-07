@@ -17,9 +17,11 @@ export function parseRemoteQualified(raw) {
 
 // Client adapter for the existing owner-token relay. No new relay/server authority.
 export class RelayAdapter {
-  constructor({ deviceId, token, url = 'wss://agent-lee-x.vercel.app/api/device-relay', timeoutMs = 30000, allowLoopbackTest = false }) {
+  constructor({ deviceId, token, url, timeoutMs = 30000, allowLoopbackTest = false } = {}) {
+    if (typeof url !== 'string' || !url.trim()) throw new Error('RELAY_URL_REQUIRED');
     const parsed = new URL(url);
     if (parsed.protocol !== 'wss:' && !(allowLoopbackTest && parsed.protocol === 'ws:' && ['127.0.0.1', '[::1]'].includes(parsed.hostname))) throw new Error('TLS_REQUIRED');
+    if (parsed.username || parsed.password || parsed.hash) throw new Error('RELAY_URL_CREDENTIALS_FORBIDDEN');
     if (!deviceId || !token) throw new Error('MISSING_RELAY_IDENTITY');
     Object.assign(this, { deviceId, token, url, timeoutMs });
   }

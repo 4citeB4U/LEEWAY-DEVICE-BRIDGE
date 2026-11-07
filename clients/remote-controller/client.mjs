@@ -1,20 +1,25 @@
 import WebSocket from "ws";
 import crypto from "node:crypto";
 
-const relay=process.env.LEEWAY_RELAY_URL ||
-  "wss://agent-lee-x.vercel.app/api/device-relay";
+const relay=process.env.LEEWAY_RELAY_URL;
 const deviceId=process.env.LEEWAY_DEVICE_ID;
 const token=process.env.LEEWAY_PAIRING_TOKEN;
 const capability=process.argv[2] || "device.health";
 const args=process.argv[3] ? JSON.parse(process.argv[3]) : {};
 
-if(!deviceId || !token){
-  console.error("LEEWAY_DEVICE_ID and LEEWAY_PAIRING_TOKEN are required.");
+if(!relay || !deviceId || !token){
+  console.error("LEEWAY_RELAY_URL, LEEWAY_DEVICE_ID and LEEWAY_PAIRING_TOKEN are required.");
+  process.exit(2);
+}
+let relayUrl;
+try { relayUrl=new URL(relay); } catch { console.error("LEEWAY_RELAY_URL is invalid."); process.exit(2); }
+if(relayUrl.protocol!=="wss:" || !relayUrl.hostname || relayUrl.username || relayUrl.password){
+  console.error("LEEWAY_RELAY_URL must be an owner-bound wss endpoint without embedded credentials.");
   process.exit(2);
 }
 
 const commandId=crypto.randomUUID();
-const ws=new WebSocket(relay);
+const ws=new WebSocket(relayUrl);
 const timer=setTimeout(()=>{
   console.error("Timed out waiting for Device Bridge result.");
   process.exit(3);

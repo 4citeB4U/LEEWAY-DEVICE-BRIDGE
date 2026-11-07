@@ -120,13 +120,13 @@ The latest Device Bridge Vercel production deployment `dpl_AyLynXVh7CfNff5va1nPw
 
 This confirms the public facade and existing owner-scoped info path after the latest release; it does not qualify health or full production operation. The configured upstream release and all independent Continuum/Formula/Veritas/receipt-admission gates remain open. No inference, GPU operation, mutation or service lifecycle action occurred.
 
-## 2026-11-06 10:47 America/Chicago (UTC−06:00) — Release-path investigation and rejected legacy relay
+## 2026-11-06 10:47 America/Chicago (UTC−06:00) — Release-path investigation and retired relay
 
-The canonical Runtime Vercel adapter fixture suite passed (`npm run test:vercel-device-bridge`; `status: PASS`). Its actual read-only live probe returned `BLOCKED`: configured `agent-lee-x` relay `/api/device-relay` and workstation `/api/device-workstation` both returned HTTP 404. The corresponding Vercel project is absent from the connected Vercel team inventory; GitHub did not return the referenced `Leeway-Digital-Employment-Center` source. Treat this route as unavailable legacy configuration, not as an alternate production upstream.
+The canonical Runtime adapter fixture suite passed. Its live read-only probe returned HTTP 404 for the relay and workstation paths on the retired deployment. The corresponding hosting project was absent from the connected team inventory, and its source repository could not be fetched. Treat those paths as unavailable historical configuration, not as an alternate production upstream.
 
 Hosting inventory found no accessible Render workspaces. The connected Railway account has one project, `heroic-tenderness`, whose only service is MySQL; it has no Device Bridge MCP runtime. No Tailscale management/deploy adapter is exposed. The active read-only Device Bridge connector still reaches `device.info`, while health reports `LEEWAY_BRIDGE_UPSTREAM_TOOL_NOT_REGISTERED`.
 
-**Recovery decision:** retain the existing configured Tailscale MCP upstream and the published source fix; do not substitute the stale agent-lee-x route, create a new service without the canonical native binding/source, or repurpose the Railway database project. Full qualification remains **BLOCKED at upstream lifecycle access**.
+**Recovery decision:** retain the existing configured Tailscale MCP upstream and the published source fix; do not substitute the retired route, create a new service without the canonical native binding/source, or repurpose the Railway database project. Full qualification remains **BLOCKED at upstream lifecycle access**.
 
 **Exact dependency to resume:** an authorized deploy/restart operation for the already configured upstream, or access to its canonical deploy project/repository and qualified owner-controlled release mechanism. After release, repeat health/info and continue Continuum, task Formula, independent Veritas, receipt and Learning Ledger gates. Evidence: Vercel adapter suite PASS; live relay/workstation probes HTTP 404; Render workspaces empty; Railway service inventory MySQL-only; Runtime health call still reports upstream health tool absent.
 

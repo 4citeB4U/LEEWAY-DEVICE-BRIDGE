@@ -9,10 +9,9 @@
 # HOW = Local health pre-gate, hidden token prompt, canonical remote controller, evidence bundle
 set -euo pipefail
 
-DEVICE_ID="${LEEWAY_DEVICE_ID:-f30a80a743592e7d9cbe4b3113ef896db30bd80434df0afcb8591c04dbb84861}"
-RELAY_URL="${LEEWAY_RELAY_URL:-wss://agent-lee-x.vercel.app/api/device-relay}"
-PINNED_SHA="81703f27bf6968909ef844863518bde73cde5323"
-BASE_RAW="https://raw.githubusercontent.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/${PINNED_SHA}"
+DEVICE_ID="${LEEWAY_DEVICE_ID:-}"
+RELAY_URL="${LEEWAY_RELAY_URL:-}"
+BASE_RAW=""
 WORK_ROOT="${HOME}/.leeway/device-bridge-controller"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 EVIDENCE_DIR="${HOME}/leeway-evidence/device-bridge-${STAMP}"
@@ -22,12 +21,25 @@ fail(){ printf '\n[LeeWay][FAIL] %s\n' "$*" >&2; exit 1; }
 
 say "Termux direct-phone qualification starting."
 say "No pairing token will be printed or written to the evidence files."
-
+if [ -z "$DEVICE_ID" ] || [ -z "$RELAY_URL" ]; then
+  fail "Set the owner-approved LEEWAY_DEVICE_ID and LEEWAY_RELAY_URL before remote qualification. No default device or relay is assumed."
+fi
 command -v curl >/dev/null 2>&1 || { say "Installing curl"; pkg install -y curl; }
 command -v node >/dev/null 2>&1 || { say "Installing Node.js"; pkg install -y nodejs; }
 command -v npm >/dev/null 2>&1 || fail "npm is unavailable after Node.js installation."
+node - "$RELAY_URL" <<'NODE_URL' || fail "LEEWAY_RELAY_URL must be a valid wss endpoint without embedded credentials."
+const u=new URL(process.argv[2]);
+if(u.protocol!=='wss:'||!u.hostname||u.username||u.password)process.exit(2);
+NODE_URL
 
 mkdir -p "$WORK_ROOT" "$EVIDENCE_DIR"
+
+PACKAGE_META_URL="https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/downloads/leeway-device-bridge-android-latest.json"
+PACKAGE_META="$(curl -fsSL --max-time 20 "$PACKAGE_META_URL" 2>/dev/null || true)"
+[ -n "$PACKAGE_META" ] || fail "The published Device Bridge package manifest is unavailable."
+SOURCE_COMMIT="$(node -e 'const m=JSON.parse(process.argv[1]);process.stdout.write(String(m.sourceCommit||""))' "$PACKAGE_META")"
+[[ "$SOURCE_COMMIT" =~ ^[0-9a-f]{40}$ ]] || fail "The published package manifest has no valid source commit binding."
+BASE_RAW="https://raw.githubusercontent.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/${SOURCE_COMMIT}"
 
 say "GATE 1 — checking phone-local Device Bridge loopback at 127.0.0.1:5323."
 LOCAL_HEALTH="$(curl -fsS --max-time 5 http://127.0.0.1:5323/health 2>/dev/null || true)"

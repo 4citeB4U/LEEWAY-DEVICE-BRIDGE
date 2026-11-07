@@ -240,6 +240,7 @@ test('existing relay wire contract, authentication failure, capability discovery
       }
     });
   });
+  assert.throws(() => new RelayAdapter({ deviceId: 'fold-test', token: 'test-owner-token' }), /RELAY_URL_REQUIRED/);
   const options = { deviceId: 'fold-test', token: 'test-owner-token', url: `ws://127.0.0.1:${server.address().port}`, allowLoopbackTest: true, timeoutMs: 500 };
   const relay = new RelayAdapter(options);
   assert.deepEqual(await relay.discover(), ['device.health', 'voice.speak']);

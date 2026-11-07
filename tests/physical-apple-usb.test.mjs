@@ -13,13 +13,13 @@ LICENSE: MIT
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {selectQualifiedAppleUsbDevice} from '../operator/physical-apple-usb.mjs';
-const serial='00008030000C718C0E33402E';
+const serial='000000000000000000000000';
 const record={Name:'Apple Mobile Device USB Composite Device',
  Manufacturer:'Apple, Inc.',Status:'OK',DeviceID:'USB\\VID_05AC&PID_12A8\\'+serial};
 test('exact Apple USB serial qualifies, not generic vendor',()=>{
  assert.equal(selectQualifiedAppleUsbDevice([record],serial),record);
- assert.equal(selectQualifiedAppleUsbDevice([record],'222222222222222222222222'),null);
- assert.equal(selectQualifiedAppleUsbDevice([{...record,DeviceID:'USB\\VID_05AC&PID_12A8\\222222222222222222222222'}],serial),null);
+ assert.equal(selectQualifiedAppleUsbDevice([record],'111111111111111111111111'),null);
+ assert.equal(selectQualifiedAppleUsbDevice([{...record,DeviceID:'USB\\VID_05AC&PID_12A8\\111111111111111111111111'}],serial),null);
 });
 test('Bluetooth and non-USB Apple devices are excluded',()=>{
  assert.equal(selectQualifiedAppleUsbDevice([{...record,DeviceID:'BTHLEDEVICE\\VID_05AC\\'+serial}],serial),null);

@@ -8,7 +8,7 @@ import WebSocket from "ws";
 const execFileAsync=promisify(execFile);
 const ROOT=process.env.LEEWAY_WORKSTATION_ROOT || path.join(os.homedir(),".leeway","workstation");
 const CREDS=JSON.parse(fs.readFileSync(path.join(ROOT,"credentials.json"),"utf8"));
-const RELAY=CREDS.relay || "wss://agent-lee-x.vercel.app/api/device-relay";
+const RELAY=CREDS.relay;
 const DEVICE_ID=CREDS.deviceId;
 const TOKEN=CREDS.token;
 const RECEIPTS=path.join(ROOT,"receipts.jsonl");
@@ -17,6 +17,14 @@ const MAX_OUTPUT=512*1024;
 const MAX_FILE=1024*1024;
 const MAX_TIMEOUT=120000;
 let reconnectMs=1000;
+
+if(typeof RELAY!=="string" || typeof DEVICE_ID!=="string" || typeof TOKEN!=="string"){
+  throw new Error("OWNER_BOUND_RELAY_CREDENTIALS_REQUIRED");
+}
+const RELAY_URL=new URL(RELAY);
+if(RELAY_URL.protocol!=="wss:" || !RELAY_URL.hostname || RELAY_URL.username || RELAY_URL.password){
+  throw new Error("OWNER_BOUND_WSS_RELAY_REQUIRED");
+}
 
 const insideAllowed=(p)=>{
   const resolved=path.resolve(p);
@@ -98,7 +106,7 @@ async function execute(capability,args){
   throw new Error("CAPABILITY_NOT_SUPPORTED");
 }
 function connect(){
-  const ws=new WebSocket(RELAY);
+  const ws=new WebSocket(RELAY_URL);
   ws.on("open",()=>{
     ws.send(JSON.stringify({type:"hello",role:"workstation",deviceId:DEVICE_ID,token:TOKEN}));
   });

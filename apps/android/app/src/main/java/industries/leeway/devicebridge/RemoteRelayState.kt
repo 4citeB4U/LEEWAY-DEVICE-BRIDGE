@@ -2,6 +2,7 @@ package industries.leeway.devicebridge
 
 import android.content.Context
 import org.json.JSONObject
+import java.net.URI
 
 object RemoteRelayState {
     private const val PREFS = "leeway_device_bridge"
@@ -11,8 +12,6 @@ object RemoteRelayState {
     private const val LAST = "remote_relay_last_event"
     const val CONFIG_URL =
         "https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/remote-relay.json"
-    const val DEFAULT_RELAY_URL =
-        "wss://agent-lee-x.vercel.app/api/device-relay"
 
     fun enabled(context: Context): Boolean =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -22,13 +21,33 @@ object RemoteRelayState {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .edit().putBoolean(ENABLED, enabled).apply()
     }
-    fun relayUrl(context: Context): String =
+    fun relayUrl(context: Context): String? =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getString(URL, DEFAULT_RELAY_URL) ?: DEFAULT_RELAY_URL
+            .getString(URL, null)
+            ?.takeIf(::isApprovedTransportUrl)
 
-    fun setRelayUrl(context: Context, url: String) {
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .edit().putString(URL, url).apply()
+    fun setRelayUrl(context: Context, url: String?) {
+        val preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val normalized = url?.trim()?.takeIf(String::isNotEmpty)
+        if (normalized == null) {
+            preferences.edit().remove(URL).apply()
+            return
+        }
+        require(isApprovedTransportUrl(normalized)) { "RELAY_URL_MUST_USE_WSS" }
+        preferences.edit().putString(URL, normalized).apply()
+    }
+
+    private fun isApprovedTransportUrl(url: String): Boolean = runCatching {
+        val parsed = URI(url)
+        parsed.scheme.equals("wss", ignoreCase = true) &&
+            !parsed.host.isNullOrBlank() &&
+            parsed.userInfo == null &&
+            parsed.rawQuery == null &&
+            parsed.fragment == null
+    }.getOrDefault(false)
+
+    fun clearRelayUrl(context: Context) {
+        setRelayUrl(context, null)
     }
 
     fun setConnection(context: Context, connected: Boolean, detail: String) {
@@ -45,7 +64,7 @@ object RemoteRelayState {
         return JSONObject().apply {
             put("enabled", prefs.getBoolean(ENABLED, false))
             put("connected", prefs.getBoolean(CONNECTED, false))
-            put("relayUrl", prefs.getString(URL, DEFAULT_RELAY_URL))
+            put("relayUrl", prefs.getString(URL, null)?.takeIf(::isApprovedTransportUrl))
             put("lastEvent", prefs.getString(LAST, "NOT_STARTED"))
             put("deviceId", identity.optString("deviceId"))
             put("pairingTokenProvisioned", BridgeSecret.ensure(context).isNotBlank())

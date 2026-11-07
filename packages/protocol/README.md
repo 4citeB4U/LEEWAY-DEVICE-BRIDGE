@@ -29,7 +29,7 @@ Install Node 22 or newer, then run `npm ci --ignore-scripts`. Make an owner-cont
       "type": "relay",
       "platform": "android",
       "tokenEnv": "LEEWAY_PAIRING_TOKEN",
-      "url": "wss://agent-lee-x.vercel.app/api/device-relay",
+      "url": "<owner-approved-wss-endpoint>",
       "grants": ["device.health", "model.status"]
     }
   ]
@@ -37,6 +37,8 @@ Install Node 22 or newer, then run `npm ci --ignore-scripts`. Make an owner-cont
 ```
 
 Trusted startup passes callbacks from its existing LeeWay owner adapters directly to the process API: `start(configPath, { admission, receiptSink })`. Here `admission` is the already-composed Runtime/C3 gate; or pass the existing `formulaPreGate` and `veritasPreGate` providers with `receiptSink` to have this host compose the canonical C3 gate. Device registry, adapter registry, trusted issuer registry, replay guard, and consent provider can be supplied by the same trusted host composition. These values are never read from request JSON or device configuration. The `receiptSink` must target the authorized durable LeeWay receipt provider for production. The local JSONL sink is a controller-observation fallback only and cannot qualify a production ledger.
+
+The relay URL is mandatory and must be supplied by an owner-approved deployment binding. The public discovery manifest currently has no remote relay endpoint bound; omit the relay device entry until that binding is qualified. Never substitute a workstation, historical hostname, or development host as a default.
 
 `platform` is an explicit adapter-registry identity. It is not inferred from `type`, the host operating system, or the device name. The portable schema accepts registered platform identifiers; C3 checks the owner-controlled adapter registry for the target capability. An absent or unregistered platform fails closed.
 

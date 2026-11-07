@@ -12,12 +12,13 @@
 set -uo pipefail
 
 PKG="industries.leeway.devicebridge"
-RELAY_URL="wss://agent-lee-x.vercel.app/api/device-relay"
+RELAY_URL="${LEEWAY_RELAY_URL:-}"
+REQUESTED_RELAY_URL="$RELAY_URL"
 WORK_ROOT="${HOME}/.leeway/device-bridge-one-pull"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 EVIDENCE_DIR="${HOME}/leeway-evidence/device-bridge-${STAMP}"
 NODE_CLIENT="${WORK_ROOT}/controller.mjs"
-TARGET_VERSION="0.9.0"
+TARGET_VERSION="${LEEWAY_TARGET_VERSION:-}"
 LATEST_META_URL="https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/downloads/leeway-device-bridge-android-latest.json"
 LATEST_APK_URL="https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/downloads/leeway-device-bridge-android-latest-debug.apk"
 RAW_META_URL="https://raw.githubusercontent.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/main/docs/downloads/leeway-device-bridge-android-latest.json"
@@ -81,7 +82,7 @@ install_latest_bridge(){
   printf '%s\n' "$meta" > "$EVIDENCE_DIR/latest-package.json"
   version="$(node -e 'const v=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));process.stdout.write(String(v.versionName||""))' "$EVIDENCE_DIR/latest-package.json")"
   sha="$(node -e 'const v=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));process.stdout.write(String(v.sha256||""))' "$EVIDENCE_DIR/latest-package.json")"
-  if [ "$version" != "$TARGET_VERSION" ] || [ -z "$sha" ]; then
+  if { [ -n "$TARGET_VERSION" ] && [ "$version" != "$TARGET_VERSION" ]; } || [ -z "$version" ] || [ -z "$sha" ]; then
     obs "GitHub Pages manifest is stale or incomplete; retrying from raw GitHub."
     meta="$(curl -fsSL --max-time 20 "$RAW_META_URL" 2>/dev/null || true)"
     [ -n "$meta" ] || { fail "Raw GitHub package metadata is unavailable."; return 1; }
@@ -89,10 +90,11 @@ install_latest_bridge(){
     version="$(node -e 'const v=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));process.stdout.write(String(v.versionName||""))' "$EVIDENCE_DIR/latest-package.json")"
     sha="$(node -e 'const v=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));process.stdout.write(String(v.sha256||""))' "$EVIDENCE_DIR/latest-package.json")"
   fi
-  if [ "$version" != "$TARGET_VERSION" ] || [ -z "$sha" ]; then
+  if { [ -n "$TARGET_VERSION" ] && [ "$version" != "$TARGET_VERSION" ]; } || [ -z "$version" ] || [ -z "$sha" ]; then
     fail "Neither Pages nor raw GitHub exposes the qualified $TARGET_VERSION package."
     return 1
   fi
+  if [ -z "$TARGET_VERSION" ]; then TARGET_VERSION="$version"; fi
   if ! curl -fL --max-time 240 "$LATEST_APK_URL" -o "$APK_FILE"; then
     obs "GitHub Pages APK not ready; falling back to raw GitHub."
     curl -fL --max-time 240 "$RAW_APK_URL" -o "$APK_FILE" || return 1
@@ -233,6 +235,16 @@ NODE_BOOTSTRAP
   fail "Owner bootstrap response was invalid."
   exit 6
 }
+
+if [ -n "$REQUESTED_RELAY_URL" ]; then
+  LEEWAY_RELAY_URL="$REQUESTED_RELAY_URL"
+fi
+if [ -z "${LEEWAY_RELAY_URL:-}" ]; then
+  blocked "No owner-approved remote relay endpoint is bound in the Device Bridge manifest or this session. Local app setup may complete, but remote qualification cannot continue."
+  unset LEEWAY_PAIRING_TOKEN
+  exit 20
+fi
+RELAY_URL="$LEEWAY_RELAY_URL"
 
 TOKEN_LEN=${#LEEWAY_PAIRING_TOKEN}
 if [ "$TOKEN_LEN" -lt 20 ] || [ "$TOKEN_LEN" -gt 256 ]; then

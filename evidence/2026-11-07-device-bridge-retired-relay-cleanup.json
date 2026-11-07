@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0.0",
+  "evidenceType": "DEVICE_BRIDGE_SOURCE_REPAIR_CHECKPOINT",
+  "observedAt": "2026-11-07T18:54:08Z",
+  "timezone": "America/Chicago",
+  "repository": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "baseCommit": "17182f84ac3ba35c63d7c59a0de988e06bc36c03",
+  "scope": [
+    "remove unowned relay defaults",
+    "require explicit physical USB device identity",
+    "clear stale Android relay configuration",
+    "correct current phone relay manifest status",
+    "remove obsolete repository workflow that writes execution results to source control"
+  ],
+  "sourceEvidence": {
+    "mcpSuite": {"command": "npm run test:mcp", "status": "PASS", "passed": 153, "failed": 0},
+    "cliSuite": {"command": "npm run test:cli", "status": "PASS", "passed": 7, "failed": 0},
+    "relaySourceContract": {"command": "node tests/remote-relay-source.test.mjs", "status": "PASS"},
+    "physicalUsbComposition": {"command": "node tests/mcp/physical-usb-composition.test.mjs", "status": "PASS", "passed": 4, "failed": 0},
+    "physicalAppleUsb": {"command": "node tests/physical-apple-usb.test.mjs", "status": "PASS", "passed": 3, "failed": 0},
+    "phoneWorkstationSource": {"command": "node tests/phone-workstation-desktop-commander-source.test.mjs", "status": "PASS"},
+    "jsonManifests": {"status": "PASS"},
+    "termuxShellSyntax": {"command": "bash -n on LF-normalized temporary copies", "status": "PASS"},
+    "diffCheck": {"command": "git diff --check", "status": "PASS"}
+  },
+  "liveDeviceRead": {
+    "status": "OBSERVED_LIMITED_DISCOVERY",
+    "devices": ["pc-primary"],
+    "identitySource": "REGISTRY_FALLBACK",
+    "identityVerified": false,
+    "state": "OBSERVED"
+  },
+  "qualification": {
+    "remotePhoneRelay": "NOT_BOUND",
+    "remotePhoneCapabilities": "NOT_QUALIFIED",
+    "androidPackageBuild": "PENDING_MAIN_PUSH_WORKFLOW",
+    "physicalPhoneOperation": "NOT_EXECUTED",
+    "productionConversation": "NOT_QUALIFIED",
+    "c3": "NOT_QUALIFIED",
+    "formula": "NOT_EVALUATED",
+    "independentVeritas": "NOT_RUN",
+    "continuumReceipt": "NOT_CREATED",
+    "learningLedger": "NOT_UPDATED"
+  },
+  "historicalEvidencePreserved": true,
+  "receiptAuthorityRecord": "NOT_CREATED"
+}
