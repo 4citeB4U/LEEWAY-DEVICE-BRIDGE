@@ -259,7 +259,8 @@ async fn perform(req: Request) -> Result<(), &'static str> {
     if !packages.contains_key(&expected_signed_id) {
         return Err("LEEWAY_SIGNED_BUNDLE_NOT_FOUND");
     }
-    event("POST_INSTALL", "LEEWAY_BUNDLE_PRESENT");
+    println!("{}", json!({"type":"leeway.apple.installer","stage":"POST_INSTALL","state":"LEEWAY_BUNDLE_PRESENT","signedBundleId":expected_signed_id}));
+    let _ = io::stdout().flush();
     // This is a host observation, not proof of launch, Metal operation, Formula or Veritas acceptance.
     Ok(())
 }
