@@ -72,3 +72,9 @@ The host also exposed an Android/Samsung ADB device and Apple USB/WPD entries du
 
 Bind the Vision provider into the intended active Device Bridge runtime composition, positively identify that running MCP server, and execute a real `vision.frames.observe` call that returns the native image block with a fresh receipt chain. Then qualify Android and Apple producers independently. Keep this checkpoint and its source/physical evidence; do not repeat passing tests without a source or runtime change.
 
+## Publication readback — 2026-11-07 10:35:07 America/Chicago (2026-11-07 16:35:07 UTC)
+
+The post-push Android workflow `42391789821` built, tested, measured, hashed, and uploaded the APK successfully. Its only failure was the final generated-artifact push, which lost a concurrent `main` update and was rejected by GitHub as `fetch first`; no Android build defect was observed. The workflow now has three guarded push attempts with `git fetch`, `git rebase`, and retry in `.github/workflows/android-build.yml`.
+
+The repair is published at Device Bridge `main` commit `345f3f9fa9784fae0659fa0a899738f3be91ae9f`, remote readback confirmed. Portable protocol/MCP passed on `f33763b7ba5d08179113bad8afa196475931c7f2`; Pages passed on `de32c5a02a645095ba71aebaf1388f1c368baeb3`. A fresh Android run for the guarded publication workflow is expected from the new CI commit; this checkpoint does not pre-label it successful.
+
