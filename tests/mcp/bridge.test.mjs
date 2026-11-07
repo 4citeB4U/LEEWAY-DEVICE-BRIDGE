@@ -128,6 +128,30 @@ test('Runtime card result with a mismatched hash or authority cannot reach the a
   assert.equal(records[0].outcome,'BLOCKED');
 });
 
+test('post-dispatch failure remains linked to admission and preserves only a stable adapter code', async () => {
+  const card={taskId:'failure-chain'};
+  const records=[];
+  const bridge=new Bridge([{id:'host',grants:['device.health'],adapter:{
+    discover:async()=>['device.health'],execute:async()=>{throw new Error('VOICE_FABRIC_HTTP_503');},
+  }}],{
+    complianceCardGate:async()=>({valid:true,cardHash:digest(card),authority:'LEEWAY_RUNTIME_FABRIC'}),
+    admission:async()=>true,
+    receiptSink:async receipt=>records.push(receipt),
+  });
+  const result=await bridge.call('host','device.health',{}, {complianceCard:card});
+  assert.equal(result.ok,false);
+  assert.equal(result.error,'VOICE_FABRIC_HTTP_503');
+  assert.equal(result.operationMayHaveExecuted,true);
+  assert.equal(records.length,2);
+  assert.equal(records[0].outcome,'ADMITTED');
+  assert.equal(records[0].operationMayHaveExecuted,false);
+  assert.equal(records[1].outcome,'FAILED');
+  assert.equal(records[1].operationMayHaveExecuted,true);
+  assert.equal(records[1].previousHash,records[0].sha256);
+  assert.equal(records[1].complianceCardStatus,'VALID');
+  for(const receipt of records){const{sha256,...body}=receipt;assert.equal(sha256,digest(body));}
+});
+
 test('trusted Runtime card provider is server-side and visible in operation receipts', async t => {
   const card = { taskId:'trusted-task', action:'service.health' };
   let providerContext;

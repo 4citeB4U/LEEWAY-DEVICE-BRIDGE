@@ -147,6 +147,7 @@ export class Bridge {
   }
   async call(deviceId, capability, args = {}, context = {}) {
     let value, error, outcome = 'BLOCKED';
+    let previousHash = null;
     let complianceCardValidation = null;
     const complianceCard = context && typeof context === 'object' ? context.complianceCard ?? null : null;
     try {
@@ -168,15 +169,16 @@ export class Bridge {
       // Durable pre-execution evidence failure prevents execution.
       const pre = receipt({ deviceId, capability, args, outcome: 'ADMITTED', complianceCard, complianceCardValidation });
       await this.receiptSink(pre);
+      previousHash = pre.sha256;
       outcome = 'FAILED';
       value = await d.adapter.execute(capability, args);
-      const post = receipt({ deviceId, capability, args, outcome: 'PASS', result: value, previousHash: pre.sha256, complianceCard, complianceCardValidation });
+      const post = receipt({ deviceId, capability, args, outcome: 'PASS', result: value, previousHash, complianceCard, complianceCardValidation });
       await this.receiptSink(post);
       return { ok: true, operationMayHaveExecuted: true, result: value, receipt: post };
     } catch (e) {
       // Do not include arbitrary upstream error text, prompts or filesystem paths in audit records.
-      error = /^[A-Z_]+$/.test(e.message) ? e.message : 'ADAPTER_OR_VALIDATION_FAILURE';
-      const evidence = receipt({ deviceId, capability, args, outcome, error, complianceCard, complianceCardValidation });
+      error = /^[A-Z][A-Z0-9_]{0,127}$/.test(e.message) ? e.message : 'ADAPTER_OR_VALIDATION_FAILURE';
+      const evidence = receipt({ deviceId, capability, args, outcome, error, previousHash, complianceCard, complianceCardValidation });
       try { await this.receiptSink(evidence); } catch { return { ok: false, error: 'RECEIPT_WRITE_FAILED', operationMayHaveExecuted: outcome === 'FAILED', receipt: evidence }; }
       return { ok: false, error, operationMayHaveExecuted: outcome === 'FAILED', receipt: evidence };
     }
