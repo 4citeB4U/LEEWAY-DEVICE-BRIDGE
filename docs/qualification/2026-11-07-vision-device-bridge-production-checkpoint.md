@@ -182,3 +182,16 @@ The Creator reported that the iPhone Camera had been opened and requested one mo
 
 Push this change to Device Bridge `main`; wait for the GitHub macOS Apple qualification and SideStore publication workflows; download the published IPA and manifest; install/sign through the owner-controlled Apple route; open the app, grant Camera and Local Network permission, start **Host Camera Bridge**, enroll the displayed endpoint and token in the owner-controlled Bridge configuration, and execute `vision.sources.list` → `vision.session.start` → advancing `vision.frames.observe` → `vision.session.stop` with independent receipt verification. Until that physical readback exists, the Apple and three-platform production gates remain **NOT FULLY QUALIFIED**.
 
+## Apple GitHub build and publication readback — 2026-11-07 13:57:17 America/Chicago (2026-11-07 19:57:17 UTC)
+
+The source was pushed to Device Bridge `main` at `71ba32caab8368ee9f9b5e1e47319d40486cfc16`; local `HEAD` and `origin/main` match, and the worktree is clean.
+
+- Initial qualification run `42408297213` failed during XcodeGen because the new generated Info.plist declaration lacked its required `info.path`. The failure was read from the GitHub job log, repaired in `apps/apple/project.yml`, and not treated as a successful build.
+- The corrected Apple Device Bridge Qualification run `42408536653` passed: source/package tests, XcodeGen, macOS Swift compilation, unsigned iPhone build, IPA packaging, and artifact upload.
+- The dependent Publish Apple SideStore Update Channel run `42408631944` passed.
+- The `apple-latest` release assets are present and uploaded: `LeeWayDeviceBridge-unsigned.ipa`, `LEEWAY-APPLE-PACKAGE-MANIFEST.json`, and `sidestore-source.json`.
+- The published manifest records version `0.1.48`, build `48`, `signingState: UNSIGNED_OWNER_CONTROLLED_SIGNING_REQUIRED`, `nativeCameraService: INCLUDED`, `nativeCameraTransport: INCLUDED`, and source revision `71ba32caab8368ee9f9b5e1e47319d40486cfc16`.
+- Downloaded IPA SHA-256: `e7d2075ed6d8bbe71242e54f2ae011f03222fe37ecdbdcfcce0b5344f018339d`; it matches the published manifest and GitHub release asset digest.
+
+This closes the source, macOS build, package, and GitHub publication gates. It does not close owner signing/install, iPhone permission, local-network pairing, live advancing-frame, physical-stop, independent receipt verification, Formula/Veritas, or any-LLM production gates. The next exact action is owner installation from the published release, followed by the paired Bridge `vision.*` session readback described above.
+
