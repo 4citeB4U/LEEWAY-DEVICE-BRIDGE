@@ -1,4 +1,4 @@
-const CACHE = "leeway-device-bridge-v19-update-channel";
+const CACHE = "leeway-device-bridge-v20-direct-apple-ipa";
 const ASSETS = [
   "./",
   "./index.html",
@@ -8,6 +8,7 @@ const ASSETS = [
   "./dashboard-ui.js",
   "./apple-pwa.css",
   "./app.js",
+  "./apple-download.js",
   "./apple-pwa-diagnostics.js",
   "./icons/leeway-official-logo-512.png",
   "./icons/leeway-official-logo-192.png",
