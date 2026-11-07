@@ -105,6 +105,12 @@ export const schemas = Object.freeze({
   }).strict(),
   'voice.status': empty,
   'voice.speak': z.object({ text: z.string().min(1).max(4096) }).strict(),
+  'vision.sources.list': z.object({ clientId: z.string().min(1).max(128) }).strict(),
+  'vision.session.start': z.object({ clientId: z.string().min(1).max(128), deviceId: z.string().min(1).max(128), physicalSensorId: z.string().min(1).max(128) }).strict(),
+  'vision.frames.observe': z.object({ clientId: z.string().min(1).max(128), sessionId: z.string().min(1).max(128) }).strict(),
+  'vision.scene.describe': z.object({ clientId: z.string().min(1).max(128), sessionId: z.string().min(1).max(128) }).strict(),
+  'vision.objects.detect': z.object({ clientId: z.string().min(1).max(128), sessionId: z.string().min(1).max(128) }).strict(),
+  'vision.session.stop': z.object({ clientId: z.string().min(1).max(128), sessionId: z.string().min(1).max(128) }).strict(),
 });
 
 export function canonical(value) {
