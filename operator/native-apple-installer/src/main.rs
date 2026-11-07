@@ -13,7 +13,7 @@ LICENSE = MIT; the upstream isideload and idevice libraries retain their origina
 */
 use std::{
     fs::{self, File},
-    io::{self, Read, Write},
+    io::{self, IsTerminal, Read, Write},
     path::Path,
     sync::{OnceLock, atomic::{AtomicBool, Ordering}},
     time::Duration,
@@ -313,6 +313,19 @@ async fn main() {
         }
         eprintln!("UNKNOWN_NATIVE_INSTALLER_COMMAND");
         std::process::exit(2);
+    }
+    // A customer opening the executable in an actual terminal gets the local
+    // LeeWay installer. A Bridge-spawned process with piped stdin stays in the
+    // existing private structured IPC lane.
+    if io::stdin().is_terminal() && io::stderr().is_terminal() {
+        match interactive::run(None).await {
+            Ok(()) => eprintln!("LeeWay signed app observed on the selected phone; physical launch remains a separate gate."),
+            Err(code) => {
+                eprintln!("LeeWay installer stopped: {code}");
+                std::process::exit(1);
+            }
+        }
+        return;
     }
     let outcome = match bounded_line(REQUEST_LIMIT) {
         None => Err("INSTALL_REQUEST_MISSING_OR_OVERSIZED"),
