@@ -1,0 +1,126 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.DEVICE_BRIDGE.APPLE_INSTALLER_DISTRIBUTION
+# TAG: LEEWAY.APPLE_FIRST_PARTY_HOST_INSTALLER_RELEASE
+# 5WH:
+# WHAT = Release first-party Windows/macOS/Linux Apple installation hosts after source qualification.
+# WHY = Customers download a real LeeWay installer, never another GitHub project landing page.
+# WHO = Owner-authorized LeeWay GitHub Actions publisher.
+# WHERE = .github/workflows/apple-native-installer-release.yml.
+# WHEN = 2026-11-07.
+# HOW = Main-only qualifying CI, three exact-SHA measured binaries and release manifest.
+# LICENSE = MIT; upstream vendors retain their license attribution.
+name: Publish LeeWay Apple Native Host Installer
+concurrency:
+  group: leeway-device-bridge-package-publication
+  cancel-in-progress: false
+on:
+  workflow_run:
+    workflows: ["Apple Native Installer Source Qualification"]
+    types: [completed]
+permissions:
+  actions: read
+  contents: write
+jobs:
+  publish:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: \${{ github.token }}
+      QUALIFYING_RUN_ID: \${{ github.event.workflow_run.id }}
+      QUALIFYING_SOURCE_SHA: \${{ github.event.workflow_run.head_sha }}
+      RELEASE_TAG: apple-installer-latest
+    steps:
+      - name: Check out canonical main
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Download qualified three-OS host archives
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh run download "$QUALIFYING_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --pattern 'leeway-apple-installer-*' --dir package
+      - name: Check exact source revision and every native archive hash
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib,shutil
+          root=pathlib.Path("package")
+          out=pathlib.Path("publish");out.mkdir(exist_ok=True)
+          assets={}
+          for platform,ext in [("windows",".zip"),("macos",".tar.gz"),("linux",".tar.gz")]:
+              name="LeeWay-Apple-Installer-"+platform
+              archives=list(root.rglob(name+ext))
+              metadata=list(root.rglob(name+".sha256.json"))
+              if len(archives)!=1 or len(metadata)!=1:
+                  raise SystemExit("APPLE_HOST_ASSET_MISSING_OR_DUPLICATE_"+platform)
+              source=json.loads(metadata[0].read_text())
+              archive=archives[0]
+              measured=hashlib.sha256(archive.read_bytes()).hexdigest()
+              if (source.get("sourceSha")!=os.environ["QUALIFYING_SOURCE_SHA"] or
+                  source.get("platform")!=platform or
+                  source.get("archiveSha256")!=measured or
+                  source.get("archiveBytes")!=archive.stat().st_size):
+                  raise SystemExit("APPLE_HOST_ASSET_MEASUREMENT_FAILED_"+platform)
+              shutil.copy2(archive,out/archive.name)
+              assets[platform]={
+                  "url":"https://github.com/"+os.environ["GITHUB_REPOSITORY"]+"/releases/download/"+os.environ["RELEASE_TAG"]+"/"+archive.name,
+                  "sha256":measured,"sizeBytes":archive.stat().st_size,
+                  "binarySha256":source["binarySha256"]
+              }
+          (out/"assets.json").write_text(json.dumps(assets,indent=2)+"\n")
+          print("PASS exact three-platform archive hashes, sizes, qualifying revision")
+          PY
+      - name: Publish LeeWay host binaries as prerelease
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+              --title "LeeWay Apple Native Installer" --prerelease \
+              --notes "LeeWay host installer for personal Apple Account sideloading. Free accounts need no paid membership or App Store Connect. Native physical installation and independent Veritas remain separate qualification gates."
+          fi
+          gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --clobber \
+            publish/LeeWay-Apple-Installer-windows.zip \
+            publish/LeeWay-Apple-Installer-macos.tar.gz \
+            publish/LeeWay-Apple-Installer-linux.tar.gz
+      - name: Publish official host installer downloads to the Apple tile
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,os,pathlib
+          filename=pathlib.Path("docs/package-manifest.json")
+          manifest=json.loads(filename.read_text())
+          product=manifest.get("appleInstallerDistribution")
+          if (manifest.get("authority")!="4citeB4U/LEEWAY-DEVICE-BRIDGE" or
+              not isinstance(product,dict) or product.get("releaseTag")!="apple-installer-latest"):
+              raise SystemExit("APPLE_INSTALLER_MANIFEST_AUTHORITY_MISMATCH")
+          product.update({
+              "state":"PUBLISHED",
+              "releaseUrl":"https://github.com/"+os.environ["GITHUB_REPOSITORY"]+"/releases/tag/"+os.environ["RELEASE_TAG"],
+              "sourceRevision":os.environ["QUALIFYING_SOURCE_SHA"],
+              "qualificationRunId":int(os.environ["QUALIFYING_RUN_ID"]),
+              "qualification":"CI_COMPILED_PHYSICAL_VERITAS_PENDING",
+              "assets":json.loads(pathlib.Path("publish/assets.json").read_text())
+          })
+          filename.write_text(json.dumps(manifest,indent=2)+"\n")
+          PY
+          git config user.name "LeeWay Device Bridge Release"
+          git config user.email "actions@users.noreply.github.com"
+          git add docs/package-manifest.json
+          if git diff --cached --quiet; then echo "Manifest unchanged";exit 0; fi
+          git commit -m "Publish measured first-party LeeWay Apple host installer binaries"
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then exit 0; fi
+            if [ "$attempt" -eq 3 ]; then exit 1; fi
+            git fetch origin main
+            git rebase origin/main
+          done
