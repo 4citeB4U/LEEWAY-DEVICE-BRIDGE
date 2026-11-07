@@ -10,6 +10,7 @@ LeeWay Device Bridge keeps one portable capability contract while selecting the 
 | --- | --- | --- | --- |
 | `device.gpu.metal.probe` | Native Metal command/readback | Native Metal command/readback | iPhone local result and hash-bound receipt observed; independent verification pending. |
 | `device.apps.leeway.action` | App Intent and App Shortcut invoke a LeeWay-owned action | Same App Intents pattern where packaged | iPhone source implemented; physical Shortcut discovery pending. |
+| `device.camera` | Native owner-started AVFoundation capture plus an owner-started token-authenticated local TCP transport; bounded JPEG and local receipt | Not implemented in this iPhone adapter | Source transport implemented; owner pairing, live iPhone frame, physical STOP, and independent verification pending. |
 | `device.communications.call` | `tel:` handoff to Phone; user completes or cancels | `tel:`/FaceTime/system-handler handoff as supported | iPhone source implemented; no call has been placed. |
 | `device.communications.email` | `mailto:` handoff to configured mail handler; user reviews and sends | `mailto:`/Mail handoff | iPhone source implemented; no email has been sent. |
 | `device.ui.pointer.cross-app` | No ordinary-app API | AXUIElement after owner grants Accessibility | iPhone unavailable; macOS adapter not yet implemented. |
@@ -48,6 +49,8 @@ The Apple A13 GPU remains the physical Metal provider. LeeWay Device Bridge does
 
 1. Build the revised unsigned IPA on the GitHub macOS runner.
 2. Install it through the existing owner-controlled iPhone route.
-3. Launch the app once, then confirm **Run LeeWay Metal Probe** appears in the Shortcuts app and produces a new local receipt.
-4. Exercise Phone and Mail only with owner-chosen test destinations, then record the native handoff result without claiming call completion or email delivery from the request alone.
-5. Implement the separate macOS Device Bridge adapter with Accessibility and Screen Recording consent checks before claiming Mac control or observation.
+3. Launch the app, grant Camera and Local Network permission, start the host camera transport, and enroll its displayed endpoint/token in the owner-controlled Bridge configuration.
+4. Execute `vision.sources.list`, `vision.session.start`, an advancing `vision.frames.observe`, and `vision.session.stop` through the intended active Bridge, then independently verify the receipt chain.
+5. Confirm **Run LeeWay Metal Probe** appears in the Shortcuts app and produces a new local receipt.
+6. Exercise Phone and Mail only with owner-chosen test destinations, then record the native handoff result without claiming call completion or email delivery from the request alone.
+7. Implement the separate macOS Device Bridge adapter with Accessibility and Screen Recording consent checks before claiming Mac control or observation.

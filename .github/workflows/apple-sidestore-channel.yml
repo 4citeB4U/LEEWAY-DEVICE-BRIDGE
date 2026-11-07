@@ -70,7 +70,7 @@ jobs:
                   "name": "LeeWay Device Bridge",
                   "bundleIdentifier": manifest["bundleIdentifier"],
                   "developerName": "LeeWay Industries",
-                  "localizedDescription": "LeeWay-owned native Apple Device Bridge with Metal diagnostics and governed system entry points. External Formula and Veritas authority remain separate.",
+                  "localizedDescription": "LeeWay-owned native Apple Device Bridge with Metal diagnostics, owner-started camera capture, and governed system entry points. External Formula and Veritas authority remain separate.",
                   "iconURL": "https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/icons/leeway-official-logo-512.png",
                   "version": version,
                   "versionDate": now,

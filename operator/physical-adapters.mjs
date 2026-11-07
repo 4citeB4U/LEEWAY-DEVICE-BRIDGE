@@ -10,6 +10,7 @@ WHY: Clean separation of physical adapter drivers from admission and governance.
 LICENSE: MIT
 */
 import { execFile } from "node:child_process";
+import net from "node:net";
 import { promisify } from "node:util";
 import { selectQualifiedAppleUsbDevice } from './physical-apple-usb.mjs';
 
@@ -80,16 +81,24 @@ export class PhysicalAndroidAdapter {
 }
 
 export class PhysicalAppleAdapter {
-  constructor({ deviceId, timeoutMs = 15000 } = {}) {
+  constructor({ deviceId, cameraEndpoint = null, cameraToken = null, timeoutMs = 15000 } = {}) {
     if (typeof deviceId !== "string" || !/^[0-9a-fA-F]{16,64}$/.test(deviceId)) {
       throw new Error("APPLE_USB_DEVICE_ID_REQUIRED");
     }
     this.deviceId = deviceId;
     this.timeoutMs = timeoutMs;
+    if ((cameraEndpoint && !cameraToken) || (!cameraEndpoint && cameraToken)) {
+      throw new Error("APPLE_CAMERA_PAIRING_REQUIRED");
+    }
+    this.cameraTransport = cameraEndpoint ? new AppleCameraTransport({ endpoint: cameraEndpoint, token: cameraToken, timeoutMs }) : null;
   }
 
   async discover() {
-    return ["device.info", "device.health"];
+    const capabilities = ["device.info", "device.health"];
+    if (this.cameraTransport) {
+      capabilities.push("vision.sources.list", "vision.session.start", "vision.frames.observe", "vision.session.stop");
+    }
+    return capabilities;
   }
 
   async execute(capability, args = {}) {
@@ -133,6 +142,62 @@ export class PhysicalAppleAdapter {
       };
     }
 
+    if (capability.startsWith("vision.")) {
+      if (!this.cameraTransport) throw new Error("APPLE_CAMERA_TRANSPORT_NOT_CONFIGURED");
+      const response = await this.cameraTransport.request(capability, args);
+      if (response.ok !== true) throw new Error(response.error || "APPLE_CAMERA_REQUEST_FAILED");
+      return response.result ?? {};
+    }
+
     throw new Error("CAPABILITY_UNAVAILABLE: " + capability);
+  }
+}
+
+/**
+ * Small, owner-bound client for the iOS native camera provider. The endpoint
+ * and token are deployment bindings supplied outside the repository; there is
+ * no default relay, host, or credential.
+ */
+export class AppleCameraTransport {
+  constructor({ endpoint, token, timeoutMs = 15000 } = {}) {
+    let parsed;
+    try { parsed = new URL(endpoint); } catch { throw new Error("APPLE_CAMERA_ENDPOINT_INVALID"); }
+    if (parsed.protocol !== "tcp:" || !parsed.hostname || !parsed.port) throw new Error("APPLE_CAMERA_ENDPOINT_INVALID");
+    if (typeof token !== "string" || !/^[A-Za-z0-9_-]{32,128}$/.test(token)) throw new Error("APPLE_CAMERA_TOKEN_REQUIRED");
+    this.endpoint = parsed;
+    this.token = token;
+    this.timeoutMs = timeoutMs;
+  }
+
+  request(operation, argumentsValue = {}) {
+    const payload = JSON.stringify({ version: 1, operation, token: this.token, arguments: argumentsValue }) + "\n";
+    return new Promise((resolve, reject) => {
+      const socket = net.createConnection({ host: this.endpoint.hostname, port: Number(this.endpoint.port) });
+      let buffer = Buffer.alloc(0);
+      let settled = false;
+      const finish = (error, value) => {
+        if (settled) return;
+        settled = true;
+        socket.destroy();
+        if (error) reject(error); else resolve(value);
+      };
+      socket.setTimeout(this.timeoutMs, () => finish(new Error("APPLE_CAMERA_TRANSPORT_TIMEOUT")));
+      socket.once("error", () => finish(new Error("APPLE_CAMERA_TRANSPORT_UNREACHABLE")));
+      socket.on("data", chunk => {
+        buffer = Buffer.concat([buffer, chunk]);
+        if (buffer.length > 16 * 1024 * 1024) return finish(new Error("APPLE_CAMERA_RESPONSE_TOO_LARGE"));
+        const newline = buffer.indexOf(0x0a);
+        if (newline < 0) return;
+        const line = buffer.subarray(0, newline).toString("utf8");
+        try {
+          const response = JSON.parse(line);
+          if (!response || typeof response !== "object") throw new Error();
+          finish(null, response);
+        } catch {
+          finish(new Error("APPLE_CAMERA_RESPONSE_INVALID"));
+        }
+      });
+      socket.once("connect", () => socket.write(payload));
+    });
   }
 }

@@ -131,6 +131,10 @@ const deviceSchema = z.object({
   platform: z.string().min(1).max(64).optional(),
   workspace: z.string().optional(), skillsRoot: z.string().max(2048).optional(), voiceEndpoint: z.string().url().optional(), tokenEnv: z.string().regex(/^[A-Z][A-Z0-9_]*$/).optional(),
   url: z.string().url().optional(),
+  // Apple camera transport is an explicit local-network pairing, never a
+  // default endpoint or a credential embedded in the device entry.
+  cameraEndpoint: z.string().regex(/^tcp:\/\/[^\s/:]+(?::\d{1,5})$/).optional(),
+  cameraTokenEnv: z.string().regex(/^[A-Z][A-Z0-9_]*$/).optional(),
   // Explicit owner-enrolled USB identity; never rely on a built-in device serial default.
   serial: z.string().regex(/^[A-Za-z0-9._:-]{4,128}$/).optional(),
   hardwareId: z.string().regex(/^[0-9a-fA-F]{16,64}$/).optional(),
@@ -140,6 +144,7 @@ const deviceSchema = z.object({
     if (device.platform !== 'android' || !device.serial || device.hardwareId || device.url || device.workspace || device.tokenEnv) invalid('ANDROID_USB_EXPLICIT_IDENTITY_REQUIRED');
   } else if (device.type === 'physical-apple') {
     if (device.platform !== 'ios' || !device.hardwareId || device.serial || device.url || device.workspace || device.tokenEnv) invalid('APPLE_USB_EXPLICIT_IDENTITY_REQUIRED');
+    if ((device.cameraEndpoint && !device.cameraTokenEnv) || (!device.cameraEndpoint && device.cameraTokenEnv)) invalid('APPLE_CAMERA_PAIRING_REQUIRED');
   } else if (device.serial || device.hardwareId) {
     invalid('PHYSICAL_USB_FIELDS_NOT_ALLOWED');
   }
@@ -186,7 +191,11 @@ export async function createConfiguredBridge(configPath, runtimeInput = null) {
     } else if (d.type === 'physical-android') {
       adapter = new PhysicalAndroidAdapter({ serial: d.serial });
     } else if (d.type === 'physical-apple') {
-      adapter = new PhysicalAppleAdapter({ deviceId: d.hardwareId });
+      adapter = new PhysicalAppleAdapter({
+        deviceId: d.hardwareId,
+        cameraEndpoint: d.cameraEndpoint || null,
+        cameraToken: d.cameraTokenEnv ? process.env[d.cameraTokenEnv] : null,
+      });
     } else {
       adapter = new RelayAdapter({ deviceId: d.id, url: d.url, token: d.tokenEnv ? process.env[d.tokenEnv] : undefined });
     }

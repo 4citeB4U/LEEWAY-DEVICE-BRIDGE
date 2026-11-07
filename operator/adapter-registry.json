@@ -119,6 +119,11 @@
         "device.apps.install": {
           "state": "BLOCKED",
           "requiresHumanConsent": true
+        },
+        "device.camera": {
+          "state": "PARTIAL",
+          "requiresHumanConsent": true,
+          "notes": "Native AVFoundation provider and token-authenticated local TCP transport are implemented. Owner pairing, live frame progression, physical stop, and independent verification remain required."
         }
       },
       "evidenceState": "UNVERIFIED",

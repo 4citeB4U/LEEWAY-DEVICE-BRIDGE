@@ -18,6 +18,8 @@ final class AppleBridgeStore: ObservableObject {
 
 struct AppleDeviceBridgeView: View {
     @StateObject private var store = AppleBridgeStore()
+    @StateObject private var camera = AppleCameraCapture()
+    @StateObject private var cameraBridge = AppleCameraBridgeServer()
     @Environment(\.openURL) private var openURL
     @State private var phoneNumber = ""
     @State private var emailRecipient = ""
@@ -51,6 +53,55 @@ struct AppleDeviceBridgeView: View {
                     } else {
                         LabeledContent("State", value: "NOT_CREATED")
                         Text("A receipt is issued only after this app observes a Metal probe result. External verification remains separate.")
+                    }
+                }
+                Section("Native camera provider") {
+                    if camera.isRunning {
+                        AppleCameraPreview(session: camera.session)
+                            .frame(height: 240)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                    LabeledContent("State", value: camera.isRunning ? "RUNNING" : "STOPPED")
+                    LabeledContent("Position", value: camera.activePosition == .back ? "Back" : "Front")
+                    if let frame = camera.latestFrame {
+                        LabeledContent("Frame", value: "\(frame.frameNumber) · \(frame.width)x\(frame.height)")
+                        Text("JPEG SHA-256: \(frame.sha256)")
+                            .font(.footnote.monospaced())
+                            .textSelection(.enabled)
+                    }
+                    if let receipt = camera.latestReceipt {
+                        Text("Latest \(receipt.operation) receipt: \(receipt.receiptHash)")
+                            .font(.footnote.monospaced())
+                            .textSelection(.enabled)
+                    }
+                    if let errorMessage = camera.errorMessage {
+                        Text(errorMessage).foregroundStyle(.red)
+                    }
+                    Button(camera.isRunning ? "Stop Camera" : "Open Camera") {
+                        if camera.isRunning { camera.stop() } else { camera.requestAccessAndStart() }
+                    }
+                    if camera.isRunning {
+                        Button("Flip Camera") { camera.flipCamera() }
+                    }
+                    Text("Capture is owner-started and local to this LeeWay app. Host streaming requires a separately paired Device Bridge transport.")
+                        .font(.footnote)
+                    Divider()
+                    LabeledContent("Host transport", value: cameraBridge.isRunning ? "RUNNING" : "STOPPED")
+                    if cameraBridge.isRunning {
+                        Text(cameraBridge.endpointLabel)
+                            .font(.footnote.monospaced())
+                            .textSelection(.enabled)
+                        Text("Pairing token: \(cameraBridge.pairingToken)")
+                            .font(.footnote.monospaced())
+                            .textSelection(.enabled)
+                        Text("Use this exact endpoint and token in the owner-controlled Device Bridge configuration. Keep the token private.")
+                            .font(.footnote)
+                    }
+                    if let transportError = cameraBridge.errorMessage {
+                        Text(transportError).foregroundStyle(.red)
+                    }
+                    Button(cameraBridge.isRunning ? "Stop Host Camera Bridge" : "Start Host Camera Bridge") {
+                        if cameraBridge.isRunning { cameraBridge.stop() } else { cameraBridge.start(camera: camera) }
                     }
                 }
                 Section("Agent Lee system entry points") {
@@ -105,6 +156,10 @@ struct AppleDeviceBridgeView: View {
                 }
             }
             .navigationTitle("LeeWay Device")
+            .onDisappear {
+                cameraBridge.stop()
+                camera.stop()
+            }
         }
     }
 }

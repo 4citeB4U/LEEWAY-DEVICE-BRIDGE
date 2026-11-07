@@ -141,3 +141,44 @@ The Creator reported that the iPhone Camera had been opened and requested one mo
 
 **Retry outcome:** **BLOCKED — no Bridge-open or iPhone-frame evidence was produced.** The physical Camera app may be open on the phone, but the active LeeWay Device Bridge still has no authorized Apple app-launch, screen-observation, or iOS camera producer route. This retry does not change the three-platform gate.
 
+## Apple package and camera transport implementation checkpoint — 2026-11-07 13:51:13 America/Chicago (2026-11-07 19:51:13 UTC)
+
+**Requested gate:** Update the Apple Device Bridge source and GitHub publication path so the owner can download the revised package, install it on the iPhone, pair the native camera provider to the Device Bridge, and then qualify a real camera session.
+
+### Implemented source
+
+- Added `apps/apple/Sources/AppleCameraCapture.swift`: owner-started AVFoundation front/back camera capture, bounded JPEG frames (8 MiB maximum), SHA-256 frame hashes, and local `vision.session.start`, `vision.frames.observe`, and `vision.session.stop` receipts.
+- Added `apps/apple/Sources/AppleCameraBridgeServer.swift`: owner-started local TCP listener with Bonjour service `_leeway-camera._tcp`, per-installation pairing token, bounded newline-delimited JSON protocol, and only the four explicit `vision.*` operations.
+- Added the Apple host client to `operator/physical-adapters.mjs`. `PhysicalAppleAdapter` advertises the four Vision routes only when an explicit `tcp://` endpoint and an environment-backed 32–128 character token are paired. No endpoint or credential is embedded as a default.
+- Extended the owner configuration contract in `apps/desktop/mcp-server.mjs` with `cameraEndpoint` and `cameraTokenEnv`; added the `device.camera` partial capability state to `operator/adapter-registry.json`.
+- Updated the Apple package manifest/schema, camera permission and local-network/Bonjour metadata, capability route documentation, and GitHub qualification/SideStore publication descriptions.
+
+### Executed source evidence
+
+- Apple source, transport, package, and checkpoint tests: **16 passed, 0 failed**.
+- `npm run test:mcp`: **153 passed, 0 failed**.
+- `npm run test:cli`: **7 passed, 0 failed**.
+- `node --test tests/physical-apple-usb.test.mjs`: **3 passed, 0 failed**.
+- Modified JSON manifests parsed successfully; `git diff --check` passed.
+- The transport test performed a real localhost TCP request/response and verified the exact token-authenticated envelope. This is source/host transport evidence, not iPhone evidence.
+
+### Capability and evidence state
+
+| Boundary | Configured | Running | Executed | Verified | Production-ready |
+|---|---:|---:|---:|---:|---:|
+| Apple native camera source | yes | no physical iPhone readback | source tests | source-qualified | platform gate pending |
+| Apple authenticated host transport | yes | localhost test only | localhost test | source-qualified | physical pairing pending |
+| GitHub Apple IPA workflow | yes | not run on this Windows host | not yet | not yet | pending macOS workflow |
+| Installed/trusted iPhone package | no readback | no readback | no | no | no |
+| Live iPhone `vision.frames.observe` through active Bridge | route implemented | no | no | no | no |
+
+### Accepted and rejected decisions
+
+- Accepted: the download channel remains the existing `apple-latest` release, containing `LeeWayDeviceBridge-unsigned.ipa`, `LEEWAY-APPLE-PACKAGE-MANIFEST.json`, and `sidestore-source.json` after the successful macOS qualification workflow and publication workflow.
+- Accepted: installation remains owner-controlled through the existing Apple signing path, including the owner’s SideStore/iLoader route; a GitHub download is not treated as an installed or trusted iPhone app.
+- Rejected: USB/WPD presence, a local Swift source test, a passing GitHub source test, or a generated IPA will be treated as proof of a running iPhone camera, host pairing, advancing frame, physical stop, Formula approval, Veritas approval, or autonomous any-LLM production readiness.
+
+### Next executable action
+
+Push this change to Device Bridge `main`; wait for the GitHub macOS Apple qualification and SideStore publication workflows; download the published IPA and manifest; install/sign through the owner-controlled Apple route; open the app, grant Camera and Local Network permission, start **Host Camera Bridge**, enroll the displayed endpoint and token in the owner-controlled Bridge configuration, and execute `vision.sources.list` → `vision.session.start` → advancing `vision.frames.observe` → `vision.session.stop` with independent receipt verification. Until that physical readback exists, the Apple and three-platform production gates remain **NOT FULLY QUALIFIED**.
+

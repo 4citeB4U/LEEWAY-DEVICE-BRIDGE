@@ -12,6 +12,8 @@ test("Apple native package template preserves native and governance boundaries",
   assert.equal(manifest.adapterId, "leeway.operator.ios");
   assert.equal(manifest.components.deviceBridge, "INCLUDED");
   assert.equal(manifest.components.nativeMetalService, "INCLUDED");
+  assert.equal(manifest.components.nativeCameraService, "INCLUDED");
+  assert.equal(manifest.components.nativeCameraTransport, "INCLUDED");
   assert.equal(manifest.components.agentLeeRuntime, "RUNTIME_NOT_INSTALLED");
   assert.equal(manifest.components.formula, "EXTERNAL_AUTHORITY_REQUIRED");
   assert.equal(manifest.components.veritas, "EXTERNAL_AUTHORITY_REQUIRED");
@@ -32,4 +34,5 @@ test("Apple qualification artifact carries the generated package manifest", () =
   assert.match(workflow, /LEEWAY-APPLE-PACKAGE-MANIFEST\.json/);
   assert.match(workflow, /shasum -a 256/);
   assert.match(workflow, /Payload\/LeeWayDeviceBridge\.app/);
+  assert.match(workflow, /apps\/apple\/Sources/);
 });

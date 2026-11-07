@@ -5,13 +5,21 @@ on:
     paths:
       - "apps/apple/**"
       - "operator/adapter-registry.json"
+      - "operator/physical-adapters.mjs"
+      - "apps/desktop/mcp-server.mjs"
+      - "tests/apple-camera-transport.test.mjs"
       - "docs/APPLE-DEVICE-BRIDGE-ADAPTER.md"
+      - "docs/APPLE-CAMERA-PROVIDER.md"
       - ".github/workflows/apple-device-bridge-qualification.yml"
   pull_request:
     paths:
       - "apps/apple/**"
       - "operator/adapter-registry.json"
+      - "operator/physical-adapters.mjs"
+      - "apps/desktop/mcp-server.mjs"
+      - "tests/apple-camera-transport.test.mjs"
       - "docs/APPLE-DEVICE-BRIDGE-ADAPTER.md"
+      - "docs/APPLE-CAMERA-PROVIDER.md"
       - ".github/workflows/apple-device-bridge-qualification.yml"
   workflow_dispatch:
 
@@ -25,6 +33,15 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+
+      - name: Run Apple source and package contract tests
+        run: |
+          set -euo pipefail
+          node --test \
+            tests/apple-agent-capability-source.test.mjs \
+            tests/apple-camera-provider-source.test.mjs \
+            tests/apple-camera-transport.test.mjs \
+            tests/apple-native-package-contract.test.mjs
 
       - name: Record Apple build toolchain
         run: |
