@@ -19,6 +19,7 @@ on:
       - 'docs/apple-download.js'
       - 'tests/apple-direct-download.test.mjs'
       - 'tests/apple-storefront-routing.test.mjs'
+      - 'tests/apple-native-host-distribution.test.mjs'
       - 'tests/apple-identity-exchange.test.mjs'
       - 'operator/identity/apple-session-exchange.mjs'
       - 'tests/apple-github-iloader-update-channel.test.mjs'
@@ -36,6 +37,7 @@ on:
       - 'docs/apple-download.js'
       - 'tests/apple-direct-download.test.mjs'
       - 'tests/apple-storefront-routing.test.mjs'
+      - 'tests/apple-native-host-distribution.test.mjs'
       - 'tests/apple-identity-exchange.test.mjs'
       - 'operator/identity/apple-session-exchange.mjs'
       - 'tests/apple-github-iloader-update-channel.test.mjs'
@@ -63,6 +65,6 @@ jobs:
           node --check operator/identity/apple-session-exchange.mjs
           node --check operator/installation-adapter.mjs
       - name: Run Device Console source acceptance
-        run: node --test tests/device-dashboard-ui.test.mjs tests/apple-direct-download.test.mjs tests/apple-storefront-routing.test.mjs tests/apple-github-iloader-update-channel.test.mjs tests/apple-identity-exchange.test.mjs tests/installation-adapter.test.mjs
+        run: node --test tests/device-dashboard-ui.test.mjs tests/apple-direct-download.test.mjs tests/apple-storefront-routing.test.mjs tests/apple-native-host-distribution.test.mjs tests/apple-github-iloader-update-channel.test.mjs tests/apple-identity-exchange.test.mjs tests/installation-adapter.test.mjs
       - name: Preserve existing Apple PWA behavior
         run: node tests/apple-pwa-source.test.mjs
