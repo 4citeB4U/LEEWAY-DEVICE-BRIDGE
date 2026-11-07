@@ -30,6 +30,8 @@ targets:
         INFOPLIST_KEY_NSCameraUsageDescription: "LeeWay Device Bridge uses the iPhone camera only after you open and authorize the native camera provider."
         # Unbound builds cannot exchange Apple credentials or claim a LeeWay session.
         INFOPLIST_KEY_LEEWAY_APPLE_IDENTITY_EXCHANGE_ENDPOINT: "$(LEEWAY_APPLE_IDENTITY_EXCHANGE_ENDPOINT)"
+        # Developer IPA and App Store builds must never share the same update controls.
+        INFOPLIST_KEY_LEEWAY_APPLE_DISTRIBUTION_CHANNEL: developer-ipa
         TARGETED_DEVICE_FAMILY: "1,2"
         SUPPORTS_MACCATALYST: NO
     info:
