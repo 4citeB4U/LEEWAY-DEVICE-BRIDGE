@@ -3,10 +3,10 @@
 # REGION: DEVICE.PHONE.ONE_PULL
 # TAG: DEVICE.LEEWAY.TERMUX.ONEPULL
 # 5WH:
-# WHAT = Single-run Termux qualification controller for LeeWay Device Bridge on the Galaxy Fold
+# WHAT = Single-run Termux qualification controller for LeeWay Device Bridge on a supported Android device
 # WHY = Eliminate PC dependency and multi-command setup while preserving owner authority
 # WHO = LeeWay Industries / Agent Lee / Creator
-# WHERE = Termux -> production Device Bridge relay -> phone-local runtime
+# WHERE = Android Termux -> owner-bound Device Bridge relay -> phone-local runtime
 # WHEN = 2026-09-28
 # HOW = self-install dependencies, capability-detect Device Bridge, one-time local owner bootstrap, durable relay campaign, evidence
 set -uo pipefail
@@ -30,6 +30,50 @@ pass(){ printf '[LeeWay][PASS] %s\n' "$*"; }
 obs(){ printf '[LeeWay][OBSERVED] %s\n' "$*"; }
 blocked(){ printf '[LeeWay][BLOCKED] %s\n' "$*"; }
 fail(){ printf '[LeeWay][FAIL] %s\n' "$*" >&2; }
+
+BOOTSTRAP_PARSE_JS="$(cat <<'NODE_BOOTSTRAP_PARSE'
+let body = "";
+process.stdin.setEncoding("utf8");
+process.stdin.on("data", chunk => { body += chunk; });
+process.stdin.on("end", () => {
+  const reject = code => { process.exitCode = code; };
+  let value;
+  try { value = JSON.parse(body); } catch { return reject(20); }
+  if (!value || value.ok !== true) return reject(21);
+
+  const token = value.pairingToken;
+  const deviceId = value.deviceId;
+  if (typeof token !== "string" || !/^[A-Za-z0-9_-]{32,128}$/.test(token)) {
+    return reject(22);
+  }
+  if (typeof deviceId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/.test(deviceId)) {
+    return reject(23);
+  }
+
+  let relayUrl = "";
+  if (value.relayUrl !== null && value.relayUrl !== undefined) {
+    if (typeof value.relayUrl !== "string" || /[\u0000-\u001f\u007f]/.test(value.relayUrl)) {
+      return reject(24);
+    }
+    relayUrl = value.relayUrl;
+  }
+  if (relayUrl) {
+    let parsed;
+    try { parsed = new URL(relayUrl); } catch { return reject(25); }
+    if (parsed.protocol !== "wss:" || !parsed.hostname || parsed.username || parsed.password || parsed.search || parsed.hash) {
+      return reject(26);
+    }
+  }
+
+  const encode = text => Buffer.from(text, "utf8").toString("base64") || "_";
+  process.stdout.write([token, deviceId, relayUrl].map(encode).join("\n"));
+});
+NODE_BOOTSTRAP_PARSE
+)"
+
+decode_bootstrap_field(){
+  printf '%s' "$1" | node -e 'let encoded="";process.stdin.setEncoding("utf8");process.stdin.on("data",chunk=>encoded+=chunk);process.stdin.on("end",()=>{if(encoded==="_")return;const bytes=Buffer.from(encoded,"base64");const value=bytes.toString("utf8");if(bytes.toString("base64")!==encoded||/[\u0000-\u001f\u007f]/.test(value)){process.exitCode=2;return;}process.stdout.write(value);});'
+}
 
 mkdir -p "$WORK_ROOT" "$EVIDENCE_DIR"
 chmod 700 "$WORK_ROOT"
@@ -59,11 +103,16 @@ probe_owner_bootstrap(){
   for i in $(seq 1 24); do
     body="$(curl -fsS --max-time 2 "http://127.0.0.1:5323/owner-bootstrap?nonce=$nonce" 2>/dev/null || true)"
     if [ -n "$body" ]; then
-      printf '%s\n' "$body"
-      return 0
+      if printf '%s' "$body" | node -e "$BOOTSTRAP_PARSE_JS" >/dev/null; then
+        unset body nonce
+        return 0
+      fi
+      unset body nonce
+      return 1
     fi
     sleep 0.5
   done
+  unset nonce
   return 1
 }
 
@@ -153,10 +202,8 @@ install_latest_bridge(){
   return 1
 }
 
-if BOOTSTRAP_PRECHECK="$(probe_owner_bootstrap 2>/dev/null)"; then
+if probe_owner_bootstrap 2>/dev/null; then
   pass "Device Bridge owner-bootstrap capability already live; package reinstall skipped."
-  printf '%s\n' "$BOOTSTRAP_PRECHECK" > "$EVIDENCE_DIR/bootstrap-precheck.json"
-  unset BOOTSTRAP_PRECHECK
 else
   obs "Owner-bootstrap capability is not live yet; installing verified Device Bridge $TARGET_VERSION."
   install_latest_bridge || exit 5
@@ -220,21 +267,25 @@ if [ -z "$BOOTSTRAP_JSON" ]; then
   exit 6
 fi
 
-printf '%s\n' "$BOOTSTRAP_JSON" > "$EVIDENCE_DIR/owner-bootstrap.json"
-
-eval "$(node - "$EVIDENCE_DIR/owner-bootstrap.json" <<'NODE_BOOTSTRAP'
-const fs=require('fs');
-const v=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
-if(v.ok!==true) process.exit(20);
-const q=s=>JSON.stringify(String(s||""));
-console.log("LEEWAY_PAIRING_TOKEN="+q(v.pairingToken));
-console.log("LEEWAY_DEVICE_ID="+q(v.deviceId));
-console.log("LEEWAY_RELAY_URL="+q(v.relayUrl));
-NODE_BOOTSTRAP
-)" || {
+if ! BOOTSTRAP_FIELDS_RAW="$(printf '%s' "$BOOTSTRAP_JSON" | node -e "$BOOTSTRAP_PARSE_JS")"; then
   fail "Owner bootstrap response was invalid."
+  unset BOOTSTRAP_JSON BOOTSTRAP_FIELDS_RAW
   exit 6
-}
+fi
+mapfile -t BOOTSTRAP_FIELDS <<< "$BOOTSTRAP_FIELDS_RAW"
+if [ "${#BOOTSTRAP_FIELDS[@]}" -ne 3 ]; then
+  fail "Owner bootstrap response did not contain the required fields."
+  unset BOOTSTRAP_JSON BOOTSTRAP_FIELDS_RAW BOOTSTRAP_FIELDS
+  exit 6
+fi
+if ! LEEWAY_PAIRING_TOKEN="$(decode_bootstrap_field "${BOOTSTRAP_FIELDS[0]}")" || \
+   ! LEEWAY_DEVICE_ID="$(decode_bootstrap_field "${BOOTSTRAP_FIELDS[1]}")" || \
+   ! LEEWAY_RELAY_URL="$(decode_bootstrap_field "${BOOTSTRAP_FIELDS[2]}")"; then
+  fail "Owner bootstrap fields could not be decoded safely."
+  unset BOOTSTRAP_JSON BOOTSTRAP_FIELDS_RAW BOOTSTRAP_FIELDS LEEWAY_PAIRING_TOKEN
+  exit 6
+fi
+unset BOOTSTRAP_JSON BOOTSTRAP_FIELDS_RAW BOOTSTRAP_FIELDS
 
 if [ -n "$REQUESTED_RELAY_URL" ]; then
   LEEWAY_RELAY_URL="$REQUESTED_RELAY_URL"
@@ -458,7 +509,7 @@ NODE_CONTROLLER
   npm install --ignore-scripts --no-audit --no-fund >/dev/null 2>&1
 ) || { fail "Could not install the local WebSocket controller dependency."; unset LEEWAY_PAIRING_TOKEN; exit 7; }
 
-export LEEWAY_DEVICE_ID="$DEVICE_ID"
+export LEEWAY_DEVICE_ID
 export LEEWAY_RELAY_URL="$RELAY_URL"
 export LEEWAY_EVIDENCE_DIR="$EVIDENCE_DIR"
 export LEEWAY_PAIRING_TOKEN

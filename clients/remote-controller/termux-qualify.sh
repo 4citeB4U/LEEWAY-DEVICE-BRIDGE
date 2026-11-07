@@ -5,7 +5,7 @@
 # WHAT = Phone-local + remote Device Bridge qualification from Termux
 # WHY = Prove the Fold execution path without requiring the PC or exposing the owner token to chat
 # WHO = LeeWay Industries / Agent Lee / Creator
-# WHERE = Galaxy Fold Termux -> Device Bridge loopback + production relay
+# WHERE = Android Termux -> Device Bridge loopback + owner-bound relay
 # HOW = Local health pre-gate, hidden token prompt, canonical remote controller, evidence bundle
 set -euo pipefail
 

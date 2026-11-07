@@ -42,6 +42,47 @@
     "continuumReceipt": "NOT_CREATED",
     "learningLedger": "NOT_UPDATED"
   },
+  "followUp": {
+    "observedAt": "2026-11-07T19:14:05Z",
+    "baseCommit": "1a0b37c9edabd8a54be3c27370f3c425c9679742",
+    "priorMainWorkflow": {
+      "runId": 42403668977,
+      "status": "FAILED",
+      "failedBefore": "ANDROID_SDK_AND_GRADLE",
+      "cause": "STALE_TEST_REQUIRED_REMOVED_FIXED_PACKAGE_VERSION",
+      "apkPublished": false
+    },
+    "sourceRepair": [
+      "owner-bootstrap response is parsed in memory and is no longer written to evidence files",
+      "shell eval of server-provided values removed",
+      "device identity export preserves the parsed logical identity",
+      "Termux adapter descriptions no longer bind the capability to one phone model",
+      "package-version test now follows the published manifest contract"
+    ],
+    "localEvidence": {
+      "remoteRelaySourceContract": "PASS",
+      "embeddedBootstrapParserPositiveAndNegativeFixtures": "PASS",
+      "mcpSuite": {"status": "PASS", "passed": 153, "failed": 0},
+      "cliSuite": {"status": "PASS", "passed": 7, "failed": 0},
+      "bashSyntaxLfNormalized": "PASS",
+      "diffCheck": "PASS",
+      "followUpMainWorkflow": "PENDING"
+    },
+    "liveDeviceRead": {
+      "status": "OBSERVED_LIMITED_DISCOVERY",
+      "devices": ["pc-primary"],
+      "identitySource": "REGISTRY_FALLBACK",
+      "identityVerified": false,
+      "phoneSideHistoricalBootstrapFiles": "NOT_INSPECTED_UNREACHABLE"
+    },
+    "receiptAuthority": "SOURCE_CANDIDATE_NOT_PRODUCTION_QUALIFIED",
+    "receiptCreated": false,
+    "learningLedgerUpdated": false,
+    "formulaTaskEvaluation": "NOT_EXECUTED",
+    "independentVeritas": "NOT_RUN",
+    "productionConversation": "NOT_QUALIFIED",
+    "c3": "NOT_QUALIFIED"
+  },
   "historicalEvidencePreserved": true,
   "receiptAuthorityRecord": "NOT_CREATED"
 }
