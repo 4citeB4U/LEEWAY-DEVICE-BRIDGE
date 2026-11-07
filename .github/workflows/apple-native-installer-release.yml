@@ -30,9 +30,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      GH_TOKEN: \${{ github.token }}
-      QUALIFYING_RUN_ID: \${{ github.event.workflow_run.id }}
-      QUALIFYING_SOURCE_SHA: \${{ github.event.workflow_run.head_sha }}
+      GH_TOKEN: ${{ github.token }}
+      QUALIFYING_RUN_ID: ${{ github.event.workflow_run.id }}
+      QUALIFYING_SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
       RELEASE_TAG: apple-installer-latest
     steps:
       - name: Check out canonical main
