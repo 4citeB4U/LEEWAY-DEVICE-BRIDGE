@@ -6,6 +6,7 @@
   "authority": "Creator-authorized Device Bridge source maintenance",
   "repository": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
   "baseCommit": "1aceb2418805f4ce7ff411c4ee2e54e4e5a8bc19",
+  "publishedCommit": "408c9bc66a600d1bac3d25c25e3ad89f73f84639",
   "workingBranch": "codex/windows-composer-contract-20261107",
   "scope": "Deliver the LeeWay agent operating contract through the canonical MCP initialize path and the authenticated public Vercel MCP forwarder.",
   "directiveSha256": "E8F3EE957A868A5AA147324178C01A731680A45CE58CE0826D5D30E6D5C627EA",
@@ -31,7 +32,7 @@
     "validate": "PASS_SOURCE",
     "repair": "PASS",
     "retest": "PASS",
-    "verify": "BLOCKED_ON_PUBLICATION_AND_LIVE_CLIENT_READBACK",
+    "verify": "BLOCKED_ON_AUTHENTICATED_CLIENT_READBACK",
     "evidence": "EVIDENCED",
     "checkpoint": "VERIFIED_READBACK",
     "continue": "IN_PROGRESS"
@@ -51,10 +52,20 @@
     "Fresh authenticated initialize readback from ChatGPT, Gemini and Antigravity is not yet verified.",
     "Active local host composition points to a separate dirty checkout with a source hash mismatch; it was preserved and not changed."
   ],
+  "publication": {
+    "verifiedAt": "2026-11-07T11:44:09-06:00",
+    "mainReadback": "408c9bc66a600d1bac3d25c25e3ad89f73f84639",
+    "githubCombinedStatus": "VERCEL_SUCCESS",
+    "vercelDeploymentId": "dpl_4GdPhTayi5DTsBWbBYSo3nKnZu47",
+    "vercelTarget": "production",
+    "vercelState": "READY",
+    "deploymentCommit": "408c9bc66a600d1bac3d25c25e3ad89f73f84639",
+    "authenticatedClientInitializeReadback": "NOT_PERFORMED"
+  },
   "receipt": "NOT_CREATED",
   "formula": "NOT_EVALUATED",
   "veritas": "NOT_RUN",
   "continuumAdmission": "NOT_EXECUTED",
   "learningLedger": "NOT_UPDATED",
-  "nextAction": "Publish to canonical main, verify GitHub and Vercel for the exact commit, then inspect public initialization and reconcile the local source binding safely."
+  "nextAction": "Perform an authenticated initialize/tools-list readback through an owner-approved client binding, then reconcile the stale local source pin without overwriting its dirty checkout."
 }
