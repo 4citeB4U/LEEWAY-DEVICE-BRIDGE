@@ -452,3 +452,5 @@ Evidence AGAINST production: Apple Developer Program enrollment, owner signing m
 
 The 12-stage engineering checkpoint with both successful and failed test evidence lives in `docs/qualification/2026-11-07-apple-consumer-and-native-installation.md`. Machine-readable evidence and exact boundaries are in `evidence/installation/2026-11-07-apple-consumer-native-delivery.json`. Keep PR #95 draft until the owner-controlled Apple, Runtime identity, physical device, and independent governance gates are actually satisfied.
 
+
+**2026-11-07 follow-up:** Android Build [42421658159](https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/actions/runs/42421658159) passed on `2c3b324c60b39c9ecf0fce698ac2f22dc3ce8e7b` after the Apple update-source assertion repair. This is an Android source/build recovery, not proof of Apple App Store installation, physical execution or independent Veritas.
