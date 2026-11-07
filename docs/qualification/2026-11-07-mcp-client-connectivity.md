@@ -64,6 +64,17 @@ Official references: [MCP TypeScript SDK transport guidance](https://ts.sdk.mode
 5. **Promote actions independently.** UI input, filesystem mutation, process control, voice and inference each require their own capability grant and Formula/Veritas/receipt evidence. The active Bridge still reports `uiControl:false`; the new Windows composer source is not installed on the live host.
 6. **Keep agent messaging separate from device execution.** MCP gives each model tool access; it does not mirror the other model’s chat or create an inter-agent conversation. The old `device-relay` source path is recorded as returning 404 in the prior production-readiness checkpoint. Do not substitute shell dispatch. A replacement relay must be a LeeWay-owned, authenticated message capability with recipient binding, correlation IDs, content limits, consent, response capture and receipts.
 
+## Follow-up: proposed direct Node stdio config — not qualified
+
+The suggested Antigravity entry that runs `node apps/desktop/mcp-server.mjs` directly is not a valid full-connection repair:
+
+- The CLI reads `process.argv[2]` as a required Bridge config path. The suggested entry supplies only the script path, so it reaches `CONFIG_REQUIRED` and exits before creating an MCP server.
+- The required JSON config needs a `devices` entry and either an explicit local `receipts` path or a trusted Runtime composition. `NODE_ENV=production` is not read as authority and does not construct Formula, Veritas, owner-consent or receipt callbacks.
+- The direct CLI calls `start(configPath)` without `runtimeInput`. With only the local JSONL sink, its C3 admission has no Formula or Veritas pre-gate and denies every Bridge operation. If started with that sink, records are local controller observations, not canonical durable receipts.
+- Consequently, adding an `args` path could make the process start, but would still not provide the claimed full operation, genuine canonical receipts, or production admission. Do not enable this config as an execution route.
+
+The local stdio path is viable only behind an owner-approved launcher that injects the real trusted Runtime composition and canonical receipt sink. No such launcher was found or run here. The remote Streamable HTTP path remains the existing client integration route; it requires an approved OAuth client for Antigravity.
+
 ## Engineering loop and evidence
 
 | Stage | State | Record |
@@ -79,6 +90,6 @@ Official references: [MCP TypeScript SDK transport guidance](https://ts.sdk.mode
 | Evidence | EVIDENCED | Live response details above; no secret values recorded. Task Formula evaluation was not executed; Veritas decision, canonical receipt and Learning Ledger admission were not produced. |
 
 **Rollback:** the Antigravity config change is reversible using the byte-for-byte backups above; the docs-only change can be reverted by reverting its commit. No Antigravity process was restarted and no runtime deployment changed.  
-**Next action:** register/approve an Antigravity OAuth client with the existing LeeWay issuer or identify the canonical local trusted-composition launcher; then replace the disabled scratch Python entry with the existing remote Streamable HTTP endpoint and verify Antigravity’s authenticated `initialize` and `tools/list`. Do not claim a full connection until that real client call passes.
+**Next action:** register/approve an Antigravity OAuth client with the existing LeeWay issuer or identify the canonical local trusted-composition launcher; then configure the existing remote Streamable HTTP endpoint and verify Antigravity’s authenticated `initialize` and `tools/list`. Do not substitute the bare Node CLI example and do not claim a full connection until that real client call passes.
 
 **Current gate: TRANSPORT SOURCE PRESENT; CODEX SESSION READ-ONLY ROUTE OBSERVED; ANTIGRAVITY ADAPTER UNQUALIFIED; MULTI-CLIENT PRODUCTION CONNECTION NOT QUALIFIED.**
