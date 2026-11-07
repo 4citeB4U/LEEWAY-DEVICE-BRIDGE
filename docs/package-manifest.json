@@ -14,16 +14,48 @@
     "automaticDownload": false,
     "automaticInstall": false,
     "ownerConfirmationRequired": true,
-    "verification": ["HTTPS", "SHA256", "PLATFORM_NATIVE_INSTALLER"]
+    "verification": [
+      "HTTPS",
+      "SHA256",
+      "PLATFORM_NATIVE_INSTALLER"
+    ]
   },
   "platformRoutes": {
-    "web": { "state": "AVAILABLE", "updateMode": "GITHUB_PAGES_SERVICE_WORKER", "source": "github-pages" },
-    "android": { "state": "AVAILABLE", "updateMode": "CHECK_PROMPT_AND_ANDROID_INSTALLER", "source": "github-pages" },
-    "ios": { "state": "AVAILABLE", "updateMode": "CHECK_PROMPT_AND_SIDESTORE", "source": "github-release" },
-    "ipados": { "state": "AVAILABLE", "updateMode": "CHECK_PROMPT_AND_SIDESTORE", "source": "github-release" },
-    "windows": { "state": "SOURCE_ONLY", "updateMode": "PWA_OR_OWNER_MANAGED_SOURCE_UPDATE", "source": "github-source" },
-    "macos": { "state": "SOURCE_ONLY", "updateMode": "PWA_OR_OWNER_MANAGED_SOURCE_UPDATE", "source": "github-source" },
-    "linux": { "state": "SOURCE_ONLY", "updateMode": "PWA_OR_OWNER_MANAGED_SOURCE_UPDATE", "source": "github-source" }
+    "web": {
+      "state": "AVAILABLE",
+      "updateMode": "GITHUB_PAGES_SERVICE_WORKER",
+      "source": "github-pages"
+    },
+    "android": {
+      "state": "AVAILABLE",
+      "updateMode": "CHECK_PROMPT_AND_ANDROID_INSTALLER",
+      "source": "github-pages"
+    },
+    "ios": {
+      "state": "AVAILABLE",
+      "updateMode": "CHECK_PROMPT_AND_SIDESTORE",
+      "source": "github-release"
+    },
+    "ipados": {
+      "state": "AVAILABLE",
+      "updateMode": "CHECK_PROMPT_AND_SIDESTORE",
+      "source": "github-release"
+    },
+    "windows": {
+      "state": "SOURCE_ONLY",
+      "updateMode": "PWA_OR_OWNER_MANAGED_SOURCE_UPDATE",
+      "source": "github-source"
+    },
+    "macos": {
+      "state": "SOURCE_ONLY",
+      "updateMode": "PWA_OR_OWNER_MANAGED_SOURCE_UPDATE",
+      "source": "github-source"
+    },
+    "linux": {
+      "state": "SOURCE_ONLY",
+      "updateMode": "PWA_OR_OWNER_MANAGED_SOURCE_UPDATE",
+      "source": "github-source"
+    }
   },
   "packages": [
     {
@@ -38,8 +70,8 @@
       "runtimeLocation": "phone",
       "dockerRequired": false,
       "downloadUrl": "./downloads/leeway-device-bridge-android-latest-debug.apk",
-      "sha256": "9a5000f387ca3e99c7d84ccc6cd66788b77f150be2b8cd004684c26cd35dee65",
-      "sizeBytes": 66428981,
+      "sha256": "2b100096ea5c7ea43d69ab8e115da8b223c84fa46f6c99209d9133fc36257452",
+      "sizeBytes": 66445365,
       "formulaQualification": {
         "required": true,
         "status": "MEASURED_SIZE_GATE_PASS_NO_COMPRESSION_REQUIRED",
@@ -56,10 +88,10 @@
       },
       "githubActionsQualification": {
         "state": "VERIFIED",
-        "runId": 42408297173,
-        "headSha": "2699342efbc43f8b6041c170241d89f7e4700603",
-        "apkSizeBytes": 66428981,
-        "apkSha256": "9a5000f387ca3e99c7d84ccc6cd66788b77f150be2b8cd004684c26cd35dee65",
+        "runId": 42410270094,
+        "headSha": "4206184a32cabf444c8dc5ff6457256ad74b7c1f",
+        "apkSizeBytes": 66445365,
+        "apkSha256": "2b100096ea5c7ea43d69ab8e115da8b223c84fa46f6c99209d9133fc36257452",
         "note": "The Android app checks this manifest on foreground and reconnect, downloads the verified APK, and opens Android's owner-confirmed installer. It does not silently install or erase app data."
       }
     },
@@ -88,5 +120,6 @@
         "targetMaxBytes": 104857600
       }
     }
-  ]
+  ],
+  "updatedAtUtc": "2026-11-07T20:18:23Z"
 }
