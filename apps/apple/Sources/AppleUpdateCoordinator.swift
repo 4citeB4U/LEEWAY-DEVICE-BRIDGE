@@ -14,11 +14,20 @@ final class AppleUpdateCoordinator: ObservableObject {
     @Published private(set) var errorMessage: String?
     @Published var showPrompt = false
 
+    let usesAppStoreUpdates = Bundle.main.object(forInfoDictionaryKey: "LEEWAY_APPLE_DISTRIBUTION_CHANNEL") as? String == "appstore"
+
     let manifestURL = URL(string: "https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/package-manifest.json")!
     let releaseURL = URL(string: "https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/tag/apple-latest")!
     let iLoaderGuideURL = URL(string: "https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/APPLE-DIRECT-ILOADER-DELIVERY.md")!
 
     func check() {
+        if usesAppStoreUpdates {
+            state = "APPLE_APP_STORE_MANAGED"
+            updateAvailable = false
+            showPrompt = false
+            errorMessage = nil
+            return
+        }
         state = "CHECKING"
         errorMessage = nil
         var request = URLRequest(url: manifestURL)
