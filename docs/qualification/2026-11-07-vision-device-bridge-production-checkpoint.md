@@ -27,7 +27,7 @@ The Windows physical-camera path is executed and verified through the live Devic
 ## Implemented source
 
 - Vision `main` commit: `59693f117a77061a237c940ced61dc661619ff21` (`feat(vision): bind verified Windows frames to Device Bridge`).
-- Device Bridge source commit: `eb62f5c` (`feat(vision): expose verified images through MCP`) on top of `d2482fbeab5b37e24761c504e17f7f07225739cd`.
+- Device Bridge source commit: `311dfa830afa1a6dd061cc831b50936b1ac09d3b` (`feat(vision): expose verified images through MCP`) rebased onto concurrent USB C3 `main` at `0a5268209d5b4aedc5f9ed3673bfaa7ec978f5ab`.
 - Vision files: `service/directshow-frame-producer.mjs`, `service/vision-bridge-connector.mjs`, `scripts/qualify-directshow-live.mjs`, and `docs/DEVICE-BRIDGE-RUNTIME-BINDING.md`.
 - Device Bridge files: `apps/desktop/mcp-server.mjs` and `tests/mcp/vision-image-content.test.mjs`.
 
