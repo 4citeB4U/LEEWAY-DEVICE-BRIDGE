@@ -135,12 +135,15 @@ export function receipt({ deviceId, capability, args, outcome, result, error, pr
 }
 
 export class Bridge {
-  constructor(devices, { admission, receiptSink = async () => { throw new Error('RECEIPT_SINK_REQUIRED'); }, complianceCardGate = null } = {}) {
+  constructor(devices, { admission, receiptSink = async () => { throw new Error('RECEIPT_SINK_REQUIRED'); }, complianceCardGate = null, deviceRegistry = null } = {}) {
     this.devices = new Map(devices.map(d => [d.id, d]));
     if (this.devices.size !== devices.length) throw new Error('DUPLICATE_DEVICE');
     this.admission = admission;
     this.receiptSink = receiptSink;
     this.complianceCardGate = complianceCardGate;
+    // Device adapters are transport bindings. Registration identity must come
+    // from the trusted host registry, never from the adapter/config list.
+    this.deviceRegistry = deviceRegistry;
     this.requiresComplianceCard = typeof complianceCardGate === 'function';
   }
   async discover(id) {

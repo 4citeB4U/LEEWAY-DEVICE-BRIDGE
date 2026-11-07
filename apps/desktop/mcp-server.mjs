@@ -68,7 +68,18 @@ function visionFrameResult(value) {
   ] };
 }
 
-export function createServer(bridge, { discoveryOnly = false, readOnlyCapabilities = [], complianceCardProvider = null, visionClientId = null } = {}) {
+function trustedRegistryEntries(deviceRegistry) {
+  if (deviceRegistry instanceof Map) return [...deviceRegistry.entries()];
+  if (Array.isArray(deviceRegistry)) return deviceRegistry.map(record => [record?.id ?? record?.deviceId, record]);
+  return [];
+}
+
+function hasTrustedDeviceRegistration(deviceRegistry, bridge, deviceId) {
+  const record = trustedRegistryEntries(deviceRegistry).find(([id]) => id === deviceId)?.[1];
+  return bridge.devices.has(deviceId) && typeof record?.platform === 'string' && record.platform.trim().length > 0;
+}
+
+export function createServer(bridge, { discoveryOnly = false, readOnlyCapabilities = [], complianceCardProvider = null, visionClientId = null, deviceRegistry = bridge.deviceRegistry ?? null } = {}) {
   const boundVisionClientId = typeof visionClientId === 'string' && visionClientId.trim() && visionClientId.length <= 128 ? visionClientId : null;
   const server = new McpServer({ name: 'leeway-device-bridge', version: '0.1.0' }, {
     instructions: LEEWAY_MCP_INSTRUCTIONS,
@@ -85,9 +96,23 @@ export function createServer(bridge, { discoveryOnly = false, readOnlyCapabiliti
     enforcementBoundary: 'CLIENT_GUIDANCE_AND_EXISTING_RUNTIME_ADMISSION',
     contract: LEEWAY_OPERATING_CONTRACT,
   }));
-  server.registerTool('bridge_devices', { description: 'List configured device IDs. Configuration does not prove connectivity.', inputSchema: {} }, async () => result({ devices: [...bridge.devices.keys()] }));
+  server.registerTool('bridge_devices', { description: 'List configured adapters only when their device ID also exists in the trusted Runtime device registry. Configuration alone is not registration, and registration does not prove live reachability.', inputSchema: {} }, async () => {
+    const registryBound = deviceRegistry instanceof Map || Array.isArray(deviceRegistry);
+    const devices = trustedRegistryEntries(deviceRegistry)
+      .filter(([id, record]) => bridge.devices.has(id) && typeof record?.platform === 'string' && record.platform.trim().length > 0)
+      .map(([id]) => id);
+    return result({
+      devices,
+      registrationState: !registryBound ? 'REGISTRATION_AUTHORITY_UNBOUND' : (devices.length ? 'TRUSTED_REGISTRY_READ' : 'NO_REGISTERED_ADAPTERS'),
+      registrationAuthority: registryBound ? 'TRUSTED_RUNTIME_DEVICE_REGISTRY' : null,
+      reachability: 'NOT_PROBED',
+    });
+  });
   server.registerTool('bridge_capabilities', { description: 'Discover current capabilities for one device; grants and verification are distinct.', inputSchema: { deviceId: z.string().min(1).max(128) } }, async ({ deviceId }) => {
-    try { return result(await bridge.discover(deviceId)); } catch { return result({ ok: false, error: 'DISCOVERY_FAILED' }); }
+    try {
+      const discovery = await bridge.discover(deviceId);
+      return result({ ...discovery, registrationState: hasTrustedDeviceRegistration(deviceRegistry, bridge, deviceId) ? 'REGISTERED_IN_TRUSTED_RUNTIME' : 'NOT_IN_TRUSTED_RUNTIME_REGISTRY' });
+    } catch { return result({ ok: false, error: 'DISCOVERY_FAILED' }); }
   });
   // Never advertise agent-facing optical operations without an identity supplied by trusted Runtime or authenticated MCP ingress.
   const selectedCapabilities = discoveryOnly ? [...new Set(readOnlyCapabilities)] :
@@ -154,9 +179,7 @@ const deviceSchema = z.object({
 // startup may supply the owner callbacks; otherwise the canonical C3 binding
 // receives no Formula/Veritas gates and denies every command.
 export function createProductionAdmission(devices, providers = {}) {
-  const deviceRegistry = providers.deviceRegistry ?? new Map(devices.map(device => [device.id, {
-    platform: device.platform || null,
-  }]));
+  const deviceRegistry = providers.deviceRegistry ?? new Map();
   return createC3AdmissionBinding({
     deviceRegistry,
     registry: providers.adapterRegistry,
@@ -171,7 +194,7 @@ export function createProductionAdmission(devices, providers = {}) {
 export async function createConfiguredBridge(configPath, runtimeInput = null) {
   if (!configPath) throw new Error('CONFIG_REQUIRED');
   const runtimeComposition = runtimeInput === null ? null : requireTrustedRuntimeComposition(runtimeInput);
-  const config = z.object({ devices: z.array(deviceSchema).min(1).max(32), receipts: z.string().min(1).optional() }).strict().parse(JSON.parse(await fs.readFile(configPath, 'utf8')));
+  const config = z.object({ devices: z.array(deviceSchema).min(0).max(32), receipts: z.string().min(1).optional() }).strict().parse(JSON.parse(await fs.readFile(configPath, 'utf8')));
   const base = path.dirname(path.resolve(configPath));
   const receiptPath = config.receipts ? path.resolve(base, config.receipts) : null;
   if (!runtimeComposition && !receiptPath) throw new Error('RECEIPTS_REQUIRED');
@@ -209,6 +232,7 @@ export async function createConfiguredBridge(configPath, runtimeInput = null) {
     // Without an injected Runtime composition, C3 deliberately denies all execution.
     admission,
     complianceCardGate: runtimeComposition?.complianceCardGate ?? null,
+    deviceRegistry: runtimeComposition?.deviceRegistry ?? null,
     receiptSink: runtimeComposition?.receiptSink ?? (evidence => fs.appendFile(receiptPath, JSON.stringify(evidence) + '\n', { mode: 0o600 })),
   });
   return bridge;
@@ -219,7 +243,8 @@ export async function start(configPath, runtimeInput = null) {
   const runtimeComposition = runtimeInput === null ? null : requireTrustedRuntimeComposition(runtimeInput);
   const server = createServer(bridge, {
     complianceCardProvider: runtimeComposition?.complianceCardProvider ?? null,
-    visionClientId: runtimeComposition?.visionClientId ?? null
+    visionClientId: runtimeComposition?.visionClientId ?? null,
+    deviceRegistry: runtimeComposition?.deviceRegistry ?? null,
   });
   await server.connect(new StdioServerTransport());
   return server;
