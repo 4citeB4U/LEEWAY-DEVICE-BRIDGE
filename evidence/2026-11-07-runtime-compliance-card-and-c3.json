@@ -1,0 +1,65 @@
+{
+  "recordType": "DEVICE_BRIDGE_ENGINEERING_OBSERVATION",
+  "notCanonicalReceipt": true,
+  "observedAt": "2026-11-07T15:10:39Z",
+  "timezone": "America/Chicago",
+  "agentIdentity": "Codex",
+  "repository": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "source": {
+    "complianceCardCommit": "2ce8216b27e217c951e2712fcaecc30b311c01b6",
+    "currentMainCommit": "42c4c5d4d422aa859177dd6198a8c95db7cce308"
+  },
+  "ci": [
+    {
+      "workflow": "Portable protocol and MCP",
+      "runId": 42384420173,
+      "sourceCommit": "2ce8216b27e217c951e2712fcaecc30b311c01b6",
+      "platforms": ["macos-latest", "windows-latest", "ubuntu-latest"],
+      "conclusion": "success",
+      "steps": ["npm run test:mcp", "CLI real MCP probe and fail-closed command path", "trusted-composition startup regression"]
+    },
+    {
+      "workflow": "Android Build",
+      "runId": 42384420188,
+      "sourceCommit": "2ce8216b27e217c951e2712fcaecc30b311c01b6",
+      "conclusion": "success"
+    }
+  ],
+  "vercel": {
+    "deploymentId": "dpl_HatFmhKGXKxFoMKysUFJxe7uP1wS",
+    "target": "production",
+    "state": "READY",
+    "sourceCommit": "42c4c5d4d422aa859177dd6198a8c95db7cce308",
+    "mcpRouteRole": "transport-only-forwarder-to-runtime-fabric"
+  },
+  "trustedLocalCompositionReceipts": [
+    {"id":"b49c8bfc-f3d8-4ff5-83fe-3820ec60d015","capability":"device.health","outcome":"ADMITTED","operationMayHaveExecuted":false,"complianceCardStatus":"VALID","complianceCardAuthority":"LEEWAY_RUNTIME_FABRIC","authority":"CONTROLLER_OBSERVATION","formula":"NOT_EVALUATED"},
+    {"id":"8ae62531-77ea-4dc0-920d-2d5ad7240620","capability":"device.health","outcome":"PASS","operationMayHaveExecuted":true,"complianceCardStatus":"VALID","complianceCardAuthority":"LEEWAY_RUNTIME_FABRIC","authority":"CONTROLLER_OBSERVATION","formula":"NOT_EVALUATED"},
+    {"id":"bfa68e8f-1ebf-450b-953d-9d6bed195576","capability":"voice.status","outcome":"ADMITTED","operationMayHaveExecuted":false,"complianceCardStatus":"VALID","complianceCardAuthority":"LEEWAY_RUNTIME_FABRIC","authority":"CONTROLLER_OBSERVATION","formula":"NOT_EVALUATED"},
+    {"id":"16a0d039-eb3a-41b5-b364-76189abea37a","capability":"voice.status","outcome":"PASS","operationMayHaveExecuted":true,"complianceCardStatus":"VALID","complianceCardAuthority":"LEEWAY_RUNTIME_FABRIC","authority":"CONTROLLER_OBSERVATION","formula":"NOT_EVALUATED"},
+    {"id":"dfa66c61-0b6d-4dd2-b992-4b4dcb9895de","capability":"voice.speak","outcome":"ADMITTED","operationMayHaveExecuted":false,"complianceCardStatus":"VALID","complianceCardAuthority":"LEEWAY_RUNTIME_FABRIC","authority":"CONTROLLER_OBSERVATION","formula":"NOT_EVALUATED"},
+    {"id":"19e8014f-4ff3-444a-b6b7-07316ca76cbf","capability":"voice.speak","outcome":"FAILED","operationMayHaveExecuted":true,"error":"VOICE_FABRIC_HTTP_500","complianceCardStatus":"VALID","complianceCardAuthority":"LEEWAY_RUNTIME_FABRIC","authority":"CONTROLLER_OBSERVATION","formula":"NOT_EVALUATED"},
+    {"id":"e2758e29-0b37-431e-ab2c-a6ea123c806b","capability":"voice.status","outcome":"ADMITTED","operationMayHaveExecuted":false,"complianceCardStatus":"VALID","complianceCardAuthority":"LEEWAY_RUNTIME_FABRIC","authority":"CONTROLLER_OBSERVATION","formula":"NOT_EVALUATED"},
+    {"id":"ae1e24c9-968f-4b4a-99a0-7768363b36b0","capability":"voice.status","outcome":"PASS","operationMayHaveExecuted":true,"complianceCardStatus":"VALID","complianceCardAuthority":"LEEWAY_RUNTIME_FABRIC","authority":"CONTROLLER_OBSERVATION","formula":"NOT_EVALUATED"}
+  ],
+  "currentReadOnlyConnector": {
+    "healthReceipt": "2bea04d7-adc4-4867-bbd3-dbf8d700938e",
+    "infoReceipt": "593cafd6-2f9a-40de-b563-383e488d8ec5",
+    "adapter": "bounded-workspace",
+    "uiControl": false,
+    "physicalProbe": "EXECUTED_NOT_INDEPENDENTLY_VERIFIED",
+    "deviceReachability": "CONFIGURED_NOT_PHYSICALLY_PROBED",
+    "capabilityVerification": false
+  },
+  "voiceAcceptance": {
+    "voiceStatusProvider": "UNAVAILABLE",
+    "voiceSpeakOutcome": "FAILED_AFTER_DISPATCH",
+    "microphoneIngressExposed": false,
+    "twoMinuteConversation": "NOT_PERFORMED",
+    "productionConversation": "NOT_QUALIFIED",
+    "c3": "NOT_QUALIFIED"
+  },
+  "canonicalReceiptAdmission": "NOT_CREATED",
+  "independentVeritas": "NOT_EXECUTED",
+  "learningLedger": "NOT_UPDATED"
+}
