@@ -187,5 +187,110 @@
     "Physical iPhone/iPad install, authenticated Device Bridge session and native Metal readback",
     "Independent Veritas and Receipt Authority admission",
     "Measured 700/15000000-user load/tenant-isolation tests"
-  ]
+  ],
+  "firstPartyPersonalAccountInstallerAmendment": {
+    "missionContinuity": "CONTINUE_SAME_APPLE_DEVICE_BRIDGE_MISSION_PR_95",
+    "ownerConsent": "CREATOR_APPROVED_NATIVE_ILOADER_EQUIVALENT",
+    "distribution": {
+      "primary": "OWNER_AUTHORIZED_FREE_APPLE_ACCOUNT_SIDELOAD",
+      "paidDeveloperMembershipRequired": false,
+      "appStoreConnectRequired": false,
+      "requiredHost": "WINDOWS_OR_MACOS_OR_LINUX_WITH_AUTHORIZED_APPLE_PAIRING",
+      "physicalInstallStatus": "NOT_EXECUTED",
+      "publicBinaryPublication": "NOT_EXECUTED"
+    },
+    "sourceChanges": [
+      {
+        "path": "operator/native-apple-installer/src/main.rs",
+        "change": "newline-IPC, free Personal Team, interactive CLI, exact native signed-bundle readback"
+      },
+      {
+        "path": "operator/native-apple-installer/src/interactive.rs",
+        "change": "USB selection, local credential/2FA, official IPA streaming/hash, explicit install approval"
+      },
+      {
+        "path": "operator/native-apple-installer/runtime-provider.mjs",
+        "change": "accept no preexisting Team ID, verify native signedBundleId"
+      },
+      {
+        "path": ".github/workflows/apple-native-installer-check.yml",
+        "change": "three-OS cargo check, release build, help smoke test and measured downloadable archives"
+      },
+      {
+        "path": ".github/workflows/apple-native-installer-release.yml",
+        "change": "main-only successful CI release and SHA-linked manifest publisher; unexecuted"
+      },
+      {
+        "path": "docs/apple-download.js",
+        "change": "actual direct Windows/macOS/Linux links only after qualified release manifest"
+      },
+      {
+        "path": "docs/index.html",
+        "change": "Apple host installer download surfaces without removing existing IPA/Metal routes"
+      }
+    ],
+    "measuredFailures": [
+      {
+        "runId": 42425488947,
+        "component": "tests/apple-native-runtime-provider.test.mjs",
+        "observation": "7 PASS, 1 FAIL APPLE_POST_INSTALL_BUNDLE_IDENTITY_MISMATCH on no-team fixture",
+        "repairCommit": "f993d5733b2ecb0d2b19f2afa28431a670c0c071",
+        "retest": "INITIATED"
+      },
+      {
+        "runId": 42425489097,
+        "component": "native Rust cargo check on Windows/macOS/Ubuntu",
+        "observation": "E0425 AtomicBool missing and E0433 Ordering missing",
+        "repairCommit": "2c0b0f3076a48d5f98b72e42e0871386fc3f09cc",
+        "retest": "INITIATED"
+      },
+      {
+        "component": "apple native release workflow authoring",
+        "observation": "Escaped GitHub expression placeholders were wrong",
+        "repairCommit": "3869254816e8d062f398c483dd9d26e358bd4e85",
+        "retest": "SOURCE_READBACK"
+      },
+      {
+        "component": "archive Python packaging",
+        "observation": "Generated newline-escape strings would have written incorrect bytes",
+        "repairCommit": "a9c659dd9e320777ff6944974fadfcbbb40e5315",
+        "retest": "INITIATED"
+      }
+    ],
+    "observedPositive": [
+      {
+        "runId": 42425858808,
+        "headSha": "a592636d0f3fb7a4f9abab66dcbf3d7ffb70f4ee",
+        "name": "Android Build",
+        "result": "success",
+        "scope": "SOURCE_AND_ANDROID_WORKFLOW"
+      },
+      {
+        "runId": 42426144491,
+        "headSha": "a9c659dd9e320777ff6944974fadfcbbb40e5315",
+        "name": "Device Console UI Acceptance",
+        "result": "success",
+        "scope": "BROWSER_SOURCE"
+      },
+      {
+        "runId": 42425858771,
+        "headSha": "a592636d0f3fb7a4f9abab66dcbf3d7ffb70f4ee",
+        "name": "Apple Device Bridge Qualification",
+        "result": "success",
+        "scope": "UNSIGNED_SWIFT_BUILD_SOURCE"
+      }
+    ],
+    "remainingGates": {
+      "nativeRustReleaseAtLatestSHA": "CI_RUNNING_OR_QUEUED",
+      "hostArchiveDownload": "NOT_PUBLISHED",
+      "ownerHostAppleLogin": "NOT_EXECUTED",
+      "ownerHostIphonePairing": "NOT_EXECUTED",
+      "newMetalReadback": "NOT_EXECUTED",
+      "independentVeritas": "NOT_EXECUTED",
+      "receiptAuthority": "NOT_CREATED",
+      "learningLedger": "NOT_UPDATED",
+      "reaCliIloader": "NOT_EXECUTED"
+    },
+    "contributorStatus": "SOURCE_COMMITTED_TESTING_IN_PROGRESS_NOT_PRODUCTION_READY"
+  }
 }
