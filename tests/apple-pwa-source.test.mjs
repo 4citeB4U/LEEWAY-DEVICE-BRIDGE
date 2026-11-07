@@ -26,7 +26,7 @@ assert.match(page, /APPLE · IPHONE \/ IPAD \/ MAC/);
 assert.match(page, /Apple workspace and native Metal/);
 assert.match(page, /Use the Home Screen app as the daily LeeWay front door/);
 assert.match(page, /OPEN APPLE WORKSTATION/);
-assert.match(page, /DOWNLOAD LEEWAY APP/);
+assert.match(page, /DOWNLOAD DEVELOPER IPA/);
 assert.match(page, /releases\/tag\/apple-latest/);
 assert.match(page, /Apple controls/);
 assert.match(page, /id="appleRuntime"/);
