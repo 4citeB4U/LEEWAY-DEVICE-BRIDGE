@@ -130,7 +130,7 @@ export function createVoiceAuthGateway({
    return deny(res,404,'NOT_FOUND');
   if(route==='/health'){
    if(!productionConversationProof)productionConversationProof=await restoreProductionConversationProof();
-   let upstreamQualified=false,probe='UPSTREAM_UNAVAILABLE';
+   let upstreamQualified=false,voiceProviderReady=false,voiceProviderState='UPSTREAM_UNAVAILABLE',probe='UPSTREAM_UNAVAILABLE';
    try{
     const [carrierReply,bindingReply,telemetryReply]=await Promise.all([
      fetchImpl(new URL('/health',vf),{method:'GET',signal:AbortSignal.timeout(2500),redirect:'error'}),
@@ -139,16 +139,19 @@ export function createVoiceAuthGateway({
     ]);
     const [carrierState,bindingState,telemetryState]=await Promise.all([carrierReply.json(),bindingReply.json(),telemetryReply.json()]);
     const binding=bindingState?.voiceBinding,telemetry=telemetryState?.gateway;
+    voiceProviderReady=carrierReply.ok&&carrierState?.voice?.ready===true;
+    voiceProviderState=carrierState?.voice?.state||(voiceProviderReady?'READY':'VOICE_PROVIDER_UNAVAILABLE');
     upstreamQualified=carrierReply.ok&&carrierState?.identity==='LEEWAY_MACHINE_CONSCIOUSNESS'&&
-     carrierState?.voice?.ready===true&&bindingReply.ok&&binding?.authority==='LEEWAY_VOICE_FABRIC'&&
+     bindingReply.ok&&binding?.authority==='LEEWAY_VOICE_FABRIC'&&
      binding?.agentId==='agent-lee'&&binding?.productionAdmitted===true&&binding?.qualificationOnly===false&&
      telemetryReply.ok&&telemetry?.identity==='Agent Lee'&&telemetry?.inferenceAuthority==='LEEWAY_EDGE_GPU_ONLY'&&
      telemetry?.storageAuthority==='LEEWAY_CONTINUUM_ONLY';
-    probe=upstreamQualified?'READ_ONLY_PRODUCTION_CARRIER_BINDING_CHECK_PASS':'PRODUCTION_CARRIER_BINDING_MISMATCH';
+    probe=upstreamQualified?'READ_ONLY_CARRIER_BINDING_CHECK_PASS':'PRODUCTION_CARRIER_BINDING_MISMATCH';
    }catch{}
    return json(res,200,{ready:true,authority:'LEEWAY_DEVICE_BRIDGE_VOICE',internetPublished:false,
-    upstreamQualified,upstreamQualificationScope:'OWNER_LOCAL_MACHINE_CONSCIOUSNESS_AND_VOICE_BINDING_READINESS',
-    upstreamProbe:probe,productionConversationQualified:productionConversationProof?.qualified===true,
+    upstreamQualified,upstreamQualificationScope:'OWNER_LOCAL_CARRIER_AND_VOICE_BINDING_IDENTITY',
+    upstreamProbe:probe,voiceProviderReady,voiceProviderState,
+    productionConversationQualified:productionConversationProof?.qualified===true,
     productionConversationEvidence:productionConversationProof?.evidence||'AUTHENTICATED_PRODUCTION_TURN_NOT_YET_OBSERVED',
     c3Qualified:c3Proof?.qualified===true,c3Evidence:c3Proof?.evidence||'LIVE_DUPLEX_VERITAS_AND_RECEIPT_ADMISSION_NOT_YET_OBSERVED',sourceCommit});
   }
