@@ -201,7 +201,7 @@ export function createAppleNativeInstallProvider({
       }
       return launchInstaller({
         binaryPath, requestId:input.requestId, timeoutMs, spawnBinary, twoFactor:handleTwoFactor,
-        signedBundleId:BUNDLE_ID + "." + cred.developerTeamId,
+        signedBundleId:cred.developerTeamId ? BUNDLE_ID + "." + cred.developerTeamId : null,
         request:{
           action:"install-official-leeway-ipa",appleId:cred.appleId,applePassword:cred.applePassword,
           developerTeamId:cred.developerTeamId,deviceUdid:deviceUDID,
