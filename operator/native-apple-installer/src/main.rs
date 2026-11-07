@@ -15,7 +15,7 @@ use std::{
     fs::{self, File},
     io::{self, Read, Write},
     path::Path,
-    sync::OnceLock,
+    sync::{OnceLock, atomic::{AtomicBool, Ordering}},
     time::Duration,
 };
 
