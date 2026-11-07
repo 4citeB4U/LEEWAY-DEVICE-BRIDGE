@@ -13,8 +13,6 @@ LICENSE = MIT; upstream isideload and idevice retain their licenses.
 */
 use std::{
     io::{self, IsTerminal, Write},
-    fs::File,
-    path::Path,
 };
 use idevice::usbmuxd::UsbmuxdConnection;
 use serde_json::Value;
@@ -83,7 +81,7 @@ async fn download_official_ipa() -> Result<(tempfile::NamedTempFile, String), &'
         .map_err(|_| "APPLE_MANIFEST_INVALID_JSON")?;
     let (expected_hash, expected_size) = official_manifest(&parsed)?;
     let expected_hash = expected_hash.to_ascii_lowercase();
-    eprintln!("LeeWay package verified against its published release manifest. Downloading the official IPA.");
+    eprintln!("Official manifest provenance checked; measuring the LeeWay IPA against its actual SHA-256.");
     let response = client.get(IPA_URL).send().await
         .map_err(|_| "APPLE_IPA_DOWNLOAD_FAILED")?
         .error_for_status().map_err(|_| "APPLE_IPA_HTTP_ERROR")?;
@@ -92,7 +90,10 @@ async fn download_official_ipa() -> Result<(tempfile::NamedTempFile, String), &'
     }
     let mut stream = response.bytes_stream();
     use futures_util::StreamExt;
-    let mut file = tempfile::NamedTempFile::new().map_err(|_| "APPLE_TEMPORARY_FILE_UNAVAILABLE")?;
+    let mut file = tempfile::Builder::new()
+        .prefix("leeway-apple-")
+        .suffix(".ipa")
+        .tempfile().map_err(|_| "APPLE_TEMPORARY_FILE_UNAVAILABLE")?;
     let mut bytes: u64 = 0;
     let mut hash = Sha256::new();
     while let Some(chunk) = stream.next().await {
