@@ -34,6 +34,8 @@ jobs:
       APPSTORE_CONNECT_ISSUER_ID: ${{ secrets.APPSTORE_CONNECT_ISSUER_ID }}
       APPSTORE_CONNECT_KEY_ID: ${{ secrets.APPSTORE_CONNECT_KEY_ID }}
       APPSTORE_CONNECT_PRIVATE_KEY_BASE64: ${{ secrets.APPSTORE_CONNECT_PRIVATE_KEY_BASE64 }}
+      # HTTPS session exchange must point to the owner-approved Runtime identity provider.
+      LEEWAY_APPLE_IDENTITY_EXCHANGE_ENDPOINT: ${{ vars.LEEWAY_APPLE_IDENTITY_EXCHANGE_ENDPOINT }}
 
     steps:
       - uses: actions/checkout@v4
@@ -42,6 +44,15 @@ jobs:
         run: |
           set -euo pipefail
           test "${{ inputs.release_version }}" != ""
+          python3 - <<'PY'
+          import os, urllib.parse
+          value = os.environ.get("LEEWAY_APPLE_IDENTITY_EXCHANGE_ENDPOINT", "")
+          parsed = urllib.parse.urlparse(value)
+          if (parsed.scheme != "https" or not parsed.hostname or
+              parsed.path != "/v1/device-bridge/apple/session" or
+              parsed.username or parsed.password or parsed.query or parsed.fragment):
+              raise SystemExit("A qualified HTTPS LeeWay Apple identity exchange must be configured before public distribution.")
+          PY
           [[ "${{ inputs.build_number }}" =~ ^[1-9][0-9]*$ ]]
           for variable in APPLE_TEAM_ID APPLE_DISTRIBUTION_CERTIFICATE_BASE64 \
             APPLE_DISTRIBUTION_CERTIFICATE_PASSWORD APPLE_PROVISIONING_PROFILE_BASE64 \
@@ -89,6 +100,8 @@ jobs:
             -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' \
             -archivePath "$ARCHIVE_PATH" \
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            INFOPLIST_KEY_LEEWAY_APPLE_DISTRIBUTION_CHANNEL=appstore \
+            LEEWAY_APPLE_IDENTITY_EXCHANGE_ENDPOINT="$LEEWAY_APPLE_IDENTITY_EXCHANGE_ENDPOINT" \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY='Apple Distribution' \
             PROVISIONING_PROFILE="$PROFILE_UUID" \
