@@ -129,33 +129,40 @@ struct AppleDeviceBridgeView: View {
                         if cameraBridge.isRunning { cameraBridge.stop() } else { cameraBridge.start(camera: camera) }
                     }
                 }
-                Section("GitHub update channel") {
+                Section(updater.usesAppStoreUpdates ? "Apple App Store updates" : "Developer IPA update channel") {
                     LabeledContent("Update state", value: updater.state)
                     LabeledContent("Installed", value: "\(updater.currentVersion) (\(updater.currentBuild))")
-                    if updater.latestBuild > 0 {
-                        LabeledContent("GitHub package", value: "\(updater.latestVersion) (\(updater.latestBuild))")
-                    }
-                    if updater.latestSizeBytes > 0 {
-                        LabeledContent("Package size", value: "\(updater.latestSizeBytes / 1024 / 1024) MB")
-                    }
-                    if let errorMessage = updater.errorMessage {
-                        Text(errorMessage).foregroundStyle(.red)
-                    }
-                    Button("Check GitHub for Updates") { updater.check() }
-                    if updater.updateAvailable {
-                        Button("Open GitHub Release / Download IPA") {
-                            openURL(updater.releaseURL)
-                        }
-                        Button("Copy GitHub IPA URL") {
-                            if let ipaURL = updater.latestIPAURL {
-                                UIPasteboard.general.string = ipaURL.absoluteString
-                            }
-                        }
-                        Button("Open iLoader Delivery Instructions") {
-                            openURL(updater.iLoaderGuideURL)
-                        }
-                        Text("GitHub supplies the IPA. Import it into the existing owner-controlled iLoader installation, which signs and installs the replacement over USB. iOS cannot replace its own signed app.")
+                    if updater.usesAppStoreUpdates {
+                        Text("This official LeeWay build receives updates through the App Store. Apple manages package signing and updates; a GitHub IPA is not an App Store replacement.")
                             .font(.footnote)
+                    } else {
+                        if updater.latestBuild > 0 {
+                            LabeledContent("GitHub package", value: "\(updater.latestVersion) (\(updater.latestBuild))")
+                        }
+                        if updater.latestSizeBytes > 0 {
+                            LabeledContent("Package size", value: "\(updater.latestSizeBytes / 1024 / 1024) MB")
+                        }
+                        if let errorMessage = updater.errorMessage {
+                            Text(errorMessage).foregroundStyle(.red)
+                        }
+                        Button("Check Developer IPA for Updates") { updater.check() }
+                        if updater.updateAvailable {
+                            Button("Download Developer IPA") {
+                                if let ipaURL = updater.latestIPAURL {
+                                    openURL(ipaURL)
+                                }
+                            }
+                            Button("Copy Developer IPA URL") {
+                                if let ipaURL = updater.latestIPAURL {
+                                    UIPasteboard.general.string = ipaURL.absoluteString
+                                }
+                            }
+                            Button("Open Installation Instructions") {
+                                openURL(updater.iLoaderGuideURL)
+                            }
+                            Text("Developer channel only: a signed native installation still requires an approved host and Apple provisioning. This is not the App Store customer route.")
+                                .font(.footnote)
+                        }
                     }
                 }
                 Section("Agent Lee system entry points") {
