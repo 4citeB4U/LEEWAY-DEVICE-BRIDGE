@@ -443,3 +443,15 @@ The published repair closes the false-positive harness defect and recovers the p
 
 **Publication state:** local source changes are pending publication and runtime restart. No production deployment was performed.
 
+## 2026-11-07 06:54 America/Chicago (UTC−06:00) — source published; runtime not activated
+
+**Publication:** the Continuum readback repair and its tests were committed and pushed directly to Device Bridge `main` as `d59cf5f0772689483d13d2d3c5e0a51077e1231a`. `git ls-remote origin refs/heads/main` returned the same SHA. The worktree's unrelated/untracked `work/` content was not staged.
+
+**Exact-head verification before publication:** gateway/test syntax checks passed; `npm run test:voice-auth` passed 11/11; `node --test tests/voice-c3-preflight.test.mjs` passed 5/5; `git diff --check` passed.
+
+**Live runtime readback after publication:** `GET :5332/health` returned HTTP 200 but reports running source `a988dfdd30279c8ccf92f4791e71268c37ca22f6`, upstream `PRODUCTION_CARRIER_BINDING_MISMATCH`, and both production-conversation and C3 readiness false. The allowed Pages origin's `/v1/voice/capabilities` returned HTTP 200 with `OWNER_DEVICE_APPROVAL`; `/v1/voice/session` returned HTTP 401 / `VOICE_SESSION_REQUIRED`. Machine Consciousness `:8890/health` reports the Creator-selected `kokoro-bm_lewis` renderer unavailable; LeeWay GPU `:4178/v1/status` reports dispatch OFF and `GPU_PRODUCTION_DISPATCH_NOT_ALLOWED`. The binding remains selected and production-admitted in the binding document, but that is not provider readiness or execution.
+
+**Bridge scope:** fresh read-only Bridge inventory reports `pc-primary` as configured, not physically probed. `device.health` and `device.info` passed only at `bounded-workspace` scope, with `uiControl:false`; capability discovery does not grant process/session execution or voice operations. Runtime Fabric is authenticated and available, but its status connector has not probed the Bridge/Continuum/Formula/Veritas/receipt authorities.
+
+**Disposition:** source is published; the running local gateway is still on its prior pinned source and no authorized Bridge lifecycle capability is exposed here to restart it. No production deployment, owner session, provider activation, GPU inference, live turn, microphone capture, playback, human barge-in, independent C3 Veritas decision, production receipt, or Learning Ledger update occurred. C3 remains unqualified. This is a concrete runtime activation and live-acceptance gap, not an unresolved source publication task.
+
