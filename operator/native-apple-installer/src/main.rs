@@ -38,6 +38,9 @@ use serde::Deserialize;
 use serde_json::json;
 use sha2::{Digest, Sha256};
 
+mod interactive;
+static INTERACTIVE_MODE: AtomicBool = AtomicBool::new(false);
+
 const BUNDLE_ID: &str = "industries.leeway.devicebridge";
 const MAX_IPA_SIZE: u64 = 104_857_600;
 const REQUEST_LIMIT: usize = 32_768;
@@ -151,6 +154,18 @@ fn selected_team(teams: &Vec<DeveloperTeam>) -> Option<String> {
 }
 
 async fn challenge(params: TwoFactorCallbackParams) -> Result<TwoFactorCallbackResponse, rootcause::Report> {
+    if INTERACTIVE_MODE.load(Ordering::Relaxed) {
+        eprintln!("Apple verification is required. Enter the code shown on your trusted device.");
+        let reply = tokio::task::spawn_blocking(|| {
+            rpassword::prompt_password("Apple verification code (hidden): ")
+        }).await.ok().and_then(|v| v.ok()).unwrap_or_default();
+        return Ok(if (4..=12).contains(&reply.len()) &&
+            reply.bytes().all(|c| c.is_ascii_alphanumeric()) {
+            TwoFactorCallbackResponse::SubmitCode(reply)
+        } else {
+            TwoFactorCallbackResponse::Abort
+        });
+    }
     println!("{}", json!({
         "type": "leeway.apple.two_factor",
         "stage":"OWNER_APPROVAL",
@@ -267,6 +282,38 @@ async fn perform(req: Request) -> Result<(), &'static str> {
 
 #[tokio::main]
 async fn main() {
+    let mut arguments = std::env::args().skip(1);
+    if let Some(command) = arguments.next() {
+        if command == "--help" || command == "-h" {
+            println!("LeeWay Device Bridge Apple native installer");
+            println!("  --install-leeway           Use a personal Apple Account and an authorized iPhone/iPad");
+            println!("  --install-leeway --team ID  Select an existing team only if necessary");
+            println!("  --help                     Print available commands");
+            println!("No argument: private Device Bridge newline-delimited JSON worker.");
+            return;
+        }
+        if command == "--install-leeway" {
+            let selected_team_id = match (arguments.next(), arguments.next(), arguments.next()) {
+                (None, None, None) => None,
+                (Some(flag), Some(team), None) if flag == "--team" && team.len() == 10 &&
+                  team.bytes().all(|c| c.is_ascii_alphanumeric()) => Some(team),
+                _ => {
+                    eprintln!("INVALID_INSTALL_OPTIONS");
+                    std::process::exit(2);
+                }
+            };
+            match interactive::run(selected_team_id).await {
+                Ok(()) => eprintln!("Native signed bundle found. The next gate is live launch and Metal proof."),
+                Err(code) => {
+                    eprintln!("LeeWay installer stopped: {code}");
+                    std::process::exit(1);
+                }
+            }
+            return;
+        }
+        eprintln!("UNKNOWN_NATIVE_INSTALLER_COMMAND");
+        std::process::exit(2);
+    }
     let outcome = match bounded_line(REQUEST_LIMIT) {
         None => Err("INSTALL_REQUEST_MISSING_OR_OVERSIZED"),
         Some(line) => match serde_json::from_str::<Request>(&line) {
