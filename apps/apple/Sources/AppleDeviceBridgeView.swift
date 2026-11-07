@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import AuthenticationServices
 
 @MainActor
 final class AppleBridgeStore: ObservableObject {
@@ -22,6 +23,7 @@ struct AppleDeviceBridgeView: View {
     @StateObject private var camera = AppleCameraCapture()
     @StateObject private var cameraBridge = AppleCameraBridgeServer()
     @StateObject private var updater = AppleUpdateCoordinator()
+    @StateObject private var appleSignIn = AppleSignInCoordinator()
     @Environment(\.openURL) private var openURL
     @State private var phoneNumber = ""
     @State private var emailRecipient = ""
@@ -32,6 +34,25 @@ struct AppleDeviceBridgeView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section("Your LeeWay account") {
+                    SignInWithAppleButton(.signIn, onRequest: { request in
+                        appleSignIn.prepare(request)
+                    }, onCompletion: { result in
+                        appleSignIn.finish(result)
+                    })
+                    .signInWithAppleButtonStyle(.black)
+                    .frame(height: 48)
+                    .accessibilityLabel("Sign in with Apple for LeeWay")
+                    LabeledContent("Identity", value: appleSignIn.state)
+                    Text(appleSignIn.detail)
+                        .font(.footnote)
+                    if !appleSignIn.exchangeConfigured {
+                        Text("LeeWay identity exchange is not yet configured for this build. Apple authorization alone cannot enroll a Device Bridge session.")
+                            .font(.footnote)
+                    }
+                    Text("Your Apple password is never requested by LeeWay. Signing in does not grant installation or device control.")
+                        .font(.footnote)
+                }
                 Section("LeeWay Device Bridge adapter") {
                     LabeledContent("Adapter", value: store.evidence.adapterID)
                     LabeledContent("State", value: store.evidence.state.rawValue)
