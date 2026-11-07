@@ -334,3 +334,7 @@ Download the live `LeeWayDeviceBridge-unsigned.ipa` from `apple-latest`, import 
 ## Active-route wording cleanup — 2026-11-07 15:01:11 America/Chicago (2026-11-07 21:01:11 UTC)
 
 The final active-route scan found two stale SideStore boundary phrases in iLoader documentation. They were removed from `docs/INSTALLATION-ADAPTER.md` and `docs/ILOADER-PERSISTENCE.md`. Historical SideStore incident records remain explicitly archived and are not part of the active updater, workflow, manifest, release assets, or PWA route.
+
+## Active-route scan closed — 2026-11-07 15:02:02 America/Chicago (2026-11-07 21:02:02 UTC)
+
+Commit `2f7d572b056f7dc9902cc69f2d1baf87f0aacc40` removed the final prohibition-only SideStore sentence from the active iLoader persistence guide. The scoped scan now returns **PASS: active route has no SideStore references**. `origin/main` and the local worktree match at this commit; the pre-existing untracked `state/` test residue remains outside the commit.
