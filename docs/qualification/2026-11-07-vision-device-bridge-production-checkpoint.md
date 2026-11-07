@@ -247,3 +247,53 @@ This closes the source, macOS build, package, and GitHub publication gates. It d
 ### Exact next executable action
 
 On Android, install the newly published APK from the Device Bridge update prompt and verify Android reports the replacement without uninstalling the existing package. On iPhone, open the app after the owner-controlled SideStore route is healthy, accept the GitHub update prompt, then grant permissions and execute the paired vision.sources.list → vision.session.start → advancing vision.frames.observe → vision.session.stop readback. Preserve the installer and runtime receipts. Until those physical steps are completed, the phone runtime and three-platform camera/production gates remain NOT FULLY QUALIFIED.
+
+## Apple GitHub/iLoader route correction checkpoint — 2026-11-07 14:54:25 America/Chicago (2026-11-07 20:54:25 UTC)
+
+**Identity and authority:** Creator-directed LeeWay Device Bridge engineering work in `4citeB4U/LEEWAY-DEVICE-BRIDGE`; source authority is the local canonical worktree and the repository `main` branch. Local correction commit after rebasing onto remote `main`: `71371552ff5226c3ee8a73194c126af4e87440ce`.
+
+**Requested gate:** Apple package updates must originate from GitHub and use the already-qualified iLoader installation path. SideStore must not be an active dependency, installer handoff, or update manifest route.
+
+### Diagnosis
+
+- The previous native Swift updater had already been partly corrected, but the active manifest, publication workflow, protocol text, and tests still named SideStore as the Apple route.
+- The repository's direct-delivery evidence identifies iLoader over USB as the currently verified Apple signing/install path and identifies Metal as the native local runtime after the app is installed.
+- GitHub can publish and supply the unsigned IPA and its digest. An ordinary iOS app cannot replace its own signed executable; iLoader remains the owner-controlled signing/install authority.
+
+### Implemented
+
+- Renamed the publication workflow to `.github/workflows/apple-github-iloader-channel.yml` and removed SideStore source generation/upload.
+- Changed iOS/iPadOS manifest routes to `CHECK_PROMPT_AND_ILOADER_GITHUB_IMPORT` and the Apple package action to `OPEN_GITHUB_IPA_AND_REQUEST_ILOADER_OWNER_CONFIRMATION`.
+- Native Apple updater now reads the HTTPS GitHub IPA URL, exposes **Open GitHub Release / Download IPA**, **Copy GitHub IPA URL**, and **Open iLoader Delivery Instructions**, and no longer constructs a `sidestore://` URL.
+- Updated active Apple delivery/update protocol and PWA copy to identify GitHub as package source and iLoader as the signing/install route. SideStore documents were reduced to archived historical notices.
+- Renamed the focused publication test to `tests/apple-github-iloader-update-channel.test.mjs` and updated source contracts.
+
+### Executed evidence
+
+- Focused Apple/update/page/source tests: **5 passed, 0 failed**.
+- Full repository source tests: **133 passed, 0 failed**.
+- `npm run test:mcp`: **153 passed, 0 failed**.
+- `npm run test:cli`: **7 passed, 0 failed**.
+- JSON manifest parse check: **PASS**.
+- `git diff --cached --check`: **PASS**.
+- No native iOS/macOS compile was executed on this Windows host; GitHub macOS qualification remains the required build gate after push.
+
+### Capability and evidence state
+
+| Boundary | Configured | Running | Executed | Verified | Production-ready |
+|---|---:|---:|---:|---:|---:|
+| GitHub Apple package source | yes | existing release metadata | prior GitHub publication | source contract corrected locally | pending new GitHub workflow run |
+| iLoader Apple signing/install route | documented and selected | not active in this session | prior route evidence | route documented; no new install readback | owner install pending |
+| Native Apple Metal runtime | in package source | no new iPhone readback | prior source/receipt evidence | not a new-build verification | physical readback pending |
+| SideStore update channel | archived | not used by active source | no new action | explicitly excluded from active route | not applicable |
+
+### Accepted and rejected decisions
+
+- Accepted: GitHub remains the package publication and discovery authority; the Apple app points the owner to the GitHub IPA and iLoader guide.
+- Accepted: existing iLoader certificate, pairing, and saved session are preserved; the update path does not reset or replace them.
+- Rejected: SideStore source URLs, SideStore release assets, or SideStore phone-side sign-in are required for LeeWay Apple updates.
+- Rejected: passing source tests or a GitHub release will be treated as proof of a new physical iPhone install, launch, Metal readback, camera session, or autonomous any-LLM production qualification.
+
+### Exact next executable action
+
+Push commits `71371552ff5226c3ee8a73194c126af4e87440ce` and `40e1f6427a44cf2d7362d9e9a54425198a5644ae` to `origin/main`, then wait for the GitHub macOS Apple qualification/publication and Pages deployment workflows. Read back the published manifest and release, install the downloaded IPA through the existing iLoader USB session, launch LeeWay Device Bridge, and capture a fresh Metal/camera receipt before making any new physical-runtime claim.
