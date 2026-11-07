@@ -93,3 +93,40 @@ The local stdio path is viable only behind an owner-approved launcher that injec
 **Next action:** register/approve an Antigravity OAuth client with the existing LeeWay issuer or identify the canonical local trusted-composition launcher; then configure the existing remote Streamable HTTP endpoint and verify Antigravity’s authenticated `initialize` and `tools/list`. Do not substitute the bare Node CLI example and do not claim a full connection until that real client call passes.
 
 **Current gate: TRANSPORT SOURCE PRESENT; CODEX SESSION READ-ONLY ROUTE OBSERVED; ANTIGRAVITY ADAPTER UNQUALIFIED; MULTI-CLIENT PRODUCTION CONNECTION NOT QUALIFIED.**
+
+## Follow-up: Codex host-composition launcher discovered — 2026-11-07 02:28 America/Chicago (UTC−06:00)
+
+Both installed Antigravity MCP configuration files now point to the same local launcher already configured in Codex:
+
+- `C:/Users/Leona/.codex/leeway/codex-host-composition/leeway-device-bridge-mcp.mjs`
+- Runtime base URL `http://127.0.0.1:4011`
+- Device configuration `C:/Users/Leona/.codex/leeway/codex-host-composition/device-bridge.config.json`
+
+These are current on-disk values observed during this follow-up. The earlier disabled-Python configuration and its backup remain historical evidence; this follow-up did not edit either Antigravity configuration and did not restart Antigravity.
+
+### Read-only launcher qualification
+
+Started the configured launcher as an MCP stdio child process and performed `initialize` plus `tools/list`; no device capability was called. It passed the launcher's eight local SHA-256 pin checks, Runtime `/runtime/health` and `/runtime/enforcement/manifest` startup checks, and advertised 63 tools. This proves the local process can start and expose its tool catalog from this Codex host. It does not prove Antigravity itself loaded the current config, nor does it prove device execution, provider authentication, or cross-agent messaging.
+
+### Admission and evidence limits
+
+- The pinned bridge files match the current local `device-bridge-controller` checkout, but none of the eight pinned files matches the corresponding file in the clean Device Bridge `main` checkout inspected at `bda068d74832a972e6bcea42aea5a356c5ca8544`; three pinned modules are absent from that clean checkout. The launcher is therefore pinned to a local candidate composition, not qualified canonical `main` source.
+- Runtime `/runtime/authorize-action` validates the compliance card and writes a receipt with status `AUTHORIZED_PENDING_VERIFICATION`. The launcher treats that status as an affirmative admission result. This endpoint does not itself return an independent Veritas decision or final verification.
+- The host-composition receipt sink appends Bridge records to local `codex-host-composition/receipts/device-bridge-mcp.jsonl`. Bridge receipts identify authority as `CONTROLLER_OBSERVATION` and Formula as `NOT_EVALUATED`. This file is not proven to be Continuum custody and must not be represented as a canonical LeeWay receipt or ledger.
+- The referenced device config grants a broad set of file, process, browser, Windows UI, voice, and write capabilities. Since the local launcher is not yet bound to verified Continuum receipt custody and independent verification, the 63-tool catalog must not be treated as production-admitted capability.
+
+### Updated state and next gate
+
+| Gate | State | Evidence |
+| --- | --- | --- |
+| Antigravity config points to Codex host launcher | CONFIGURED_ON_DISK | Read-back of both JSON configs; no Antigravity restart |
+| Local launcher startup and tool discovery | OBSERVED_PASS | MCP stdio `initialize`/`tools/list`; 63 tools; no operation invoked |
+| Antigravity process loaded this configuration | UNVERIFIED | Process was not restarted or queried through its own MCP client |
+| Pinned source equals clean Device Bridge `main` | FAILED | All eight local pins differ or are absent in the clean checkout |
+| Runtime status means independent pre-execution verification | NOT_ESTABLISHED | Handler returns `AUTHORIZED_PENDING_VERIFICATION` after card validation/receipt write |
+| Canonical Continuum receipt custody | NOT_ESTABLISHED | Launcher writes local JSONL; no Continuum binding proved |
+| Device operation / Formula / Veritas | NOT_EXECUTED | No device tool was called; no task Formula or independent Veritas evaluation occurred |
+
+The present configuration is **transport-connected at process level but not production-qualified for tool execution**. Keep the source/version, Runtime admission semantics, and receipt custody gates open before using the broad Antigravity tool surface. The next implementation gate is to reconcile the trusted composition with canonical source and bind its pre/post evidence through the approved Continuum and independent-verification authorities; then qualify Antigravity's own handshake and a narrowly scoped read-only device operation.
+
+No source or runtime deployment changed in this follow-up. No device action, Formula task evaluation, Veritas decision, canonical receipt, or Learning Ledger admission was produced.
