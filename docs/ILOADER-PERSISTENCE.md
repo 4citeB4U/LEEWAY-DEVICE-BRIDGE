@@ -26,7 +26,7 @@ iLoader can retain the selected service, saved login through Windows Credential 
 
 ## Active LeeWay route
 
-The current LeeWay native Apple update route is direct iLoader IPA import from the GitHub `apple-latest` release. Do not route a Device Bridge update through SideStore.
+The current LeeWay native Apple update route is direct iLoader IPA import from the GitHub `apple-latest` release.
 
 ## Evidence basis
 
