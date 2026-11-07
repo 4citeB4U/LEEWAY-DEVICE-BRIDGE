@@ -79,12 +79,26 @@ jobs:
           output = pathlib.Path("dist"); output.mkdir(exist_ok=True)
           sha = hashlib.sha256(binary.read_bytes()).hexdigest()
           archive = output / ("LeeWay-Apple-Installer-"+platform+(".zip" if platform=="windows" else ".tar.gz"))
+          readme = output / "README-APPLE-INSTALLER.txt"
+          readme.write_text(
+              "LeeWay Apple Native Installer\\n"
+              "Connect and trust your iPhone/iPad over USB. Open the launcher for your operating system.\\n"
+              "Choose your device, verify Apple's account prompt and enter the 2FA code locally.\\n"
+              "A free Apple Account can sign sideloaded apps; paid Developer enrollment or App Store Connect is not required.\\n"
+              "Free provisioning is temporary and typically needs renewal in seven days.\\n"
+              "The client is not proof of physical installation or independent Veritas until tested on a real device.\\n"
+              "Upstream library: nab138/isideload (MIT); nab138/iloader reference source (MIT, separate branding).\\n")
           if platform=="windows":
+              launcher = output / "START-LEEWAY-APPLE-INSTALLER.cmd"
+              launcher.write_bytes(b'@echo off\\r\\n"%~dp0leeway-apple-native-installer.exe" --install-leeway\\r\\npause\\r\\n')
               with zipfile.ZipFile(archive,"w",compression=zipfile.ZIP_DEFLATED) as z:
-                  z.write(binary,binary.name)
+                  for item in [binary,launcher,readme]: z.write(item,item.name)
           else:
+              launcher = output / ("START-LEEWAY-APPLE-INSTALLER.command" if platform=="macos" else "START-LEEWAY-APPLE-INSTALLER.sh")
+              launcher.write_text('#!/bin/sh\\ncd "$(dirname "$0")"\\nexec "./leeway-apple-native-installer" --install-leeway\\n')
+              launcher.chmod(0o755)
               with tarfile.open(archive,"w:gz") as t:
-                  t.add(binary,arcname=binary.name,recursive=False)
+                  for item in [binary,launcher,readme]: t.add(item,arcname=item.name,recursive=False)
           meta = {"platform":platform,"sourceSha":os.environ["GITHUB_SHA"],
                   "binarySha256":sha,"binarySizeBytes":binary.stat().st_size,
                   "archiveSha256":hashlib.sha256(archive.read_bytes()).hexdigest(),
