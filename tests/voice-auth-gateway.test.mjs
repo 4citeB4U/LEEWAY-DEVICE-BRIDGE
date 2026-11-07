@@ -11,7 +11,7 @@ AUTHORITY: offline test. LICENSE: MIT
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {randomBytes,scryptSync} from 'node:crypto';
-import {startVoiceAuthGateway} from '../operator/voice-auth-gateway.mjs';
+import {createVoiceAuthGateway,startVoiceAuthGateway} from '../operator/voice-auth-gateway.mjs';
 const salt=randomBytes(16).toString('hex');
 const hash=scryptSync('this-is-an-owner-only-test-passphrase',Buffer.from(salt,'hex'),64).toString('hex');
 test('voice authentication is login, CSRF and origin bound',async()=>{
@@ -66,4 +66,16 @@ test('gateway needs operator secret material and rejects public binding',async()
  assert.throws(()=>startVoiceAuthGateway({port:0}),/HASH_AND_SALT_REQUIRED/);
  assert.throws(()=>startVoiceAuthGateway({port:0,host:'0.0.0.0',
   passwordHash:hash,passwordSalt:salt}),/VOICE_HTTPS_PROXY_REQUIRED/);
+});
+test('health reports the exact running source commit for lifecycle reconciliation',async()=>{
+ const sourceCommit='a'.repeat(40);
+ const env=await startVoiceAuthGateway({port:0,passwordSalt:salt,passwordHash:hash,sourceCommit});
+ try{
+  const response=await fetch('http://127.0.0.1:'+env.port+'/health');
+  assert.equal(response.status,200);
+  assert.deepEqual(await response.json(),{ready:true,authority:'LEEWAY_DEVICE_BRIDGE_VOICE',
+   internetPublished:false,upstreamQualified:false,sourceCommit});
+  assert.throws(()=>createVoiceAuthGateway({passwordSalt:salt,passwordHash:hash,sourceCommit:'not-a-commit'}),
+   /VOICE_SOURCE_COMMIT_INVALID/);
+ }finally{await new Promise(resolve=>env.server.close(resolve))}
 });

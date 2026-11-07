@@ -35,9 +35,10 @@ const pairing=createVoicePairing({root:path.join(approvalDir,'requests'),approva
 const result=await startVoiceAuthGateway({pairing,registeredApps,
   host:'127.0.0.1',port:5332,passwordHash:data.passwordHash,
   passwordSalt:data.passwordSalt,
+  sourceCommit:process.env.LEEWAY_DEVICE_BRIDGE_SOURCE_COMMIT||null,
 });
 console.log(JSON.stringify({
   service:'LEEWAY_DEVICE_BRIDGE_VOICE_AUTH',state:'LOCAL_GATEWAY_LISTENING',
   port:result.port,remoteHttps:'EXTERNAL_TLS_MUST_BE_VERIFIED',ownerSecret:'ENROLLED_DPAPI_LOCAL',
-  passwordless:'OWNER_DEVICE_APPROVAL_READY',
+  passwordless:'OWNER_DEVICE_APPROVAL_READY',sourceCommit:process.env.LEEWAY_DEVICE_BRIDGE_SOURCE_COMMIT||null,
 }));

@@ -31,8 +31,9 @@ const boundedBody=async(req)=>{
 export function createVoiceAuthGateway({
  passwordHash,passwordSalt,fetchImpl=fetch,pairing=null,
  registeredApps={'leeway.voice.studio':FRONTEND},sessionDurationMs=30*60*1000,
- upstream='http://127.0.0.1:5173/__leeway/voice-turn',clock=now
+ upstream='http://127.0.0.1:5173/__leeway/voice-turn',clock=now,sourceCommit=null
 }={}){
+ if(sourceCommit!==null&&!/^[a-f0-9]{40}$/.test(sourceCommit))throw Error('VOICE_SOURCE_COMMIT_INVALID');
  if(!/^[a-f0-9]{128}$/.test(passwordHash||'')||!(/^[a-f0-9]{32,128}$/.test(passwordSalt||'')))
   throw Error('VOICE_AUTH_HASH_AND_SALT_REQUIRED');
  const u=new URL(upstream);
@@ -59,7 +60,8 @@ export function createVoiceAuthGateway({
   if(route!=='/health' && !Object.values(ROUTES).includes(route))
    return deny(res,404,'NOT_FOUND');
   if(route==='/health')return json(res,200,{ready:true,
-   authority:'LEEWAY_DEVICE_BRIDGE_VOICE',internetPublished:false,upstreamQualified:false});
+   authority:'LEEWAY_DEVICE_BRIDGE_VOICE',internetPublished:false,upstreamQualified:false,
+   sourceCommit});
   if(!allowOrigin(req))return deny(res,403,'VOICE_ORIGIN_DENIED');
   if(method==='OPTIONS'){
    if(!Object.values(ROUTES).includes(route))return deny(res,404,'NOT_FOUND');
