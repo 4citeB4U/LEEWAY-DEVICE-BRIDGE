@@ -297,3 +297,36 @@ On Android, install the newly published APK from the Device Bridge update prompt
 ### Exact next executable action
 
 Push commits `71371552ff5226c3ee8a73194c126af4e87440ce` and `40e1f6427a44cf2d7362d9e9a54425198a5644ae` to `origin/main`, then wait for the GitHub macOS Apple qualification/publication and Pages deployment workflows. Read back the published manifest and release, install the downloaded IPA through the existing iLoader USB session, launch LeeWay Device Bridge, and capture a fresh Metal/camera receipt before making any new physical-runtime claim.
+
+## GitHub/iLoader publication and live manifest readback — 2026-11-07 15:00:12 America/Chicago (2026-11-07 21:00:12 UTC)
+
+**Remote head:** `120081bc36d152ac6000d82d0d98a8e31a98684a` on `origin/main`, including the generated Apple publication commit after the correction push.
+
+### Remote execution evidence
+
+- Apple Device Bridge Qualification run `42413442161`: **success** on correction head `594fe5ec19a93afd115af0b23a4128c6bb6ad54e`.
+- Android Build run `42413442172`: **success** on the correction head.
+- Publish Apple GitHub iLoader Package Channel run `42413534963`: **success**.
+- Pages deployment run `42413605082`: **success** for the generated publication head.
+- Device Console UI Acceptance run `42413442245`: **success**.
+- The superseded Pages run `42413557822` was cancelled by the newer publication-triggered deployment; this is not a source failure.
+
+### Release and live Pages evidence
+
+- `apple-latest` release updated successfully. It now contains exactly `LeeWayDeviceBridge-unsigned.ipa` and `LEEWAY-APPLE-PACKAGE-MANIFEST.json`; the stale `sidestore-source.json` asset was removed explicitly.
+- Release notes now state owner-controlled iLoader signing and USB installation.
+- Live Pages manifest returned HTTP 200 at `2026-11-07T20:58:36Z`.
+- Live iOS/iPadOS route: `CHECK_PROMPT_AND_ILOADER_GITHUB_IMPORT`.
+- Live Apple action: `OPEN_GITHUB_IPA_AND_REQUEST_ILOADER_OWNER_CONFIRMATION`.
+- Live Apple artifact: version `0.1.51`, build `51`, size `376246` bytes, SHA-256 `19b662919290fe13a8b155877f4831ef845e818f161f959226ec2e1aedeb524b`.
+- Live manifest note: GitHub publishes the unsigned IPA; the owner-controlled iLoader route signs and installs it over USB.
+
+### Final state for this correction
+
+**VERIFIED:** repository source, manifest contract, GitHub Apple qualification, GitHub iLoader publication workflow, release cleanup, and live Pages route now agree on GitHub → iLoader → native Apple app → Metal runtime.
+
+**NOT VERIFIED:** a new physical iLoader install on the iPhone, native launch of build `51`, fresh Metal receipt from build `51`, camera pairing/readback, and any-LLM autonomous production qualification. Those require the connected iPhone and owner-controlled iLoader session; no source or GitHub result is being promoted to that physical evidence.
+
+### Exact next executable action
+
+Download the live `LeeWayDeviceBridge-unsigned.ipa` from `apple-latest`, import it through the existing iLoader USB session without revoking the certificate or pairing, open the app, and capture the new build/version plus Metal and camera receipts. The active repository route no longer requires or advertises SideStore.
