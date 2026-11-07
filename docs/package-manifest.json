@@ -139,5 +139,24 @@
       }
     }
   ],
-  "updatedAtUtc": "2026-11-07T20:58:36Z"
+  "updatedAtUtc": "2026-11-07T20:58:36Z",
+  "appleInstallerDistribution": {
+    "state": "NOT_PUBLISHED",
+    "role": "FIRST_PARTY_HOST_SIDELOAD_INSTALLER",
+    "package": "leeway-apple-native-installer",
+    "version": "0.1.0",
+    "releaseTag": "apple-installer-latest",
+    "releaseUrl": null,
+    "sourceRevision": null,
+    "qualificationRunId": null,
+    "requiresPaidDeveloperMembership": false,
+    "requiresAppleAccountAuthentication": true,
+    "requiresTrustedDevicePairing": true,
+    "assets": {
+      "windows": null,
+      "macos": null,
+      "linux": null
+    },
+    "qualification": "NATIVE_CI_AND_PHYSICAL_INSTALL_PENDING"
+  }
 }
