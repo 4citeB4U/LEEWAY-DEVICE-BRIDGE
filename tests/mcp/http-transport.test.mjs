@@ -79,6 +79,8 @@ test('HTTP MCP uses one dispatcher for all registered device adapters', async t 
   assert.match(c.getInstructions() || '', /GATE 0 — AGENT LEE VOICE IS MANDATORY/);
   assert.match(c.getInstructions() || '', /4citeB4U\/LeeWay-Engineering/);
   assert.match(c.getInstructions() || '', /4citeB4U\/Receipt-Authority/);
+  assert.match(c.getInstructions() || '', /GATE P — PORTABLE CODE WRITING AND DEVICE AUTHORITY/);
+  assert.match(c.getInstructions() || '', /development computer/);
   assert.match(c.getInstructions() || '', /INVESTIGATE → DIAGNOSE → PLAN → IMPLEMENT → TEST → VALIDATE → REPAIR → RETEST → VERIFY → EVIDENCE → CHECKPOINT → CONTINUE/);
   const tools=await c.listTools();
   assert.ok(tools.tools.some(x=>x.name==='leeway_operating_contract'));
