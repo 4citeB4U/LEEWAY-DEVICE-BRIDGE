@@ -61,3 +61,13 @@ That is the supported next route to investigate if a fresh Bridge observation st
 - Next action: after the source contract is promoted and the intended Bridge host is updated through its authorized lifecycle, run a governed read-only observation for the active Antigravity conversation. If it still exposes no writable control, qualify the owner-bound official Remote Control browser session as the input adapter. Only then can a Creator-provided exact message be entered and a live response read back.
 
 **Current gate: SOURCE CONTRACT TESTED; ANTIGRAVITY LIVE COMPOSER AND FULL CONVERSATION EXCHANGE UNQUALIFIED.**
+
+## Main publication readback
+
+- Published to canonical `main`: commit `8d9bb5f23eb1bc042c7018394d7f313911d09373` (`Add observation-bound Windows composer controls`).
+- GitHub readback on `main`: `apps/desktop/windows-ui-sessions.mjs` blob `285156c668bfaf21daa59bb5e4f56055f052c995`; this qualification record blob `e809f4a3623f6fbea1c6712113235f47f6977a57`; contributor note blob `a4e3cb119d1fa5682ab98e5a805681ee7be66bc7`.
+- GitHub Actions `42351732680` (Portable protocol and MCP) passed on the exact source SHA; Windows, macOS, and Ubuntu jobs all passed the MCP, CLI, and trusted-composition checks.
+- GitHub Pages build/deployment run `42351732316` passed.
+- Unrelated Android Build workflow `42351732707` was canceled before artifact publication because its broad `tests/**` trigger would have rebuilt an unrelated APK.
+- Secondary Workstation Live Pages Gate `42351732741` was still running at checkpoint time; it does not qualify Windows UI control.
+- Main publication distributes source. No active Device Bridge host update, production route change, or live UI execution occurred.
