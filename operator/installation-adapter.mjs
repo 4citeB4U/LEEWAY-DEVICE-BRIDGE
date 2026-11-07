@@ -1,9 +1,15 @@
 /*
-REGION: LeeWay Device Bridge installation adapter
+LEEWAY HEADER — DO NOT REMOVE
+REGION: LEEWAY.DEVICE_BRIDGE.INSTALLATION
 TAG: LEEWAY-INSTALLATION-ADAPTER
-WHAT: Deterministic, read-only selection and preflight for an authorized package installer.
-WHY: Route a package only through observed platform capabilities without inventing installer authority.
-HOW: Probe -> classify -> plan. Execution, verification, and rollback remain explicitly unavailable here.
+5WH:
+WHAT = Deterministic read-only installer selection and hash-bound Apple release handoff.
+WHY = Prevent foreign packages and unverified signing from being passed to native installers.
+WHO = LeeWay Device Bridge contributors under Creator and LeeWay Standards authority.
+WHERE = operator/installation-adapter.mjs.
+WHEN = Original implementation 2026-10-18; Apple release binding qualified in source 2026-11-07.
+HOW = Probe, classify, verify canonical release identity, require owner approval, and plan; execution remains separate.
+LICENSE = MIT; no upstream iLoader code is embedded.
 */
 import { adapterForPlatform, loadAdapterRegistry } from "./device-operator.mjs";
 
@@ -155,6 +161,67 @@ export function probeInstallationTarget(target = {}, registry = loadAdapterRegis
   } catch {
     return { state: "UNSUPPORTED_TARGET", platform, expectedPackageType: null, expectedProviderId: null, transportReady: false };
   }
+}
+
+const APPLE_RELEASE_ASSET = "https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/download/apple-latest/LeeWayDeviceBridge-unsigned.ipa";
+
+/**
+ * Bind the existing iLoader preflight to the actual LeeWay-distributed IPA.
+ * The caller must provide a SHA-256 measured from the downloaded file,
+ * never one copied from the publication manifest as simulated readback.
+ * This prepares a handoff; it does not execute a native signing operation.
+ */
+export function planPublishedAppleIpaHandoff({ manifest, measuredIpaSha256, target = {}, ownerApproved = false } = {}, registry = loadAdapterRegistry()) {
+  if (target.platform !== "ios" && target.platform !== "ipados") {
+    return { state: "APPLE_TARGET_REQUIRED", executable: false };
+  }
+  if (manifest?.authority !== "4citeB4U/LEEWAY-DEVICE-BRIDGE" ||
+      manifest?.distributionRole !== "GITHUB_PAGES_DISCOVERY_AND_DOWNLOAD" ||
+      !Array.isArray(manifest?.packages)) {
+    return { state: "APPLE_RELEASE_AUTHORITY_UNVERIFIED", executable: false };
+  }
+  const matches = manifest.packages.filter(item => item?.platform === "ios" && item?.id === "apple-native");
+  if (matches.length !== 1) {
+    return { state: "APPLE_RELEASE_IDENTITY_AMBIGUOUS", executable: false };
+  }
+  const pkg = matches[0];
+  const ci = pkg.githubActionsQualification;
+  if (pkg.downloadUrl !== APPLE_RELEASE_ASSET ||
+      pkg.source !== "github-release" ||
+      pkg.status !== "QUALIFIED_ARTIFACT_OWNER_INSTALL_REQUIRED" ||
+      !sha256(pkg.sha256) || !Number.isSafeInteger(pkg.sizeBytes) || pkg.sizeBytes <= 0 ||
+      ci?.state !== "VERIFIED" || ci?.ipaSha256 !== pkg.sha256 ||
+      ci?.ipaSizeBytes !== pkg.sizeBytes ||
+      !/^[a-f0-9]{40}$/i.test(ci?.sourceRevision ?? "") ||
+      !Number.isSafeInteger(ci?.runId) || ci.runId <= 0 ||
+      !Number.isSafeInteger(pkg.versionCode) || pkg.versionCode <= 0) {
+    return { state: "APPLE_RELEASE_PROVENANCE_UNVERIFIED", executable: false };
+  }
+  if (!sha256(measuredIpaSha256) || measuredIpaSha256.toLowerCase() !== pkg.sha256.toLowerCase()) {
+    return { state: "PACKAGE_HASH_MISMATCH", executable: false };
+  }
+  const plan = planInstallation({
+    target,
+    package: {
+      type: "ipa",
+      expectedSha256: pkg.sha256,
+      actualSha256: measuredIpaSha256
+    },
+    ownerApproved
+  }, registry);
+  if (plan.state !== "DRY_RUN_READY") return plan;
+  return {
+    ...plan,
+    state: "APPLE_NATIVE_HANDOFF_PLANNED",
+    executable: false,
+    bundleIdentifier: "industries.leeway.devicebridge",
+    downloadUrl: APPLE_RELEASE_ASSET,
+    version: pkg.versionName,
+    build: pkg.versionCode,
+    signing: "OWNER_CONTROLLED_ILOADER",
+    requiresNativeProvider: true,
+    nativeInstallVerified: false
+  };
 }
 
 export function executeInstallation() {
