@@ -53,6 +53,13 @@ struct AppleDeviceBridgeView: View {
                         Text("A receipt is issued only after this app observes a Metal probe result. External verification remains separate.")
                     }
                 }
+                Section("LeeWay Voice Fabric") {
+                    NavigationLink("Open LeeWay Voice") {
+                        AppleLeeWayVoiceView()
+                    }
+                    Text("LeeWay-only voice. Kokoro synthesis is performed by the LeeWay Voice Fabric browser engine when available. Apple system speech is never a fallback.")
+                        .font(.footnote)
+                }
                 Section("Agent Lee system entry points") {
                     LabeledContent("LeeWay actions", value: "Siri and Shortcuts")
                     Text("The installed app exposes its Metal probe as a LeeWay App Intent. A shortcut may start the LeeWay action; it does not grant control of other apps.")
