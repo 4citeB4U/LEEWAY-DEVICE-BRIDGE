@@ -301,3 +301,13 @@ No pairing token/session was created, no microphone or GUI was opened, no audio 
 
 No new receipt, task Formula evaluation, Learning Ledger admission, live synthesis, or playback was created in this checkpoint.
 
+## 2026-11-07 04:49 America/Chicago (UTC−06:00) — Configurable binding published and activated
+
+The loopback Voice Fabric origin is now an explicit per-host deployment binding (`LEEWAY_VOICE_FABRIC_ORIGIN`) with `http://127.0.0.1:8890` as this workstation's default. The adapter accepts only explicit loopback HTTP origins with a port; remote URLs, credentials, paths, and non-loopback hosts are rejected. The change was rebased after concurrent `main` advanced from `6421b53` to `22b0826`, then pushed directly to canonical Device Bridge `main` as `953cdb2c79b992740f81b613680be3714d99f34f`.
+
+The source-pinned owner launcher restarted the recognized local Gateway. Fresh `GET /health` reports source commit `953cdb2c79b992740f81b613680be3714d99f34f`, `ready:true`, `internetPublished:false`, and `upstreamQualified:false`. Exact registered Edge RTC origin `http://127.0.0.1:5173` receives HTTP 200 and exact CORS; sibling port `5174` receives HTTP 403. Unauthenticated `GET /v1/voice/synthesis-status` receives HTTP 401. This verifies source-bound Gateway activation and origin/auth boundaries only; it does not call synthesis or qualify the fixture turn as production ingress.
+
+**Final gate:** published on `main` and active locally; source tests remain 3/3 synthesis-route and 8/8 voice-auth; no live audio synthesized or played; Agent Lee is the only admitted voice binding; Codex identity and the active Codex conversation input/output hooks are not bound; fixture-backed Edge RTC route remains distinct from a production conversation contract; `upstreamQualified:false`; microphone-to-response-to-playout, interruption, and stale-output rejection remain unqualified; full C3 remains `UNQUALIFIED`.
+
+**Next executable action:** identify/build the supported authenticated Device Bridge contract for a positively identified active agent conversation, and bind each agent to its own admitted Voice Fabric selection plus host playout/cancel adapter. Keep the current fixture endpoint out of production qualification. Then exercise owner-approved end-to-end capture, real agent response, Voice Fabric playout, human interruption, stale-output rejection, and independent receipt-chain verification. No task Formula run, new execution receipt, or Learning Ledger admission was created here.
+
