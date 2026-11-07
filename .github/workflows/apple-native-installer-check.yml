@@ -57,3 +57,46 @@ jobs:
         run: cargo check --manifest-path operator/native-apple-installer/Cargo.toml
       - name: Validate source boundaries
         run: node --test tests/apple-native-installer-source.test.mjs tests/apple-native-runtime-provider.test.mjs
+      - name: Build portable first-party LeeWay host installer
+        run: cargo build --release --locked --manifest-path operator/native-apple-installer/Cargo.toml
+      - name: Exercise installer help without credentials or physical devices
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXE="operator/native-apple-installer/target/release/leeway-apple-native-installer"
+          if [ "$RUNNER_OS" = "Windows" ]; then EXE="${EXE}.exe"; fi
+          "$EXE" --help | grep -F "Free Apple" || "$EXE" --help | grep -F "personal Apple Account"
+      - name: Package candidate host installer with binary SHA-256
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, os, pathlib, tarfile, zipfile, json
+          platform = {"Windows":"windows","macOS":"macos","Linux":"linux"}[os.environ["RUNNER_OS"]]
+          base = pathlib.Path("operator/native-apple-installer/target/release")
+          binary = base / ("leeway-apple-native-installer.exe" if platform=="windows" else "leeway-apple-native-installer")
+          if not binary.is_file(): raise SystemExit("HOST_INSTALLER_BINARY_NOT_FOUND")
+          output = pathlib.Path("dist"); output.mkdir(exist_ok=True)
+          sha = hashlib.sha256(binary.read_bytes()).hexdigest()
+          archive = output / ("LeeWay-Apple-Installer-"+platform+(".zip" if platform=="windows" else ".tar.gz"))
+          if platform=="windows":
+              with zipfile.ZipFile(archive,"w",compression=zipfile.ZIP_DEFLATED) as z:
+                  z.write(binary,binary.name)
+          else:
+              with tarfile.open(archive,"w:gz") as t:
+                  t.add(binary,arcname=binary.name,recursive=False)
+          meta = {"platform":platform,"sourceSha":os.environ["GITHUB_SHA"],
+                  "binarySha256":sha,"binarySizeBytes":binary.stat().st_size,
+                  "archiveSha256":hashlib.sha256(archive.read_bytes()).hexdigest(),
+                  "archiveBytes":archive.stat().st_size,
+                  "approval":"CI_CANDIDATE_NOT_PHYSICAL_DEVICE_VERITAS"}
+          (output / ("LeeWay-Apple-Installer-"+platform+".sha256.json")).write_text(json.dumps(meta,indent=2)+"\\n")
+          print(meta)
+          PY
+      - name: Retain downloadable, unsigned host installer candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: leeway-apple-installer-${{ runner.os }}-${{ github.run_id }}
+          path: dist/
+          retention-days: 30
+          if-no-files-found: error
