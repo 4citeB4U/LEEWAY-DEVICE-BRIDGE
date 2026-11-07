@@ -224,7 +224,7 @@ This closes the source, macOS build, package, and GitHub publication gates. It d
 - GitHub Android Build 42410553049: success after repairing formula evidence generation.
 - GitHub Pages deployment 42410687684: success.
 - Fresh HTTPS readback of https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/package-manifest.json returned HTTP 200, schema 0.3.0, updatedAtUtc 2026-11-07T20:21:33Z, Android size/formula size 66445365, identical Android artifact/formula SHA-256 63d8f8b4ae9338f78b89ed677a3724f1ddb351b33d7eb3abe75a555c18c2ae73, and Apple version/build 0.1.49/49.
-- Source commit 4206184, evidence-repair commit 40fa733, and generated publication commits are present on origin/main; the latest observed remote head is 44fd817.
+- Source commit 4206184, evidence-repair commit 40fa733, and generated publication commits are present on origin/main; the latest observed remote head is 0089dda.
 
 ### Capability and evidence state
 
