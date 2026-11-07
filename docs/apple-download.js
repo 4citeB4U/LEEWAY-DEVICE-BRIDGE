@@ -58,9 +58,48 @@ export function qualifyAppleRelease(manifest) {
   };
 }
 
+export function qualifyAppleStoreDistribution(manifest) {
+  const packages = manifest?.authority === "4citeB4U/LEEWAY-DEVICE-BRIDGE"
+    && Array.isArray(manifest?.packages)
+    ? manifest.packages.filter(item => item?.platform === "ios" && item?.id === "apple-native") : [];
+  if (packages.length !== 1) return {state:"APP_STORE_IDENTITY_UNVERIFIED", available:false};
+  const record = packages[0].consumerDistribution;
+  if (record?.state !== "PUBLISHED") return {state:"APP_STORE_NOT_PUBLISHED", available:false};
+  const urlString = record.installUrl;
+  let parsed;
+  try { parsed = new URL(urlString); } catch { return {state:"APP_STORE_URL_INVALID", available:false}; }
+  const match = /^\/(?:[a-z]{2}\/)?app\/[^/]+\/id([0-9]+)$/.exec(parsed.pathname);
+  if (record.channel !== "APPLE_APP_STORE" ||
+      record.bundleId !== "industries.leeway.devicebridge" ||
+      typeof record.appStoreId !== "string" ||
+      !/^[0-9]{7,16}$/.test(record.appStoreId) ||
+      !match || match[1] !== record.appStoreId ||
+      parsed.protocol !== "https:" || parsed.hostname !== "apps.apple.com" ||
+      parsed.username || parsed.password || parsed.search || parsed.hash || parsed.port) {
+    return {state:"APP_STORE_URL_INVALID", available:false};
+  }
+  return {state:"APP_STORE_PUBLISHED", available:true, installUrl:parsed.href};
+}
+
 export async function initializeAppleDownloads(fetchManifest = () => fetch("./package-manifest.json", {cache: "no-store"})) {
   if (typeof document === "undefined") return {state: "NO_BROWSER_DOCUMENT", usable: false};
   const links = [...document.querySelectorAll("[data-apple-ipa-download]")];
+  const customerInstallRegions = [...document.querySelectorAll("[data-apple-customer-install]")];
+  const showAppStore = distribution => {
+    customerInstallRegions.forEach(node => {
+      node.replaceChildren();
+      if (distribution.available) {
+        const link = document.createElement("a");
+        link.href = distribution.installUrl;
+        link.className = "action";
+        link.textContent = "INSTALL OFFICIAL LEEWAY APP";
+        link.rel = "noopener";
+        node.appendChild(link);
+      } else {
+        node.textContent = "Public App Store release not yet published. The IPA below is for authorized developer installations only.";
+      }
+    });
+  };
   const labels = [...document.querySelectorAll("[data-apple-package-status]")];
   const badge = document.querySelector("#applePackageVerifiedState");
   const updateState = (message, badgeText) => {
@@ -77,7 +116,9 @@ export async function initializeAppleDownloads(fetchManifest = () => fetch("./pa
   try {
     const response = await fetchManifest();
     if (!response?.ok) throw new Error("MANIFEST_FETCH_FAILED");
-    const packageState = qualifyAppleRelease(await response.json());
+    const manifest = await response.json();
+    showAppStore(qualifyAppleStoreDistribution(manifest));
+    const packageState = qualifyAppleRelease(manifest);
     if (!packageState.usable) {
       updateState("Apple package publication could not be validated here. Check the release manifest before installing.", "CHECK REQUIRED");
       return packageState;
@@ -90,6 +131,7 @@ export async function initializeAppleDownloads(fetchManifest = () => fetch("./pa
     );
     return packageState;
   } catch {
+    showAppStore({available:false});
     updateState("Current Apple manifest unavailable. The link targets LeeWay's established release asset, but this session has not checked its current contents or signature.", "CHECK REQUIRED");
     return {state: "APPLE_MANIFEST_UNAVAILABLE", usable: false};
   }
