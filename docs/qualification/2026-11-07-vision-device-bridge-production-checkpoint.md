@@ -76,5 +76,9 @@ Bind the Vision provider into the intended active Device Bridge runtime composit
 
 The post-push Android workflow `42391789821` built, tested, measured, hashed, and uploaded the APK successfully. Its only failure was the final generated-artifact push, which lost a concurrent `main` update and was rejected by GitHub as `fetch first`; no Android build defect was observed. The workflow now has three guarded push attempts with `git fetch`, `git rebase`, and retry in `.github/workflows/android-build.yml`.
 
-The repair is published at Device Bridge `main` commit `345f3f9fa9784fae0659fa0a899738f3be91ae9f`, remote readback confirmed. Portable protocol/MCP passed on `f33763b7ba5d08179113bad8afa196475931c7f2`; Pages passed on `de32c5a02a645095ba71aebaf1388f1c368baeb3`. A fresh Android run for the guarded publication workflow is expected from the new CI commit; this checkpoint does not pre-label it successful.
+The repair is published at Device Bridge `main` commit `345f3f9fa9784fae0659fa0a899738f3be91ae9f`, remote readback confirmed. Portable protocol/MCP passed on `f33763b7ba5d08179113bad8afa196475931c7f2`; Pages passed on `de32c5a02a645095ba71aebaf1388f1c368baeb3`. Android run `42392025661` passed with the guarded publication step and published the verified APK as `080d3a3eabdb1fdc5fe3f13658b406f8a2622524`; remote `main` readback is now `080d3a3eabdb1fdc5fe3f13658b406f8a2622524`.
+
+## Final publication readback — 2026-11-07 10:37:33 America/Chicago (2026-11-07 16:37:33 UTC)
+
+Device Bridge remote `main` is `080d3a3eabdb1fdc5fe3f13658b406f8a2622524`. The Android build and publication workflow passed after the guarded-push repair. Vision remote `main` remains `59693f117a77061a237c940ced61dc661619ff21`, whose Production Vision Bridge Qualification and Pages workflows passed. The live Windows evidence and the remaining active-MCP/mobile/independent-governance boundaries above are unchanged.
 
