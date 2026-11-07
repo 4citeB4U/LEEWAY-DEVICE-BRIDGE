@@ -27,7 +27,7 @@ test("GitHub publishes stable Apple package metadata after a qualified main buil
   assert.match(publish, /LeeWayDeviceBridge-unsigned\.ipa/);
   assert.match(publish, /LEEWAY-APPLE-PACKAGE-MANIFEST\.json/);
   assert.doesNotMatch(publish, /sidestore-source\.json/);
-  assert.match(pwa, /OPEN APPLE PACKAGE/);
+  assert.match(pwa, /DOWNLOAD LEEWAY APP/);
   assert.match(pwa, /Direct iLoader update/);
   assert.doesNotMatch(pwa, /sidestore:\/\/source\?url=/);
   assert.match(pwa, /releases\/tag\/apple-latest/);
