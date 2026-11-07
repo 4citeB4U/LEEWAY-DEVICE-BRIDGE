@@ -268,3 +268,5 @@ The launcher pins a dirty local controller candidate rather than the clean Devic
 - Gemini consumer web displayed custom MCP app setup but no LeeWay app; no authenticated handshake exists. No provider prompt sent.
 - Full three-client production qualification remains open. Next: individually qualify Antigravity's app-managed handshake and obtain an approved Gemini MCP client binding, then verify initialize/tool discovery/reconnect. Do not infer production admission from discovery.
 - No task Formula evaluation, Veritas decision, Continuum receipt, or Learning Ledger admission was produced. An unexpected Voice Typing overlay was closed and the unsent composer cleared; no message was submitted.
+
+- Accessibility follow-up 2026-11-07 02:56 CST: LeeWay reader selected Kokoro m_lewis and was readiness-positive, but synthesis returned HTTP 429 from the configured provider endpoint; no WAV played and no voice fallback was used. Written response delivered; playback is unconfirmed.

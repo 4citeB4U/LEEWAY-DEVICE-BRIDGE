@@ -159,3 +159,7 @@ A Windows Voice Typing overlay opened unexpectedly during Antigravity inspection
 **Current gate:** ChatGPT-hosted read-only connector `OBSERVED_CONNECTED`; local service `RUNNING`; Antigravity application connection `UNVERIFIED`; online Gemini LeeWay binding `NOT_CONFIGURED`; full three-client production qualification `OPEN`. No Formula task evaluation, Veritas decision, canonical Continuum receipt, or Learning Ledger admission was produced.
 
 **Next action:** qualify each external client independently. First establish an approved Gemini MCP app auth/client binding and verify that client's authenticated `initialize`, `tools/list`, and reconnect. Separately inspect Antigravity's own MCP manager for an authenticated handshake to the configured LeeWay launcher. Do not submit prompts during connection qualification.
+
+### Accessibility playback follow-up — 2026-11-07 02:56 America/Chicago (UTC−06:00)
+
+The user’s default spoken-reply preference was honored through the installed LeeWay reader. Carrier `/health` reported the selected Kokoro `bm_lewis` binding ready, but synthesis of the prepared reply failed with upstream HTTP 429 from `http://127.0.0.1:8878/synthesize`. No WAV was played and no alternate voice/provider was selected. Written status remains authoritative; playback/audibility is NOT_CONFIRMED.
