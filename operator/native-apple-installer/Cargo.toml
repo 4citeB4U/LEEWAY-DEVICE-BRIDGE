@@ -1,0 +1,29 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.DEVICE_BRIDGE.NATIVE_APPLE_INSTALLER
+# TAG: LEEWAY.APPLE.NATIVE_SIGNING_WORKER.MANIFEST
+# 5WH:
+# WHAT = Compile the Device Bridge-owned native Apple signing and installation worker.
+# WHY = Run the existing isideload signing library without routing installation through a browser.
+# WHO = LeeWay Device Bridge contributors under Creator and LeeWay Standards authority.
+# WHERE = operator/native-apple-installer/Cargo.toml.
+# WHEN = 2026-11-07.
+# HOW = Version-constrained MIT isideload/idevice libraries with a private newline-JSON host IPC.
+# LICENSE = MIT; third-party crates retain their own copyright and license obligations.
+[package]
+name = "leeway-apple-native-installer"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+description = "Owner-authorized LeeWay Device Bridge iOS signing and installation host worker"
+
+[dependencies]
+idevice = { version = "=0.1.68", default-features = false, features = ["ring", "usbmuxd", "installation_proxy", "afc", "remote_pairing", "rsd"] }
+isideload = { version = "=0.5.2", features = ["keyring-storage"] }
+keyring = { version = "3.6.3", features = ["apple-native", "windows-native", "linux-native-sync-persistent"] }
+tokio = { version = "1.49", features = ["rt-multi-thread", "macros"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "tls12", "std"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.11"
+hex = "0.4"
+rootcause = "0.12"
