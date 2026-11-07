@@ -24,9 +24,9 @@ Those actions remove working state and can force a fresh Apple authorization.
 
 iLoader can retain the selected service, saved login through Windows Credential Manager, and pairing information. Apple can still reject or expire an authorization session, and the phone may require a new trust prompt after an operating-system or pairing change. That is an Apple service boundary, not a LeeWay application update.
 
-## SideStore boundary
+## Active LeeWay route
 
-SideStore sign-in is separate from iLoader. The current LeeWay native Apple update route is direct iLoader IPA import. Do not block a Device Bridge update on SideStore while its upstream session error remains unresolved.
+The current LeeWay native Apple update route is direct iLoader IPA import from the GitHub `apple-latest` release. Do not route a Device Bridge update through SideStore.
 
 ## Evidence basis
 

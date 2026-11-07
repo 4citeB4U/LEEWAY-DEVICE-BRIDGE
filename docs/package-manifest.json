@@ -33,12 +33,12 @@
     },
     "ios": {
       "state": "AVAILABLE",
-      "updateMode": "CHECK_PROMPT_AND_SIDESTORE",
+      "updateMode": "CHECK_PROMPT_AND_ILOADER_GITHUB_IMPORT",
       "source": "github-release"
     },
     "ipados": {
       "state": "AVAILABLE",
-      "updateMode": "CHECK_PROMPT_AND_SIDESTORE",
+      "updateMode": "CHECK_PROMPT_AND_ILOADER_GITHUB_IMPORT",
       "source": "github-release"
     },
     "windows": {
@@ -113,7 +113,7 @@
       "sizeBytes": 373146,
       "versionName": "0.1.50",
       "versionCode": 50,
-      "updateAction": "OPEN_SIDESTORE_SOURCE_AND_REQUEST_OWNER_CONFIRMATION",
+      "updateAction": "OPEN_GITHUB_IPA_AND_REQUEST_ILOADER_OWNER_CONFIRMATION",
       "formulaQualification": {
         "required": true,
         "status": "SOURCE_AND_MACOS_BUILD_QUALIFIED_PHYSICAL_INSTALL_PENDING",
@@ -125,7 +125,7 @@
         "sourceRevision": "b153c0d0f1d9b0ab82456bca3fd71d695a0bfc1d",
         "ipaSizeBytes": 373146,
         "ipaSha256": "e7efb92501b72d74800766f49f4e75659a5f2dd519ac7fa3b73b69468d692405",
-        "note": "GitHub publishes the unsigned IPA; the owner-controlled SideStore channel performs Apple signing and installation."
+        "note": "GitHub publishes the unsigned IPA; the owner-controlled iLoader route signs and installs it over USB."
       }
     }
   ],

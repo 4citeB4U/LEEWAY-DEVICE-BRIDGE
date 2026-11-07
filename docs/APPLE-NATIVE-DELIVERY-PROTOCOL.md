@@ -29,10 +29,10 @@ When a future Agent Lee runtime is added, its package manifest must change the r
 1. Build the native target in the GitHub macOS qualification workflow.
 2. Package the unsigned IPA and generated manifest as one workflow artifact.
 3. Verify the manifest digest against the downloaded IPA.
-4. Sign and install through the owner-controlled Apple route. SideStore is one supported route for a free Apple Account; TestFlight is the signed program-member route.
+4. Sign and install through the owner-controlled Apple route. The active LeeWay route is the existing iLoader installation: import the GitHub IPA over USB and let iLoader sign/install it. TestFlight remains a separate Apple distribution route, not part of this repository's update channel.
 5. Run the native adapter’s physical Metal probe.
 6. Submit the observation to independent receipt verification before it reaches LeeWay verified telemetry.
 
 ## Claim boundary
 
-An unsigned IPA is a delivery artifact, not an installed app. SideStore signing is an owner-controlled distribution action, not a LeeWay verification result. A successful Metal readback is a local native observation, not Formula authorization, Agent Lee inference, or a Veritas receipt.
+An unsigned IPA is a delivery artifact, not an installed app. iLoader signing is an owner-controlled distribution action, not a LeeWay verification result. A successful Metal readback is a local native observation, not Formula authorization, Agent Lee inference, or a Veritas receipt.

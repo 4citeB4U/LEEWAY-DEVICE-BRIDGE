@@ -1,4 +1,4 @@
-name: Publish Apple SideStore Update Channel
+name: Publish Apple GitHub iLoader Package Channel
 
 concurrency:
   group: leeway-device-bridge-package-publication
@@ -45,77 +45,20 @@ jobs:
             --pattern "leeway-device-bridge-apple-unsigned-*" --dir package
           find package -type f -print
 
-      - name: Generate the LeeWay SideStore source
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          import datetime
-          import json
-          from pathlib import Path
-
-          package = Path("package")
-          manifest_path = next(package.rglob("LEEWAY-APPLE-PACKAGE-MANIFEST.json"))
-          ipa_path = next(package.rglob("LeeWayDeviceBridge-unsigned.ipa"))
-          manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-          artifact = manifest["artifact"]
-          version = artifact["version"]
-          build = artifact["build"]
-          if not version or not build:
-              raise SystemExit("Qualified package omitted the required update version or build.")
-
-          repository = "4citeB4U/LEEWAY-DEVICE-BRIDGE"
-          release = f"https://github.com/{repository}/releases/download/apple-latest"
-          ipa_url = f"{release}/LeeWayDeviceBridge-unsigned.ipa"
-          now = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
-          version_description = (
-              f"LeeWay Device Bridge {version} ({build}). "
-              f"Qualified source {manifest['sourceRevision']}. "
-              "Unsigned package; SideStore performs owner-controlled signing."
-          )
-          source = {
-              "name": "LeeWay Device Bridge Updates",
-              "identifier": "industries.leeway.devicebridge.source",
-              "sourceURL": f"{release}/sidestore-source.json",
-              "apps": [{
-                  "name": "LeeWay Device Bridge",
-                  "bundleIdentifier": manifest["bundleIdentifier"],
-                  "developerName": "LeeWay Industries",
-                  "localizedDescription": "LeeWay-owned native Apple Device Bridge with Metal diagnostics, owner-started camera capture, and governed system entry points. External Formula and Veritas authority remain separate.",
-                  "iconURL": "https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/icons/leeway-official-logo-512.png",
-                  "version": version,
-                  "versionDate": now,
-                  "versionDescription": version_description,
-                  "downloadURL": ipa_url,
-                  "size": ipa_path.stat().st_size,
-                  "versions": [{
-                      "version": version,
-                      "date": now,
-                      "localizedDescription": version_description,
-                      "downloadURL": ipa_url,
-                      "size": ipa_path.stat().st_size,
-                      "minOSVersion": "17.0"
-                  }]
-              }]
-          }
-          Path("sidestore-source.json").write_text(json.dumps(source, indent=2) + "\n", encoding="utf-8")
-          print(json.dumps(source, indent=2))
-          PY
-
-      - name: Publish the stable update channel
+      - name: Publish the stable GitHub package channel
         run: |
           set -euo pipefail
           if ! gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
               --title "LeeWay Apple Native Update Channel" \
-              --notes "Current qualified unsigned iPhone package for SideStore owner-controlled updates." \
+              --notes "Current qualified unsigned iPhone package for owner-controlled iLoader signing and USB installation." \
               --prerelease
           fi
           IPA_PATH="$(find package -name LeeWayDeviceBridge-unsigned.ipa -print -quit)"
           MANIFEST_PATH="$(find package -name LEEWAY-APPLE-PACKAGE-MANIFEST.json -print -quit)"
           gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --clobber \
             "$IPA_PATH#LeeWayDeviceBridge-unsigned.ipa" \
-            "$MANIFEST_PATH#LEEWAY-APPLE-PACKAGE-MANIFEST.json" \
-            "sidestore-source.json#sidestore-source.json"
+            "$MANIFEST_PATH#LEEWAY-APPLE-PACKAGE-MANIFEST.json"
 
       - name: Publish unified GitHub Pages update manifest
         run: |
@@ -156,7 +99,7 @@ jobs:
                   "sourceRevision": package_manifest["sourceRevision"],
                   "ipaSizeBytes": ipa_path.stat().st_size,
                   "ipaSha256": digest,
-                  "note": "GitHub publishes the unsigned IPA; the owner-controlled SideStore channel performs Apple signing and installation."
+                  "note": "GitHub publishes the unsigned IPA; the owner-controlled iLoader route signs and installs it over USB."
               }
           })
           manifest["updatedAtUtc"] = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")

@@ -109,7 +109,7 @@ jobs:
           version = info.get("CFBundleShortVersionString")
           build = info.get("CFBundleVersion")
           if not isinstance(version, str) or not isinstance(build, str):
-              raise SystemExit("The built IPA is missing its SideStore update version or build number.")
+              raise SystemExit("The built IPA is missing its GitHub/iLoader update version or build number.")
           manifest["sourceRevision"] = revision
           manifest["artifact"]["fileName"] = "LeeWayDeviceBridge-unsigned.ipa"
           manifest["artifact"]["sha256"] = digest

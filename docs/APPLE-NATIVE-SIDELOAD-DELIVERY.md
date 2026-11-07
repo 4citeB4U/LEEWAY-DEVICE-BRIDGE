@@ -6,19 +6,20 @@
 
 The **Apple Device Bridge Qualification** workflow builds this source on a GitHub-hosted macOS runner with signing disabled. It then packages the compiled `.app` in the standard `Payload/` IPA layout as an unsigned artifact named `LeeWayDeviceBridge-unsigned.ipa`. The same artifact contains `LEEWAY-APPLE-PACKAGE-MANIFEST.json`, which records the source revision, IPA digest, included native capabilities, and unfulfilled governance gates.
 
-## Sideload delivery lane
+## Archived alternate delivery lane
 
-An unsigned IPA is not installable by iOS by itself. It is an input to a signer such as SideStore. SideStore re-signs an imported IPA using the owner’s personal development certificate and its local device workflow. That certificate, the signing decision, and Apple Account credentials remain in SideStore and on the owner’s device; they are never committed to LeeWay source or GitHub Actions.
+This document is retained as historical context only. It is not the active LeeWay Apple update route. Use [Apple direct iLoader delivery](./APPLE-DIRECT-ILOADER-DELIVERY.md) for current GitHub package installation.
 
-1. Open the successful **Apple Device Bridge Qualification** workflow run in GitHub Actions.
-2. Download the `leeway-device-bridge-apple-unsigned-<run-id>` artifact.
-3. Extract `LeeWayDeviceBridge-unsigned.ipa` and `LEEWAY-APPLE-PACKAGE-MANIFEST.json`.
-4. Verify the IPA SHA-256 against the manifest.
-5. Import that IPA into SideStore on the iPhone and complete SideStore's normal signing/install flow.
-6. Open **LeeWay Device** and choose **Run Device Bridge Metal Probe**.
-7. Preserve the returned adapter ID, physical Metal device name, lane count, mismatch count, and timestamp as local native-observation evidence.
+An unsigned IPA is not installable by iOS by itself. It is an input to a signer such as the existing iLoader installation. iLoader signs an imported IPA using the owner’s Apple development identity and connected-device workflow; those credentials remain local and are never committed to LeeWay source or GitHub Actions.
 
-With a free Apple Account, SideStore documents a three-app limit and a seven-day development signing period. SideStore must remain refreshed under its own documented process. This affects distribution availability; it does not turn browser compute into native Metal or make a local probe a Formula or Veritas result. [SideStore FAQ](https://docs.sidestore.io/docs/faq)
+1. Open the `apple-latest` GitHub release published from the successful **Apple Device Bridge Qualification** workflow.
+2. Download `LeeWayDeviceBridge-unsigned.ipa` and `LEEWAY-APPLE-PACKAGE-MANIFEST.json`.
+3. Verify the IPA SHA-256 against the manifest.
+4. Import that IPA into the existing iLoader installation on the connected iPhone and let iLoader sign/install it.
+5. Open **LeeWay Device** and choose **Run Device Bridge Metal Probe**.
+6. Preserve the returned adapter ID, physical Metal device name, lane count, mismatch count, and timestamp as local native-observation evidence.
+
+The iLoader route is USB-assisted and remains subject to Apple development-signing authorization. This affects distribution availability; it does not turn browser compute into native Metal or make a local probe a Formula or Veritas result.
 
 ## Evidence states
 

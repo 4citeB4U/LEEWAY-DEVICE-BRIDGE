@@ -9,7 +9,7 @@ assert.equal(manifest.updatePolicy.mode,"CHECK_AND_PROMPT_OWNER");
 assert.equal(manifest.updatePolicy.automaticInstall,false);
 assert.equal(manifest.updatePolicy.checkOnReconnect,true);
 assert.equal(manifest.platformRoutes.android.updateMode,"CHECK_PROMPT_AND_ANDROID_INSTALLER");
-assert.equal(manifest.platformRoutes.ios.updateMode,"CHECK_PROMPT_AND_SIDESTORE");
+assert.equal(manifest.platformRoutes.ios.updateMode,"CHECK_PROMPT_AND_ILOADER_GITHUB_IMPORT");
 assert.equal(manifest.platformRoutes.linux.state,"SOURCE_ONLY");
 assert.ok(manifest.packages.some(p=>p.platform==="android"));
 assert.ok(manifest.packages.some(p=>p.platform==="ios"));

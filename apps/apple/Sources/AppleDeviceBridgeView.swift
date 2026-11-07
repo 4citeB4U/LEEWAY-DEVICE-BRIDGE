@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 @MainActor
 final class AppleBridgeStore: ObservableObject {
@@ -119,13 +120,18 @@ struct AppleDeviceBridgeView: View {
                     }
                     Button("Check GitHub for Updates") { updater.check() }
                     if updater.updateAvailable {
-                        Button("Open SideStore Update Channel") {
-                            openURL(updater.sideStoreURL)
-                        }
-                        Button("Open GitHub Release") {
+                        Button("Open GitHub Release / Download IPA") {
                             openURL(updater.releaseURL)
                         }
-                        Text("GitHub supplies the package and SideStore performs the owner-confirmed signed install. iOS cannot replace its own signed app.")
+                        Button("Copy GitHub IPA URL") {
+                            if let ipaURL = updater.latestIPAURL {
+                                UIPasteboard.general.string = ipaURL.absoluteString
+                            }
+                        }
+                        Button("Open iLoader Delivery Instructions") {
+                            openURL(updater.iLoaderGuideURL)
+                        }
+                        Text("GitHub supplies the IPA. Import it into the existing owner-controlled iLoader installation, which signs and installs the replacement over USB. iOS cannot replace its own signed app.")
                             .font(.footnote)
                     }
                 }
@@ -183,10 +189,11 @@ struct AppleDeviceBridgeView: View {
             .navigationTitle("LeeWay Device")
             .onAppear { updater.check() }
             .alert("LeeWay Device Bridge update available", isPresented: $updater.showPrompt) {
-                Button("Update") { openURL(updater.sideStoreURL) }
+                Button("Open GitHub Release") { openURL(updater.releaseURL) }
+                Button("Open iLoader Instructions") { openURL(updater.iLoaderGuideURL) }
                 Button("Later", role: .cancel) {}
             } message: {
-                Text("GitHub has version \(updater.latestVersion) (\(updater.latestBuild)). Open SideStore to review and install it on this iPhone.")
+                Text("GitHub has version \(updater.latestVersion) (\(updater.latestBuild)). Download the IPA from GitHub and import it into the existing iLoader installation to sign and install the native update.")
             }
             .onDisappear {
                 cameraBridge.stop()

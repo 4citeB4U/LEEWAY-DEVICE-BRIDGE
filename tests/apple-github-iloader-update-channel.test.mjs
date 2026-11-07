@@ -6,7 +6,7 @@ const project = readFileSync("apps/apple/project.yml", "utf8");
 const packageSchema = JSON.parse(readFileSync("contracts/apple-native-package.schema.json", "utf8"));
 const packageTemplate = JSON.parse(readFileSync("apps/apple/AppleNativePackageManifest.json", "utf8"));
 const qualification = readFileSync(".github/workflows/apple-device-bridge-qualification.yml", "utf8");
-const publish = readFileSync(".github/workflows/apple-sidestore-channel.yml", "utf8");
+const publish = readFileSync(".github/workflows/apple-github-iloader-channel.yml", "utf8");
 const pwa = readFileSync("docs/index.html", "utf8");
 
 test("Apple package carries an update-compatible bundle version and build", () => {
@@ -23,9 +23,10 @@ test("GitHub publishes stable Apple package metadata after a qualified main buil
   assert.match(publish, /workflow_run:/);
   assert.match(publish, /head_branch == 'main'/);
   assert.match(publish, /apple-latest/);
-  assert.match(publish, /sidestore-source\.json/);
-  assert.match(publish, /bundleIdentifier/);
-  assert.match(publish, /versions/);
+  assert.match(publish, /iLoader signing and USB installation/);
+  assert.match(publish, /LeeWayDeviceBridge-unsigned\.ipa/);
+  assert.match(publish, /LEEWAY-APPLE-PACKAGE-MANIFEST\.json/);
+  assert.doesNotMatch(publish, /sidestore-source\.json/);
   assert.match(pwa, /OPEN APPLE PACKAGE/);
   assert.match(pwa, /Direct iLoader update/);
   assert.doesNotMatch(pwa, /sidestore:\/\/source\?url=/);

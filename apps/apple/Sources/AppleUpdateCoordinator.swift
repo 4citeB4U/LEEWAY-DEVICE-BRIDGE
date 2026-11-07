@@ -9,19 +9,14 @@ final class AppleUpdateCoordinator: ObservableObject {
     @Published private(set) var latestVersion = ""
     @Published private(set) var latestBuild = 0
     @Published private(set) var latestSizeBytes: Int64 = 0
+    @Published private(set) var latestIPAURL: URL?
     @Published private(set) var updateAvailable = false
     @Published private(set) var errorMessage: String?
     @Published var showPrompt = false
 
     let manifestURL = URL(string: "https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/package-manifest.json")!
-    let sideStoreSourceURL = URL(string: "https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/download/apple-latest/sidestore-source.json")!
     let releaseURL = URL(string: "https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/tag/apple-latest")!
-
-    var sideStoreURL: URL {
-        var components = URLComponents(string: "sidestore://source")!
-        components.queryItems = [URLQueryItem(name: "url", value: sideStoreSourceURL.absoluteString)]
-        return components.url!
-    }
+    let iLoaderGuideURL = URL(string: "https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/APPLE-DIRECT-ILOADER-DELIVERY.md")!
 
     func check() {
         state = "CHECKING"
@@ -48,7 +43,13 @@ final class AppleUpdateCoordinator: ObservableObject {
                     guard let entry = packages.first(where: { ($0["platform"] as? String) == "ios" }) else {
                         throw UpdateError.applePackageMissing
                     }
+                    guard let ipaString = entry["downloadUrl"] as? String,
+                          let ipaURL = URL(string: ipaString),
+                          ipaURL.scheme == "https" else {
+                        throw UpdateError.applePackageURLMissing
+                    }
                     let build = (entry["versionCode"] as? NSNumber)?.intValue ?? 0
+                    self.latestIPAURL = ipaURL
                     guard build > self.currentBuild else {
                         self.latestVersion = entry["versionName"] as? String ?? self.currentVersion
                         self.latestBuild = build
@@ -73,10 +74,12 @@ final class AppleUpdateCoordinator: ObservableObject {
 
     private enum UpdateError: LocalizedError {
         case applePackageMissing
+        case applePackageURLMissing
 
         var errorDescription: String? {
             switch self {
             case .applePackageMissing: return "Apple package was not present in the GitHub update manifest."
+            case .applePackageURLMissing: return "Apple package did not include a valid HTTPS GitHub IPA URL."
             }
         }
     }
