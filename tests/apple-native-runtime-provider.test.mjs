@@ -106,7 +106,8 @@ test("absent owner approval blocks before any Apple secrets or native worker",as
 
 test("unknown exact iPhone cannot pass readiness; no command is started",async()=>{
   await fixture(async ({conf,calls,published})=>{
-    conf.observePhysicalDevice=async ()=>({...conf.observePhysicalDevice(),hardwareId:"b".repeat(24)});
+    const originalObservation=conf.observePhysicalDevice;
+    conf.observePhysicalDevice=async ()=>({...await originalObservation(),hardwareId:"b".repeat(24)});
     const p=createAppleNativeInstallProvider(conf);
     assert.equal((await p.health()).state,"PHYSICAL_PREFLIGHT_NOT_READY");
     await assert.rejects(p.execute({deviceHardwareId,packageId:"apple-native",
