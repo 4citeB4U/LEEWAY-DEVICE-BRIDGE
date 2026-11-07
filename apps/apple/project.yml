@@ -29,6 +29,7 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         SUPPORTS_MACCATALYST: NO
     info:
+      path: Info.plist
       properties:
         NSLocalNetworkUsageDescription: "LeeWay Device Bridge uses the local network only after you start and authorize the owner camera transport."
         NSBonjourServices:
