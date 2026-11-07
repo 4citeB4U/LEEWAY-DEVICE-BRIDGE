@@ -130,3 +130,32 @@ Started the configured launcher as an MCP stdio child process and performed `ini
 The present configuration is **transport-connected at process level but not production-qualified for tool execution**. Keep the source/version, Runtime admission semantics, and receipt custody gates open before using the broad Antigravity tool surface. The next implementation gate is to reconcile the trusted composition with canonical source and bind its pre/post evidence through the approved Continuum and independent-verification authorities; then qualify Antigravity's own handshake and a narrowly scoped read-only device operation.
 
 No source or runtime deployment changed in this follow-up. No device action, Formula task evaluation, Veritas decision, canonical receipt, or Learning Ledger admission was produced.
+
+## Post-restart qualification — 2026-11-07 02:54 America/Chicago (UTC−06:00)
+
+A fresh system restart exposed a local startup regression. The scheduled recovery wrapper used the newer shared Codex device config against its pinned older recovery source bundle. Config validation rejected the unsupported `browser` field and `device.browser.session.*` / `device.windows.window.*` grants; wrapper cleanup then stopped the Runtime it had launched. The wrapper now selects a separate, source-version-scoped recovery config containing only the four already supported read-only grants (`device.health`, `device.info`, `device.files.read`, `device.directories.list`). The original wrapper is preserved beside it with SHA-256 `0D87233BA62A0D42AB9EE68F93D027B4CC787522B64A0B66F46B6DD121A8664B`; the broader Codex config was not changed.
+
+Smoke and live host checks after repair:
+
+- Recovery smoke `smoke-20261107-084534969`: Runtime health/manifest succeeded; unauthenticated Bridge `/mcp` returned expected HTTP 401.
+- Current scheduled task: `LeeWay Device Bridge Relay`, `Running`.
+- Local Runtime `:4011/runtime/health` and `/runtime/enforcement/manifest`: HTTP 200.
+- Local Bridge `:4271/mcp`: HTTP 401 `UNAUTHORIZED` for an unauthenticated GET, proving the protected listener responds. `/healthz` is HTTP 404 and is not the Bridge health endpoint.
+
+### Fresh client matrix
+
+| Surface | Current result | Qualification boundary |
+| --- | --- | --- |
+| ChatGPT-hosted LeeWay connector | OIDC-authenticated Runtime available; `bridge_devices`, `bridge_capabilities`, `device.health` and `device.info` succeeded | Confirms this ChatGPT session's read-only connector. `pc-primary` reports `CONFIGURED_NOT_PHYSICALLY_PROBED`; health/info receipts are controller observations with Formula unevaluated and independent verification absent. Not evidence of a separately enrolled ChatGPT web custom app. |
+| Antigravity local config / launcher | Both on-disk configs point to LeeWay trusted host composition. Local launcher MCP `initialize`/`tools/list` previously exposed 63 tools. | Antigravity's own MCP manager/session state remains unverified; tool catalog discovery does not confer operation admission. No prompt sent. |
+| Gemini web | Logged-in consumer UI exposes custom MCP app setup; connected-app list showed no LeeWay app | No LeeWay custom app was added; no authenticated MCP handshake or tool discovery. |
+
+At `2026-11-07T08:53:10Z`, Runtime reported `AVAILABLE`, `VERCEL_FUNCTION_STREAMABLE_HTTP`, `OIDC_ACCESS_TOKEN_VERIFIED`. `device.health` receipt `4982dd50-639d-405e-a023-180a0c138c38`; `device.info` receipt `552c9b16-680e-463a-8d61-fe1c6c2a041e`. Both report `authority=CONTROLLER_OBSERVATION`, `formula=NOT_EVALUATED`, and `physicalProbe=EXECUTED_NOT_INDEPENDENTLY_VERIFIED`; results report `uiControl:false`. Discovery exposed 34 capabilities, but explicitly `executionAdmission=NOT_CONFERRED_BY_DISCOVERY`. No file operation was performed.
+
+Gemini's current custom-app support and client-specific eligibility/auth requirements are documented by Google at [Gemini Apps connected apps and custom apps](https://support.google.com/gemini/answer/17209137). Antigravity supports MCP via its documented client configuration, including stdio and remote transport: [Antigravity MCP docs](https://antigravity.google/docs/mcp). Each provider requires a separate identity/auth binding; do not share tokens. The user-visible page or local config is not a client handshake.
+
+A Windows Voice Typing overlay opened unexpectedly during Antigravity inspection. It was closed, and the unsent composer content was cleared; nothing was submitted. No provider prompt was sent.
+
+**Current gate:** ChatGPT-hosted read-only connector `OBSERVED_CONNECTED`; local service `RUNNING`; Antigravity application connection `UNVERIFIED`; online Gemini LeeWay binding `NOT_CONFIGURED`; full three-client production qualification `OPEN`. No Formula task evaluation, Veritas decision, canonical Continuum receipt, or Learning Ledger admission was produced.
+
+**Next action:** qualify each external client independently. First establish an approved Gemini MCP app auth/client binding and verify that client's authenticated `initialize`, `tools/list`, and reconnect. Separately inspect Antigravity's own MCP manager for an authenticated handshake to the configured LeeWay launcher. Do not submit prompts during connection qualification.
