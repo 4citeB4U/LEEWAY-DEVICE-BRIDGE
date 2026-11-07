@@ -33,7 +33,7 @@ function screenResult(value) {
   ] };
 }
 
-export function createServer(bridge, { discoveryOnly = false, readOnlyCapabilities = [] } = {}) {
+export function createServer(bridge, { discoveryOnly = false, readOnlyCapabilities = [], complianceCardProvider = null } = {}) {
   const server = new McpServer({ name: 'leeway-device-bridge', version: '0.1.0' });
   const result = value => ({ content: [{ type: 'text', text: JSON.stringify(value) }], ...(value.ok === false ? { isError: true } : {}) });
   server.registerTool('bridge_devices', { description: 'List configured device IDs. Configuration does not prove connectivity.', inputSchema: {} }, async () => result({ devices: [...bridge.devices.keys()] }));
@@ -47,9 +47,20 @@ export function createServer(bridge, { discoveryOnly = false, readOnlyCapabiliti
       throw new Error('DISCOVERY_READ_ONLY_CAPABILITY_DENIED');
     server.registerTool(capability.replaceAll('.', '_'), {
       description: `Invoke ${capability} on an explicitly granted device. Availability is checked for each call; unsupported platforms fail closed.`,
-      inputSchema: { deviceId: z.string().min(1).max(128), arguments: schema },
-    }, async ({ deviceId, arguments: args }) => {
-      const value = await bridge.call(deviceId, capability, args);
+      inputSchema: {
+        deviceId: z.string().min(1).max(128),
+        ...(bridge.requiresComplianceCard && typeof complianceCardProvider !== 'function'
+          ? { complianceCard: z.object({}).passthrough() }
+          : {}),
+        arguments: schema,
+      },
+    }, async ({ deviceId, arguments: args, complianceCard }) => {
+      let effectiveComplianceCard = complianceCard;
+      if (!effectiveComplianceCard && typeof complianceCardProvider === 'function') {
+        try { effectiveComplianceCard = await complianceCardProvider({ deviceId, capability, args }); }
+        catch { return result({ ok: false, error: 'COMPLIANCE_CARD_PROVIDER_FAILED', operationMayHaveExecuted: false }); }
+      }
+      const value = await bridge.call(deviceId, capability, args, { complianceCard: effectiveComplianceCard });
       return capability === 'device.screen.capture' ? screenResult(value) || result(value) : result(value);
     });
   }
@@ -101,6 +112,7 @@ export async function createConfiguredBridge(configPath, runtimeInput = null) {
   const bridge = new Bridge(devices, {
     // Without an injected Runtime composition, C3 deliberately denies all execution.
     admission,
+    complianceCardGate: runtimeComposition?.complianceCardGate ?? null,
     receiptSink: runtimeComposition?.receiptSink ?? (evidence => fs.appendFile(receiptPath, JSON.stringify(evidence) + '\n', { mode: 0o600 })),
   });
   return bridge;
@@ -108,7 +120,8 @@ export async function createConfiguredBridge(configPath, runtimeInput = null) {
 
 export async function start(configPath, runtimeInput = null) {
   const bridge = await createConfiguredBridge(configPath, runtimeInput);
-  const server = createServer(bridge);
+  const runtimeComposition = runtimeInput === null ? null : requireTrustedRuntimeComposition(runtimeInput);
+  const server = createServer(bridge, { complianceCardProvider: runtimeComposition?.complianceCardProvider ?? null });
   await server.connect(new StdioServerTransport());
   return server;
 }

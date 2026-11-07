@@ -70,6 +70,96 @@ test('admission denies by default, capability withdrawal and receipt failures do
   assert.equal((await bridge.call('host', '__proto__', {})).error, 'UNKNOWN_CAPABILITY');
 });
 
+test('Runtime card admission is automatic-capable, hash-bound, and fail-closed before dispatch', async () => {
+  let executed = 0;
+  const cards = [];
+  const card = { action:'tool.execution', taskId:'task-1', proofCommand:'bridge test', failureMode:'FAIL_CLOSED' };
+  const bridge = new Bridge([{ id:'host', grants:['device.health'], adapter:{
+    discover:async()=>['device.health'], execute:async()=>{ executed++; return {ok:true}; },
+  }}], {
+    complianceCardGate:async ({complianceCard})=>complianceCard?.taskId==='task-1'
+      ? {valid:true,cardHash:digest(complianceCard),authority:'LEEWAY_RUNTIME_FABRIC'} : false,
+    admission:async ({complianceCard})=>Boolean(complianceCard?.action==='tool.execution'),
+    receiptSink:async evidence=>cards.push(evidence),
+  });
+  assert.equal(bridge.requiresComplianceCard,true);
+  const denied=await bridge.call('host','device.health',{}, {complianceCard:{}});
+  assert.equal(denied.error,'COMPLIANCE_CARD_INVALID');
+  assert.equal(denied.operationMayHaveExecuted,false);
+  assert.equal(executed,0);
+  const accepted=await bridge.call('host','device.health',{}, {complianceCard:card});
+  assert.equal(accepted.ok,true);
+  assert.equal(accepted.operationMayHaveExecuted,true);
+  assert.equal(executed,1);
+  assert.equal(accepted.receipt.complianceCardHash,digest(card));
+  assert.equal(accepted.receipt.complianceCardStatus,'VALID');
+  assert.equal(accepted.receipt.complianceCardAuthority,'LEEWAY_RUNTIME_FABRIC');
+  assert.equal(cards.length,3);
+  assert.equal(cards[0].outcome,'BLOCKED');
+  assert.equal(cards[1].outcome,'ADMITTED');
+  assert.equal(cards[1].operationMayHaveExecuted,false);
+  assert.equal(cards[1].complianceCardHash,digest(card));
+  assert.equal(cards[1].complianceCardStatus,'VALID');
+  assert.equal(cards[1].complianceCardAuthority,'LEEWAY_RUNTIME_FABRIC');
+  assert.equal(cards[2].outcome,'PASS');
+  assert.equal(cards[2].operationMayHaveExecuted,true);
+  assert.equal(cards[2].complianceCardHash,digest(card));
+  assert.equal(cards[2].complianceCardStatus,'VALID');
+  assert.equal(cards[2].complianceCardAuthority,'LEEWAY_RUNTIME_FABRIC');
+});
+
+test('Runtime card result with a mismatched hash or authority cannot reach the adapter', async () => {
+  let executed=0;
+  const card={taskId:'bound-card'};
+  const records=[];
+  const bridge=new Bridge([{id:'host',grants:['device.health'],adapter:{
+    discover:async()=>['device.health'],execute:async()=>{executed++;return {ok:true};},
+  }}],{
+    complianceCardGate:async()=>({valid:true,cardHash:digest(card),authority:'OTHER_AUTHORITY'}),
+    admission:async()=>true,
+    receiptSink:async receipt=>records.push(receipt),
+  });
+  const result=await bridge.call('host','device.health',{}, {complianceCard:card});
+  assert.equal(result.error,'COMPLIANCE_CARD_INVALID');
+  assert.equal(result.operationMayHaveExecuted,false);
+  assert.equal(result.receipt.complianceCardStatus,'NOT_VALIDATED');
+  assert.equal(executed,0);
+  assert.equal(records.length,1);
+  assert.equal(records[0].outcome,'BLOCKED');
+});
+
+test('trusted Runtime card provider is server-side and visible in operation receipts', async t => {
+  const card = { taskId:'trusted-task', action:'service.health' };
+  let providerContext;
+  const records=[];
+  const bridge = new Bridge([{id:'host',grants:['device.health'],adapter:{
+    discover:async()=>['device.health'],execute:async()=>({state:'ready'}),
+  }}], {
+    complianceCardGate:async ({complianceCard})=>complianceCard?.taskId==='trusted-task'
+      ? {valid:true,cardHash:digest(complianceCard),authority:'LEEWAY_RUNTIME_FABRIC'} : false,
+    admission:async()=>true,
+    receiptSink:async evidence=>records.push(evidence),
+  });
+  const server=createServer(bridge,{complianceCardProvider:async context=>{providerContext=context;return card;}});
+  const client=new Client({name:'card-provider-test',version:'1'});
+  const [clientTransport,serverTransport]=InMemoryTransport.createLinkedPair();
+  await Promise.all([server.connect(serverTransport),client.connect(clientTransport)]);
+  t.after(async()=>{await client.close();await server.close();});
+  const tools=await client.listTools();
+  const health=tools.tools.find(tool=>tool.name==='device_health');
+  assert.ok(health);
+  assert.equal(Object.hasOwn(health.inputSchema.properties,'complianceCard'),false);
+  const response=await client.callTool({name:'device_health',arguments:{deviceId:'host',arguments:{}}});
+  const body=JSON.parse(response.content[0].text);
+  assert.equal(body.ok,true);
+  assert.equal(body.operationMayHaveExecuted,true);
+  assert.equal(providerContext.deviceId,'host');
+  assert.equal(providerContext.capability,'device.health');
+  assert.equal(body.receipt.complianceCardStatus,'VALID');
+  assert.equal(body.receipt.complianceCardAuthority,'LEEWAY_RUNTIME_FABRIC');
+  assert.ok(records.every(record=>record.complianceCardStatus==='VALID'));
+});
+
 test('relay timeout and malformed envelope reject without hanging', async t => {
   const server = new WebSocketServer({ host: '127.0.0.1', port: 0 });
   await new Promise(resolve => server.once('listening', resolve));

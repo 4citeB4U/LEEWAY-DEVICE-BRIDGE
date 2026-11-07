@@ -28,3 +28,23 @@ test('trusted MCP startup composes Formula and Veritas owner gates through C3',(
  Object.defineProperty(accessor,'admission',{get(){return admission;}});
  assert.throws(()=>requireTrustedRuntimeComposition(accessor),/TRUSTED_RUNTIME_COMPOSITION_INVALID/);
 });
+
+test('trusted Runtime card provider requires its validation gate',()=>{
+ const admission=async()=>true,receiptSink=async()=>{};
+ const complianceCardProvider=async()=>({taskId:'task'});
+ const complianceCardGate=async()=>({valid:true});
+ const composition=requireTrustedRuntimeComposition({admission,receiptSink,complianceCardProvider,complianceCardGate});
+ assert.equal(composition.complianceCardProvider,complianceCardProvider);
+ assert.equal(composition.complianceCardGate,complianceCardGate);
+ assert.throws(()=>requireTrustedRuntimeComposition({admission,receiptSink,complianceCardProvider}),/TRUSTED_RUNTIME_COMPOSITION_REQUIRED/);
+});
+
+test('trusted Runtime card provider is accepted only with a matching validation gate',()=>{
+ const admission=async()=>true,receiptSink=async()=>{};
+ const complianceCardProvider=async()=>({taskId:'task'});
+ const complianceCardGate=async()=>({valid:true});
+ const result=requireTrustedRuntimeComposition({admission,receiptSink,complianceCardProvider,complianceCardGate});
+ assert.equal(result.complianceCardProvider,complianceCardProvider);
+ assert.equal(result.complianceCardGate,complianceCardGate);
+ assert.throws(()=>requireTrustedRuntimeComposition({admission,receiptSink,complianceCardProvider}),/TRUSTED_RUNTIME_COMPOSITION_REQUIRED/);
+});

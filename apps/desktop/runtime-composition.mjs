@@ -4,6 +4,7 @@
 const COMPOSITION_KEYS = new Set([
   'admission', 'receiptSink', 'formulaPreGate', 'veritasPreGate', 'consentProvider',
   'deviceRegistry', 'adapterRegistry', 'trustedIssuerRegistry', 'replayGuard',
+  'complianceCardGate', 'complianceCardProvider',
 ]);
 
 function ownDataValue(input, key) {
@@ -25,13 +26,17 @@ export function requireTrustedRuntimeComposition(input = {}) {
   if (typeof values.receiptSink !== 'function') {
     throw new Error('TRUSTED_RUNTIME_COMPOSITION_REQUIRED');
   }
+  if (values.complianceCardProvider && typeof values.complianceCardGate !== 'function') {
+    throw new Error('TRUSTED_RUNTIME_COMPOSITION_REQUIRED');
+  }
 
   const direct = typeof values.admission === 'function';
   const c3 = typeof values.formulaPreGate === 'function' && typeof values.veritasPreGate === 'function';
-  const directHasProviderFields = Object.keys(values).some(key => !['admission', 'receiptSink'].includes(key));
+  const directHasProviderFields = Object.keys(values).some(key =>
+    !['admission', 'receiptSink', 'complianceCardGate', 'complianceCardProvider'].includes(key));
   if (direct === c3 || (direct && directHasProviderFields) ||
       (!direct && !c3) ||
-      ['formulaPreGate', 'veritasPreGate', 'consentProvider'].some(key =>
+      ['formulaPreGate', 'veritasPreGate', 'consentProvider', 'complianceCardGate', 'complianceCardProvider'].some(key =>
         key in values && typeof values[key] !== 'function')) {
     throw new Error('TRUSTED_RUNTIME_COMPOSITION_REQUIRED');
   }
