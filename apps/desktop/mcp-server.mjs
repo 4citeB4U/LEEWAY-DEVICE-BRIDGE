@@ -199,9 +199,15 @@ export async function createConfiguredBridge(configPath, runtimeInput = null) {
   const receiptPath = config.receipts ? path.resolve(base, config.receipts) : null;
   if (!runtimeComposition && !receiptPath) throw new Error('RECEIPTS_REQUIRED');
   const visionProviders = runtimeComposition?.visionProviders ?? new Map();
+  const appleInstallProviders = runtimeComposition?.appleInstallProviders ?? new Map();
   for (const deviceId of visionProviders.keys()) {
     if (!config.devices.some(device => device.id === deviceId && device.type === 'desktop')) {
       throw new Error('TRUSTED_VISION_PROVIDER_DEVICE_NOT_CONFIGURED');
+    }
+  }
+  for (const deviceId of appleInstallProviders.keys()) {
+    if (!config.devices.some(device => device.id === deviceId && device.type === 'physical-apple')) {
+      throw new Error('TRUSTED_APPLE_INSTALL_PROVIDER_DEVICE_NOT_CONFIGURED');
     }
   }
   const devices = config.devices.map(d => {
@@ -218,6 +224,7 @@ export async function createConfiguredBridge(configPath, runtimeInput = null) {
         deviceId: d.hardwareId,
         cameraEndpoint: d.cameraEndpoint || null,
         cameraToken: d.cameraTokenEnv ? process.env[d.cameraTokenEnv] : null,
+        appleInstallProvider: appleInstallProviders.get(d.id) ?? null,
       });
     } else {
       adapter = new RelayAdapter({ deviceId: d.id, url: d.url, token: d.tokenEnv ? process.env[d.tokenEnv] : undefined });
