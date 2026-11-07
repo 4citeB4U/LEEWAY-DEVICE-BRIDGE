@@ -4,7 +4,7 @@
 const COMPOSITION_KEYS = new Set([
   'admission', 'receiptSink', 'formulaPreGate', 'veritasPreGate', 'consentProvider',
   'deviceRegistry', 'adapterRegistry', 'trustedIssuerRegistry', 'replayGuard',
-  'complianceCardGate', 'complianceCardProvider', 'visionProviders',
+  'complianceCardGate', 'complianceCardProvider', 'visionProviders', 'visionClientId',
 ]);
 
 function ownDataValue(input, key) {
@@ -26,6 +26,10 @@ export function requireTrustedRuntimeComposition(input = {}) {
   if (typeof values.receiptSink !== 'function') {
     throw new Error('TRUSTED_RUNTIME_COMPOSITION_REQUIRED');
   }
+  if (values.visionClientId !== undefined &&
+      (typeof values.visionClientId !== 'string' || !values.visionClientId.trim() || values.visionClientId.length > 128)) {
+    throw new Error('TRUSTED_VISION_CLIENT_ID_INVALID');
+  }
   if (values.visionProviders !== undefined &&
       (!(values.visionProviders instanceof Map) ||
        [...values.visionProviders].some(([deviceId, provider]) =>
@@ -40,7 +44,7 @@ export function requireTrustedRuntimeComposition(input = {}) {
   const direct = typeof values.admission === 'function';
   const c3 = typeof values.formulaPreGate === 'function' && typeof values.veritasPreGate === 'function';
   const directHasProviderFields = Object.keys(values).some(key =>
-    !['admission', 'receiptSink', 'complianceCardGate', 'complianceCardProvider', 'visionProviders'].includes(key));
+    !['admission', 'receiptSink', 'complianceCardGate', 'complianceCardProvider', 'visionProviders', 'visionClientId'].includes(key));
   if (direct === c3 || (direct && directHasProviderFields) ||
       (!direct && !c3) ||
       ['formulaPreGate', 'veritasPreGate', 'consentProvider', 'complianceCardGate', 'complianceCardProvider'].some(key =>
