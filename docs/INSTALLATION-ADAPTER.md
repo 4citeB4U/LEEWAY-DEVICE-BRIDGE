@@ -39,3 +39,13 @@ The desktop provider routes remain dry-run only until their native adapters are 
 ## Execution boundary
 
 Before an execution adapter may be added, it must preserve the existing package and app data, require a verified package digest, obtain specific user confirmation, and create a post-install verification record. It must never reset credentials, revoke certificates, erase pairing data, uninstall an app, or bypass platform authorization as a recovery step.
+
+## Apple native execution route — source candidate (2026-11-07)
+
+The Bridge now has a distinct executable capability `device.apps.install.apple`, separate from the existing `executeInstallation()` dry-run stub. Its request schema carries only a canonical package ID, expected SHA-256, and request ID; Apple password, 2FA and private signing material are never MCP arguments.
+
+`apps/desktop/runtime-composition.mjs` accepts `appleInstallProviders` only as a trusted host-injected Map. `apps/desktop/mcp-server.mjs` checks the Map references an enrolled `physical-apple` device. `PhysicalAppleAdapter` will advertise the capability only when such a provider exists. Each real execution still requires `Bridge.call()` grants, Runtime C3 admission, owner consent and receipts. The live session does **not** currently expose an authorized signing provider; adding source code does not grant permissions.
+
+`operator/native-apple-installer/runtime-provider.mjs` binds an exact USB hardware identity to the native `usbmuxd` device UDID, uses host callbacks for real device readback and owner consent, requires a locally measured IPA and worker-binary SHA-256, and only then invokes the Bridge-owned Rust `isideload` worker. The worker signs the existing official LeeWay IPA, installs through the authorized device transport, and reads back the signed bundle from InstallationProxy. Output is an observation pending independent Veritas, not an automatic production PASS.
+
+The general consumer flow is **not** this signer. Customers receive a LeeWay-signed App Store build and use Apple's system identity controls; see [Apple consumer distribution](APPLE-CONSUMER-DISTRIBUTION-20261107.md). No hardware or Apple account is used in source CI fixtures.
