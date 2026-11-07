@@ -81,7 +81,7 @@ export class PhysicalAndroidAdapter {
 }
 
 export class PhysicalAppleAdapter {
-  constructor({ deviceId, cameraEndpoint = null, cameraToken = null, timeoutMs = 15000 } = {}) {
+  constructor({ deviceId, cameraEndpoint = null, cameraToken = null, appleInstallProvider = null, timeoutMs = 15000 } = {}) {
     if (typeof deviceId !== "string" || !/^[0-9a-fA-F]{16,64}$/.test(deviceId)) {
       throw new Error("APPLE_USB_DEVICE_ID_REQUIRED");
     }
@@ -91,6 +91,11 @@ export class PhysicalAppleAdapter {
       throw new Error("APPLE_CAMERA_PAIRING_REQUIRED");
     }
     this.cameraTransport = cameraEndpoint ? new AppleCameraTransport({ endpoint: cameraEndpoint, token: cameraToken, timeoutMs }) : null;
+    if (appleInstallProvider && ['execute', 'describe', 'health'].some(name => typeof appleInstallProvider[name] !== 'function')) {
+      throw new Error('APPLE_INSTALL_PROVIDER_INVALID');
+    }
+    this.appleInstallProvider = appleInstallProvider;
+
   }
 
   async discover() {
@@ -98,10 +103,27 @@ export class PhysicalAppleAdapter {
     if (this.cameraTransport) {
       capabilities.push("vision.sources.list", "vision.session.start", "vision.frames.observe", "vision.session.stop");
     }
+    // A trusted provider being injected does not itself prove that signing or device access is live.
+    if (this.appleInstallProvider) capabilities.push("device.apps.install.apple");
     return capabilities;
   }
 
   async execute(capability, args = {}) {
+    if (capability === "device.apps.install.apple") {
+      if (!this.appleInstallProvider) throw new Error("APPLE_NATIVE_INSTALL_PROVIDER_NOT_BOUND");
+      if (args?.packageId !== 'apple-native' || !/^[a-f0-9]{64}$/.test(args.expectedSha256 ?? '') ||
+          !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(args.requestId ?? '')) {
+        throw new Error("APPLE_NATIVE_INSTALL_ARGUMENTS_INVALID");
+      }
+      const health = await this.appleInstallProvider.health();
+      if (health?.state !== "READY_TO_EXECUTE") throw new Error("APPLE_NATIVE_INSTALL_PROVIDER_NOT_READY");
+      return this.appleInstallProvider.execute({
+        deviceHardwareId: this.deviceId,
+        packageId: args.packageId,
+        expectedSha256: args.expectedSha256,
+        requestId: args.requestId,
+      });
+    }
     if (capability === "device.info") {
       const psCommand = `Get-CimInstance Win32_PnPEntity | Where-Object DeviceID -match '${this.deviceId}|VID_05AC' | Select-Object Name, DeviceID, Manufacturer, Status | ConvertTo-Json -Compress`;
       const { stdout } = await execFileAsync("powershell.exe", ["-NoProfile", "-Command", psCommand], { timeout: this.timeoutMs });
