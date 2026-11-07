@@ -57,7 +57,7 @@ async function fixture(fn) {
         queueMicrotask(()=>{
           stdout.emit("data",[
             {type:"leeway.apple.installer",stage:"INSTALL",state:"NATIVE_INSTALLER_ACKNOWLEDGED"},
-            {type:"leeway.apple.installer",stage:"POST_INSTALL",state:"LEEWAY_BUNDLE_PRESENT"},
+            {type:"leeway.apple.installer",stage:"POST_INSTALL",state:"LEEWAY_BUNDLE_PRESENT",signedBundleId:"industries.leeway.devicebridge.ABCDEFGHIJ"},
             {type:"leeway.apple.installer",stage:"FINAL",state:"HOST_INSTALL_OBSERVED_NOT_INDEPENDENTLY_VERIFIED"}
           ].map(x=>JSON.stringify(x)).join("\n")+"\n");
           child.emit("close",0);
@@ -134,6 +134,47 @@ test("valid synthetic host pathway does not misrepresent independent Veritas",as
     assert.equal(calls.spawn,1);
     assert.equal(calls.stdin[0].action,"install-official-leeway-ipa");
     assert.equal(JSON.stringify(result).includes("synthetic-secret"),false);
+  });
+});
+
+test("free Apple Account works without preexisting paid Developer Team ID",async()=>{
+  await fixture(async ({conf,calls,published})=>{
+    conf.getHostCredentials=async ()=>(calls.secrets++,{
+      appleId:"test@example.invalid",applePassword:"synthetic-secret"
+    });
+    const provider=createAppleNativeInstallProvider(conf);
+    const result=await provider.execute({
+      deviceHardwareId,packageId:"apple-native",requestId,
+      expectedSha256:published.packages.find(x=>x.platform==="ios").sha256
+    });
+    assert.equal(result.state,"HOST_INSTALL_OBSERVED_VERITAS_PENDING");
+    assert.equal(result.installedBundleId,"industries.leeway.devicebridge.ABCDEFGHIJ");
+    assert.equal(calls.stdin[0].developerTeamId,undefined);
+    assert.equal(calls.stdin[0].anisetteUrl,undefined);
+    assert.equal(calls.spawn,1);
+  });
+});
+
+test("wrong signed bundle reported by worker never counts as a successful install",async()=>{
+  await fixture(async ({conf,calls,published})=>{
+    conf.spawnBinary=()=>{
+      calls.spawn++;
+      const child=new EventEmitter(), stdout=new EventEmitter();
+      stdout.setEncoding=()=>{}; child.stdout=stdout;child.kill=()=>{};
+      child.stdin={write:()=>queueMicrotask(()=>{
+        stdout.emit("data",JSON.stringify({
+          type:"leeway.apple.installer",stage:"POST_INSTALL",
+          state:"LEEWAY_BUNDLE_PRESENT",signedBundleId:"com.example.otherapp.ABCDEFGHIJ"
+        })+"\\n");
+        child.emit("close",0);
+      })};
+      return child;
+    };
+    const provider=createAppleNativeInstallProvider(conf);
+    await assert.rejects(provider.execute({
+      deviceHardwareId,packageId:"apple-native",requestId,
+      expectedSha256:published.packages.find(x=>x.platform==="ios").sha256
+    }), /APPLE_POST_INSTALL_BUNDLE_IDENTITY_MISMATCH|APPLE_INSTALL_OR_READBACK_FAILED/);
   });
 });
 
