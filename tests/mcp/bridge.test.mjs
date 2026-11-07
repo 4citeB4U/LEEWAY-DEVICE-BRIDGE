@@ -29,7 +29,16 @@ test('real SDK stdio tools/list and tools/call fail-closed without canonical C3 
   const contractResult = await client.callTool({ name: 'leeway_operating_contract', arguments: {} });
   const contract = JSON.parse(contractResult.content[0].text);
   assert.equal(contract.contractId, 'LEEWAY_DEVICE_BRIDGE_AGENT_OPERATING_CONTRACT');
-  assert.equal(contract.version, '1.0.0');
+  assert.equal(contract.version, '1.2.0');
+  assert.match(contract.contract, /GATE 0 — AGENT LEE VOICE IS MANDATORY/);
+  assert.match(contract.contract, /GATE0_RESPONSE_FAIL/);
+  assert.match(contract.contract, /4citeB4U\/LeeWay-Standards/);
+  assert.match(contract.contract, /4citeB4U\/LeeWay-Engineering/);
+  assert.match(contract.contract, /4citeB4U\/Receipt-Authority/);
+  assert.match(contract.contract, /public GitHub is not a receipt writer/);
+  assert.match(contract.contract, /GATE P — PORTABLE CODE WRITING AND DEVICE AUTHORITY/);
+  assert.match(contract.contract, /CONTRACT_PORTABLE, ADAPTER_IMPLEMENTED and PLATFORM_TESTED/);
+  assert.match(contract.contract, /OBSERVED_LIMITED_DISCOVERY/);
   assert.match(contract.contract, /VERIFIED, OBSERVED, INFERRED, BLOCKED or FAILED/);
   assert.equal(contract.enforcementBoundary, 'CLIENT_GUIDANCE_AND_EXISTING_RUNTIME_ADMISSION');
   const invoke = async (name, args) => {

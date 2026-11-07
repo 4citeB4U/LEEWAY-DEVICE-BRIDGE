@@ -62,6 +62,11 @@ test('real SDK HTTP initializes and advertises only canonical discovery tools af
   const initializeBody = await initialize.json();
   assert.equal(initializeBody.result.serverInfo.name, 'leeway-device-bridge');
   assert.match(initializeBody.result.instructions, /LeeWay Device Bridge Agent Operating Contract/);
+  assert.match(initializeBody.result.instructions, /GATE 0 — AGENT LEE VOICE IS MANDATORY/);
+  assert.match(initializeBody.result.instructions, /SOURCE_NOT_READ/);
+  assert.match(initializeBody.result.instructions, /Receipt-Authority/);
+  assert.match(initializeBody.result.instructions, /GATE P — PORTABLE CODE WRITING AND DEVICE AUTHORITY/);
+  assert.match(initializeBody.result.instructions, /OBSERVED_LIMITED_DISCOVERY/);
   assert.match(initializeBody.result.instructions, /INVESTIGATE.*CONTINUE/);
   const listed = await rpc('tools/list', 3);
   assert.equal(listed.status, 200);
