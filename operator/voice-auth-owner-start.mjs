@@ -35,6 +35,7 @@ const pairing=createVoicePairing({root:path.join(approvalDir,'requests'),approva
 const result=await startVoiceAuthGateway({pairing,registeredApps,
   host:'127.0.0.1',port:5332,passwordHash:data.passwordHash,
   passwordSalt:data.passwordSalt,
+  voiceFabric:process.env.LEEWAY_VOICE_FABRIC_ORIGIN||'http://127.0.0.1:8890',
   sourceCommit:process.env.LEEWAY_DEVICE_BRIDGE_SOURCE_COMMIT||null,
 });
 console.log(JSON.stringify({

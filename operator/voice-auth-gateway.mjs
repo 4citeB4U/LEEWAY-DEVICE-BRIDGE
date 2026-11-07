@@ -40,8 +40,9 @@ export function createVoiceAuthGateway({
  if(u.protocol!=='http:'||u.hostname!=='127.0.0.1'||u.port!=='5173'||
   u.pathname!=='/__leeway/voice-turn'||u.search)throw Error('UNTRUSTED_VOICE_UPSTREAM');
  const vf=new URL(voiceFabric);
- if(vf.protocol!=='http:'||vf.hostname!=='127.0.0.1'||vf.port!=='8890'||
-  vf.pathname!=='/'||vf.search||vf.hash)throw Error('UNTRUSTED_VOICE_FABRIC');
+ if(vf.protocol!=='http:'||!['127.0.0.1','localhost','[::1]'].includes(vf.hostname)||
+  !vf.port||vf.pathname!=='/'||vf.search||vf.hash||vf.username||vf.password)
+  throw Error('UNTRUSTED_VOICE_FABRIC');
  const sessions=new Map(),failures=new Map();
  const permittedOrigins=new Set(Object.values(registeredApps));
  const allowOrigin=req=>permittedOrigins.has(req.headers.origin);

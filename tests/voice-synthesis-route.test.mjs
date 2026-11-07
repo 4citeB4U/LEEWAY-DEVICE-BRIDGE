@@ -8,7 +8,7 @@ AUTHORITY: isolated test only; LICENSE: MIT. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {randomBytes,scryptSync} from 'node:crypto';
-import {startVoiceAuthGateway} from '../operator/voice-auth-gateway.mjs';
+import {createVoiceAuthGateway,startVoiceAuthGateway} from '../operator/voice-auth-gateway.mjs';
 
 const makeAuth=()=>{
  const salt=randomBytes(16).toString('hex'),pass='fixture-passphrase-for-testing';
@@ -24,6 +24,13 @@ const response=(value,status=200)=>({ok:status>=200&&status<300,status,
 const renderResult={voiceAuthority:'LEEWAY_VOICE_FABRIC',agentId:'agent-lee',voicePackageId:'kokoro-bm_lewis',
  selectionRevision:admittedBinding.selectionRevision,productionAdmitted:true,qualificationOnly:false,
  format:'wav',sampleRate:24000,audioContent:wav,state:'SYNTHESIZED_NOT_PLAYBACK_VERIFIED'};
+
+test('Voice Fabric origin is a configurable loopback host binding only',()=>{
+ const {salt,passwordHash}=makeAuth(),base={passwordSalt:salt,passwordHash};
+ for(const origin of ['https://voice.example/mcp','http://192.168.1.8:8890','http://127.0.0.1:8890/path','http://user:pass@127.0.0.1:8890'])
+  assert.throws(()=>createVoiceAuthGateway({...base,voiceFabric:origin}),/UNTRUSTED_VOICE_FABRIC/);
+ assert.doesNotThrow(()=>createVoiceAuthGateway({...base,voiceFabric:'http://127.0.0.1:9180'}));
+});
 
 test('Voice Fabric status and synthesis require owner session, CSRF, admitted identity and selected binding',async()=>{
  const {salt,pass,passwordHash}=makeAuth(),calls=[];
