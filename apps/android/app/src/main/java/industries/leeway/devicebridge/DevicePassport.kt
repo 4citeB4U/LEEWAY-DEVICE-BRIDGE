@@ -16,6 +16,8 @@ object DevicePassport {
         val stat = StatFs(Environment.getDataDirectory().absolutePath)
         val metrics: DisplayMetrics = context.resources.displayMetrics
         val operatorActive = DeviceOperatorAccessibilityService.status().optBoolean("active")
+        val filesRead = FileAccess.canRead(context)
+        val filesWrite = FileAccess.canWrite(context)
 
         return JSONObject().apply {
             put("schemaVersion", "0.1.0")
@@ -49,8 +51,8 @@ object DevicePassport {
             put("capabilityClaims", JSONArray().apply {
                 put(capability("device.info", true, true, true))
                 put(capability("device.health", true, false, false))
-                put(capability("device.files.read", true, false, false))
-                put(capability("device.files.write", true, false, false))
+                put(capability("device.files.read", true, filesRead, false, filesRead))
+                put(capability("device.files.write", true, filesWrite, false, filesWrite))
                 put(capability("device.screen.observe", true, operatorActive, false, operatorActive))
                 put(capability("device.ui.control", true, operatorActive, false, operatorActive))
                 put(capability("device.apps.install", true, false, false))
@@ -75,3 +77,4 @@ object DevicePassport {
         put("verified", verified)
     }
 }
+
