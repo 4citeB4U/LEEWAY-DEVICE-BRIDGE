@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { Bridge, schemas } from '../../packages/protocol/index.mjs';
 import { RelayAdapter } from '../../packages/agent-relay/index.mjs';
 import { DesktopAdapter } from './adapter.mjs';
+import { PhysicalAndroidAdapter, PhysicalAppleAdapter } from '../../operator/physical-adapters.mjs';
 import { createC3AdmissionBinding } from '../../operator/c3-admission-binding.mjs';
 import { requireTrustedRuntimeComposition } from './runtime-composition.mjs';
 
@@ -74,14 +75,26 @@ export function createServer(bridge, { discoveryOnly = false, readOnlyCapabiliti
 }
 
 const deviceSchema = z.object({
-  id: z.string().min(1).max(128), type: z.enum(['desktop', 'relay']),
+  id: z.string().min(1).max(128), type: z.enum(['desktop', 'relay', 'physical-android', 'physical-apple']),
   grants: z.array(z.enum(Object.keys(schemas))).max(Object.keys(schemas).length),
   // Platform names are resolved against the owner-controlled adapter registry.
   // Do not bake a finite OS list or an implicit desktop default into this contract.
   platform: z.string().min(1).max(64).optional(),
   workspace: z.string().optional(), skillsRoot: z.string().max(2048).optional(), voiceEndpoint: z.string().url().optional(), tokenEnv: z.string().regex(/^[A-Z][A-Z0-9_]*$/).optional(),
   url: z.string().url().optional(),
-}).strict();
+  // Explicit owner-enrolled USB identity; never rely on a built-in device serial default.
+  serial: z.string().regex(/^[A-Za-z0-9._:-]{4,128}$/).optional(),
+  hardwareId: z.string().regex(/^[0-9a-fA-F]{16,64}$/).optional(),
+}).strict().superRefine((device, context) => {
+  const invalid = (message) => context.addIssue({ code: 'custom', message });
+  if (device.type === 'physical-android') {
+    if (device.platform !== 'android' || !device.serial || device.hardwareId || device.url || device.workspace || device.tokenEnv) invalid('ANDROID_USB_EXPLICIT_IDENTITY_REQUIRED');
+  } else if (device.type === 'physical-apple') {
+    if (device.platform !== 'ios' || !device.hardwareId || device.serial || device.url || device.workspace || device.tokenEnv) invalid('APPLE_USB_EXPLICIT_IDENTITY_REQUIRED');
+  } else if (device.serial || device.hardwareId) {
+    invalid('PHYSICAL_USB_FIELDS_NOT_ALLOWED');
+  }
+});
 
 // Configuration grants never act as Formula/Veritas approval. Trusted Runtime
 // startup may supply the owner callbacks; otherwise the canonical C3 binding
@@ -114,9 +127,22 @@ export async function createConfiguredBridge(configPath, runtimeInput = null) {
       throw new Error('TRUSTED_VISION_PROVIDER_DEVICE_NOT_CONFIGURED');
     }
   }
-  const devices = config.devices.map(d => ({ ...d, adapter: d.type === 'desktop'
-    ? new DesktopAdapter(d.workspace ? path.resolve(base, d.workspace) : (() => { throw new Error('WORKSPACE_REQUIRED'); })(), {skillsRoot: d.skillsRoot ? path.resolve(base,d.skillsRoot) : null, voiceEndpoint: d.voiceEndpoint || null, receiptPath, visionProvider: visionProviders.get(d.id) ?? null})
-    : new RelayAdapter({ deviceId: d.id, url: d.url, token: d.tokenEnv ? process.env[d.tokenEnv] : undefined }) }));
+  const devices = config.devices.map(d => {
+    let adapter;
+    if (d.type === 'desktop') {
+      adapter = new DesktopAdapter(d.workspace ? path.resolve(base, d.workspace) : (() => { throw new Error('WORKSPACE_REQUIRED'); })(), {
+        skillsRoot: d.skillsRoot ? path.resolve(base, d.skillsRoot) : null,
+        voiceEndpoint: d.voiceEndpoint || null, receiptPath, visionProvider: visionProviders.get(d.id) ?? null
+      });
+    } else if (d.type === 'physical-android') {
+      adapter = new PhysicalAndroidAdapter({ serial: d.serial });
+    } else if (d.type === 'physical-apple') {
+      adapter = new PhysicalAppleAdapter({ deviceId: d.hardwareId });
+    } else {
+      adapter = new RelayAdapter({ deviceId: d.id, url: d.url, token: d.tokenEnv ? process.env[d.tokenEnv] : undefined });
+    }
+    return { ...d, adapter };
+  });
   if (receiptPath) await fs.mkdir(path.dirname(receiptPath), { recursive: true });
   const admission = runtimeComposition?.mode === 'direct'
     ? runtimeComposition.admission

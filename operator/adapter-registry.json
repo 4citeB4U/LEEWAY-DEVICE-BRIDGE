@@ -19,6 +19,11 @@
         "Termux provider bridge"
       ],
       "capabilities": {
+        "device.health": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": false,
+          "notes": "Physical adapter executes an actual ADB or exact Windows USB PnP readback; discovery alone is not verification."
+        },
         "device.info": {
           "state": "VERIFIED",
           "requiresHumanConsent": false
@@ -86,6 +91,11 @@
         "PhotosPicker"
       ],
       "capabilities": {
+        "device.health": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": false,
+          "notes": "Physical adapter executes an actual ADB or exact Windows USB PnP readback; discovery alone is not verification."
+        },
         "device.info": {
           "state": "SUPPORTED",
           "requiresHumanConsent": false
