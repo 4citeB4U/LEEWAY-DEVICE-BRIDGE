@@ -71,7 +71,7 @@ struct AppleCameraReceipt: Identifiable, Codable, Sendable {
     }
 
     var exportText: String {
-        guard let data = canonicalData(for: self), let text = String(data: data, encoding: .utf8) else {
+        guard let data = Self.canonicalData(for: self), let text = String(data: data, encoding: .utf8) else {
             return "{\"receiptId\":\"\(receiptId.uuidString)\",\"exportState\":\"FAILED\"}"
         }
         return text
