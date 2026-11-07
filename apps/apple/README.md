@@ -11,3 +11,11 @@ The model-runtime interface rejects requests until a LeeWay Formula grant verifi
 The direct package guide is [docs/APPLE-CAMERA-PROVIDER.md](../../docs/APPLE-CAMERA-PROVIDER.md). It describes the published GitHub download, owner-controlled signing, explicit host pairing, and the remaining live qualification gate.
 
 `project.yml` is an XcodeGen specification used only to create the Xcode project during development and in GitHub Actions. It is not part of the iPhone runtime. The GitHub qualification workflow builds and packages the unsigned IPA plus its digest-bound manifest. The `apple-latest` GitHub release is the current direct download channel for the owner-controlled signing/install path. It does not install an app or create a TestFlight build by itself.
+
+## Consumer distribution branch — 2026-11-07
+
+The existing SwiftUI app now includes a source-qualified Apple Sign in control, a nonce-bound identity-token handoff, a signed App Store build channel and iPad device-family support. The control remains hidden without a configured authoritative HTTPS Apple-session exchange URL, and even an accepted identity credential never grants native Device Bridge commands by itself.
+
+`AppleUpdateCoordinator` keeps App Store upgrades under the `appstore` channel and iLoader/GitHub IPA instructions under the `developer-ipa` channel. The Apple native Metal and camera implementation is preserved. The unsigned IPA remains the developer delivery artifact; a published App Store listing and physical launch are not currently evidenced.
+
+See [Apple consumer distribution](../../docs/APPLE-CONSUMER-DISTRIBUTION-20261107.md) and the existing [TestFlight setup](../../docs/APPLE-TESTFLIGHT-SETUP.md). Source and compilation qualification do not replace Developer Program membership, Apple approval, Runtime-issued sessions or independent Veritas.
