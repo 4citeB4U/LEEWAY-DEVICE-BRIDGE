@@ -58,7 +58,7 @@ jobs:
       - name: Validate source boundaries
         run: node --test tests/apple-native-installer-source.test.mjs tests/apple-native-runtime-provider.test.mjs
       - name: Build portable first-party LeeWay host installer
-        run: cargo build --release --locked --manifest-path operator/native-apple-installer/Cargo.toml
+        run: cargo build --release --manifest-path operator/native-apple-installer/Cargo.toml
       - name: Exercise installer help without credentials or physical devices
         shell: bash
         run: |
