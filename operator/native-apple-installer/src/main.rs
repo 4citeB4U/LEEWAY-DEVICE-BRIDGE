@@ -13,7 +13,7 @@ LICENSE = MIT; the upstream isideload and idevice libraries retain their origina
 */
 use std::{
     fs::{self, File},
-    io::{self, BufRead, Read, Write},
+    io::{self, Read, Write},
     path::Path,
     sync::OnceLock,
     time::Duration,
@@ -71,7 +71,7 @@ fn event(stage: &str, state: &str) {
 
 fn bounded_line(size_limit: usize) -> Option<String> {
     let stdin = io::stdin();
-    let mut handle = stdin.lock();
+    let handle = stdin.lock();
     let mut line = String::new();
     let bytes = handle.take((size_limit + 1) as u64).read_to_string(&mut line).ok()?;
     if bytes > size_limit || !line.ends_with('\n') { return None; }
@@ -209,8 +209,7 @@ async fn perform(req: Request) -> Result<(), &'static str> {
     event("SIGNING", "TEAM_OBSERVED");
 
     // Never silently revoke certificates, delete profiles, reset device trust, or erase app data.
-    let certs: MaxCertsCallbackBox = Box::new(|_| Box::pin(async { Ok(None) }));
-    let mut signer = SideloaderBuilder::<_, ExtensionsBehaviorCallbackBox>::new(session, req.apple_id.to_lowercase())
+    let mut signer = SideloaderBuilder::<MaxCertsCallbackBox, ExtensionsBehaviorCallbackBox>::new(session, req.apple_id.to_lowercase())
         .team_selection(TeamSelection::PromptOnce(selected_team))
         .max_certs_behavior(MaxCertsBehavior::Error)
         .extensions_behavior(ExtensionsBehaviorSelection::Fixed(ExtensionsBehavior::ReuseMain))
