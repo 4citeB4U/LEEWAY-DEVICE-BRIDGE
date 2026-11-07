@@ -24,7 +24,7 @@ const recovery = readFileSync(new URL("../docs/refresh.html", import.meta.url), 
 assert.match(page, /id="appleLane"/);
 assert.match(page, /APPLE · IPHONE \/ IPAD \/ MAC/);
 assert.match(page, /Apple workspace and native Metal/);
-assert.match(page, /Use the Home Screen app as the daily LeeWay front door/);
+assert.match(page, /Customers install through the App Store once published/);
 assert.match(page, /OPEN APPLE WORKSTATION/);
 assert.match(page, /DOWNLOAD DEVELOPER IPA/);
 assert.match(page, /releases\/tag\/apple-latest/);
