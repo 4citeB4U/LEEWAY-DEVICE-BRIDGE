@@ -10,7 +10,7 @@ AUTHORITY: test only. LICENSE: MIT.
 */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {validateVoiceAppRegistry} from '../operator/voice-app-registry.mjs';
+import {validateVoiceAppRegistry,LOCAL_EDGE_RTC_APP_ID,LOCAL_EDGE_RTC_ORIGIN} from '../operator/voice-app-registry.mjs';
 test('voice registry validates 1600 separate application registrations',()=>{
  const apps={'leeway.voice.studio':'https://4citeb4u.github.io'};
  for(let i=0;i<1600;i++)apps['leeway.app.'+i]='https://app-'+i+'.example.test';
@@ -22,9 +22,14 @@ test('voice registry validates 1600 separate application registrations',()=>{
 test('wildcard, insecure and unapproved origins are rejected',()=>{
  const apps={'leeway.voice.studio':'https://4citeb4u.github.io'};
  for(const unsafe of ['http://example.org','https://*.example.org',
-  'https://localhost','https://example.org/path','https://user:pass@example.org']){
+  'https://localhost','https://example.org/path','https://user:pass@example.org',
+  'http://127.0.0.1:5174','http://localhost:5173','http://127.0.0.1:5173']){
   assert.throws(()=>validateVoiceAppRegistry({...apps,'leeway.bad':unsafe}),/ORIGIN_INVALID/);
  }
+ const local=validateVoiceAppRegistry({...apps,[LOCAL_EDGE_RTC_APP_ID]:LOCAL_EDGE_RTC_ORIGIN});
+ assert.equal(local[LOCAL_EDGE_RTC_APP_ID],LOCAL_EDGE_RTC_ORIGIN);
+ assert.throws(()=>validateVoiceAppRegistry({...apps,'leeway.edge-rtc.local':'http://127.0.0.1:5174'}),/ORIGIN_INVALID/);
+ assert.throws(()=>validateVoiceAppRegistry({...apps,'leeway.edge-rtc.other':LOCAL_EDGE_RTC_ORIGIN}),/ORIGIN_INVALID/);
  assert.throws(()=>validateVoiceAppRegistry({'leeway.other':'https://other.example.org'}),
   /CANONICAL_VOICE_STUDIO/);
 });
@@ -48,5 +53,25 @@ test('registered second app has exact-origin HTTPS CORS, unknown apps are reject
   const unknown=await fetch(root+'/v1/voice/capabilities',{headers:{origin:'https://evil.example.test'}});
   assert.equal(unknown.status,403);
   assert.equal(unknown.headers.get('access-control-allow-origin'),null);
+ }finally{await new Promise(resolve=>s.server.close(resolve))}
+});
+
+test('explicit local Edge RTC registration receives exact-origin capability CORS',async()=>{
+ const {randomBytes,scryptSync}=await import('node:crypto');
+ const {startVoiceAuthGateway}=await import('../operator/voice-auth-gateway.mjs');
+ const salt=randomBytes(16),passwordHash=scryptSync('fixture-local-edge-rtc-not-real',salt,64).toString('hex');
+ const apps={'leeway.voice.studio':'https://4citeb4u.github.io',
+   [LOCAL_EDGE_RTC_APP_ID]:LOCAL_EDGE_RTC_ORIGIN};
+ const s=await startVoiceAuthGateway({port:0,passwordHash,passwordSalt:salt.toString('hex'),registeredApps:apps});
+ try{
+  const root='http://127.0.0.1:'+s.port;
+  const allowed=await fetch(root+'/v1/voice/capabilities',{headers:{origin:LOCAL_EDGE_RTC_ORIGIN}});
+  assert.equal(allowed.status,200);
+  assert.equal(allowed.headers.get('access-control-allow-origin'),LOCAL_EDGE_RTC_ORIGIN);
+  const body=await allowed.json();
+  assert.equal(body.registeredAppCount,2);
+  const otherPort=await fetch(root+'/v1/voice/capabilities',{headers:{origin:'http://127.0.0.1:5174'}});
+  assert.equal(otherPort.status,403);
+  assert.equal(otherPort.headers.get('access-control-allow-origin'),null);
  }finally{await new Promise(resolve=>s.server.close(resolve))}
 });

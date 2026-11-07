@@ -11,6 +11,11 @@ LICENSE: MIT
 */
 import {readFile} from 'node:fs/promises';
 export const DEFAULT_VOICE_APPS=Object.freeze({'leeway.voice.studio':'https://4citeb4u.github.io'});
+// This exact loopback app is permitted only when the owner explicitly enrolls
+// it in registered-apps.json. It is the local Edge RTC qualification surface,
+// not a general HTTP-origin exception or a production deployment identity.
+export const LOCAL_EDGE_RTC_APP_ID='leeway.edge-rtc.local';
+export const LOCAL_EDGE_RTC_ORIGIN='http://127.0.0.1:5173';
 const ID=/^[a-z][a-z0-9._-]{2,79}$/;
 export function validateVoiceAppRegistry(value){
  if(!value||Array.isArray(value)||typeof value!=='object')throw Error('VOICE_APPS_INVALID');
@@ -20,10 +25,13 @@ export function validateVoiceAppRegistry(value){
  for(const [id,origin]of entries){
   if(!ID.test(id)||typeof origin!=='string')throw Error('VOICE_APP_ID_INVALID');
   let url;try{url=new URL(origin)}catch{throw Error('VOICE_APP_ORIGIN_INVALID')}
-  if(url.protocol!=='https:'||url.origin!==origin||url.username||url.password||
-   url.hostname==='localhost'||url.hostname==='127.0.0.1'||
-   url.hostname.endsWith('.localhost')||url.hostname==='0.0.0.0'||
-   origin.includes('*'))throw Error('VOICE_APP_ORIGIN_INVALID');
+  const secureRemote=url.protocol==='https:'&&url.origin===origin&&
+   url.hostname!=='localhost'&&url.hostname!=='127.0.0.1'&&
+   !url.hostname.endsWith('.localhost')&&url.hostname!=='0.0.0.0';
+  const exactLocalEdgeRtc=id===LOCAL_EDGE_RTC_APP_ID&&origin===LOCAL_EDGE_RTC_ORIGIN&&
+   url.protocol==='http:'&&url.origin===origin;
+  if((!secureRemote&&!exactLocalEdgeRtc)||url.username||url.password||origin.includes('*'))
+   throw Error('VOICE_APP_ORIGIN_INVALID');
   registry[id]=url.origin;
  }
  if(registry['leeway.voice.studio']!=='https://4citeb4u.github.io')
