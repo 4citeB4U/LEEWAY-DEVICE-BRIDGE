@@ -21,8 +21,9 @@ const reply = (res, status, error) => {
  * resolveBridge must return a fresh, principal-scoped Bridge with owner providers.
  * This factory issues no credentials and infers no authority from an OS or device name.
  */
-export function createRemoteMcpHandler({ authenticate, resolveBridge, allowedHosts, allowedOrigins = [], discoveryOnly = false } = {}) {
+export function createRemoteMcpHandler({ authenticate, resolveBridge, resolveComplianceCardProvider = null, allowedHosts, allowedOrigins = [], discoveryOnly = false } = {}) {
   if (typeof authenticate !== 'function' || typeof resolveBridge !== 'function' ||
+      (resolveComplianceCardProvider !== null && typeof resolveComplianceCardProvider !== 'function') ||
       !Array.isArray(allowedHosts) || !allowedHosts.length ||
       allowedHosts.some(x => typeof x !== 'string' || !x.trim() || x.includes('*')) ||
       !Array.isArray(allowedOrigins) ||
@@ -80,10 +81,22 @@ export function createRemoteMcpHandler({ authenticate, resolveBridge, allowedHos
       if (typeof principalDiscoveryOnly !== 'boolean') {
         return reply(res, 503, 'TRUSTED_MCP_TOOL_POLICY_REQUIRED');
       }
+      let complianceCardProvider = null;
+      if (bridge.requiresComplianceCard) {
+        if (typeof resolveComplianceCardProvider !== 'function') {
+          return reply(res, 503, 'TRUSTED_COMPLIANCE_CARD_PROVIDER_REQUIRED');
+        }
+        try { complianceCardProvider = await resolveComplianceCardProvider(principal); }
+        catch { return reply(res, 503, 'TRUSTED_COMPLIANCE_CARD_PROVIDER_UNAVAILABLE'); }
+        if (typeof complianceCardProvider !== 'function') {
+          return reply(res, 503, 'TRUSTED_COMPLIANCE_CARD_PROVIDER_UNAVAILABLE');
+        }
+      }
       server = createServer(bridge, { discoveryOnly: principalDiscoveryOnly,
         readOnlyCapabilities: principalDiscoveryOnly
           ? ['device.health', 'device.info', 'device.directories.list', 'device.files.read', ...(process.env.LEEWAY_MODEL_HUB_URL ? ['model.hub.catalog'] : [])]
-          : [] });
+          : [],
+        complianceCardProvider });
       const transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: undefined,
         enableJsonResponse: true,

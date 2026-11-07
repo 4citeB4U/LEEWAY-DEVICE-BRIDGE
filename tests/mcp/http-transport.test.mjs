@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { Bridge } from '../../packages/protocol/index.mjs';
+import { Bridge, digest } from '../../packages/protocol/index.mjs';
 import { createRemoteMcpHandler } from '../../apps/desktop/mcp-http.mjs';
 
 async function fixture(t, options = {}) {
@@ -39,9 +39,21 @@ async function fixture(t, options = {}) {
         }
       })), {
         admission: async ({capability}) => capability === 'device.health',
+        ...(options.cardRequired ? {
+          complianceCardGate: async ({complianceCard}) => complianceCard?.taskId === 'http-card'
+            ? {valid:true,cardHash:digest(complianceCard),authority:'LEEWAY_RUNTIME_FABRIC'}
+            : false,
+        } : {}),
         receiptSink: async r => { if(options.receiptFailure) throw Error('FAIL'); receipts.push(r); }
       });
-    }
+    },
+    ...(options.cardProvider ? {
+      resolveComplianceCardProvider: async principal => principal === 'owner'
+        ? async ({deviceId,capability,args}) => ({
+          taskId:'http-card',agentId:'ChatGPT',deviceId,capability,argumentsHash:digest(args),
+        })
+        : null,
+    } : {}),
   });
   server.on('request', handler);
   const clients = [];
@@ -114,5 +126,28 @@ test('HTTP refuses missing trusted Bridge and missing startup callbacks',async t
   assert.throws(()=>createRemoteMcpHandler(),/TRUSTED_MCP_HTTP_CONFIGURATION_REQUIRED/);
   const f=await fixture(t,{unavailable:true});
   assert.equal((await fetch(f.url,{method:'POST',headers:{authorization:'Bearer test-owner','content-type':'application/json'},body:'{}'})).status,503);
+  assert.equal(f.executed.length,0);
+});
+
+test('owner-scoped HTTP MCP issues Runtime-validated cards server-side and omits card input',async t=>{
+  const f=await fixture(t,{cardRequired:true,cardProvider:true}),client=await f.connect();
+  const tools=(await client.listTools()).tools;
+  const health=tools.find(tool=>tool.name==='device_health');
+  assert.ok(health);
+  assert.equal(Object.hasOwn(health.inputSchema.properties,'complianceCard'),false);
+  const result=decode(await client.callTool({name:'device_health',arguments:{deviceId:'android-unit',arguments:{}}}));
+  assert.equal(result.ok,true);
+  assert.equal(result.operationMayHaveExecuted,true);
+  assert.equal(result.receipt.complianceCardStatus,'VALID');
+  assert.equal(result.receipt.complianceCardAuthority,'LEEWAY_RUNTIME_FABRIC');
+  assert.equal(f.receipts.filter(r=>r.outcome==='ADMITTED').at(-1).complianceCardStatus,'VALID');
+  assert.equal(f.receipts.filter(r=>r.outcome==='PASS').at(-1).operationMayHaveExecuted,true);
+});
+
+test('HTTP execution fails closed when a card-required Bridge has no trusted issuer/validator',async t=>{
+  const f=await fixture(t,{cardRequired:true}),headers={authorization:'Bearer test-owner','content-type':'application/json'};
+  const response=await fetch(f.url,{method:'POST',headers,body:JSON.stringify({jsonrpc:'2.0',id:1,method:'initialize',params:{protocolVersion:'2025-03-26',capabilities:{},clientInfo:{name:'missing-provider-test',version:'1'}}})});
+  assert.equal(response.status,503);
+  assert.equal((await response.json()).error,'TRUSTED_COMPLIANCE_CARD_PROVIDER_REQUIRED');
   assert.equal(f.executed.length,0);
 });

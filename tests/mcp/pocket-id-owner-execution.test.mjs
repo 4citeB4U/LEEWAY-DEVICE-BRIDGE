@@ -137,4 +137,16 @@ test('startup refuses command exposure without verified host-injected Runtime co
     startUniversalPocketIdMcp({ enableExecution: 'true', port: 4272 }),
     /INVALID_MCP_EXECUTION_MODE/
   );
+  await assert.rejects(
+    startUniversalPocketIdMcp({
+      enableExecution: true,
+      port: 4272,
+      runtimeInput: {
+        admission: async () => true,
+        receiptSink: async () => {},
+        complianceCardGate: async () => false,
+      },
+    }),
+    /TRUSTED_COMPLIANCE_CARD_COMPOSITION_REQUIRED/
+  );
 });

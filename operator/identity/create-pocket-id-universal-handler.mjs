@@ -24,7 +24,7 @@ export const DEVICE_BRIDGE_EXECUTE_PERMISSION = 'device.bridge.execute';
  */
 export function createPocketIdUniversalHandler({
   issuer, resource, ownerSubject, permission = 'device.bridge.read',
-  fetchImpl, resolveBridge, allowedHosts, allowedOrigins = [],
+  fetchImpl, resolveBridge, resolveComplianceCardProvider = null, allowedHosts, allowedOrigins = [],
   executionEnabled = false
 } = {}) {
   if (typeof resolveBridge !== 'function') throw Error('TRUSTED_BRIDGE_RESOLVER_REQUIRED');
@@ -57,6 +57,7 @@ export function createPocketIdUniversalHandler({
       return null;
     },
     resolveBridge,
+    resolveComplianceCardProvider,
     allowedHosts,
     allowedOrigins,
     discoveryOnly: principal => principal?.mayExecute !== true

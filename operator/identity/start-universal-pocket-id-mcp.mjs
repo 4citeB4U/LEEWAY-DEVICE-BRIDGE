@@ -27,11 +27,17 @@ export async function startUniversalPocketIdMcp({
   // Never construct execution authority from request input or a device manifest.
   // The trusted host must inject the existing Runtime Fabric admission and receipt providers.
   const trusted = runtimeInput === null ? null : requireTrustedRuntimeComposition(runtimeInput);
+  if (enableExecution && (!trusted?.complianceCardGate || !trusted?.complianceCardProvider)) {
+    throw Error('TRUSTED_COMPLIANCE_CARD_COMPOSITION_REQUIRED');
+  }
   const bridge = await createConfiguredBridge(configPath, trusted);
   const handler = createPocketIdUniversalHandler({
     issuer, resource, ownerSubject, fetchImpl,
     executionEnabled: enableExecution,
     resolveBridge: async principal => principal?.subject === ownerSubject ? bridge : null,
+    resolveComplianceCardProvider: async principal => principal?.subject === ownerSubject
+      ? trusted?.complianceCardProvider ?? null
+      : null,
     allowedHosts: [host + ':' + port],
     allowedOrigins: []
   });
