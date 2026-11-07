@@ -389,3 +389,9 @@ The owner app capability route is registered but requires explicit owner device 
 
 **Next action:** preserve the exact `c3Proof` defect and harness change in canonical main, then bind it to the existing Runtime/Veritas/Continuum admitted evidence contract. Separately resolve owner session, LeeWay GPU ASR admission, and Voice Fabric provider readiness before live duplex execution.
 
+## 2026-11-07 05:55 America/Chicago (UTC−06:00) — harness published and exact-head readback
+
+Device Bridge commit `6cf2cc70b9ba72b7b060b4438a54f070cde7e1b7` is verified on canonical `main` (`git ls-remote` matched local HEAD). Exact-head verification passed: voice-auth suite 10/10; C3 preflight contract tests 5/5. The live preflight returned exit code 2/BLOCKED and read back the historical calibration as `VERIFIED_SHADOW_PASS` with the record, receipt and SHA-256 listed above. The Gateway and Machine Consciousness services were not restarted because this publication changes the read-only preflight tooling, not their runtime source.
+
+The published repair closes the false-positive harness defect and recovers the proven calibration without replaying it. It does not repair the separate production path: current session is owner-approval-required, Voice Fabric renderer is unavailable, GPU dispatch is unbound, and upstream/production/C3 Gateway flags are false. `c3Proof` remains unassigned in Gateway source; wiring that flag to a valid signed independent Veritas and admitted canonical receipt requires the existing custodian contract. No production voice run, receipt, Veritas decision, or Learning Ledger update occurred in this publication.
+
