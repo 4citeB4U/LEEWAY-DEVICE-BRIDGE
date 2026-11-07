@@ -27,7 +27,7 @@ try{
     'OPEN APPLE CLOUD WORKSTATION',
     'OPEN ANDROID REMOTE WORKSTATION',
     'GitHub Codespaces',
-    'editor, terminal, Git, Node, GitHub CLI, and Docker development environment'
+    'editor, terminal, Git, Node, and GitHub CLI development environment'
   ]);
   await waitFor('manifest.webmanifest',[
     'LeeWay Device-Neutral Workstation',
