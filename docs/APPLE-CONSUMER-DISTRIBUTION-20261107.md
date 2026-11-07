@@ -46,3 +46,10 @@ LICENSE = MIT. Upstream isideload 0.5.2 remains an MIT third-party dependency.
 Source changes and CI are **not** a public App Store release. GitHub-hosted macOS compilation does not have the owner's Apple distribution identity or a connected iPhone. The current in-session Device Bridge owner-scoped connector provides read-only tools and previously returned `LEEWAY_BRIDGE_DISCOVERY_REGISTRATION_UNVERIFIED`; it cannot approve or execute the physical installation. Credential and certificate material must not be pasted into chat or the repository.
 
 **Original mission remains open until the live source/identity/publisher/physical gates are evidenced.** The draft PR and issue #37 retain the execution chain and exact failures; do not create a rival runtime or abandon existing qualified work.
+
+
+## Amendment — direct free-account sideload delivery takes priority
+
+The earlier App Store-first framing is **not a mandatory prerequisite for the Creator-approved LeeWay installer**. The primary near-term Apple distribution work is the first-party native host installer (Windows/macOS/Linux), which uses the free Apple Account and its Personal Team via `isideload` in the canonical Device Bridge. No paid Developer Program, App Store Connect record, or App Review is required for this direct sideload lane. Device USB pairing, Apple authentication/2FA and temporary development provisioning still apply, and this cannot guarantee zero-touch on-device installs for millions of unrelated iPhones.
+
+The App Store route described above is an **optional later mass-distribution channel**, with its distinct Apple requirements. The first-party installer build artifacts, source-gated release publisher and Apple-tile distribution manifest are governed under PR #95; only real uploaded binaries make the links available. Keep installed app identity and Metal source intact. Production acceptance remains physical device and independent Veritas specific to the selected distribution lane.
