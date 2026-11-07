@@ -15,11 +15,21 @@ on:
     paths:
       - 'operator/native-apple-installer/**'
       - 'tests/apple-native-installer-source.test.mjs'
+      - 'tests/apple-native-runtime-provider.test.mjs'
+      - 'operator/physical-adapters.mjs'
+      - 'apps/desktop/runtime-composition.mjs'
+      - 'apps/desktop/mcp-server.mjs'
+      - 'packages/protocol/index.mjs'
       - '.github/workflows/apple-native-installer-check.yml'
   pull_request:
     paths:
       - 'operator/native-apple-installer/**'
       - 'tests/apple-native-installer-source.test.mjs'
+      - 'tests/apple-native-runtime-provider.test.mjs'
+      - 'operator/physical-adapters.mjs'
+      - 'apps/desktop/runtime-composition.mjs'
+      - 'apps/desktop/mcp-server.mjs'
+      - 'packages/protocol/index.mjs'
       - '.github/workflows/apple-native-installer-check.yml'
 permissions:
   contents: read
@@ -46,4 +56,4 @@ jobs:
       - name: Compile check without device commands
         run: cargo check --manifest-path operator/native-apple-installer/Cargo.toml
       - name: Validate source boundaries
-        run: node --test tests/apple-native-installer-source.test.mjs
+        run: node --test tests/apple-native-installer-source.test.mjs tests/apple-native-runtime-provider.test.mjs
