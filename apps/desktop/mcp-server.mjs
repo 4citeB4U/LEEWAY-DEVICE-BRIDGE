@@ -102,8 +102,14 @@ export async function createConfiguredBridge(configPath, runtimeInput = null) {
   const base = path.dirname(path.resolve(configPath));
   const receiptPath = config.receipts ? path.resolve(base, config.receipts) : null;
   if (!runtimeComposition && !receiptPath) throw new Error('RECEIPTS_REQUIRED');
+  const visionProviders = runtimeComposition?.visionProviders ?? new Map();
+  for (const deviceId of visionProviders.keys()) {
+    if (!config.devices.some(device => device.id === deviceId && device.type === 'desktop')) {
+      throw new Error('TRUSTED_VISION_PROVIDER_DEVICE_NOT_CONFIGURED');
+    }
+  }
   const devices = config.devices.map(d => ({ ...d, adapter: d.type === 'desktop'
-    ? new DesktopAdapter(d.workspace ? path.resolve(base, d.workspace) : (() => { throw new Error('WORKSPACE_REQUIRED'); })(), {skillsRoot: d.skillsRoot ? path.resolve(base,d.skillsRoot) : null, receiptPath})
+    ? new DesktopAdapter(d.workspace ? path.resolve(base, d.workspace) : (() => { throw new Error('WORKSPACE_REQUIRED'); })(), {skillsRoot: d.skillsRoot ? path.resolve(base,d.skillsRoot) : null, receiptPath, visionProvider: visionProviders.get(d.id) ?? null})
     : new RelayAdapter({ deviceId: d.id, url: d.url, token: d.tokenEnv ? process.env[d.tokenEnv] : undefined }) }));
   if (receiptPath) await fs.mkdir(path.dirname(receiptPath), { recursive: true });
   const admission = runtimeComposition?.mode === 'direct'
