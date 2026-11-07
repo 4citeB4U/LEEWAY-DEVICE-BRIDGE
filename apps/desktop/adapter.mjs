@@ -17,6 +17,7 @@ import { randomUUID } from 'node:crypto';
 import { fileDigest, binaryRange, binaryCreate, guardedMove, exactEdit } from './file-parity.mjs';
 import { DesktopSessions } from './process-sessions.mjs';
 import { DesktopSearchSessions } from './search-sessions.mjs';
+import { WindowsUiSessions } from './windows-ui-sessions.mjs';
 import { LeeWaySkillsCatalog } from './skills-catalog.mjs';
 import { appendBinary, directoryPage } from './transfer-parity.mjs';
 import { writePdf } from './documents-parity.mjs';
@@ -26,8 +27,8 @@ const execFileAsync = promisify(execFile);
 
 // Bounded workspace files and explicitly allowlisted process execution. Never invokes a shell.
 export class DesktopAdapter {
-  constructor(root,{skillsRoot=null,receiptPath=null,modelHubUrl=process.env.LEEWAY_MODEL_HUB_URL||''}={}) { this.root = path.resolve(root); this.jobs = new Map(); this.sessions = new DesktopSessions(this); this.searchSessions = new DesktopSearchSessions(this); this.skills=skillsRoot?new LeeWaySkillsCatalog(skillsRoot):null; this.receiptPath=receiptPath; this.modelHubUrl=modelHubUrl; }
-  async discover() { await fs.access(this.root); return [...(this.skills?['skills.list','skills.read']:[]),...(this.modelHubUrl?['model.hub.catalog']:[]),'device.health','device.info','device.documents.write_pdf','device.audit.recent','device.audit.usage','device.files.read','device.files.info','device.files.read_multiple','device.files.write','device.files.hash','device.files.read_binary','device.files.write_binary','device.files.append_binary','device.files.move','device.files.edit','device.directories.list','device.directories.page','device.directories.create','device.search.files','device.search.content','device.search.start','device.search.next','device.search.stop','device.search.list','device.process.list','device.process.terminate','device.process.execute','device.job.start','device.job.status','device.job.stop','device.session.start','device.session.read','device.session.input','device.session.stop','device.session.list']; }
+  constructor(root,{skillsRoot=null,receiptPath=null,modelHubUrl=process.env.LEEWAY_MODEL_HUB_URL||''}={}) { this.root = path.resolve(root); this.jobs = new Map(); this.sessions = new DesktopSessions(this); this.searchSessions = new DesktopSearchSessions(this); this.windows = process.platform === 'win32' ? new WindowsUiSessions() : null; this.skills=skillsRoot?new LeeWaySkillsCatalog(skillsRoot):null; this.receiptPath=receiptPath; this.modelHubUrl=modelHubUrl; }
+  async discover() { await fs.access(this.root); return [...(this.skills?['skills.list','skills.read']:[]),...(this.modelHubUrl?['model.hub.catalog']:[]),...(this.windows?['device.windows.window.list','device.windows.window.observe','device.windows.window.invoke','device.windows.window.input','device.windows.window.submit']:[]),'device.health','device.info','device.documents.write_pdf','device.audit.recent','device.audit.usage','device.files.read','device.files.info','device.files.read_multiple','device.files.write','device.files.hash','device.files.read_binary','device.files.write_binary','device.files.append_binary','device.files.move','device.files.edit','device.directories.list','device.directories.page','device.directories.create','device.search.files','device.search.content','device.search.start','device.search.next','device.search.stop','device.search.list','device.process.list','device.process.terminate','device.process.execute','device.job.start','device.job.status','device.job.stop','device.session.start','device.session.read','device.session.input','device.session.stop','device.session.list']; }
   async readModelHubCatalog({query=''}) {
     let endpoint;
     try { endpoint = new URL('/v1/catalog', this.modelHubUrl); } catch { throw new Error('MODEL_HUB_ENDPOINT_INVALID'); }
@@ -229,8 +230,13 @@ export class DesktopAdapter {
   }
   jobView(id) { const j=this.jobs.get(id); if(!j)throw new Error('UNKNOWN_JOB'); return {jobId:j.id,pid:j.pid,state:j.state,exitCode:j.exitCode,startedAt:j.startedAt,stdout:j.stdout,stderr:j.stderr}; }
   async execute(capability, args) {
-    if (capability === 'device.health') return { ok: true, platform: process.platform, adapter: 'bounded-workspace', uiControl: false };
-    if (capability === 'device.info') return { platform: process.platform, architecture: os.arch(), node: process.version, uiControl: false };
+    if (capability === 'device.health') return { ok: true, platform: process.platform, adapter: 'bounded-workspace', uiControl: this.windows !== null, uiControlState: this.windows ? 'SOURCE_BOUND_NOT_LIVE_PROBED' : 'UNAVAILABLE' };
+    if (capability === 'device.info') return { platform: process.platform, architecture: os.arch(), node: process.version, uiControl: this.windows !== null, uiControlState: this.windows ? 'SOURCE_BOUND_NOT_LIVE_PROBED' : 'UNAVAILABLE' };
+    if (capability === 'device.windows.window.list' && this.windows) return this.windows.list(args);
+    if (capability === 'device.windows.window.observe' && this.windows) return this.windows.observe(args);
+    if (capability === 'device.windows.window.invoke' && this.windows) return this.windows.invoke(args);
+    if (capability === 'device.windows.window.input' && this.windows) return this.windows.input(args);
+    if (capability === 'device.windows.window.submit' && this.windows) return this.windows.submit(args);
     if (capability === 'model.hub.catalog' && this.modelHubUrl) return this.readModelHubCatalog(args);
     if (capability === 'skills.list' && this.skills) return this.skills.list(args);
     if (capability === 'skills.read' && this.skills) return this.skills.read(args);
