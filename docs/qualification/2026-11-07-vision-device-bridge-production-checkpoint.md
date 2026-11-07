@@ -120,3 +120,12 @@ The immediate operational request is **partially satisfied**: the laptop Camera 
 
 **Next executable action:** qualify and bind a supported LeeWay-owned iOS runtime path (App Intent/Shortcuts or an installed native LeeWay camera provider with the required Apple permissions), then execute an iPhone camera open, advancing frame, physical STOP, and independent verification through the intended active Bridge. Until that exists and is read back, the three-platform camera gate remains NOT FULLY QUALIFIED.
 
+## iPhone retry readback — 2026-11-07 13:17:54 America/Chicago (2026-11-07 19:17:54 UTC)
+
+The Creator reported that the iPhone Camera app had been opened and requested one more Bridge-only attempt. The live `pc-primary` Bridge remained healthy (`device.health` receipt `24458b35-2ebb-4530-a4b8-af7cce8d8768`) and still advertised only the desktop device; no separate iOS device or Apple camera capability appeared.
+
+- Bridge-mediated Apple tooling discovery found no `idevice_id`, `ideviceinfo`, `idevicescreenshot`, `idevicepair`, or `ifuse` command, and no Apple Mobile Device Service record. Session-start receipt: `dc22e04f-77ac-4a61-ada4-c607d3bbc2b6`; session-read receipt: `82c94a26-47da-4a54-9cb9-502cabbef352`.
+- A fresh Bridge-mediated `Get-PnpDevice` and `Win32_PnPEntity` match for Apple VID `05AC`, the known iPhone hardware identifier, `Apple`, and `iPhone` returned no records. Session-start receipt: `88360f35-6273-4a4f-bb5b-ab6a27beab91`; session-read receipt: `20670498-cb8c-47d1-b4a8-a46dc46adcc3`.
+
+**Retry outcome:** **BLOCKED — iPhone not present on the current Bridge host transport.** No iPhone app-launch operation or camera frame could be executed or verified. Opening the Camera app on the phone is not observable by this Bridge while the phone is absent from its USB/PnP transport, and the active adapter still has no iOS screen/camera route. The next executable action is to reconnect the iPhone, unlock it, accept the Trust prompt if shown, keep Camera open, and rerun this same Bridge-only readback. The earlier Android and Windows evidence is unchanged.
+
