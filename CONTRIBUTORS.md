@@ -321,6 +321,34 @@ The read-only C3 preflight was executed through the authorized LeeWay Device Bri
 
 The source change is local and pending publication. It does not set `c3Qualified`; full C3 still requires an authorized active voice session, admitted LeeWay GPU route, a real human spoken turn and barge-in, hash-verified stale-output rejection, and independent Veritas/Continuum receipt admission.
 
+## C3 continuation — 2026-11-07 07:26 America/Chicago — preflight semantics and current owner gates
+
+**Harness repair:** `scripts/qualify-c3-live.mjs` is a read-only preflight, not a live C3 runner. It previously returned `qualification: PASS` when all readiness values appeared true despite `fullC3Executed:false`; it also required post-run conversation/C3 proofs before allowing the first live run. The preflight now reports `qualification: NOT_EXECUTED`, separates `readiness`/`liveRunAllowed` from post-run gates, and requires exact gateway, Agent Lee, LeeWay GPU-only, Continuum-only, production-turn, and C3 evidence identities. The first live run is no longer made circularly dependent on its own post-run proof. Focused preflight tests pass 7/7; syntax and diff checks pass.
+
+**Fresh Bridge evidence:** `voice.status` receipt `5941d9a1-7df2-4f88-8eff-679c28b29e31` returned `VOICE_PROVIDER_UNAVAILABLE` for the selected `kokoro-bm_lewis` package. The post-change canonical preflight ran and read through `device.session.start` / `device.session.read` receipts `1417cd89-cac9-4352-a6f2-6e1b2041d4c5` / `1e408bc6-b675-4a54-9a28-9a390ca50158`. It exited 2 with `readiness: BLOCKED`, `qualification: NOT_EXECUTED`, `liveRunAllowed:false`, `fullC3Executed:false`; Gateway, upstream, selected voice binding, and Agent Lee/GPU-only/Continuum-only identity pass. Session is 401/owner approval required, renderer unavailable, GPU unbound/dispatch denied. Post-run conversation and C3 gates remain `NOT_YET_OBSERVED`.
+
+**Lifecycle audit:** the existing LeeWay Boot Fabric task's owner script starts the selected local Kokoro adapter at `:8878` from `voice/adapters/start-studio.py`; that adapter loads `kokoro-js` and a local ONNX model. The broader boot script also opens the Notebook page and publishes a boot JSON receipt directly to `4citeB4U/LEEWAY-INTELLECTUAL-ESTATE` through GitHub API. It was not run: that path is not evidence of LeeWay-GPU-only inference and its GitHub receipt write conflicts with the Creator's Continuum-only storage direction. The passwordless voice-pairing source explicitly says owner desktop approval is required and never autoapproved; no approval artifact was created.
+
+**Authority refresh:** Runtime Fabric `main` at `6c46218d144bd031a8887c57d35ea98b32235903` still exports `QUALIFIED_PRODUCTION_VERITAS_ROOTS=[]`. Receipt Authority `main` at `8f8c13105c9c66f9685200373e460e3c372c116b` still classifies itself as a source candidate, with production signature verification and C3 custody unqualified. Gateway `c3Proof` remains null with no canonical assignment. These are actual authority gaps, not preflight wording.
+
+**Current result:** no production conversation, owner-approved app session, mic capture, GPU ASR, Agent Lee turn, Voice Fabric playout, human interruption, stale-output rejection, independent Veritas decision, production C3 receipt, or Learning Ledger admission occurred. No provider, session, permission, or qualification flag was changed. Do not start the legacy Kokoro adapter as a substitute for the LeeWay GPU route.
+
+**Next engineering action:** replace the Edge RTC fixture client route with the authenticated Device Bridge Voice Gateway contract, preserving the native owner approval flow; then bind an actually admitted LeeWay GPU/Continuum path and implement the live acoustic run plus independently verified C3 admission. The target remains unqualified until those runtime events occur.
+
+**Final source checks:** preflight tests passed 7/7, voice Gateway/auth/pairing tests passed 12/12, syntax checks and `git diff --check` passed. This is source verification only; no production conversation or C3 execution occurred.
+
+### C3 continuation — 2026-11-07 07:35 CST — strict turn contract and admission audit
+
+Codex continues the Creator-authorized Device Bridge / Voice Fabric repair; Agent Lee remains the target conversation identity, not Codex's identity. The full production acoustic C3 gate remains open.
+
+Fresh session check: Formula and Notebook bridge responded; task-specific gates remain unverified. Fresh read-only Runtime Fabric connector: Runtime authentication available, Device Bridge/Continuum/Formula/independent Veritas/receipt admission `NOT_PROBED`, authenticated device command `NOT_PROBED`. Device inventory reports `pc-primary` configured but not physically probed; identity unverified.
+
+The canonical Device Bridge `/v1/voice/turn` requires final Edge RTC transcript evidence bound to LeeWay GPU ASR, Continuum storage, capture timing, owner device, segment, and SHA-256 audio record. The Voice Fabric HTTPS client currently posts only mode/text/device-action scope, and the ignored RTC fixture worktree still routes through `__leeway/voice-turn`. This is a source-level integration gap. The canonical Model Hub catalog lists five model IDs and no named ASR model; an Edge GPU report's Qwen2-Audio route is explicitly not live-proven. LeeWay GPU dispatch remains unbound/denied. Runtime Fabric's production Veritas root set remains empty, and Receipt Authority remains an unqualified source candidate.
+
+The preflight harness semantics are repaired locally and focused source checks passed. No production conversation or full C3 qualification occurred in this turn; there was no live capture, GPU ASR, Agent Lee turn, playout, human interruption, stale-output rejection, independent Veritas decision, Continuum admission, or Learning Ledger update. The fresh Bridge preflight receipts remain `1417cd89-cac9-4352-a6f2-6e1b2041d4c5` / `1e408bc6-b675-4a54-9a28-9a390ca50158`, `BLOCKED` on owner session, renderer, and GPU dispatch.
+
+Next: publish the verified Device Bridge preflight correction, repair the canonical Voice Fabric HTTPS client against the strict turn schema, and implement/qualify the missing LeeWay GPU ASR producer and independent Continuum/Veritas path. Continue; do not claim C3 from source checks.
+
 ### C3 continuation — 2026-11-07 06:54 CST — test and Bridge recheck
 
 **Verification rerun:** `node --check` passed for the gateway and both changed test files; `npm run test:voice-auth` passed 11/11; `node --test tests/voice-c3-preflight.test.mjs` passed 5/5; `git diff --check` passed.

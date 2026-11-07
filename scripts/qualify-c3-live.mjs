@@ -67,25 +67,33 @@ export function assessC3Readiness({gateway,carrier,sessionStatus}){
  const voice=carrier?.health?.body?.voice;
  const gpu=carrier?.health?.body?.sources?.gpu;
  const binding=carrier?.binding?.body?.voiceBinding;
+ const telemetry=carrier?.telemetry?.body?.gateway;
  const stages={
-  gateway:gateway?.status===200&&health?.authority==='LEEWAY_DEVICE_BRIDGE_VOICE'?'PASS':'BLOCKED',
+  gateway:gateway?.status===200&&health?.ready===true&&health?.authority==='LEEWAY_DEVICE_BRIDGE_VOICE'?'PASS':'BLOCKED',
   authenticatedSession:sessionStatus===200?'PASS':sessionStatus===401?'OWNER_APPROVAL_REQUIRED':'BLOCKED',
   voiceProvider:voice?.ready===true?'PASS':'BLOCKED',
   productionVoiceBinding:binding?.authority==='LEEWAY_VOICE_FABRIC'&&binding?.productionAdmitted===true&&binding?.qualificationOnly===false?'PASS':'BLOCKED',
   leewayGpuInference:gpu?.provider==='LEEWAY_EDGE_GPU_GATEWAY'&&gpu?.productionReady===true&&gpu?.dispatchAllowed===true?'PASS':'BLOCKED',
+  governedAgentTelemetry:telemetry?.identity==='Agent Lee'&&telemetry?.inferenceAuthority==='LEEWAY_EDGE_GPU_ONLY'&&
+   telemetry?.storageAuthority==='LEEWAY_CONTINUUM_ONLY'?'PASS':'BLOCKED',
   upstreamQualification:health?.upstreamQualified===true?'PASS':'BLOCKED',
-  productionConversation:health?.productionConversationQualified===true?'PASS':'BLOCKED',
-  continuumC3Admission:health?.c3Qualified===true&&typeof health?.c3Evidence==='string'&&
-   health.c3Evidence!=='LIVE_DUPLEX_VERITAS_AND_RECEIPT_ADMISSION_NOT_YET_OBSERVED'?'PASS':'BLOCKED',
  };
- const qualified=Object.values(stages).every(value=>value==='PASS');
+ const readyForLiveRun=Object.values(stages).every(value=>value==='PASS');
+ const postRunGates={
+  productionConversation:health?.productionConversationQualified===true&&
+   health?.productionConversationEvidence==='CONTINUUM_READBACK_AUTHENTICATED_GPU_ASR_AGENT_LEE_TURN'?'PASS':'NOT_YET_OBSERVED',
+  continuumC3Admission:health?.c3Qualified===true&&
+   health?.c3Evidence==='CONTINUUM_HASH_VERIFIED_C3_DUPLEX_VERITAS_RECEIPT_ADMISSION'?'PASS':'NOT_YET_OBSERVED',
+ };
  return {schema:'leeway.device-bridge.c3-preflight.v1',mode:'READ_ONLY_PREFLIGHT',
-  qualification:qualified?'PASS':'BLOCKED',fullC3Executed:false,stages,
+  readiness:readyForLiveRun?'READY_FOR_LIVE_C3_RUN':'BLOCKED',
+  qualification:'NOT_EXECUTED',liveRunAllowed:readyForLiveRun,fullC3Executed:false,stages,postRunGates,
   observed:{gatewayEvidence:health?.c3Evidence||null,upstreamProbe:health?.upstreamProbe||null,
    voiceState:voice?.state||null,gpuState:gpu?.state||null,gpuReason:gpu?.reason||null,
    voiceBindingAuthority:binding?.authority||null,voicePackageId:binding?.voicePackageId||null,
-   sessionHttpStatus:sessionStatus??null},
-  limits:['This preflight does not activate the microphone or send a conversation turn.',
+   telemetryIdentity:telemetry?.identity||null, inferenceAuthority:telemetry?.inferenceAuthority||null,
+   storageAuthority:telemetry?.storageAuthority||null,sessionHttpStatus:sessionStatus??null},
+  limits:['This preflight never qualifies C3; it does not activate the microphone or send a conversation turn.',
    'C3 PASS is accepted only when the Gateway reads back a hash-verified Continuum record with all live gates, independent Veritas PASS, and an admitted receipt chain.']};
 }
 
@@ -116,7 +124,7 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
  try{
   const report=await runC3Preflight();
   console.log(JSON.stringify(report,null,2));
-  if(report.qualification!=='PASS')process.exitCode=2;
+  if(report.liveRunAllowed!==true)process.exitCode=2;
  }catch(error){
   console.error(JSON.stringify({schema:'leeway.device-bridge.c3-preflight.v1',qualification:'BLOCKED',
    fullC3Executed:false,error:error instanceof Error?error.message:'PREFLIGHT_FAILED'},null,2));
