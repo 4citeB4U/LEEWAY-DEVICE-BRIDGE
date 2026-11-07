@@ -69,3 +69,16 @@ The iLoader software source is MIT-licensed (blob `78a8b6b5590d0df1d0f9e30a475a8
 The public Apple tile is owned by `docs/index.html`, `docs/apple-download.js` validates `docs/package-manifest.json`, and the existing `operator/installation-adapter.mjs` now plans an Apple release handoff only when the caller supplies a **freshly measured** IPA digest, observed device/provider preflight and explicit owner approval. A copy of the published SHA-256 is not a measured local digest. The resulting plan is deliberately `executable: false`; it is not proof that iLoader was invoked.
 
 **Still unfulfilled:** a production-authorized host-side signing/install executor, actual USB or other supported Apple distribution connection, real on-device package/version readback, fresh Metal execution and independent Veritas/Receipt Authority admission. iLoader sideloading does not enable arbitrary users to bypass Apple's per-device trust, authentication, code-signing or provisioning requirements. Wider public installation would require a separately qualified Apple-sanctioned distribution lane such as the existing TestFlight workflow with valid account, signatures and provisioning.
+
+
+## First-party LeeWay replacement under qualification (2026-11-07)
+
+The Creator's approved primary route is **native first-party LeeWay installation without a paid Apple Developer membership**, using the same upstream MIT `isideload` library used by iLoader. The earlier instructions above remain a supported fallback for an already-working installation; they are no longer the sole intended installation entry.
+
+The owner-facing Rust executable in `operator/native-apple-installer` uses `--install-leeway` (or an interactive terminal launch) to select the exact connected iPhone, download the current official LeeWay IPA, measure its SHA-256, and request Apple Account sign-in and two-factor confirmation locally. It discovers the free Personal Team when only one team is returned; multiple teams require explicit selection. The private MCP worker entry is separate and still requires the existing Device Bridge C3 authorization and trusted provider mapping. The code does not silently revoke certificates, erase apps, or bypass device trust.
+
+Windows/macOS/Linux host archives are compiled and SHA-measured by `.github/workflows/apple-native-installer-check.yml`. Their future release is `apple-installer-latest`, published only from a successful qualifying main-branch run. The Apple Device Bridge download page will show those links **only after actual publication**, preventing an inert download button. The release is designed as a prerelease until real-device testing clears the physical acceptance gate.
+
+**Free Apple Account path:** No paid Developer Program or App Store Connect is needed. Apple Account login, a connected/trusted device, signing and time-limited provisioning still apply, generally requiring re-signing after seven days. App Store distribution remains optional and distinct. An unsigned IPA is never a complete installation on its own.
+
+**Current state:** Source candidate present; physical owner-host signed install and independent Veritas not yet executed in this session. The prior iLoader 2.3.10 and Metal receipts are preserved.
