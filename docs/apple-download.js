@@ -81,6 +81,43 @@ export function qualifyAppleStoreDistribution(manifest) {
   return {state:"APP_STORE_PUBLISHED", available:true, installUrl:parsed.href};
 }
 
+const HOST_ARCHIVE_NAMES = {
+  windows: "LeeWay-Apple-Installer-windows.zip",
+  macos: "LeeWay-Apple-Installer-macos.tar.gz",
+  linux: "LeeWay-Apple-Installer-linux.tar.gz"
+};
+export function qualifyLeeWayHostInstallers(manifest) {
+  if (manifest?.authority !== "4citeB4U/LEEWAY-DEVICE-BRIDGE") {
+    return {state:"HOST_INSTALLER_AUTHORITY_UNVERIFIED",available:false};
+  }
+  const source=manifest.appleInstallerDistribution;
+  if (source?.state !== "PUBLISHED") {
+    return {state:"HOST_INSTALLER_NOT_PUBLISHED",available:false};
+  }
+  if (source.role !== "FIRST_PARTY_HOST_SIDELOAD_INSTALLER" ||
+      source.package !== "leeway-apple-native-installer" ||
+      source.releaseTag !== "apple-installer-latest" ||
+      !/^[0-9a-f]{40}$/i.test(source.sourceRevision ?? "") ||
+      !Number.isSafeInteger(source.qualificationRunId) || source.qualificationRunId <= 0 ||
+      source.requiresPaidDeveloperMembership !== false ||
+      source.requiresAppleAccountAuthentication !== true ||
+      source.requiresTrustedDevicePairing !== true) {
+    return {state:"HOST_INSTALLER_PROVENANCE_UNVERIFIED",available:false};
+  }
+  const items=[];
+  for (const [platform,archive] of Object.entries(HOST_ARCHIVE_NAMES)) {
+    const pkg=source.assets?.[platform];
+    if (!pkg || !/^[a-f0-9]{64}$/i.test(pkg.sha256 ?? "") ||
+        !Number.isSafeInteger(pkg.sizeBytes) || pkg.sizeBytes <= 0) {
+      return {state:"HOST_INSTALLER_ASSET_UNVERIFIED",available:false};
+    }
+    const expected = "https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/download/apple-installer-latest/" + archive;
+    if (pkg.url !== expected) return {state:"HOST_INSTALLER_URL_UNVERIFIED",available:false};
+    items.push({platform,url:expected,archive,sizeBytes:pkg.sizeBytes,sha256:pkg.sha256});
+  }
+  return {state:"FIRST_PARTY_HOST_INSTALLERS_PUBLISHED",available:true,items};
+}
+
 export async function initializeAppleDownloads(fetchManifest = () => fetch("./package-manifest.json", {cache: "no-store"})) {
   if (typeof document === "undefined") return {state: "NO_BROWSER_DOCUMENT", usable: false};
   const links = [...document.querySelectorAll("[data-apple-ipa-download]")];
@@ -97,6 +134,25 @@ export async function initializeAppleDownloads(fetchManifest = () => fetch("./pa
         node.appendChild(link);
       } else {
         node.textContent = "Public App Store release not yet published. The IPA below is for authorized developer installations only.";
+      }
+    });
+  };
+  const installerRegions = [...document.querySelectorAll("[data-apple-host-installers]")];
+  const showHostInstallers = distribution => {
+    installerRegions.forEach(node => {
+      node.replaceChildren();
+      if (!distribution.available) {
+        node.textContent = "Native LeeWay installer binaries are awaiting release qualification. Existing iLoader installations remain supported.";
+        return;
+      }
+      for (const item of distribution.items) {
+        const link=document.createElement("a");
+        link.href=item.url;
+        link.download=item.archive;
+        link.rel="noopener";
+        link.className="action secondary";
+        link.textContent="LEEWAY APPLE INSTALLER — " + item.platform.toUpperCase();
+        node.appendChild(link);
       }
     });
   };
@@ -118,6 +174,7 @@ export async function initializeAppleDownloads(fetchManifest = () => fetch("./pa
     if (!response?.ok) throw new Error("MANIFEST_FETCH_FAILED");
     const manifest = await response.json();
     showAppStore(qualifyAppleStoreDistribution(manifest));
+    showHostInstallers(qualifyLeeWayHostInstallers(manifest));
     const packageState = qualifyAppleRelease(manifest);
     if (!packageState.usable) {
       updateState("Apple package publication could not be validated here. Check the release manifest before installing.", "CHECK REQUIRED");
@@ -132,6 +189,7 @@ export async function initializeAppleDownloads(fetchManifest = () => fetch("./pa
     return packageState;
   } catch {
     showAppStore({available:false});
+    showHostInstallers({available:false});
     updateState("Current Apple manifest unavailable. The link targets LeeWay's established release asset, but this session has not checked its current contents or signature.", "CHECK REQUIRED");
     return {state: "APPLE_MANIFEST_UNAVAILABLE", usable: false};
   }
