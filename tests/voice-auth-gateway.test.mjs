@@ -16,20 +16,41 @@ const salt=randomBytes(16).toString('hex');
 const hash=scryptSync('this-is-an-owner-only-test-passphrase',Buffer.from(salt,'hex'),64).toString('hex');
 test('voice authentication is login, CSRF and origin bound',async()=>{
  const executed=[];
+ let continuumBytes=Buffer.alloc(0),continuumDigest='';
  const env=await startVoiceAuthGateway({port:0,passwordSalt:salt,passwordHash:hash,
   fetchImpl:async(url,init)=>{
-   executed.push({url,init});
+   const target=String(url);
+   if(target==='http://127.0.0.1:8890/api/continuum/content?recordId=continuum-fixture-record')return {
+    ok:true,status:200,headers:{get:name=>name==='x-continuum-content-sha256'?continuumDigest:null},
+    arrayBuffer:async()=>Buffer.from(continuumBytes)
+   };
+   if(target==='http://127.0.0.1:8890/health')return {ok:true,status:200,json:async()=>({identity:'LEEWAY_MACHINE_CONSCIOUSNESS',voice:{ready:true}})};
+   if(target==='http://127.0.0.1:8890/voice/binding')return {ok:true,status:200,json:async()=>({voiceBinding:{authority:'LEEWAY_VOICE_FABRIC',agentId:'agent-lee',productionAdmitted:true,qualificationOnly:false}})};
+   if(target==='http://127.0.0.1:8890/voice/telemetry')return {ok:true,status:200,json:async()=>({gateway:{identity:'Agent Lee',inferenceAuthority:'LEEWAY_EDGE_GPU_ONLY',storageAuthority:'LEEWAY_CONTINUUM_ONLY'}})};
    const input=init?.body?JSON.parse(init.body):null;
-   return {ok:true,json:async()=>input?.type==='speech.interrupt'?{
-    state:'VERIFIED',type:'speech.interrupt',interruptionEpoch:1,continuum:{recordId:'continuum-interrupt-fixture'}
-   }:{
-    state:'VERIFIED',type:'transcript.final',requestId:'voice-test-request-0001',
-    response:{text:'Creator, Agent Lee here. Voice fixture response.',personaDelivery:{state:'VERIFIED',identity:'Agent Lee'}},
-    continuum:{recordId:'continuum-fixture-record'},telemetry:{result:'RESPONSE_RENDERED',
-     transcriptSource:'LEEWAY_EDGE_GPU_ASR',inferenceRoute:'LEEWAY_EDGE_GPU',
-     capture:{audioRecordId:'audio-record-test',audioSha256:'a'.repeat(64)}},
-    voice:{voicePackageId:'kokoro-bm_lewis',audioContent:'UklGRg==',sampleRate:24000,format:'wav'}
-   }};
+   if(input?.type==='speech.interrupt'){
+    executed.push({url,init});
+    return {ok:true,json:async()=>({state:'VERIFIED',type:'speech.interrupt',interruptionEpoch:1,continuum:{recordId:'continuum-interrupt-fixture'}})};
+   }
+   if(input?.type==='transcript.final'){
+    executed.push({url,init});
+    const text='Creator, Agent Lee here. Voice fixture response.';
+    const audio=Buffer.from('fixture-wav-audio-bytes');
+    const audioHash=createHash('sha256').update(audio).digest('hex');
+    const responseHash=createHash('sha256').update(Buffer.from(text,'utf8')).digest('hex');
+    const telemetry={type:'transcript.final',source:'LEEWAY_EDGE_RTC',transcriptSource:'LEEWAY_EDGE_GPU_ASR',
+     inferenceAuthority:'LEEWAY_EDGE_GPU_ONLY',inferenceRoute:'LEEWAY_EDGE_GPU',storageAuthority:'LEEWAY_CONTINUUM_ONLY',
+     result:'RESPONSE_RENDERED',responseHash,audioHash,voicePackageId:'kokoro-bm_lewis',
+     capture:{audioRecordId:input.audioRecordId,audioSha256:input.audioSha256,
+      captureStartedAt:input.captureStartedAt,captureEndedAt:input.captureEndedAt}};
+    continuumBytes=Buffer.from(JSON.stringify({schema:'leeway.machine-consciousness.voice-input-telemetry.v1',identity:'Agent Lee',telemetry}));
+    continuumDigest=createHash('sha256').update(continuumBytes).digest('hex');
+    return {ok:true,json:async()=>({state:'VERIFIED',type:'transcript.final',requestId:'voice-test-request-0001',
+     response:{text,personaDelivery:{state:'VERIFIED',identity:'Agent Lee'}},
+     continuum:{recordId:'continuum-fixture-record'},telemetry,
+     voice:{voicePackageId:'kokoro-bm_lewis',audioContent:audio.toString('base64'),sampleRate:24000,format:'wav'}})};
+   }
+   throw Error('Unexpected Gateway upstream request '+target);
   }});
  const origin='http://127.0.0.1:'+env.port;
  const req=async(route,{method='GET',data,cookie,csrf,front='https://4citeb4u.github.io'}={})=>{
@@ -102,13 +123,57 @@ test('health restores production conversation proof from a hash-verified Continu
    if(target==='http://127.0.0.1:8890/voice/binding')return {ok:true,json:async()=>({voiceBinding:{authority:'LEEWAY_VOICE_FABRIC',agentId:'agent-lee',productionAdmitted:true,qualificationOnly:false}})};
    if(target==='http://127.0.0.1:8890/voice/telemetry')return {ok:true,json:async()=>({gateway:{identity:'Agent Lee',inferenceAuthority:'LEEWAY_EDGE_GPU_ONLY',storageAuthority:'LEEWAY_CONTINUUM_ONLY'}})};
    if(target.startsWith('http://127.0.0.1:8890/api/continuum/search'))return {ok:true,json:async()=>({ok:true,result:{hits:[{recordId:'continuum-production-proof',contentSha256:digest}]}})};
-   if(target==='http://127.0.0.1:8890/api/continuum/content?recordId=continuum-production-proof')return {ok:true,text:async()=>persisted};
+   if(target==='http://127.0.0.1:8890/api/continuum/content?recordId=continuum-production-proof')return {
+    ok:true,headers:{get:name=>name==='x-continuum-content-sha256'?digest:null},
+    arrayBuffer:async()=>Buffer.from(persisted,'utf8')};
    throw Error('Unexpected health probe '+target);
   }});
  try{
   const value=await (await fetch('http://127.0.0.1:'+env.port+'/health')).json();
   assert.equal(value.productionConversationQualified,true);
   assert.equal(value.productionConversationEvidence,'CONTINUUM_READBACK_AUTHENTICATED_GPU_ASR_AGENT_LEE_TURN');
+ }finally{await new Promise(resolve=>env.server.close(resolve))}
+});
+test('production conversation proof is withheld when Continuum readback hash fails',async()=>{
+ const text='Creator, Agent Lee here. This response has a valid fixture identity.';
+ const audio=Buffer.from('fixture-audio-bytes');
+ const audioHash=createHash('sha256').update(audio).digest('hex');
+ const responseHash=createHash('sha256').update(Buffer.from(text,'utf8')).digest('hex');
+ const telemetry={type:'transcript.final',source:'LEEWAY_EDGE_RTC',transcriptSource:'LEEWAY_EDGE_GPU_ASR',
+  inferenceAuthority:'LEEWAY_EDGE_GPU_ONLY',inferenceRoute:'LEEWAY_EDGE_GPU',storageAuthority:'LEEWAY_CONTINUUM_ONLY',
+  result:'RESPONSE_RENDERED',responseHash,audioHash,voicePackageId:'kokoro-bm_lewis',
+  capture:{audioRecordId:'audio-record-hash-failure',audioSha256:'f'.repeat(64),
+   captureStartedAt:'2026-11-07T11:00:00.000Z',captureEndedAt:'2026-11-07T11:00:02.000Z'}};
+ const record=Buffer.from(JSON.stringify({schema:'leeway.machine-consciousness.voice-input-telemetry.v1',identity:'Agent Lee',telemetry}));
+ const env=await startVoiceAuthGateway({port:0,passwordSalt:salt,passwordHash:hash,
+  fetchImpl:async(url,init)=>{
+   const target=String(url);
+   if(target==='http://127.0.0.1:8890/voice/input')return {ok:true,json:async()=>({state:'VERIFIED',type:'transcript.final',
+    response:{text,personaDelivery:{state:'VERIFIED',identity:'Agent Lee'}},continuum:{recordId:'bad-hash-record'},telemetry,
+    voice:{voicePackageId:'kokoro-bm_lewis',audioContent:audio.toString('base64')}})};
+   if(target==='http://127.0.0.1:8890/api/continuum/content?recordId=bad-hash-record')return {
+    ok:true,headers:{get:name=>name==='x-continuum-content-sha256'?'0'.repeat(64):null},arrayBuffer:async()=>Buffer.from(record)};
+   if(target==='http://127.0.0.1:8890/health')return {ok:true,json:async()=>({identity:'LEEWAY_MACHINE_CONSCIOUSNESS',voice:{ready:true}})};
+   if(target==='http://127.0.0.1:8890/voice/binding')return {ok:true,json:async()=>({voiceBinding:{authority:'LEEWAY_VOICE_FABRIC',agentId:'agent-lee',productionAdmitted:true,qualificationOnly:false}})};
+   if(target==='http://127.0.0.1:8890/voice/telemetry')return {ok:true,json:async()=>({gateway:{identity:'Agent Lee',inferenceAuthority:'LEEWAY_EDGE_GPU_ONLY',storageAuthority:'LEEWAY_CONTINUUM_ONLY'}})};
+   throw Error('Unexpected hash-failure fixture request '+target);
+  }});
+ const origin='http://127.0.0.1:'+env.port;
+ try{
+  const login=await fetch(origin+'/v1/voice/login',{method:'POST',headers:{origin:'https://4citeb4u.github.io','content-type':'application/json'},
+   body:JSON.stringify({password:'this-is-an-owner-only-test-passphrase'})});
+  const session=await login.json(),cookie=login.headers.get('set-cookie').split(';')[0];
+  const turn={schema:'leeway.voice.turn.v1',source:'LEEWAY_EDGE_RTC',transcriptSource:'LEEWAY_EDGE_GPU_ASR',
+   inferenceRoute:'LEEWAY_EDGE_GPU',inferenceAuthority:'LEEWAY_EDGE_GPU_ONLY',storageAuthority:'LEEWAY_CONTINUUM_ONLY',
+   ownerDeviceId:'owner-device-test',segmentId:'hash-failure-segment',audioRecordId:'audio-record-hash-failure',
+   audioSha256:'f'.repeat(64),captureStartedAt:'2026-11-07T11:00:00.000Z',captureEndedAt:'2026-11-07T11:00:02.000Z',
+   final:true,text:'Hello Agent Lee',allowDeviceActions:false};
+  const result=await fetch(origin+'/v1/voice/turn',{method:'POST',headers:{origin:'https://4citeb4u.github.io',
+   'content-type':'application/json',cookie,'x-leeway-voice-csrf':session.csrfToken},body:JSON.stringify(turn)});
+  assert.equal(result.status,503);
+  assert.equal((await result.json()).error,'LEEWAY_VOICE_RESPONSE_UNVERIFIED');
+  const health=await (await fetch(origin+'/health')).json();
+  assert.equal(health.productionConversationQualified,false);
  }finally{await new Promise(resolve=>env.server.close(resolve))}
 });
 test('gateway needs operator secret material and rejects public binding',async()=>{

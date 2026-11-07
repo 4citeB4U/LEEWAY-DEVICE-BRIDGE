@@ -10,7 +10,7 @@ AUTHORITY: fixture approval only, not owner acceptance. LICENSE: MIT.
 */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {randomBytes,scryptSync} from 'node:crypto';
+import {randomBytes,scryptSync,createHash} from 'node:crypto';
 import {mkdtemp,rm} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -21,15 +21,27 @@ test('owner approval gates a single app-specific, read-only voice session',async
  const approvalKey=randomBytes(32),salt=randomBytes(16);
  const passwordHash=scryptSync('sample-owner-password-only-for-fixture',salt,64).toString('hex');
  const pairing=createVoicePairing({root,approvalKey});
+ let continuumBytes=Buffer.alloc(0),continuumDigest='';
  const gateway=await startVoiceAuthGateway({port:0,pairing,passwordHash,passwordSalt:salt.toString('hex'),
-  fetchImpl:async()=>({ok:true,json:async()=>({
-   state:'VERIFIED',type:'transcript.final',requestId:'voice-pair-test-0001',
-   response:{text:'Creator, Agent Lee here. Voice fixture.',personaDelivery:{state:'VERIFIED',identity:'Agent Lee'}},
-   continuum:{recordId:'continuum-pair-fixture'},telemetry:{result:'RESPONSE_RENDERED',
-    transcriptSource:'LEEWAY_EDGE_GPU_ASR',inferenceRoute:'LEEWAY_EDGE_GPU',
-    capture:{audioRecordId:'audio-record-pair',audioSha256:'f'.repeat(64)}},
-   voice:{voicePackageId:'kokoro-bm_lewis',audioContent:'UklGRg==',sampleRate:24000,format:'wav'},
-  })})});
+  fetchImpl:async(url,init)=>{
+   const target=String(url);
+   if(target==='http://127.0.0.1:8890/api/continuum/content?recordId=continuum-pair-fixture')return {
+    ok:true,headers:{get:name=>name==='x-continuum-content-sha256'?continuumDigest:null},
+    arrayBuffer:async()=>Buffer.from(continuumBytes)};
+   const input=JSON.parse(init.body),text='Creator, Agent Lee here. Voice fixture.';
+   const audio=Buffer.from('fixture-wav-audio-bytes');
+   const telemetry={type:'transcript.final',source:'LEEWAY_EDGE_RTC',transcriptSource:'LEEWAY_EDGE_GPU_ASR',
+    inferenceAuthority:'LEEWAY_EDGE_GPU_ONLY',inferenceRoute:'LEEWAY_EDGE_GPU',storageAuthority:'LEEWAY_CONTINUUM_ONLY',
+    result:'RESPONSE_RENDERED',responseHash:createHash('sha256').update(Buffer.from(text,'utf8')).digest('hex'),
+    audioHash:createHash('sha256').update(audio).digest('hex'),voicePackageId:'kokoro-bm_lewis',
+    capture:{audioRecordId:input.audioRecordId,audioSha256:input.audioSha256,
+     captureStartedAt:input.captureStartedAt,captureEndedAt:input.captureEndedAt}};
+   continuumBytes=Buffer.from(JSON.stringify({schema:'leeway.machine-consciousness.voice-input-telemetry.v1',identity:'Agent Lee',telemetry}));
+   continuumDigest=createHash('sha256').update(continuumBytes).digest('hex');
+   return {ok:true,json:async()=>({state:'VERIFIED',type:'transcript.final',requestId:'voice-pair-test-0001',
+    response:{text,personaDelivery:{state:'VERIFIED',identity:'Agent Lee'}},continuum:{recordId:'continuum-pair-fixture'},telemetry,
+    voice:{voicePackageId:'kokoro-bm_lewis',audioContent:audio.toString('base64'),sampleRate:24000,format:'wav'}})};
+  }});
  const base='http://127.0.0.1:'+gateway.port;
  const request=async(route,body,options={})=>{
   const response=await fetch(base+route,{method:'POST',

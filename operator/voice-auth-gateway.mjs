@@ -42,6 +42,48 @@ export function createVoiceAuthGateway({
   throw Error('UNTRUSTED_VOICE_FABRIC');
  const sessions=new Map(),failures=new Map();
  let productionConversationProof=null,c3Proof=null;
+ const readContinuumRecord=async recordId=>{
+  if(typeof recordId!=='string'||!recordId.trim())return null;
+  try{
+   const contentUrl=new URL('/api/continuum/content',vf);contentUrl.searchParams.set('recordId',recordId);
+   const response=await fetchImpl(contentUrl,{method:'GET',headers:{origin:vf.origin},signal:AbortSignal.timeout(5000),redirect:'error'});
+   const maxBytes=256*1024,declaredLength=Number(response.headers?.get?.('content-length'));
+   if(!response.ok||(Number.isFinite(declaredLength)&&declaredLength>maxBytes))return null;
+   let bytes;
+   if(typeof response.body?.getReader==='function'){
+    const reader=response.body.getReader(),chunks=[];let size=0;
+    try{
+     while(true){
+      const {done,value}=await reader.read();if(done)break;
+      size+=value.byteLength;if(size>maxBytes){await reader.cancel();return null}
+      chunks.push(Buffer.from(value));
+     }
+    }finally{reader.releaseLock?.()}
+    bytes=Buffer.concat(chunks,size);
+   }else if(typeof response.arrayBuffer==='function')bytes=Buffer.from(await response.arrayBuffer());
+   else return null;
+   if(bytes.length>maxBytes)return null;
+   const digest=sha(bytes),claimed=response.headers?.get?.('x-continuum-content-sha256');
+   if(typeof claimed!=='string'||claimed.toLowerCase()!==digest.toLowerCase())return null;
+   let document;try{document=JSON.parse(bytes.toString('utf8'))}catch{return null}
+   return {document,digest};
+  }catch{return null}
+ };
+ const qualifiesProductionTelemetry=(document,{audioRecordId,audioSha256,responseText,voicePackageId,audioHash}={})=>{
+  const t=document?.telemetry,capture=t?.capture;
+  return document?.schema==='leeway.machine-consciousness.voice-input-telemetry.v1'&&
+   document?.identity==='Agent Lee'&&t?.type==='transcript.final'&&t?.source==='LEEWAY_EDGE_RTC'&&
+   t?.transcriptSource==='LEEWAY_EDGE_GPU_ASR'&&t?.inferenceRoute==='LEEWAY_EDGE_GPU'&&
+   t?.inferenceAuthority==='LEEWAY_EDGE_GPU_ONLY'&&t?.storageAuthority==='LEEWAY_CONTINUUM_ONLY'&&
+   t?.result==='RESPONSE_RENDERED'&&/^([a-f0-9]{64})$/i.test(t?.responseHash||'')&&
+   t.responseHash===sha(Buffer.from(responseText||'','utf8'))&&
+   /^([a-f0-9]{64})$/i.test(t?.audioHash||'')&&t.audioHash===audioHash&&
+   t.voicePackageId===voicePackageId&&capture?.audioRecordId===audioRecordId&&
+   capture?.audioSha256===audioSha256&&/^([a-f0-9]{64})$/i.test(capture?.audioSha256||'')&&
+   Boolean(capture?.captureStartedAt&&capture?.captureEndedAt)&&
+   Number.isFinite(Date.parse(capture.captureStartedAt))&&Number.isFinite(Date.parse(capture.captureEndedAt))&&
+   Date.parse(capture.captureEndedAt)>=Date.parse(capture.captureStartedAt);
+ };
  const restoreProductionConversationProof=async()=>{
   try{
    const query=new URL('/api/continuum/search',vf);query.searchParams.set('query','Agent Lee voice telemetry');query.searchParams.set('limit','32');
@@ -51,11 +93,9 @@ export function createVoiceAuthGateway({
    if(!Array.isArray(hits))return null;
    for(const hit of hits){
     if(typeof hit?.recordId!=='string'||!/^([a-f0-9]{64})$/i.test(hit.contentSha256||''))continue;
-    const contentUrl=new URL('/api/continuum/content',vf);contentUrl.searchParams.set('recordId',hit.recordId);
-    const content=await fetchImpl(contentUrl,{method:'GET',headers:{origin:vf.origin},signal:AbortSignal.timeout(4000),redirect:'error'});
-    if(!content.ok)continue;
-    const raw=await content.text();if(sha(Buffer.from(raw,'utf8'))!==hit.contentSha256)continue;
-    let document;try{document=JSON.parse(raw)}catch{continue}
+    const readback=await readContinuumRecord(hit.recordId);
+    if(!readback||readback.digest.toLowerCase()!==hit.contentSha256.toLowerCase())continue;
+    const document=readback.document;
     const t=document?.telemetry;
     if(document?.schema!=='leeway.machine-consciousness.voice-input-telemetry.v1'||
      document?.identity!=='Agent Lee'||t?.type!=='transcript.final'||t?.source!=='LEEWAY_EDGE_RTC'||
@@ -279,18 +319,27 @@ export function createVoiceAuthGateway({
      signal:AbortSignal.timeout(90000),redirect:'error'});
     if(!upstreamReply.ok)return deny(res,503,'LEEWAY_VOICE_UPSTREAM_UNAVAILABLE');
     const output=await upstreamReply.json();
+    const continuumReadback=await readContinuumRecord(output?.continuum?.recordId);
+    const responseText=output?.response?.text;
+    const audioBytes=typeof output?.voice?.audioContent==='string'&&/^[A-Za-z0-9+/]+={0,2}$/.test(output.voice.audioContent)?
+     Buffer.from(output.voice.audioContent,'base64'):Buffer.alloc(0);
+    const audioHash=audioBytes.length?sha(audioBytes):null;
+    const continuumMatches=continuumReadback&&qualifiesProductionTelemetry(continuumReadback.document,{
+     audioRecordId:data.audioRecordId,audioSha256:data.audioSha256,responseText,
+     voicePackageId:output?.voice?.voicePackageId,audioHash});
     const machine=output?.state==='VERIFIED'&&output?.type==='transcript.final'&&
      output?.response?.personaDelivery?.state==='VERIFIED'&&output?.response?.personaDelivery?.identity==='Agent Lee'&&
      Boolean(output?.continuum?.recordId)&&output?.telemetry?.result==='RESPONSE_RENDERED'&&
      output?.telemetry?.transcriptSource==='LEEWAY_EDGE_GPU_ASR'&&output?.telemetry?.inferenceRoute==='LEEWAY_EDGE_GPU'&&
      output?.telemetry?.capture?.audioRecordId===data.audioRecordId&&
      output?.telemetry?.capture?.audioSha256===data.audioSha256&&
-     typeof output?.voice?.voicePackageId==='string'&&typeof output?.voice?.audioContent==='string';
-    if(!machine||typeof output.response.text!=='string'||!output.response.text.trim()||output.response.text.length>4000)
+     typeof output?.voice?.voicePackageId==='string'&&typeof output?.voice?.audioContent==='string'&&
+     typeof output?.continuum?.recordId==='string'&&continuumMatches===true;
+    if(!machine||typeof responseText!=='string'||!responseText.trim()||responseText.length>4000)
      return deny(res,503,'LEEWAY_VOICE_RESPONSE_UNVERIFIED');
     productionConversationProof={qualified:true,evidence:'AUTHENTICATED_AGENT_LEE_TURN_VOICE_FABRIC_AND_CONTINUUM_READBACK',at:clock()};
     return json(res,200,{schema:'leeway.voice.turn-result.v1',
-     source:'LEEWAY_MACHINE_CONSCIOUSNESS',identity:'Agent Lee',text:output.response.text,verified:true,
+     source:'LEEWAY_MACHINE_CONSCIOUSNESS',identity:'Agent Lee',text:responseText,verified:true,
      veritasStatus:'NOT_ASSERTED',status:output.state,requestId:output.requestId||data.requestId||null,
      continuumRecordId:output.continuum.recordId,voice:{authority:'LEEWAY_VOICE_FABRIC',agentId:'agent-lee',
       voicePackageId:output.voice.voicePackageId,audioContent:output.voice.audioContent,
