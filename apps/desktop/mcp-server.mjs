@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -30,6 +31,33 @@ function screenResult(value) {
   // Only safe image metadata enters text; the native image is sent exactly once.
   return { content: [
     { type: 'text', text: JSON.stringify({ ok: true, result: { ok: true, mimeType: capture.mimeType, width: capture.width, height: capture.height }, receipt: value.receipt }) },
+    { type: 'image', mimeType: capture.mimeType, data: capture.base64 },
+  ] };
+}
+
+function visionFrameResult(value) {
+  if (value.ok !== true) return null;
+  const frame = value.result?.frame;
+  if (!frame || frame.image === undefined || frame.image === null) return null;
+  const capture = frame.image;
+  const fail = () => ({ isError: true, content: [{ type: 'text', text: JSON.stringify({ ok: false, error: 'INVALID_VISION_IMAGE', receipt: value.receipt }) }] });
+  if (!capture || typeof capture !== 'object' || !['image/jpeg', 'image/png'].includes(capture.mimeType)
+    || typeof capture.base64 !== 'string' || capture.base64.length === 0 || capture.base64.length > 8 * 1024 * 1024
+    || capture.base64.length % 4 !== 0 || !/^[A-Za-z0-9+/]*={0,2}$/.test(capture.base64)
+    || !Number.isInteger(capture.width) || capture.width < 1 || capture.width > 32768
+    || !Number.isInteger(capture.height) || capture.height < 1 || capture.height > 32768
+    || typeof capture.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(capture.sha256)) return fail();
+  const bytes = Buffer.from(capture.base64, 'base64');
+  if (bytes.length === 0 || bytes.length > 8 * 1024 * 1024 || bytes.toString('base64') !== capture.base64) return fail();
+  const magicMatches = capture.mimeType === 'image/jpeg'
+    ? bytes.length >= 4 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[bytes.length - 2] === 0xff && bytes[bytes.length - 1] === 0xd9
+    : bytes.length >= 8 && bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+  if (!magicMatches || createHash('sha256').update(bytes).digest('hex') !== capture.sha256) return fail();
+  const safeFrame = { ...frame, image: {
+    mimeType: capture.mimeType, width: capture.width, height: capture.height, sha256: capture.sha256,
+  } };
+  return { content: [
+    { type: 'text', text: JSON.stringify({ ok: true, result: { ...value.result, frame: safeFrame }, receipt: value.receipt }) },
     { type: 'image', mimeType: capture.mimeType, data: capture.base64 },
   ] };
 }
@@ -68,7 +96,9 @@ export function createServer(bridge, { discoveryOnly = false, readOnlyCapabiliti
         catch { return result({ ok: false, error: 'COMPLIANCE_CARD_PROVIDER_FAILED', operationMayHaveExecuted: false }); }
       }
       const value = await bridge.call(deviceId, capability, args, { complianceCard: effectiveComplianceCard });
-      return capability === 'device.screen.capture' ? screenResult(value) || result(value) : result(value);
+      if (capability === 'device.screen.capture') return screenResult(value) || result(value);
+      if (capability === 'vision.frames.observe') return visionFrameResult(value) || result(value);
+      return result(value);
     });
   }
   return server;
