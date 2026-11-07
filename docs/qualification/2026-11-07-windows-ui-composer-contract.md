@@ -71,3 +71,14 @@ That is the supported next route to investigate if a fresh Bridge observation st
 - Unrelated Android Build workflow `42351732707` was canceled before artifact publication because its broad `tests/**` trigger would have rebuilt an unrelated APK.
 - Secondary Workstation Live Pages Gate `42351732741` was still running at checkpoint time; it does not qualify Windows UI control.
 - Main publication distributes source. No active Device Bridge host update, production route change, or live UI execution occurred.
+
+## Final source correction and CI readback
+
+- Final adapter correction: commit `f5aca3de55f5731ff4caac7fe7d66a822f2a9a3d` on `main` revalidates that the process still owns the observed `MainWindowHandle` before input/submission. GitHub `main` readback returned source blob `1142bc434365bbd80e6d5416be79c6f391b72c51`.
+- Retest on the final source: focused composer contract 5/5; complete MCP suite 125/125; CLI suite 7/7; JavaScript syntax and `git diff --check` passed.
+- GitHub Actions `42352155546` passed on the exact final source SHA. Windows, macOS, and Ubuntu jobs each passed the full MCP, CLI, and trusted-composition checks.
+- GitHub Pages build/deployment `42352154881` passed.
+- Android Build run `42352155548` was canceled before dependency installation or Android build; package build, artifact upload and publication were skipped.
+- Secondary Workstation Live Pages Gate `42351732741` failed because the published `/docs/` page did not contain legacy workstation copy expected by that unrelated test (`LIVE_CONTENT_NOT_PROPAGATED`). The failure is not a Windows UI or composer check. The repeat gate for final SHA `f5aca3de55f5731ff4caac7fe7d66a822f2a9a3d` was still running when this note was written.
+
+**Final source state: PUBLISHED AND CROSS-PLATFORM SOURCE-TESTED. Active Bridge host update, fresh governed composer observation, Antigravity writable target, submitted conversation, and response readback remain unverified.**
