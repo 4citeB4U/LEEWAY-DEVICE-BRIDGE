@@ -52,16 +52,17 @@ test('VisionSensoryProvider initializes, describes contract, and probes health',
   const desc = provider.describe();
   assert.equal(desc.providerId, 'leeway-vision-sensory');
   assert.equal(desc.class, 'sensory');
-  assert.equal(desc.capabilities.length, 6);
+  assert.equal(desc.capabilities.length, 0); // no connector, no advertised executable routes
 
   const health1 = await provider.health();
-  assert.equal(health1.ok, true);
+  assert.equal(health1.ok, false);
   assert.equal(health1.body.connectorBound, false);
 
   provider.bindConnector(createMockConnector());
   const health2 = await provider.health();
   assert.equal(health2.body.connectorBound, true);
   assert.equal(health2.body.status, 'ACTIVE');
+  assert.equal(provider.describe().capabilities.length, 4); // semantic adapters are not bound
 });
 
 test('VisionSensoryProvider executes vision capability routes', async () => {
@@ -100,4 +101,29 @@ test('VisionSensoryProvider executes vision capability routes', async () => {
   });
   assert.equal(stopRes.ok, true);
   assert.equal(stopRes.stopped, true);
+});
+
+
+test('Vision provider advertises semantic routes only when executable adapters are bound', async () => {
+  const connector = createMockConnector();
+  const noSemantic = new VisionSensoryProvider({ bridgeSessionId: 'bridge-01', ownerId: 'creator', connector });
+  assert.equal(noSemantic.describe().capabilities.includes('vision.scene.describe'), false);
+  assert.equal(noSemantic.describe().capabilities.includes('vision.objects.detect'), false);
+  await assert.rejects(noSemantic.execute('vision.scene.describe', { clientId: 'model-a', sessionId: 's' }), /VISION_SCENE_BACKEND_NOT_BOUND/);
+  await assert.rejects(noSemantic.execute('vision.objects.detect', { clientId: 'model-a', sessionId: 's' }), /VISION_OBJECT_BACKEND_NOT_BOUND/);
+
+  connector.describeScene = async (_clientId, sessionId) => ({ sourceSessionId: sessionId, label: 'fixture-only' });
+  connector.detectObjects = async (_clientId, sessionId) => ({ sourceSessionId: sessionId, objects: [] });
+  const active = new VisionSensoryProvider({ bridgeSessionId: 'bridge-01', ownerId: 'creator', connector });
+  assert.equal(active.describe().capabilities.length, 6);
+  const scene = await active.execute('vision.scene.describe', { clientId: 'model-a', sessionId: 's' });
+  assert.equal(scene.scene.label, 'fixture-only');
+  const detection = await active.execute('vision.objects.detect', { clientId: 'model-a', sessionId: 's' });
+  assert.deepEqual(detection.detection.objects, []);
+});
+
+test('Vision provider rejects a connector without executable base routes', () => {
+  const provider = new VisionSensoryProvider({ bridgeSessionId: 'bridge-01', ownerId: 'creator' });
+  assert.throws(() => provider.bindConnector({ getCapabilities: () => [] }), /INVALID_CONNECTOR/);
+  assert.equal(provider.describe().capabilities.length, 0);
 });

@@ -33,14 +33,17 @@ function screenResult(value) {
   ] };
 }
 
-export function createServer(bridge, { discoveryOnly = false, readOnlyCapabilities = [], complianceCardProvider = null } = {}) {
+export function createServer(bridge, { discoveryOnly = false, readOnlyCapabilities = [], complianceCardProvider = null, visionClientId = null } = {}) {
+  const boundVisionClientId = typeof visionClientId === 'string' && visionClientId.trim() && visionClientId.length <= 128 ? visionClientId : null;
   const server = new McpServer({ name: 'leeway-device-bridge', version: '0.1.0' });
   const result = value => ({ content: [{ type: 'text', text: JSON.stringify(value) }], ...(value.ok === false ? { isError: true } : {}) });
   server.registerTool('bridge_devices', { description: 'List configured device IDs. Configuration does not prove connectivity.', inputSchema: {} }, async () => result({ devices: [...bridge.devices.keys()] }));
   server.registerTool('bridge_capabilities', { description: 'Discover current capabilities for one device; grants and verification are distinct.', inputSchema: { deviceId: z.string().min(1).max(128) } }, async ({ deviceId }) => {
     try { return result(await bridge.discover(deviceId)); } catch { return result({ ok: false, error: 'DISCOVERY_FAILED' }); }
   });
-  const selectedCapabilities = discoveryOnly ? [...new Set(readOnlyCapabilities)] : Object.keys(schemas);
+  // Never advertise agent-facing optical operations without an identity supplied by trusted Runtime or authenticated MCP ingress.
+  const selectedCapabilities = discoveryOnly ? [...new Set(readOnlyCapabilities)] :
+    Object.keys(schemas).filter(name => !name.startsWith('vision.') || boundVisionClientId !== null);
   for (const capability of selectedCapabilities) {
     const schema = schemas[capability];
     if (!schema || (discoveryOnly && !['device.health', 'device.info', 'device.directories.list', 'device.files.read', 'model.hub.catalog'].includes(capability)))
@@ -55,6 +58,9 @@ export function createServer(bridge, { discoveryOnly = false, readOnlyCapabiliti
         arguments: schema,
       },
     }, async ({ deviceId, arguments: args, complianceCard }) => {
+      if (capability.startsWith('vision.') && args.clientId !== boundVisionClientId) {
+        return result({ ok: false, error: 'VISION_PRINCIPAL_MISMATCH', operationMayHaveExecuted: false });
+      }
       let effectiveComplianceCard = complianceCard;
       if (!effectiveComplianceCard && typeof complianceCardProvider === 'function') {
         try { effectiveComplianceCard = await complianceCardProvider({ deviceId, capability, args }); }
@@ -102,8 +108,14 @@ export async function createConfiguredBridge(configPath, runtimeInput = null) {
   const base = path.dirname(path.resolve(configPath));
   const receiptPath = config.receipts ? path.resolve(base, config.receipts) : null;
   if (!runtimeComposition && !receiptPath) throw new Error('RECEIPTS_REQUIRED');
+  const visionProviders = runtimeComposition?.visionProviders ?? new Map();
+  for (const deviceId of visionProviders.keys()) {
+    if (!config.devices.some(device => device.id === deviceId && device.type === 'desktop')) {
+      throw new Error('TRUSTED_VISION_PROVIDER_DEVICE_NOT_CONFIGURED');
+    }
+  }
   const devices = config.devices.map(d => ({ ...d, adapter: d.type === 'desktop'
-    ? new DesktopAdapter(d.workspace ? path.resolve(base, d.workspace) : (() => { throw new Error('WORKSPACE_REQUIRED'); })(), {skillsRoot: d.skillsRoot ? path.resolve(base,d.skillsRoot) : null, receiptPath})
+    ? new DesktopAdapter(d.workspace ? path.resolve(base, d.workspace) : (() => { throw new Error('WORKSPACE_REQUIRED'); })(), {skillsRoot: d.skillsRoot ? path.resolve(base,d.skillsRoot) : null, receiptPath, visionProvider: visionProviders.get(d.id) ?? null})
     : new RelayAdapter({ deviceId: d.id, url: d.url, token: d.tokenEnv ? process.env[d.tokenEnv] : undefined }) }));
   if (receiptPath) await fs.mkdir(path.dirname(receiptPath), { recursive: true });
   const admission = runtimeComposition?.mode === 'direct'
@@ -121,7 +133,10 @@ export async function createConfiguredBridge(configPath, runtimeInput = null) {
 export async function start(configPath, runtimeInput = null) {
   const bridge = await createConfiguredBridge(configPath, runtimeInput);
   const runtimeComposition = runtimeInput === null ? null : requireTrustedRuntimeComposition(runtimeInput);
-  const server = createServer(bridge, { complianceCardProvider: runtimeComposition?.complianceCardProvider ?? null });
+  const server = createServer(bridge, {
+    complianceCardProvider: runtimeComposition?.complianceCardProvider ?? null,
+    visionClientId: runtimeComposition?.visionClientId ?? null
+  });
   await server.connect(new StdioServerTransport());
   return server;
 }

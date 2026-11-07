@@ -96,7 +96,10 @@ export function createRemoteMcpHandler({ authenticate, resolveBridge, resolveCom
         readOnlyCapabilities: principalDiscoveryOnly
           ? ['device.health', 'device.info', 'device.directories.list', 'device.files.read', ...(process.env.LEEWAY_MODEL_HUB_URL ? ['model.hub.catalog'] : [])]
           : [],
-        complianceCardProvider });
+        complianceCardProvider,
+        // Trust only the host-authenticated principal, never caller-supplied vision arguments.
+        visionClientId: typeof principal === 'object' && principal !== null &&
+          typeof principal.visionClientId === 'string' ? principal.visionClientId : null });
       const transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: undefined,
         enableJsonResponse: true,

@@ -1,9 +1,9 @@
 name: Portable protocol and MCP
 on:
   pull_request:
-    paths: ['packages/**', 'apps/desktop/**', 'tests/mcp/**', 'package*.json', '.github/workflows/protocol-mcp.yml']
+    paths: ['packages/**', 'apps/desktop/**', 'tests/mcp/**', 'tests/vision-sensory-provider-source.test.mjs', 'providers/vision/**', 'package*.json', '.github/workflows/protocol-mcp.yml']
   push:
-    paths: ['packages/**', 'apps/desktop/**', 'tests/mcp/**', 'package*.json', '.github/workflows/protocol-mcp.yml']
+    paths: ['packages/**', 'apps/desktop/**', 'tests/mcp/**', 'tests/vision-sensory-provider-source.test.mjs', 'providers/vision/**', 'package*.json', '.github/workflows/protocol-mcp.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -22,6 +22,8 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm run test:mcp
+      - name: Qualify bound Vision provider and fail-closed capability disclosure
+        run: node --test tests/vision-sensory-provider-source.test.mjs
       - name: Qualify CLI real MCP probe and fail-closed command path
         run: npm run test:cli
       - name: Verify independent trusted-composition startup regression
