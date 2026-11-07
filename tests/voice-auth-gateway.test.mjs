@@ -69,13 +69,34 @@ test('gateway needs operator secret material and rejects public binding',async()
 });
 test('health reports the exact running source commit for lifecycle reconciliation',async()=>{
  const sourceCommit='a'.repeat(40);
- const env=await startVoiceAuthGateway({port:0,passwordSalt:salt,passwordHash:hash,sourceCommit});
+ const env=await startVoiceAuthGateway({port:0,passwordSalt:salt,passwordHash:hash,sourceCommit,
+  fetchImpl:async(url)=>{
+   if(String(url)==='http://127.0.0.1:5173/__leeway/voice-turn')return {ok:false,status:405,json:async()=>({ok:false,error:'POST_REQUIRED'})};
+   if(String(url)==='http://127.0.0.1:8890/health')return {ok:true,status:200,json:async()=>({identity:'LEEWAY_MACHINE_CONSCIOUSNESS',voice:{ready:true}})};
+   throw Error('Unexpected health probe '+url);
+  }});
  try{
   const response=await fetch('http://127.0.0.1:'+env.port+'/health');
   assert.equal(response.status,200);
   assert.deepEqual(await response.json(),{ready:true,authority:'LEEWAY_DEVICE_BRIDGE_VOICE',
-   internetPublished:false,upstreamQualified:false,sourceCommit});
+   internetPublished:false,upstreamQualified:true,
+   upstreamQualificationScope:'OWNER_LOCAL_EDGE_RTC_FIXTURE_ROUTE_READINESS',
+   upstreamProbe:'READ_ONLY_ROUTE_AND_CARRIER_CHECK_PASS',productionConversationQualified:false,
+   c3Qualified:false,sourceCommit});
   assert.throws(()=>createVoiceAuthGateway({passwordSalt:salt,passwordHash:hash,sourceCommit:'not-a-commit'}),
    /VOICE_SOURCE_COMMIT_INVALID/);
+ }finally{await new Promise(resolve=>env.server.close(resolve))}
+});
+test('health keeps upstream unqualified when the route or carrier check fails',async()=>{
+ const env=await startVoiceAuthGateway({port:0,passwordSalt:salt,passwordHash:hash,
+  fetchImpl:async(url)=>String(url)==='http://127.0.0.1:5173/__leeway/voice-turn'?
+   {ok:false,status:404,json:async()=>({error:'NOT_FOUND'})}:
+   {ok:true,status:200,json:async()=>({identity:'LEEWAY_MACHINE_CONSCIOUSNESS',voice:{ready:true}})}});
+ try{
+  const value=await (await fetch('http://127.0.0.1:'+env.port+'/health')).json();
+  assert.equal(value.upstreamQualified,false);
+  assert.equal(value.upstreamProbe,'UPSTREAM_CONTRACT_MISMATCH');
+  assert.equal(value.productionConversationQualified,false);
+  assert.equal(value.c3Qualified,false);
  }finally{await new Promise(resolve=>env.server.close(resolve))}
 });

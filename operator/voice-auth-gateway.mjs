@@ -63,9 +63,22 @@ export function createVoiceAuthGateway({
   const method=req.method||'GET',route=new URL(req.url||'/', 'http://127.0.0.1').pathname;
   if(route!=='/health' && !Object.values(ROUTES).includes(route))
    return deny(res,404,'NOT_FOUND');
-  if(route==='/health')return json(res,200,{ready:true,
-   authority:'LEEWAY_DEVICE_BRIDGE_VOICE',internetPublished:false,upstreamQualified:false,
-   sourceCommit});
+  if(route==='/health'){
+   let upstreamQualified=false,probe='UPSTREAM_UNAVAILABLE';
+   try{
+    const [turnReply,carrierReply]=await Promise.all([
+     fetchImpl(upstream,{method:'GET',signal:AbortSignal.timeout(2500),redirect:'error'}),
+     fetchImpl(new URL('/health',vf),{method:'GET',signal:AbortSignal.timeout(2500),redirect:'error'})
+    ]);
+    const [turnState,carrierState]=await Promise.all([turnReply.json(),carrierReply.json()]);
+    upstreamQualified=turnReply.status===405&&turnState?.error==='POST_REQUIRED'&&
+     carrierReply.ok&&carrierState?.identity==='LEEWAY_MACHINE_CONSCIOUSNESS'&&carrierState?.voice?.ready===true;
+    probe=upstreamQualified?'READ_ONLY_ROUTE_AND_CARRIER_CHECK_PASS':'UPSTREAM_CONTRACT_MISMATCH';
+   }catch{}
+   return json(res,200,{ready:true,authority:'LEEWAY_DEVICE_BRIDGE_VOICE',internetPublished:false,
+    upstreamQualified,upstreamQualificationScope:'OWNER_LOCAL_EDGE_RTC_FIXTURE_ROUTE_READINESS',
+    upstreamProbe:probe,productionConversationQualified:false,c3Qualified:false,sourceCommit});
+  }
   if(!allowOrigin(req))return deny(res,403,'VOICE_ORIGIN_DENIED');
   if(method==='OPTIONS'){
    if(!Object.values(ROUTES).includes(route))return deny(res,404,'NOT_FOUND');
