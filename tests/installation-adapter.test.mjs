@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
 import {
   classifyApplePreflight,
   executeInstallation,
   planInstallation,
+  planPublishedAppleIpaHandoff,
   probeInstallationTarget,
   rollbackInstallation,
   verifyInstallation
@@ -57,4 +59,44 @@ assert.equal(probeInstallationTarget(appleTarget).state, "INSTALLER_PROVIDER_OBS
 assert.equal(executeInstallation().state, "EXECUTION_NOT_IMPLEMENTED");
 assert.equal(verifyInstallation().verified, false);
 assert.equal(rollbackInstallation().rolledBack, false);
+const applePublication = JSON.parse(readFileSync("docs/package-manifest.json", "utf8"));
+const publishedApple = applePublication.packages.find(p => p.platform === "ios");
+const handoff = planPublishedAppleIpaHandoff({
+  manifest: applePublication,
+  measuredIpaSha256: publishedApple.sha256,
+  target: appleTarget,
+  ownerApproved: true
+});
+assert.equal(handoff.state, "APPLE_NATIVE_HANDOFF_PLANNED");
+assert.equal(handoff.executable, false);
+assert.equal(handoff.nativeInstallVerified, false);
+assert.equal(handoff.bundleIdentifier, "industries.leeway.devicebridge");
+assert.equal(handoff.downloadUrl, publishedApple.downloadUrl);
+assert.equal(handoff.signing, "OWNER_CONTROLLED_ILOADER");
+assert.equal(planPublishedAppleIpaHandoff({
+  manifest: applePublication, measuredIpaSha256: publishedApple.sha256, target: appleTarget
+}).state, "OWNER_AUTHORIZATION_REQUIRED");
+assert.equal(planPublishedAppleIpaHandoff({
+  manifest: applePublication, measuredIpaSha256: null, target: appleTarget, ownerApproved: true
+}).state, "PACKAGE_HASH_MISMATCH");
+const foreignManifest = structuredClone(applePublication);
+foreignManifest.packages.find(p => p.platform === "ios").downloadUrl = "https://example.com/foreign.ipa";
+assert.equal(planPublishedAppleIpaHandoff({
+  manifest: foreignManifest, measuredIpaSha256: publishedApple.sha256, target: appleTarget, ownerApproved: true
+}).state, "APPLE_RELEASE_PROVENANCE_UNVERIFIED");
+const expired = structuredClone(appleTarget);
+expired.installerProviders[0].certificateState = "EXPIRED";
+assert.equal(planPublishedAppleIpaHandoff({
+  manifest: applePublication, measuredIpaSha256: publishedApple.sha256, target: expired, ownerApproved: true
+}).state, "CERT_EXPIRED");
+const notInProfile = structuredClone(appleTarget);
+notInProfile.installerProviders[0].deviceInProfile = false;
+assert.equal(planPublishedAppleIpaHandoff({
+  manifest: applePublication, measuredIpaSha256: publishedApple.sha256, target: notInProfile, ownerApproved: true
+}).state, "DEVICE_NOT_IN_PROFILE");
+assert.equal(planPublishedAppleIpaHandoff({
+  manifest: applePublication, measuredIpaSha256: publishedApple.sha256,
+  target: {...appleTarget, platform: "android"}, ownerApproved: true
+}).state, "APPLE_TARGET_REQUIRED");
+
 console.log("PASS installation adapter dry-run contract");
