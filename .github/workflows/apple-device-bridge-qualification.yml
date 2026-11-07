@@ -8,6 +8,7 @@ on:
       - "operator/physical-adapters.mjs"
       - "apps/desktop/mcp-server.mjs"
       - "tests/apple-camera-transport.test.mjs"
+      - "tests/apple-native-consumer-auth-source.test.mjs"
       - "docs/APPLE-DEVICE-BRIDGE-ADAPTER.md"
       - "docs/APPLE-CAMERA-PROVIDER.md"
       - ".github/workflows/apple-device-bridge-qualification.yml"
@@ -41,7 +42,8 @@ jobs:
             tests/apple-agent-capability-source.test.mjs \
             tests/apple-camera-provider-source.test.mjs \
             tests/apple-camera-transport.test.mjs \
-            tests/apple-native-package-contract.test.mjs
+            tests/apple-native-package-contract.test.mjs \
+            tests/apple-native-consumer-auth-source.test.mjs
 
       - name: Record Apple build toolchain
         run: |
