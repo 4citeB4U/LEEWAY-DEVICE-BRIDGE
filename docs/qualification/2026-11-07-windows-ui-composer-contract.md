@@ -82,3 +82,17 @@ That is the supported next route to investigate if a fresh Bridge observation st
 - Secondary Workstation Live Pages Gate `42351732741` failed because the published `/docs/` page did not contain legacy workstation copy expected by that unrelated test (`LIVE_CONTENT_NOT_PROPAGATED`). The failure is not a Windows UI or composer check. The repeat gate for final SHA `f5aca3de55f5731ff4caac7fe7d66a822f2a9a3d` was still running when this note was written.
 
 **Final source state: PUBLISHED AND CROSS-PLATFORM SOURCE-TESTED. Active Bridge host update, fresh governed composer observation, Antigravity writable target, submitted conversation, and response readback remain unverified.**
+
+## Fresh live Bridge retest — 2026-11-07 01:41 America/Chicago
+
+A new read-only Runtime Fabric / Device Bridge probe after the `main` publication establishes that the source change has not reached the active `pc-primary` adapter:
+
+- Runtime Fabric health: `AVAILABLE`; OIDC token verified. Provider composition, authenticated command path and mutation were not probed/attempted.
+- `bridge_devices`: `pc-primary`, `CONFIGURED_NOT_PHYSICALLY_PROBED`.
+- `bridge_capabilities(pc-primary)`: no Windows UI list, observe, input or submit capability is registered. Device UI capability execution admission is not conferred by discovery.
+- `device.health` returned `uiControl:false`, receipt `a7ec4d2e-1572-42e7-85ce-4a3b141f2fa7`; `device.info` returned `uiControl:false`, receipt `3f3d988f-84f0-4f50-9cce-ec2a6435d03e`. Both were `CONTROLLER_OBSERVATION`, `FORMULA=NOT_EVALUATED`, and `physicalProbe=EXECUTED_NOT_INDEPENDENTLY_VERIFIED`.
+- This runtime response is direct evidence of the old active adapter contract; GitHub `main` source publication did not update or restart the local Bridge process.
+
+Lifecycle research did not recover a supported deployment/restart path. `Receipt-Authority` `main` describes a candidate source repository and explicitly does not own Runtime deployment. The private Tailscale source says it contains no tailnet state, credentials, or automatic deployment workflow; its last checked connection record had local Tailscale `NoState` and did not prove the active route owner was this PC. The Creator supplied the node name `Agent-Lee`, DNS `agent-lee.tailb186e7.ts.net`, and IP `100.122.0.118`, but these identify a historical observation and do not identify a callable lifecycle mechanism.
+
+**Current blocker: no exposed owner-authorized capability can install/restart the updated desktop adapter on the active node.** Do not claim the adapter is live. The next executable gate is to bind the existing node's authorized lifecycle owner to a controlled source update, then re-run Bridge health and a read-only composer observation. The actual Antigravity UIA composer and end-to-end exchange remain unqualified.
