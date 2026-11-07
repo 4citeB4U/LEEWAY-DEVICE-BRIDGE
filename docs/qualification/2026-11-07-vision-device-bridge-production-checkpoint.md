@@ -99,5 +99,5 @@ This closes the repository’s tested source, publication, UI, Pages, Android, a
 
 ## Checkpoint publication readback — 2026-11-07 10:50:42 America/Chicago (2026-11-07 16:50:42 UTC)
 
-The Android artifact publication commit `2539ec376b5a504ffbe726b5af6b300cf073ac8a` is the latest generated release commit. The final qualification-record-only push is Device Bridge `main` `df445970d86717b840dbe956c8a5fb8674938be2`; this is the current remote head. No source or runtime behavior changed after the green UI, live-workstation, Pages, Android, Portable protocol/MCP, and Vision workflow results recorded above.
+The Android artifact publication commit `2539ec376b5a504ffbe726b5af6b300cf073ac8a` is the latest generated release commit. The final qualification-record-only pushes ended at Device Bridge `main` `91a6226a95ba54516367463bb9b55e1c45c0d585`; this is the current remote head. No source or runtime behavior changed after the green UI, live-workstation, Pages, Android, Portable protocol/MCP, and Vision workflow results recorded above.
 
