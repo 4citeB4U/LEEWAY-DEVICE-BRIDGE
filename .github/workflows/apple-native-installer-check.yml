@@ -90,7 +90,7 @@ jobs:
                   "archiveSha256":hashlib.sha256(archive.read_bytes()).hexdigest(),
                   "archiveBytes":archive.stat().st_size,
                   "approval":"CI_CANDIDATE_NOT_PHYSICAL_DEVICE_VERITAS"}
-          (output / ("LeeWay-Apple-Installer-"+platform+".sha256.json")).write_text(json.dumps(meta,indent=2)+"\\n")
+          (output / ("LeeWay-Apple-Installer-"+platform+".sha256.json")).write_text(json.dumps(meta,indent=2)+"\n")
           print(meta)
           PY
       - name: Retain downloadable, unsigned host installer candidate
