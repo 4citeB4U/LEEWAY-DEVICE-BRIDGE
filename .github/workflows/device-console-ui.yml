@@ -20,6 +20,8 @@ on:
       - 'tests/apple-direct-download.test.mjs'
       - 'tests/apple-github-iloader-update-channel.test.mjs'
       - 'tests/apple-pwa-source.test.mjs'
+      - 'tests/installation-adapter.test.mjs'
+      - 'operator/installation-adapter.mjs'
       - 'docs/sw.js'
       - 'tests/device-dashboard-ui.test.mjs'
       - '.github/workflows/device-console-ui.yml'
@@ -28,6 +30,12 @@ on:
       - 'docs/index.html'
       - 'docs/dashboard.css'
       - 'docs/dashboard-ui.js'
+      - 'docs/apple-download.js'
+      - 'tests/apple-direct-download.test.mjs'
+      - 'tests/apple-github-iloader-update-channel.test.mjs'
+      - 'tests/apple-pwa-source.test.mjs'
+      - 'tests/installation-adapter.test.mjs'
+      - 'operator/installation-adapter.mjs'
       - 'docs/sw.js'
       - 'tests/device-dashboard-ui.test.mjs'
       - '.github/workflows/device-console-ui.yml'
@@ -46,7 +54,8 @@ jobs:
         run: |
           node --check docs/dashboard-ui.js
           node --check docs/apple-download.js
+          node --check operator/installation-adapter.mjs
       - name: Run Device Console source acceptance
-        run: node --test tests/device-dashboard-ui.test.mjs tests/apple-direct-download.test.mjs tests/apple-github-iloader-update-channel.test.mjs
+        run: node --test tests/device-dashboard-ui.test.mjs tests/apple-direct-download.test.mjs tests/apple-github-iloader-update-channel.test.mjs tests/installation-adapter.test.mjs
       - name: Preserve existing Apple PWA behavior
         run: node tests/apple-pwa-source.test.mjs
