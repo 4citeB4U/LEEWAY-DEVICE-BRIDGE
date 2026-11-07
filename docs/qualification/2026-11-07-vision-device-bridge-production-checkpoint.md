@@ -36,7 +36,7 @@ The Windows physical-camera path is executed and verified through the live Devic
 ### Source gates
 
 - Vision: `node --test tests/*.test.cjs tests/*.test.mjs` — **20 passed, 0 failed**.
-- Device Bridge: `npm run test:mcp` — **145 passed, 0 failed**.
+- Device Bridge integration gate before the concurrent USB C3 rebase: `npm run test:mcp` — **145 passed, 0 failed**. Post-rebase final source tree: **150 passed, 0 failed**.
 - The native MCP test confirms one image block, no duplicated base64 in text, receipt result-hash preservation, and fail-closed rejection of a mismatched SHA-256.
 
 ### Live Device Bridge physical gate
@@ -96,4 +96,8 @@ Final workflow readback for the repair commit `e9cb0ae9cbffd5f129d9585794261285a
 - Remote Device Bridge `main` readback: `2539ec376b5a504ffbe726b5af6b300cf073ac8a`.
 
 This closes the repository’s tested source, publication, UI, Pages, Android, and Windows live-camera gates in scope for this task. It does not change the explicit NOT FULLY QUALIFIED cross-platform active-MCP/Formula/Veritas/any-LLM gate above.
+
+## Checkpoint publication readback — 2026-11-07 10:50:42 America/Chicago (2026-11-07 16:50:42 UTC)
+
+The Android artifact publication commit `2539ec376b5a504ffbe726b5af6b300cf073ac8a` is the latest generated release commit. The final qualification-record-only push is Device Bridge `main` `df445970d86717b840dbe956c8a5fb8674938be2`; this is the current remote head. No source or runtime behavior changed after the green UI, live-workstation, Pages, Android, Portable protocol/MCP, and Vision workflow results recorded above.
 
