@@ -330,3 +330,7 @@ Push commits `71371552ff5226c3ee8a73194c126af4e87440ce` and `40e1f6427a44cf2d736
 ### Exact next executable action
 
 Download the live `LeeWayDeviceBridge-unsigned.ipa` from `apple-latest`, import it through the existing iLoader USB session without revoking the certificate or pairing, open the app, and capture the new build/version plus Metal and camera receipts. The active repository route no longer requires or advertises SideStore.
+
+## Active-route wording cleanup — 2026-11-07 15:01:11 America/Chicago (2026-11-07 21:01:11 UTC)
+
+The final active-route scan found two stale SideStore boundary phrases in iLoader documentation. They were removed from `docs/INSTALLATION-ADAPTER.md` and `docs/ILOADER-PERSISTENCE.md`. Historical SideStore incident records remain explicitly archived and are not part of the active updater, workflow, manifest, release assets, or PWA route.

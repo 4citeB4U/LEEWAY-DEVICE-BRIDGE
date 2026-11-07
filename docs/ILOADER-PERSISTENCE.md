@@ -16,7 +16,7 @@ Use this guide to keep the Windows iLoader setup ready for LeeWay Device Bridge 
 
 - Do not reset Anisette state just because iLoader is restarted.
 - Do not delete stored pairing data as a normal update step.
-- Do not revoke the active certificate to solve a SideStore sign-in problem.
+- Do not revoke the active certificate as a routine repair step.
 
 Those actions remove working state and can force a fresh Apple authorization.
 
