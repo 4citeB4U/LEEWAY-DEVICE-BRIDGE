@@ -49,11 +49,13 @@ struct Request {
     action: String,
     apple_id: String,
     apple_password: String,
-    developer_team_id: String,
+    #[serde(default)]
+    developer_team_id: Option<String>,
     device_udid: String,
     ipa_path: String,
     expected_sha256: String,
-    anisette_url: String,
+    #[serde(default)]
+    anisette_url: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -70,13 +72,20 @@ fn event(stage: &str, state: &str) {
 }
 
 fn bounded_line(size_limit: usize) -> Option<String> {
+    // Read exactly one newline-delimited IPC message. read_to_string waited for EOF,
+    // preventing two-factor callbacks while the Bridge kept stdin open.
     let stdin = io::stdin();
-    let handle = stdin.lock();
-    let mut line = String::new();
-    let bytes = handle.take((size_limit + 1) as u64).read_to_string(&mut line).ok()?;
-    if bytes > size_limit || !line.ends_with('\n') { return None; }
-    line.pop();
-    Some(line)
+    let mut handle = stdin.lock();
+    let mut bytes = Vec::with_capacity(size_limit.min(4096));
+    for _ in 0..=size_limit {
+        let mut one = [0u8; 1];
+        if handle.read(&mut one).ok()? != 1 { return None; }
+        if one[0] == b'\n' {
+            return String::from_utf8(bytes).ok();
+        }
+        bytes.push(one[0]);
+    }
+    None
 }
 
 fn validate_request(req: &Request) -> Result<(), &'static str> {
@@ -85,18 +94,25 @@ fn validate_request(req: &Request) -> Result<(), &'static str> {
         || req.apple_password.is_empty() || req.apple_password.len() > 4_096 {
         return Err("APPLE_ACCOUNT_INPUT_INVALID");
     }
-    if req.developer_team_id.len() != 10 ||
-       !req.developer_team_id.bytes().all(|c| c.is_ascii_alphanumeric()) {
-        return Err("DEVELOPER_TEAM_ID_INVALID");
+    // The normal free Apple Account path does NOT require a supplied team ID.
+    // If multiple teams exist, an exact explicit choice is required.
+    if let Some(team) = &req.developer_team_id {
+        if team.len() != 10 || !team.bytes().all(|c| c.is_ascii_alphanumeric()) {
+            return Err("DEVELOPER_TEAM_ID_INVALID");
+        }
     }
     if req.device_udid.len() < 16 || req.device_udid.len() > 64 ||
        !req.device_udid.bytes().all(|c| c.is_ascii_alphanumeric() || c == b'-') {
         return Err("APPLE_DEVICE_ID_INVALID");
     }
-    let u = url::Url::parse(&req.anisette_url).map_err(|_| "ANISETTE_URL_INVALID")?;
-    if u.scheme() != "https" || u.host_str().is_none() || u.username() != "" ||
-       u.password().is_some() || u.fragment().is_some() || u.query().is_some() {
-        return Err("ANISETTE_URL_UNTRUSTED");
+    // Use the upstream isideload HTTPS default unless the trusted host selects
+    // an authorized alternative. No manual Anisette URL is needed for customers.
+    if let Some(value) = &req.anisette_url {
+        let u = url::Url::parse(value).map_err(|_| "ANISETTE_URL_INVALID")?;
+        if u.scheme() != "https" || u.host_str().is_none() || u.username() != "" ||
+           u.password().is_some() || u.fragment().is_some() || u.query().is_some() {
+            return Err("ANISETTE_URL_UNTRUSTED");
+        }
     }
     if req.ipa_path.len() < 4 || req.ipa_path.len() > 1_024 ||
        !Path::new(&req.ipa_path).is_absolute() {
@@ -172,7 +188,6 @@ async fn perform(req: Request) -> Result<(), &'static str> {
     check_file_sha256(&req.ipa_path, &req.expected_sha256)?;
     // Only the invoking user's local keyring is used. No Apple secrets leave through stdout or logs.
     event("PACKAGE", "SHA256_MATCH");
-    TEAM_ID.set(req.developer_team_id.clone()).map_err(|_| "TEAM_ALREADY_SELECTED")?;
 
     rustls::crypto::ring::default_provider()
         .install_default().map_err(|_| "TLS_PROVIDER_NOT_READY")?;
@@ -191,8 +206,11 @@ async fn perform(req: Request) -> Result<(), &'static str> {
     let anisette = RemoteV3AnisetteProvider::default()
         .map_err(|_| "ANISETTE_INIT_FAILED")?
         .set_serial_number("leeway".to_string())
-        .set_storage(Box::new(KeyringStorage::new("leeway-device-bridge".to_string())))
-        .set_url(&req.anisette_url);
+        .set_storage(Box::new(KeyringStorage::new("leeway-device-bridge".to_string())));
+    let anisette = match &req.anisette_url {
+        Some(endpoint) => anisette.set_url(endpoint),
+        None => anisette,
+    };
     let mut account = AppleAccount::builder(&req.apple_id.to_lowercase())
         .anisette_provider(anisette)
         .login(&req.apple_password, challenge)
@@ -202,10 +220,20 @@ async fn perform(req: Request) -> Result<(), &'static str> {
     let mut session = DeveloperSession::from_account(&mut account)
         .await.map_err(|_| "APPLE_DEVELOPER_SESSION_UNAVAILABLE")?;
     let teams = session.list_teams().await.map_err(|_| "APPLE_TEAMS_NOT_OBSERVED")?;
-    if !teams.iter().any(|team| team.team_id == req.developer_team_id) {
-        return Err("REQUESTED_APPLE_TEAM_NOT_AUTHORIZED");
-    }
-    let current_team_id = TEAM_ID.get().ok_or("APPLE_TEAM_SELECTION_MISSING")?.clone();
+    let current_team_id = if let Some(requested) = &req.developer_team_id {
+        if !teams.iter().any(|team| &team.team_id == requested) {
+            return Err("REQUESTED_APPLE_TEAM_NOT_AUTHORIZED");
+        }
+        requested.clone()
+    } else if teams.len() == 1 {
+        // isideload's own listTeams response includes the free Personal Team.
+        teams[0].team_id.clone()
+    } else if teams.is_empty() {
+        return Err("APPLE_ACCOUNT_HAS_NO_SIGNING_TEAM");
+    } else {
+        return Err("MULTIPLE_APPLE_TEAMS_NEED_OWNER_SELECTION");
+    };
+    TEAM_ID.set(current_team_id.clone()).map_err(|_| "TEAM_ALREADY_SELECTED")?;
     event("SIGNING", "TEAM_OBSERVED");
 
     // Never silently revoke certificates, delete profiles, reset device trust, or erase app data.
