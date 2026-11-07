@@ -14,7 +14,7 @@ import http from 'node:http';
 import {randomBytes,scryptSync,timingSafeEqual,createHash} from 'node:crypto';
 
 const FRONTEND='https://4citeb4u.github.io';
-const ROUTES=Object.freeze({login:'/v1/voice/login',session:'/v1/voice/session',turn:'/v1/voice/turn',pairStart:'/v1/voice/pair/start',pairClaim:'/v1/voice/pair/claim',capabilities:'/v1/voice/capabilities',synthesize:'/v1/voice/synthesize',synthesisStatus:'/v1/voice/synthesis-status'});
+const ROUTES=Object.freeze({login:'/v1/voice/login',session:'/v1/voice/session',turn:'/v1/voice/turn',interrupt:'/v1/voice/interrupt',pairStart:'/v1/voice/pair/start',pairClaim:'/v1/voice/pair/claim',capabilities:'/v1/voice/capabilities',synthesize:'/v1/voice/synthesize',synthesisStatus:'/v1/voice/synthesis-status'});
 const now=()=>Date.now();
 const sha=data=>createHash('sha256').update(data).digest('hex');
 const equal=(a,b)=>{const x=Buffer.from(String(a)),y=Buffer.from(String(b));return x.length===y.length&&timingSafeEqual(x,y)};
@@ -31,19 +31,17 @@ const boundedBody=async(req)=>{
 export function createVoiceAuthGateway({
  passwordHash,passwordSalt,fetchImpl=fetch,pairing=null,
  registeredApps={'leeway.voice.studio':FRONTEND},sessionDurationMs=30*60*1000,
- upstream='http://127.0.0.1:5173/__leeway/voice-turn',voiceFabric='http://127.0.0.1:8890',clock=now,sourceCommit=null
+ voiceFabric='http://127.0.0.1:8890',clock=now,sourceCommit=null
 }={}){
  if(sourceCommit!==null&&!/^[a-f0-9]{40}$/.test(sourceCommit))throw Error('VOICE_SOURCE_COMMIT_INVALID');
  if(!/^[a-f0-9]{128}$/.test(passwordHash||'')||!(/^[a-f0-9]{32,128}$/.test(passwordSalt||'')))
   throw Error('VOICE_AUTH_HASH_AND_SALT_REQUIRED');
- const u=new URL(upstream);
- if(u.protocol!=='http:'||u.hostname!=='127.0.0.1'||u.port!=='5173'||
-  u.pathname!=='/__leeway/voice-turn'||u.search)throw Error('UNTRUSTED_VOICE_UPSTREAM');
  const vf=new URL(voiceFabric);
  if(vf.protocol!=='http:'||!['127.0.0.1','localhost','[::1]'].includes(vf.hostname)||
   !vf.port||vf.pathname!=='/'||vf.search||vf.hash||vf.username||vf.password)
   throw Error('UNTRUSTED_VOICE_FABRIC');
  const sessions=new Map(),failures=new Map();
+ let productionConversationProof=null,c3Proof=null;
  const permittedOrigins=new Set(Object.values(registeredApps));
  const allowOrigin=req=>permittedOrigins.has(req.headers.origin);
  const cookie=req=>{
@@ -66,18 +64,25 @@ export function createVoiceAuthGateway({
   if(route==='/health'){
    let upstreamQualified=false,probe='UPSTREAM_UNAVAILABLE';
    try{
-    const [turnReply,carrierReply]=await Promise.all([
-     fetchImpl(upstream,{method:'GET',signal:AbortSignal.timeout(2500),redirect:'error'}),
-     fetchImpl(new URL('/health',vf),{method:'GET',signal:AbortSignal.timeout(2500),redirect:'error'})
+    const [carrierReply,bindingReply,telemetryReply]=await Promise.all([
+     fetchImpl(new URL('/health',vf),{method:'GET',signal:AbortSignal.timeout(2500),redirect:'error'}),
+     fetchImpl(new URL('/voice/binding',vf),{method:'GET',signal:AbortSignal.timeout(2500),redirect:'error'}),
+     fetchImpl(new URL('/voice/telemetry',vf),{method:'GET',signal:AbortSignal.timeout(2500),redirect:'error'})
     ]);
-    const [turnState,carrierState]=await Promise.all([turnReply.json(),carrierReply.json()]);
-    upstreamQualified=turnReply.status===405&&turnState?.error==='POST_REQUIRED'&&
-     carrierReply.ok&&carrierState?.identity==='LEEWAY_MACHINE_CONSCIOUSNESS'&&carrierState?.voice?.ready===true;
-    probe=upstreamQualified?'READ_ONLY_ROUTE_AND_CARRIER_CHECK_PASS':'UPSTREAM_CONTRACT_MISMATCH';
+    const [carrierState,bindingState,telemetryState]=await Promise.all([carrierReply.json(),bindingReply.json(),telemetryReply.json()]);
+    const binding=bindingState?.voiceBinding,telemetry=telemetryState?.gateway;
+    upstreamQualified=carrierReply.ok&&carrierState?.identity==='LEEWAY_MACHINE_CONSCIOUSNESS'&&
+     carrierState?.voice?.ready===true&&bindingReply.ok&&binding?.authority==='LEEWAY_VOICE_FABRIC'&&
+     binding?.agentId==='agent-lee'&&binding?.productionAdmitted===true&&binding?.qualificationOnly===false&&
+     telemetryReply.ok&&telemetry?.identity==='Agent Lee'&&telemetry?.inferenceAuthority==='LEEWAY_EDGE_GPU_ONLY'&&
+     telemetry?.storageAuthority==='LEEWAY_CONTINUUM_ONLY';
+    probe=upstreamQualified?'READ_ONLY_PRODUCTION_CARRIER_BINDING_CHECK_PASS':'PRODUCTION_CARRIER_BINDING_MISMATCH';
    }catch{}
    return json(res,200,{ready:true,authority:'LEEWAY_DEVICE_BRIDGE_VOICE',internetPublished:false,
-    upstreamQualified,upstreamQualificationScope:'OWNER_LOCAL_EDGE_RTC_FIXTURE_ROUTE_READINESS',
-    upstreamProbe:probe,productionConversationQualified:false,c3Qualified:false,sourceCommit});
+    upstreamQualified,upstreamQualificationScope:'OWNER_LOCAL_MACHINE_CONSCIOUSNESS_AND_VOICE_BINDING_READINESS',
+    upstreamProbe:probe,productionConversationQualified:productionConversationProof?.qualified===true,
+    productionConversationEvidence:productionConversationProof?.evidence||'AUTHENTICATED_PRODUCTION_TURN_NOT_YET_OBSERVED',
+    c3Qualified:c3Proof?.qualified===true,c3Evidence:c3Proof?.evidence||'LIVE_DUPLEX_VERITAS_AND_RECEIPT_ADMISSION_NOT_YET_OBSERVED',sourceCommit});
   }
   if(!allowOrigin(req))return deny(res,403,'VOICE_ORIGIN_DENIED');
   if(method==='OPTIONS'){
@@ -90,7 +95,7 @@ export function createVoiceAuthGateway({
    schema:'leeway.voice.api.v1',status:'AUTHENTICATION_REQUIRED',
    authorization:'OWNER_DEVICE_APPROVAL',
    scope:'voice:turn:readonly',session:ROUTES.session,
-   pairStart:ROUTES.pairStart,pairClaim:ROUTES.pairClaim,turn:ROUTES.turn,
+    pairStart:ROUTES.pairStart,pairClaim:ROUTES.pairClaim,turn:ROUTES.turn,interrupt:ROUTES.interrupt,
    registeredAppCount:Object.keys(registeredApps).length,
    deviceActionsAllowed:false
   },headers);
@@ -197,36 +202,66 @@ export function createVoiceAuthGateway({
      playbackVerified:false},headers);
    }catch{return deny(res,503,'KOKORO_SYNTHESIS_UNAVAILABLE')}
   }
+  if(route===ROUTES.interrupt&&method==='POST'){
+   if(!session)return deny(res,401,'VOICE_SESSION_REQUIRED');
+   if(session.scope&&session.scope!=='voice:turn:readonly')return deny(res,403,'VOICE_SCOPE_DENIED');
+   if(!equal(req.headers['x-leeway-voice-csrf']||'',session.csrf))return deny(res,403,'VOICE_CSRF_DENIED');
+   if(!(req.headers['content-type']||'').startsWith('application/json'))return deny(res,415,'JSON_REQUIRED');
+   let data;try{data=await boundedBody(req)}catch{return deny(res,400,'VOICE_BODY_INVALID')}
+   if(data?.schema!=='leeway.voice.interrupt.v1'||data.source!=='LEEWAY_EDGE_RTC'||
+    data.transcriptSource!=='LEEWAY_EDGE_GPU_ASR'||data.inferenceRoute!=='LEEWAY_EDGE_GPU'||
+    data.inferenceAuthority!=='LEEWAY_EDGE_GPU_ONLY'||data.storageAuthority!=='LEEWAY_CONTINUUM_ONLY'||
+    typeof data.ownerDeviceId!=='string'||typeof data.segmentId!=='string')return deny(res,422,'VOICE_INTERRUPT_INVALID');
+   try{
+    const reply=await fetchImpl(new URL('/voice/input',vf),{method:'POST',headers:{origin:vf.origin,'content-type':'application/json'},
+     body:JSON.stringify({...data,type:'speech.interrupt'}),signal:AbortSignal.timeout(15000),redirect:'error'});
+    if(!reply.ok)return deny(res,503,'LEEWAY_VOICE_INTERRUPT_UNAVAILABLE');
+    const result=await reply.json();
+    if(result?.state!=='VERIFIED'||result?.type!=='speech.interrupt'||!Number.isInteger(result?.interruptionEpoch))return deny(res,502,'LEEWAY_VOICE_INTERRUPT_UNVERIFIED');
+    return json(res,200,{schema:'leeway.voice.interrupt-result.v1',authority:'LEEWAY_MACHINE_CONSCIOUSNESS',
+     interruptionEpoch:result.interruptionEpoch,continuum:result.continuum||null,staleOutputGuard:'EPOCH_ADVANCED'},headers);
+   }catch{return deny(res,503,'LEEWAY_VOICE_INTERRUPT_UNAVAILABLE')}
+  }
   if(route===ROUTES.turn&&method==='POST'){
    if(!session)return deny(res,401,'VOICE_SESSION_REQUIRED');
    if(session.scope&&session.scope!=='voice:turn:readonly')return deny(res,403,'VOICE_SCOPE_DENIED');
    if(!equal(req.headers['x-leeway-voice-csrf']||'',session.csrf))return deny(res,403,'VOICE_CSRF_DENIED');
    if(!(req.headers['content-type']||'').startsWith('application/json'))return deny(res,415,'JSON_REQUIRED');
    let data;try{data=await boundedBody(req)}catch{return deny(res,400,'VOICE_BODY_INVALID')}
-   if(data?.schema!=='leeway.voice.turn.v1'||data.final!==true||
-    data.allowDeviceActions!==false||!['machine','llm'].includes(data.mode)||
-    typeof data.text!=='string'||!data.text.trim()||data.text.length>2500)
+   if(data?.schema!=='leeway.voice.turn.v1'||data.final!==true||data.allowDeviceActions!==false||
+    data.source!=='LEEWAY_EDGE_RTC'||data.transcriptSource!=='LEEWAY_EDGE_GPU_ASR'||
+    data.inferenceRoute!=='LEEWAY_EDGE_GPU'||data.inferenceAuthority!=='LEEWAY_EDGE_GPU_ONLY'||
+    data.storageAuthority!=='LEEWAY_CONTINUUM_ONLY'||typeof data.ownerDeviceId!=='string'||
+    typeof data.segmentId!=='string'||typeof data.text!=='string'||!data.text.trim()||data.text.length>2500)
     return deny(res,422,'VOICE_REQUEST_INVALID');
    try{
-    const upstreamReply=await fetchImpl(upstream,{method:'POST',
-     headers:{origin:'http://127.0.0.1:5173','x-leeway-voice-test':'live-conversation',
-      'content-type':'application/json'},
-     body:JSON.stringify({mode:data.mode,text:data.text,final:true}),
+    const upstreamReply=await fetchImpl(new URL('/voice/input',vf),{method:'POST',
+     headers:{origin:vf.origin,'content-type':'application/json'},
+     body:JSON.stringify({type:'transcript.final',segmentId:data.segmentId,ownerDeviceId:data.ownerDeviceId,
+      requestId:data.requestId,source:data.source,transcriptSource:data.transcriptSource,
+      inferenceRoute:data.inferenceRoute,inferenceAuthority:data.inferenceAuthority,
+      storageAuthority:data.storageAuthority,transcript:data.text,startedAt:data.startedAt,
+      audioRecordId:data.audioRecordId,audioSha256:data.audioSha256,captureStartedAt:data.captureStartedAt,
+      captureEndedAt:data.captureEndedAt,playbackTelemetry:data.playbackTelemetry,
+      interruptionTelemetry:data.interruptionTelemetry,latencyTelemetry:data.latencyTelemetry,
+      deliveryTelemetry:data.deliveryTelemetry}),
      signal:AbortSignal.timeout(90000),redirect:'error'});
     if(!upstreamReply.ok)return deny(res,503,'LEEWAY_VOICE_UPSTREAM_UNAVAILABLE');
     const output=await upstreamReply.json();
-    const machine=output.source==='LEEWAY_MACHINE_CONSCIOUSNESS'&&
-      output.results?.some(r=>r.kind==='machine'&&r.valid===true);
-    const llm=output.source==='OLLAMA_QWEN35_4B'&&
-      output.status==='GENERATED_NOT_VERITAS_VERIFIED'&&output.gpuInferenceVerified===false;
-    if((data.mode==='machine'&&!machine)||(data.mode==='llm'&&!llm)||
-      typeof output.text!=='string'||!output.text.trim()||output.text.length>4000)
+    const machine=output?.state==='VERIFIED'&&output?.type==='transcript.final'&&
+     output?.response?.personaDelivery?.state==='VERIFIED'&&output?.response?.personaDelivery?.identity==='Agent Lee'&&
+     Boolean(output?.continuum?.recordId)&&output?.telemetry?.result==='RESPONSE_RENDERED'&&
+     typeof output?.voice?.voicePackageId==='string'&&typeof output?.voice?.audioContent==='string';
+    if(!machine||typeof output.response.text!=='string'||!output.response.text.trim()||output.response.text.length>4000)
      return deny(res,503,'LEEWAY_VOICE_RESPONSE_UNVERIFIED');
+    productionConversationProof={qualified:true,evidence:'AUTHENTICATED_AGENT_LEE_TURN_VOICE_FABRIC_AND_CONTINUUM_READBACK',at:clock()};
     return json(res,200,{schema:'leeway.voice.turn-result.v1',
-     source:output.source,text:output.text,verified:!!machine,
-     veritasStatus:machine?'PASS':'NOT_VERIFIED',status:output.status,
-     gpuInferenceVerified:false,requestId:output.results?.[0]?.requestId||null,
-     receiptHash:output.results?.[0]?.receiptHash||null},headers);
+     source:'LEEWAY_MACHINE_CONSCIOUSNESS',identity:'Agent Lee',text:output.response.text,verified:true,
+     veritasStatus:'NOT_ASSERTED',status:output.state,requestId:output.requestId||data.requestId||null,
+     continuumRecordId:output.continuum.recordId,voice:{authority:'LEEWAY_VOICE_FABRIC',agentId:'agent-lee',
+      voicePackageId:output.voice.voicePackageId,audioContent:output.voice.audioContent,
+      sampleRate:output.voice.sampleRate,format:output.voice.format,playbackVerified:false},
+     evidence:productionConversationProof.evidence},headers);
    }catch{return deny(res,503,'LEEWAY_VOICE_UPSTREAM_UNAVAILABLE')}
   }
   return deny(res,405,'METHOD_NOT_ALLOWED');

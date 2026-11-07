@@ -19,10 +19,15 @@ test('voice authentication is login, CSRF and origin bound',async()=>{
  const env=await startVoiceAuthGateway({port:0,passwordSalt:salt,passwordHash:hash,
   fetchImpl:async(url,init)=>{
    executed.push({url,init});
-   return {ok:true,json:async()=>({
-    source:'OLLAMA_QWEN35_4B',status:'GENERATED_NOT_VERITAS_VERIFIED',
-    gpuInferenceVerified:false,text:'Qwen response for fixture',results:[]
-   })};
+   const input=init?.body?JSON.parse(init.body):null;
+   return {ok:true,json:async()=>input?.type==='speech.interrupt'?{
+    state:'VERIFIED',type:'speech.interrupt',interruptionEpoch:1,continuum:{recordId:'continuum-interrupt-fixture'}
+   }:{
+    state:'VERIFIED',type:'transcript.final',requestId:'voice-test-request-0001',
+    response:{text:'Creator, Agent Lee here. Voice fixture response.',personaDelivery:{state:'VERIFIED',identity:'Agent Lee'}},
+    continuum:{recordId:'continuum-fixture-record'},telemetry:{result:'RESPONSE_RENDERED'},
+    voice:{voicePackageId:'kokoro-bm_lewis',audioContent:'UklGRg==',sampleRate:24000,format:'wav'}
+   }};
   }});
  const origin='http://127.0.0.1:'+env.port;
  const req=async(route,{method='GET',data,cookie,csrf,front='https://4citeb4u.github.io'}={})=>{
@@ -47,18 +52,31 @@ test('voice authentication is login, CSRF and origin bound',async()=>{
   assert.ok(!JSON.stringify(login.body).includes('this-is-an-owner-only-test'));
   const cookie=login.cookie.split(';')[0],csrf=login.body.csrfToken;
   assert.equal((await req('/v1/voice/session',{cookie})).body.authenticated,true);
-  const body={schema:'leeway.voice.turn.v1',mode:'llm',
-   text:'Hello Agent Lee',final:true,allowDeviceActions:false};
+  const body={schema:'leeway.voice.turn.v1',source:'LEEWAY_EDGE_RTC',transcriptSource:'LEEWAY_EDGE_GPU_ASR',
+   inferenceRoute:'LEEWAY_EDGE_GPU',inferenceAuthority:'LEEWAY_EDGE_GPU_ONLY',storageAuthority:'LEEWAY_CONTINUUM_ONLY',
+   ownerDeviceId:'owner-device-test',segmentId:'segment-test-0001',text:'Hello Agent Lee',final:true,allowDeviceActions:false};
   assert.equal((await req('/v1/voice/turn',{method:'POST',data:body,cookie})).code,403);
   assert.equal((await req('/v1/voice/turn',{method:'POST',data:{
    ...body,allowDeviceActions:true},cookie,csrf})).code,422);
+  assert.equal((await req('/v1/voice/turn',{method:'POST',data:{
+   ...body,transcriptSource:'BROWSER_SPEECH_RECOGNITION'},cookie,csrf})).code,422);
+  assert.equal(executed.length,0);
   const result=await req('/v1/voice/turn',{method:'POST',data:body,cookie,csrf});
   assert.equal(result.code,200);
-  assert.equal(result.body.source,'OLLAMA_QWEN35_4B');
-  assert.equal(result.body.verified,false);
+  assert.equal(result.body.source,'LEEWAY_MACHINE_CONSCIOUSNESS');
+  assert.equal(result.body.identity,'Agent Lee');
+  assert.equal(result.body.verified,true);
+  assert.equal(result.body.veritasStatus,'NOT_ASSERTED');
   assert.equal(executed.length,1);
-  assert.equal(JSON.parse(executed[0].init.body).mode,'llm');
-  assert.equal(JSON.parse(executed[0].init.body).final,true);
+  assert.equal(String(executed[0].url),'http://127.0.0.1:8890/voice/input');
+  assert.equal(JSON.parse(executed[0].init.body).type,'transcript.final');
+  assert.equal(JSON.parse(executed[0].init.body).transcriptSource,'LEEWAY_EDGE_GPU_ASR');
+  const interrupt={schema:'leeway.voice.interrupt.v1',source:'LEEWAY_EDGE_RTC',transcriptSource:'LEEWAY_EDGE_GPU_ASR',
+   inferenceRoute:'LEEWAY_EDGE_GPU',inferenceAuthority:'LEEWAY_EDGE_GPU_ONLY',storageAuthority:'LEEWAY_CONTINUUM_ONLY',
+   ownerDeviceId:'owner-device-test',segmentId:'interrupt-segment-01'};
+  assert.equal((await req('/v1/voice/interrupt',{method:'POST',data:interrupt,cookie,csrf})).body.staleOutputGuard,'EPOCH_ADVANCED');
+  assert.equal(String(executed[1].url),'http://127.0.0.1:8890/voice/input');
+  assert.equal(JSON.parse(executed[1].init.body).type,'speech.interrupt');
   console.log('VOICE_SESSION_AND_READONLY_TURN_PASS');
  }finally{await new Promise(resolve=>env.server.close(resolve))}
 });
@@ -71,8 +89,9 @@ test('health reports the exact running source commit for lifecycle reconciliatio
  const sourceCommit='a'.repeat(40);
  const env=await startVoiceAuthGateway({port:0,passwordSalt:salt,passwordHash:hash,sourceCommit,
   fetchImpl:async(url)=>{
-   if(String(url)==='http://127.0.0.1:5173/__leeway/voice-turn')return {ok:false,status:405,json:async()=>({ok:false,error:'POST_REQUIRED'})};
    if(String(url)==='http://127.0.0.1:8890/health')return {ok:true,status:200,json:async()=>({identity:'LEEWAY_MACHINE_CONSCIOUSNESS',voice:{ready:true}})};
+   if(String(url)==='http://127.0.0.1:8890/voice/binding')return {ok:true,status:200,json:async()=>({voiceBinding:{authority:'LEEWAY_VOICE_FABRIC',agentId:'agent-lee',productionAdmitted:true,qualificationOnly:false}})};
+   if(String(url)==='http://127.0.0.1:8890/voice/telemetry')return {ok:true,status:200,json:async()=>({gateway:{identity:'Agent Lee',inferenceAuthority:'LEEWAY_EDGE_GPU_ONLY',storageAuthority:'LEEWAY_CONTINUUM_ONLY'}})};
    throw Error('Unexpected health probe '+url);
   }});
  try{
@@ -80,22 +99,23 @@ test('health reports the exact running source commit for lifecycle reconciliatio
   assert.equal(response.status,200);
   assert.deepEqual(await response.json(),{ready:true,authority:'LEEWAY_DEVICE_BRIDGE_VOICE',
    internetPublished:false,upstreamQualified:true,
-   upstreamQualificationScope:'OWNER_LOCAL_EDGE_RTC_FIXTURE_ROUTE_READINESS',
-   upstreamProbe:'READ_ONLY_ROUTE_AND_CARRIER_CHECK_PASS',productionConversationQualified:false,
-   c3Qualified:false,sourceCommit});
+   upstreamQualificationScope:'OWNER_LOCAL_MACHINE_CONSCIOUSNESS_AND_VOICE_BINDING_READINESS',
+   upstreamProbe:'READ_ONLY_PRODUCTION_CARRIER_BINDING_CHECK_PASS',productionConversationQualified:false,
+   productionConversationEvidence:'AUTHENTICATED_PRODUCTION_TURN_NOT_YET_OBSERVED',c3Qualified:false,
+   c3Evidence:'LIVE_DUPLEX_VERITAS_AND_RECEIPT_ADMISSION_NOT_YET_OBSERVED',sourceCommit});
   assert.throws(()=>createVoiceAuthGateway({passwordSalt:salt,passwordHash:hash,sourceCommit:'not-a-commit'}),
    /VOICE_SOURCE_COMMIT_INVALID/);
  }finally{await new Promise(resolve=>env.server.close(resolve))}
 });
 test('health keeps upstream unqualified when the route or carrier check fails',async()=>{
  const env=await startVoiceAuthGateway({port:0,passwordSalt:salt,passwordHash:hash,
-  fetchImpl:async(url)=>String(url)==='http://127.0.0.1:5173/__leeway/voice-turn'?
-   {ok:false,status:404,json:async()=>({error:'NOT_FOUND'})}:
-   {ok:true,status:200,json:async()=>({identity:'LEEWAY_MACHINE_CONSCIOUSNESS',voice:{ready:true}})}});
+  fetchImpl:async(url)=>String(url)==='http://127.0.0.1:8890/health'?
+   {ok:false,status:503,json:async()=>({error:'UNAVAILABLE'})}:
+   {ok:true,status:200,json:async()=>({})}});
  try{
   const value=await (await fetch('http://127.0.0.1:'+env.port+'/health')).json();
   assert.equal(value.upstreamQualified,false);
-  assert.equal(value.upstreamProbe,'UPSTREAM_CONTRACT_MISMATCH');
+  assert.equal(value.upstreamProbe,'PRODUCTION_CARRIER_BINDING_MISMATCH');
   assert.equal(value.productionConversationQualified,false);
   assert.equal(value.c3Qualified,false);
  }finally{await new Promise(resolve=>env.server.close(resolve))}
