@@ -16,6 +16,10 @@ on:
       - 'docs/index.html'
       - 'docs/dashboard.css'
       - 'docs/dashboard-ui.js'
+      - 'docs/apple-download.js'
+      - 'tests/apple-direct-download.test.mjs'
+      - 'tests/apple-github-iloader-update-channel.test.mjs'
+      - 'tests/apple-pwa-source.test.mjs'
       - 'docs/sw.js'
       - 'tests/device-dashboard-ui.test.mjs'
       - '.github/workflows/device-console-ui.yml'
@@ -39,8 +43,10 @@ jobs:
       - name: Confirm Node available
         run: node --version
       - name: Check browser controller JavaScript syntax
-        run: node --check docs/dashboard-ui.js
+        run: |
+          node --check docs/dashboard-ui.js
+          node --check docs/apple-download.js
       - name: Run Device Console source acceptance
-        run: node --test tests/device-dashboard-ui.test.mjs
+        run: node --test tests/device-dashboard-ui.test.mjs tests/apple-direct-download.test.mjs tests/apple-github-iloader-update-channel.test.mjs
       - name: Preserve existing Apple PWA behavior
         run: node tests/apple-pwa-source.test.mjs
