@@ -1,4 +1,4 @@
-const CACHE = "leeway-device-bridge-v18-functional";
+const CACHE = "leeway-device-bridge-v19-update-channel";
 const ASSETS = [
   "./",
   "./index.html",
@@ -28,7 +28,8 @@ const ASSETS = [
   "./APPLE-SIDESTORE-0.7.0-REPAIR.md",
   "./APPLE-DIRECT-ILOADER-DELIVERY.md",
   "./ILOADER-PERSISTENCE.md",
-  "./SIDESTORE-UPDATE-CHANNEL.md"
+  "./SIDESTORE-UPDATE-CHANNEL.md",
+  "./PACKAGE-UPDATE-PROTOCOL.md"
 ];
 
 self.addEventListener("install", event => {

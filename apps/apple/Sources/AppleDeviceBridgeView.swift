@@ -20,6 +20,7 @@ struct AppleDeviceBridgeView: View {
     @StateObject private var store = AppleBridgeStore()
     @StateObject private var camera = AppleCameraCapture()
     @StateObject private var cameraBridge = AppleCameraBridgeServer()
+    @StateObject private var updater = AppleUpdateCoordinator()
     @Environment(\.openURL) private var openURL
     @State private var phoneNumber = ""
     @State private var emailRecipient = ""
@@ -104,6 +105,30 @@ struct AppleDeviceBridgeView: View {
                         if cameraBridge.isRunning { cameraBridge.stop() } else { cameraBridge.start(camera: camera) }
                     }
                 }
+                Section("GitHub update channel") {
+                    LabeledContent("Update state", value: updater.state)
+                    LabeledContent("Installed", value: "\(updater.currentVersion) (\(updater.currentBuild))")
+                    if updater.latestBuild > 0 {
+                        LabeledContent("GitHub package", value: "\(updater.latestVersion) (\(updater.latestBuild))")
+                    }
+                    if updater.latestSizeBytes > 0 {
+                        LabeledContent("Package size", value: "\(updater.latestSizeBytes / 1024 / 1024) MB")
+                    }
+                    if let errorMessage = updater.errorMessage {
+                        Text(errorMessage).foregroundStyle(.red)
+                    }
+                    Button("Check GitHub for Updates") { updater.check() }
+                    if updater.updateAvailable {
+                        Button("Open SideStore Update Channel") {
+                            openURL(updater.sideStoreURL)
+                        }
+                        Button("Open GitHub Release") {
+                            openURL(updater.releaseURL)
+                        }
+                        Text("GitHub supplies the package and SideStore performs the owner-confirmed signed install. iOS cannot replace its own signed app.")
+                            .font(.footnote)
+                    }
+                }
                 Section("Agent Lee system entry points") {
                     LabeledContent("LeeWay actions", value: "Siri and Shortcuts")
                     Text("The installed app exposes its Metal probe as a LeeWay App Intent. A shortcut may start the LeeWay action; it does not grant control of other apps.")
@@ -156,6 +181,13 @@ struct AppleDeviceBridgeView: View {
                 }
             }
             .navigationTitle("LeeWay Device")
+            .onAppear { updater.check() }
+            .alert("LeeWay Device Bridge update available", isPresented: $updater.showPrompt) {
+                Button("Update") { openURL(updater.sideStoreURL) }
+                Button("Later", role: .cancel) {}
+            } message: {
+                Text("GitHub has version \(updater.latestVersion) (\(updater.latestBuild)). Open SideStore to review and install it on this iPhone.")
+            }
             .onDisappear {
                 cameraBridge.stop()
                 camera.stop()

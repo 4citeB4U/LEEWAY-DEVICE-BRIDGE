@@ -2,10 +2,17 @@ import fs from "node:fs";
 import assert from "node:assert/strict";
 
 const manifest=JSON.parse(fs.readFileSync("docs/package-manifest.json","utf8"));
-assert.equal(manifest.schemaVersion,"0.2.0");
+assert.equal(manifest.schemaVersion,"0.3.0");
 assert.equal(manifest.distributionRole,"GITHUB_PAGES_DISCOVERY_AND_DOWNLOAD");
 assert.equal(manifest.runtimeRole,"PHONE_LOCAL");
+assert.equal(manifest.updatePolicy.mode,"CHECK_AND_PROMPT_OWNER");
+assert.equal(manifest.updatePolicy.automaticInstall,false);
+assert.equal(manifest.updatePolicy.checkOnReconnect,true);
+assert.equal(manifest.platformRoutes.android.updateMode,"CHECK_PROMPT_AND_ANDROID_INSTALLER");
+assert.equal(manifest.platformRoutes.ios.updateMode,"CHECK_PROMPT_AND_SIDESTORE");
+assert.equal(manifest.platformRoutes.linux.state,"SOURCE_ONLY");
 assert.ok(manifest.packages.some(p=>p.platform==="android"));
+assert.ok(manifest.packages.some(p=>p.platform==="ios"));
 assert.ok(manifest.packages.every(p=>p.nativeVerification===true));
 assert.ok(manifest.packages.every(p=>p.dockerRequired===false));
 

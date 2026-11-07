@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leeway.industries/contracts/package-manifest.schema.json",
+  "title": "LeeWay Device Bridge package update manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "schemaVersion", "authority", "distributionRole", "runtimeRole", "targetBootstrapPackageMaxBytes", "manifestUrl", "updatePolicy", "platformRoutes", "packages"],
+  "properties": {
+    "$schema": { "type": "string", "minLength": 1 },
+    "schemaVersion": { "const": "0.3.0" },
+    "authority": { "const": "4citeB4U/LEEWAY-DEVICE-BRIDGE" },
+    "distributionRole": { "const": "GITHUB_PAGES_DISCOVERY_AND_DOWNLOAD" },
+    "runtimeRole": { "const": "PHONE_LOCAL" },
+    "targetBootstrapPackageMaxBytes": { "type": "integer", "minimum": 1 },
+    "manifestUrl": { "type": "string", "format": "uri" },
+    "updatedAtUtc": { "type": "string", "format": "date-time" },
+    "updatePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "checkOnForeground", "checkOnReconnect", "checkIntervalHours", "automaticDownload", "automaticInstall", "ownerConfirmationRequired", "verification"],
+      "properties": {
+        "mode": { "const": "CHECK_AND_PROMPT_OWNER" },
+        "checkOnForeground": { "const": true },
+        "checkOnReconnect": { "const": true },
+        "checkIntervalHours": { "type": "integer", "minimum": 1, "maximum": 168 },
+        "automaticDownload": { "const": false },
+        "automaticInstall": { "const": false },
+        "ownerConfirmationRequired": { "const": true },
+        "verification": { "type": "array", "items": { "enum": ["HTTPS", "SHA256", "PLATFORM_NATIVE_INSTALLER"] }, "minItems": 3, "uniqueItems": true }
+      }
+    },
+    "platformRoutes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["state", "updateMode", "source"],
+        "properties": {
+          "state": { "enum": ["AVAILABLE", "SOURCE_ONLY"] },
+          "updateMode": { "type": "string", "minLength": 1 },
+          "source": { "enum": ["github-pages", "github-release", "github-source"] }
+        }
+      }
+    },
+    "packages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["id", "platform", "architecture", "channel", "label", "source", "status", "nativeVerification", "runtimeLocation", "dockerRequired", "downloadUrl", "sha256", "sizeBytes"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "platform": { "enum": ["android", "ios", "ipados", "windows", "macos", "linux", "web"] },
+          "architecture": { "type": "string", "minLength": 1 },
+          "channel": { "type": "string", "minLength": 1 },
+          "label": { "type": "string", "minLength": 1 },
+          "source": { "enum": ["github-pages", "github-release", "github-source"] },
+          "status": { "type": "string", "minLength": 1 },
+          "nativeVerification": { "type": "boolean" },
+          "runtimeLocation": { "type": "string", "minLength": 1 },
+          "dockerRequired": { "const": false },
+          "downloadUrl": { "type": ["string", "null"] },
+          "sha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+          "sizeBytes": { "type": ["integer", "null"], "minimum": 0 }
+        }
+      }
+    }
+  }
+}
