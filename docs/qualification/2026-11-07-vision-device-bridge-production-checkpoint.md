@@ -82,3 +82,18 @@ The repair is published at Device Bridge `main` commit `345f3f9fa9784fae0659fa0a
 
 Device Bridge remote `main` is `080d3a3eabdb1fdc5fe3f13658b406f8a2622524`. The Android build and publication workflow passed after the guarded-push repair. Vision remote `main` remains `59693f117a77061a237c940ced61dc661619ff21`, whose Production Vision Bridge Qualification and Pages workflows passed. The live Windows evidence and the remaining active-MCP/mobile/independent-governance boundaries above are unchanged.
 
+## Final live publication readback — 2026-11-07 10:49:57 America/Chicago (2026-11-07 16:49:57 UTC)
+
+The secondary workstation verifier first exposed a stale PWA contract: the page omitted its required device-neutral workstation entrypoints, and its live test incorrectly demanded a Docker claim that the Apple PWA acceptance test forbids. The visible workstation panel and the live-test needle were corrected without claiming native Docker in the browser. Local UI acceptance passed 5/5.
+
+Final workflow readback for the repair commit `e9cb0ae9cbffd5f129d9585794261285a537e0a7`:
+
+- Device Console UI Acceptance `42393032707`: **success**.
+- Secondary Workstation Live Pages Gate `42393032687`: **success**.
+- Pages deployment `42393031941`: **success**.
+- Android Build `42393032864`: **success**, including guarded APK publication.
+- Android publication commit: `2539ec376b5a504ffbe726b5af6b300cf073ac8a`.
+- Remote Device Bridge `main` readback: `2539ec376b5a504ffbe726b5af6b300cf073ac8a`.
+
+This closes the repository’s tested source, publication, UI, Pages, Android, and Windows live-camera gates in scope for this task. It does not change the explicit NOT FULLY QUALIFIED cross-platform active-MCP/Formula/Veritas/any-LLM gate above.
+
