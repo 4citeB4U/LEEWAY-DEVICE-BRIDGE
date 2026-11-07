@@ -61,3 +61,7 @@ The working branch is `creator/apple-iloader-native-delivery-20261107`, based on
 **Canonical Receipt Authority:** NOT_CREATED. **Independent Veritas:** NOT_EXECUTED. **Learning Ledger admission:** NOT_UPDATED. **REA CLI against iLoader in this session:** NOT_EXECUTED. **Production App Store publish:** NOT_EXECUTED. **Physical native Apple install and Metal probe for the new build:** NOT_EXECUTED.
 
 Rollback is a reviewed revert of PR #95 source files; the original unsigned Apple channel and legacy USB installation remain on unchanged production `main`. No production rollback or live Apple install was executed.
+
+## Retest readback added after checkpoint
+
+The cross-lane Android source/build failure has an observed repair and retest: [Android Build 42421658159](https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/actions/runs/42421658159) completed **success** at `2c3b324c60b39c9ecf0fce698ac2f22dc3ce8e7b`, following the corrected legacy Apple update-source assertions. The in-progress CI for later source revisions must still be read back at their exact SHAs before further promotion. No native physical Apple or App Store execution follows from Android PASS.
