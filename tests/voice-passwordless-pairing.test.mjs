@@ -25,7 +25,9 @@ test('owner approval gates a single app-specific, read-only voice session',async
   fetchImpl:async()=>({ok:true,json:async()=>({
    state:'VERIFIED',type:'transcript.final',requestId:'voice-pair-test-0001',
    response:{text:'Creator, Agent Lee here. Voice fixture.',personaDelivery:{state:'VERIFIED',identity:'Agent Lee'}},
-   continuum:{recordId:'continuum-pair-fixture'},telemetry:{result:'RESPONSE_RENDERED'},
+   continuum:{recordId:'continuum-pair-fixture'},telemetry:{result:'RESPONSE_RENDERED',
+    transcriptSource:'LEEWAY_EDGE_GPU_ASR',inferenceRoute:'LEEWAY_EDGE_GPU',
+    capture:{audioRecordId:'audio-record-pair',audioSha256:'f'.repeat(64)}},
    voice:{voicePackageId:'kokoro-bm_lewis',audioContent:'UklGRg==',sampleRate:24000,format:'wav'},
   })})});
  const base='http://127.0.0.1:'+gateway.port;
@@ -57,7 +59,9 @@ test('owner approval gates a single app-specific, read-only voice session',async
   assert.equal((await request('/v1/voice/pair/claim',claim)).status,403);
   const turn={schema:'leeway.voice.turn.v1',source:'LEEWAY_EDGE_RTC',transcriptSource:'LEEWAY_EDGE_GPU_ASR',
    inferenceRoute:'LEEWAY_EDGE_GPU',inferenceAuthority:'LEEWAY_EDGE_GPU_ONLY',storageAuthority:'LEEWAY_CONTINUUM_ONLY',
-   ownerDeviceId:'owner-device-test',segmentId:'pair-segment-001',final:true,text:'Hello Agent Lee',allowDeviceActions:false};
+   ownerDeviceId:'owner-device-test',segmentId:'pair-segment-001',audioRecordId:'audio-record-pair',
+   audioSha256:'f'.repeat(64),captureStartedAt:'2026-11-07T11:00:00.000Z',captureEndedAt:'2026-11-07T11:00:02.000Z',
+   final:true,text:'Hello Agent Lee',allowDeviceActions:false};
   assert.equal((await request('/v1/voice/turn',turn,{cookie:approved.cookie})).status,403);
   const reply=await request('/v1/voice/turn',turn,{
    cookie:approved.cookie,csrf:approved.body.csrfToken});

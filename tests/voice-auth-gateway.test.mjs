@@ -10,7 +10,7 @@ AUTHORITY: offline test. LICENSE: MIT
 */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {randomBytes,scryptSync} from 'node:crypto';
+import {randomBytes,scryptSync,createHash} from 'node:crypto';
 import {createVoiceAuthGateway,startVoiceAuthGateway} from '../operator/voice-auth-gateway.mjs';
 const salt=randomBytes(16).toString('hex');
 const hash=scryptSync('this-is-an-owner-only-test-passphrase',Buffer.from(salt,'hex'),64).toString('hex');
@@ -25,7 +25,9 @@ test('voice authentication is login, CSRF and origin bound',async()=>{
    }:{
     state:'VERIFIED',type:'transcript.final',requestId:'voice-test-request-0001',
     response:{text:'Creator, Agent Lee here. Voice fixture response.',personaDelivery:{state:'VERIFIED',identity:'Agent Lee'}},
-    continuum:{recordId:'continuum-fixture-record'},telemetry:{result:'RESPONSE_RENDERED'},
+    continuum:{recordId:'continuum-fixture-record'},telemetry:{result:'RESPONSE_RENDERED',
+     transcriptSource:'LEEWAY_EDGE_GPU_ASR',inferenceRoute:'LEEWAY_EDGE_GPU',
+     capture:{audioRecordId:'audio-record-test',audioSha256:'a'.repeat(64)}},
     voice:{voicePackageId:'kokoro-bm_lewis',audioContent:'UklGRg==',sampleRate:24000,format:'wav'}
    }};
   }});
@@ -54,7 +56,9 @@ test('voice authentication is login, CSRF and origin bound',async()=>{
   assert.equal((await req('/v1/voice/session',{cookie})).body.authenticated,true);
   const body={schema:'leeway.voice.turn.v1',source:'LEEWAY_EDGE_RTC',transcriptSource:'LEEWAY_EDGE_GPU_ASR',
    inferenceRoute:'LEEWAY_EDGE_GPU',inferenceAuthority:'LEEWAY_EDGE_GPU_ONLY',storageAuthority:'LEEWAY_CONTINUUM_ONLY',
-   ownerDeviceId:'owner-device-test',segmentId:'segment-test-0001',text:'Hello Agent Lee',final:true,allowDeviceActions:false};
+   ownerDeviceId:'owner-device-test',segmentId:'segment-test-0001',audioRecordId:'audio-record-test',
+   audioSha256:'a'.repeat(64),captureStartedAt:'2026-11-07T11:00:00.000Z',captureEndedAt:'2026-11-07T11:00:02.000Z',
+   text:'Hello Agent Lee',final:true,allowDeviceActions:false};
   assert.equal((await req('/v1/voice/turn',{method:'POST',data:body,cookie})).code,403);
   assert.equal((await req('/v1/voice/turn',{method:'POST',data:{
    ...body,allowDeviceActions:true},cookie,csrf})).code,422);
@@ -77,7 +81,34 @@ test('voice authentication is login, CSRF and origin bound',async()=>{
   assert.equal((await req('/v1/voice/interrupt',{method:'POST',data:interrupt,cookie,csrf})).body.staleOutputGuard,'EPOCH_ADVANCED');
   assert.equal(String(executed[1].url),'http://127.0.0.1:8890/voice/input');
   assert.equal(JSON.parse(executed[1].init.body).type,'speech.interrupt');
+  const health=await (await fetch(origin+'/health')).json();
+  assert.equal(health.productionConversationQualified,true);
   console.log('VOICE_SESSION_AND_READONLY_TURN_PASS');
+ }finally{await new Promise(resolve=>env.server.close(resolve))}
+});
+test('health restores production conversation proof from a hash-verified Continuum record',async()=>{
+ const sourceCommit='b'.repeat(40);
+ const persisted=JSON.stringify({schema:'leeway.machine-consciousness.voice-input-telemetry.v1',identity:'Agent Lee',
+  telemetry:{type:'transcript.final',source:'LEEWAY_EDGE_RTC',transcriptSource:'LEEWAY_EDGE_GPU_ASR',
+   inferenceRoute:'LEEWAY_EDGE_GPU',inferenceAuthority:'LEEWAY_EDGE_GPU_ONLY',storageAuthority:'LEEWAY_CONTINUUM_ONLY',
+   result:'RESPONSE_RENDERED',audioHash:'c'.repeat(64),voicePackageId:'kokoro-bm_lewis',responseHash:'d'.repeat(64),
+   ownerDeviceId:'owner-device',capture:{audioRecordId:'audio-record-1',audioSha256:'e'.repeat(64),
+    captureStartedAt:'2026-11-07T10:00:00.000Z',captureEndedAt:'2026-11-07T10:00:02.000Z'}}});
+ const digest=createHash('sha256').update(persisted).digest('hex');
+ const env=await startVoiceAuthGateway({port:0,passwordSalt:salt,passwordHash:hash,sourceCommit,
+  fetchImpl:async(url)=>{
+   const target=String(url);
+   if(target==='http://127.0.0.1:8890/health')return {ok:true,json:async()=>({identity:'LEEWAY_MACHINE_CONSCIOUSNESS',voice:{ready:true}})};
+   if(target==='http://127.0.0.1:8890/voice/binding')return {ok:true,json:async()=>({voiceBinding:{authority:'LEEWAY_VOICE_FABRIC',agentId:'agent-lee',productionAdmitted:true,qualificationOnly:false}})};
+   if(target==='http://127.0.0.1:8890/voice/telemetry')return {ok:true,json:async()=>({gateway:{identity:'Agent Lee',inferenceAuthority:'LEEWAY_EDGE_GPU_ONLY',storageAuthority:'LEEWAY_CONTINUUM_ONLY'}})};
+   if(target.startsWith('http://127.0.0.1:8890/api/continuum/search'))return {ok:true,json:async()=>({ok:true,result:{hits:[{recordId:'continuum-production-proof',contentSha256:digest}]}})};
+   if(target==='http://127.0.0.1:8890/api/continuum/content?recordId=continuum-production-proof')return {ok:true,text:async()=>persisted};
+   throw Error('Unexpected health probe '+target);
+  }});
+ try{
+  const value=await (await fetch('http://127.0.0.1:'+env.port+'/health')).json();
+  assert.equal(value.productionConversationQualified,true);
+  assert.equal(value.productionConversationEvidence,'CONTINUUM_READBACK_AUTHENTICATED_GPU_ASR_AGENT_LEE_TURN');
  }finally{await new Promise(resolve=>env.server.close(resolve))}
 });
 test('gateway needs operator secret material and rejects public binding',async()=>{

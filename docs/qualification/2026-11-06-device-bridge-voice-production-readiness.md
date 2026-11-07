@@ -343,3 +343,11 @@ The same live response reports `productionConversationQualified:false` with `AUT
 
 **Checkpoint status:** published and locally source-pinned; fixture-free carrier readiness `VERIFIED`; production turn `NOT EXECUTED`; C3 `UNQUALIFIED`. The historic outbound `voice.speak` receipt pair remains unchanged. Next action is to bind Edge RTC to an owner-approved authenticated session and an admitted LeeWay GPU ASR execution route. Then perform the physical owner mic → Agent Lee → Voice Fabric playout → human barge-in → stale-output rejection run and verify independent Veritas plus Continuum receipts. Production public ingress and reboot-persistent qualification evidence remain separate gates.
 
+## 2026-11-07 05:20 America/Chicago (UTC−06:00) — Persist production-turn qualification in Continuum
+
+The production-turn readiness latch must survive a Gateway restart. The Gateway now restores `productionConversationQualified` by searching the existing Continuum voice-telemetry collection, reading candidate content back, validating its SHA-256 against the Continuum search result, and requiring a completed Agent Lee response, LeeWay GPU ASR provenance, LeeWay GPU inference and Continuum storage authorities, Voice Fabric package/audio hash, and captured-audio record/hash/timestamps. A successful authenticated production turn must include those same capture fields before the in-process qualification latch can become true. The Vite fixture cannot satisfy this contract.
+
+**Verification:** the focused Gateway, owner-pairing, and Voice Fabric synthesis suites now pass 9/9; the source syntax check and diff check pass. The new Continuum recovery test is fixture-based and proves the hash/readback gate behavior, not production voice qualification. No physical ASR or audio operation was performed.
+
+**Activation pending:** these source changes still need publication to canonical `main` and restart through the source-pinned owner lifecycle. The existing verified live state remains `upstreamQualified:true`; production conversation and C3 remain unqualified because no real GPU-ASR production turn, acoustic duplex session, interruption, independent Veritas admission, or persisted C3 receipt has been produced. The current GPU service is still OFF and the ASR command remains an unresolved placeholder.
+

@@ -42,6 +42,33 @@ export function createVoiceAuthGateway({
   throw Error('UNTRUSTED_VOICE_FABRIC');
  const sessions=new Map(),failures=new Map();
  let productionConversationProof=null,c3Proof=null;
+ const restoreProductionConversationProof=async()=>{
+  try{
+   const query=new URL('/api/continuum/search',vf);query.searchParams.set('query','Agent Lee voice telemetry');query.searchParams.set('limit','32');
+   const found=await fetchImpl(query,{method:'GET',headers:{origin:vf.origin},signal:AbortSignal.timeout(4000),redirect:'error'});
+   if(!found.ok)return null;
+   const hits=(await found.json())?.result?.hits;
+   if(!Array.isArray(hits))return null;
+   for(const hit of hits){
+    if(typeof hit?.recordId!=='string'||!/^([a-f0-9]{64})$/i.test(hit.contentSha256||''))continue;
+    const contentUrl=new URL('/api/continuum/content',vf);contentUrl.searchParams.set('recordId',hit.recordId);
+    const content=await fetchImpl(contentUrl,{method:'GET',headers:{origin:vf.origin},signal:AbortSignal.timeout(4000),redirect:'error'});
+    if(!content.ok)continue;
+    const raw=await content.text();if(sha(Buffer.from(raw,'utf8'))!==hit.contentSha256)continue;
+    let document;try{document=JSON.parse(raw)}catch{continue}
+    const t=document?.telemetry;
+    if(document?.schema!=='leeway.machine-consciousness.voice-input-telemetry.v1'||
+     document?.identity!=='Agent Lee'||t?.type!=='transcript.final'||t?.source!=='LEEWAY_EDGE_RTC'||
+     t?.transcriptSource!=='LEEWAY_EDGE_GPU_ASR'||t?.inferenceRoute!=='LEEWAY_EDGE_GPU'||
+     t?.inferenceAuthority!=='LEEWAY_EDGE_GPU_ONLY'||t?.storageAuthority!=='LEEWAY_CONTINUUM_ONLY'||
+     t?.result!=='RESPONSE_RENDERED'||!/^([a-f0-9]{64})$/i.test(t.audioHash||'')||
+     !t.voicePackageId||!t.responseHash||!t.ownerDeviceId||!t.capture?.audioRecordId||
+     !/^([a-f0-9]{64})$/i.test(t.capture.audioSha256||'')||!t.capture.captureStartedAt||!t.capture.captureEndedAt)continue;
+    return {qualified:true,evidence:'CONTINUUM_READBACK_AUTHENTICATED_GPU_ASR_AGENT_LEE_TURN',recordId:hit.recordId};
+   }
+  }catch{}
+  return null;
+ };
  const permittedOrigins=new Set(Object.values(registeredApps));
  const allowOrigin=req=>permittedOrigins.has(req.headers.origin);
  const cookie=req=>{
@@ -62,6 +89,7 @@ export function createVoiceAuthGateway({
   if(route!=='/health' && !Object.values(ROUTES).includes(route))
    return deny(res,404,'NOT_FOUND');
   if(route==='/health'){
+   if(!productionConversationProof)productionConversationProof=await restoreProductionConversationProof();
    let upstreamQualified=false,probe='UPSTREAM_UNAVAILABLE';
    try{
     const [carrierReply,bindingReply,telemetryReply]=await Promise.all([
@@ -232,7 +260,10 @@ export function createVoiceAuthGateway({
     data.source!=='LEEWAY_EDGE_RTC'||data.transcriptSource!=='LEEWAY_EDGE_GPU_ASR'||
     data.inferenceRoute!=='LEEWAY_EDGE_GPU'||data.inferenceAuthority!=='LEEWAY_EDGE_GPU_ONLY'||
     data.storageAuthority!=='LEEWAY_CONTINUUM_ONLY'||typeof data.ownerDeviceId!=='string'||
-    typeof data.segmentId!=='string'||typeof data.text!=='string'||!data.text.trim()||data.text.length>2500)
+    typeof data.segmentId!=='string'||typeof data.text!=='string'||!data.text.trim()||data.text.length>2500||
+    typeof data.audioRecordId!=='string'||!/^([a-f0-9]{64})$/i.test(data.audioSha256||'')||
+    !Number.isFinite(Date.parse(data.captureStartedAt))||!Number.isFinite(Date.parse(data.captureEndedAt))||
+    Date.parse(data.captureEndedAt)<Date.parse(data.captureStartedAt))
     return deny(res,422,'VOICE_REQUEST_INVALID');
    try{
     const upstreamReply=await fetchImpl(new URL('/voice/input',vf),{method:'POST',
@@ -251,6 +282,9 @@ export function createVoiceAuthGateway({
     const machine=output?.state==='VERIFIED'&&output?.type==='transcript.final'&&
      output?.response?.personaDelivery?.state==='VERIFIED'&&output?.response?.personaDelivery?.identity==='Agent Lee'&&
      Boolean(output?.continuum?.recordId)&&output?.telemetry?.result==='RESPONSE_RENDERED'&&
+     output?.telemetry?.transcriptSource==='LEEWAY_EDGE_GPU_ASR'&&output?.telemetry?.inferenceRoute==='LEEWAY_EDGE_GPU'&&
+     output?.telemetry?.capture?.audioRecordId===data.audioRecordId&&
+     output?.telemetry?.capture?.audioSha256===data.audioSha256&&
      typeof output?.voice?.voicePackageId==='string'&&typeof output?.voice?.audioContent==='string';
     if(!machine||typeof output.response.text!=='string'||!output.response.text.trim()||output.response.text.length>4000)
      return deny(res,503,'LEEWAY_VOICE_RESPONSE_UNVERIFIED');
