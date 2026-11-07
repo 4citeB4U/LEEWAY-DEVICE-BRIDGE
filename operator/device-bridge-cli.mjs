@@ -150,7 +150,11 @@ async function main() {
         } catch { discoveries.push({ deviceId: id, adapterResponded: false, state: 'DISCOVERY_FAILED' }); }
       }
       print({ transport: 'LOCAL_STDIO_MCP_CONNECTED', toolsEnumerated: tools.tools.length,
-        devicesConfigured: devices.devices, discoveries, devicesOnline: 'NOT_TESTED',
+        registeredDevices: devices.devices,
+        registrationState: devices.registrationState,
+        registrationAuthority: devices.registrationAuthority,
+        reachability: devices.reachability,
+        discoveries, devicesOnline: 'NOT_TESTED',
         chatgptConnectorRegistered: 'NOT_TESTED', productionAdmission: 'NOT_VERIFIED' });
     } finally { await client.close(); }
     return;
