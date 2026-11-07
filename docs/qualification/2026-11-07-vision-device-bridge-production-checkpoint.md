@@ -195,3 +195,55 @@ The source was pushed to Device Bridge `main` at `71ba32caab8368ee9f9b5e1e47319d
 
 This closes the source, macOS build, package, and GitHub publication gates. It does not close owner signing/install, iPhone permission, local-network pairing, live advancing-frame, physical-stop, independent receipt verification, Formula/Veritas, or any-LLM production gates. The next exact action is owner installation from the published release, followed by the paired Bridge `vision.*` session readback described above.
 
+## GitHub-managed package update channel checkpoint — 2026-11-07 14:25:44 America/Chicago (2026-11-07 20:25:44 UTC)
+
+**Identity and authority:** Creator-directed LeeWay Device Bridge engineering work in 4citeB4U/LEEWAY-DEVICE-BRIDGE; canonical source authority is the repository main branch and its GitHub Actions qualification/publication workflows.
+
+**Requested gate:** Native packages must discover GitHub updates from the phone, present an owner confirmation, and use the platform-native installation route without requiring iLoader or a computer for Android, and without claiming that ordinary iOS code can self-replace a signed application.
+
+### Implemented
+
+- Added the public contracts/package-manifest.schema.json and upgraded docs/package-manifest.json to schema 0.3.0.
+- Added docs/PACKAGE-UPDATE-PROTOCOL.md documenting update states, platform boundaries, verification, and owner confirmation.
+- Android now checks the GitHub Pages manifest on foreground and owner-authorized relay reconnect, compares versionCode, verifies HTTPS and SHA-256, notifies the owner, and opens Android's native installer only after the owner taps Update.
+- Apple now checks the same manifest on app foreground and offers the existing SideStore source or GitHub release. The app explicitly reports that iOS cannot replace its own signed executable.
+- The PWA service worker cache was advanced to v19-update-channel and explicitly calls registration.update() after registration.
+- Android and Apple publication workflows now update the unified manifest from the actual qualified artifact, with a shared publication concurrency group.
+- Windows, macOS, and Linux remain explicitly SOURCE_ONLY; no native package or native self-updater is claimed for them. The Read Aloud Android companion remains a separate package channel.
+
+### Executed and independent evidence
+
+- Full repository source tests: passed.
+- npm run test:mcp: 153 passed, 0 failed.
+- npm run test:cli: 7 passed, 0 failed after updating the stale pre-publication Apple assertion.
+- Targeted package/update/page/source tests: passed.
+- Local native Android build: not executed because this Windows host has neither Gradle nor a Gradle wrapper. This is a local capability boundary; it is not a build claim.
+- GitHub Android Build 42410270094: success; Android package compiled, tests ran, and package publication completed.
+- GitHub Apple Device Bridge Qualification 42410270027: success; Apple source/package tests, XcodeGen, macOS Swift compilation, unsigned iPhone build, IPA packaging, and upload completed.
+- GitHub Publish Apple SideStore Update Channel 42410397138: success; release assets and unified manifest publication completed.
+- GitHub Android Build 42410553049: success after repairing formula evidence generation.
+- GitHub Pages deployment 42410687684: success.
+- Fresh HTTPS readback of https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/package-manifest.json returned HTTP 200, schema 0.3.0, updatedAtUtc 2026-11-07T20:21:33Z, Android size/formula size 66445365, identical Android artifact/formula SHA-256 63d8f8b4ae9338f78b89ed677a3724f1ddb351b33d7eb3abe75a555c18c2ae73, and Apple version/build 0.1.49/49.
+- Source commit 4206184, evidence-repair commit 40fa733, and generated publication commits are present on origin/main; the latest observed remote head is 44fd817.
+
+### Capability and evidence state
+
+| Boundary | Configured | Running | Executed | Verified | Production-ready |
+|---|---:|---:|---:|---:|---:|
+| GitHub Pages update manifest | yes | live | HTTPS readback | yes | distribution metadata ready |
+| Android update checker and installer handoff | yes | only in qualified build artifact | GitHub compile/source tests | GitHub build qualified | physical install pending |
+| Apple foreground checker and SideStore handoff | yes | only in qualified IPA | GitHub macOS build/source tests | GitHub package/publication qualified | owner signing/install pending |
+| Web/PWA update route | yes | Pages deployment passed | source tests/live manifest | Pages deployment qualified | browser lifecycle remains device-dependent |
+| Windows/macOS/Linux native self-update | no | no native package | source-only route documented | not applicable | BLOCKED — native packages are not published |
+| Installed Android/Apple package and live phone runtime | owner-dependent | no new phone readback in this checkpoint | no physical update action | not verified | BLOCKED — owner install/reconnect/receipt evidence pending |
+
+### Accepted and rejected decisions
+
+- Accepted: GitHub is the package-discovery and artifact-publication source for all available routes; owners can update Android directly from the phone through Android's installer after a prompt.
+- Accepted: Apple updates remain GitHub-published and phone-directed through SideStore; iLoader is not required by the source contract when SideStore is healthy, but iOS signing/installation remains owner-controlled.
+- Accepted: automatic checking and owner prompts do not equal automatic installation.
+- Rejected: GitHub Actions success, a manifest digest, a live Pages response, or an IPA/APK download will be treated as proof that a phone installed, trusted, paired, or reconnected the new package.
+
+### Exact next executable action
+
+On Android, install the newly published APK from the Device Bridge update prompt and verify Android reports the replacement without uninstalling the existing package. On iPhone, open the app after the owner-controlled SideStore route is healthy, accept the GitHub update prompt, then grant permissions and execute the paired vision.sources.list → vision.session.start → advancing vision.frames.observe → vision.session.stop readback. Preserve the installer and runtime receipts. Until those physical steps are completed, the phone runtime and three-platform camera/production gates remain NOT FULLY QUALIFIED.
