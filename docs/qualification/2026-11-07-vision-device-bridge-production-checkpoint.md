@@ -129,3 +129,15 @@ The Creator reported that the iPhone Camera app had been opened and requested on
 
 **Retry outcome:** **BLOCKED — iPhone not present on the current Bridge host transport.** No iPhone app-launch operation or camera frame could be executed or verified. Opening the Camera app on the phone is not observable by this Bridge while the phone is absent from its USB/PnP transport, and the active adapter still has no iOS screen/camera route. The next executable action is to reconnect the iPhone, unlock it, accept the Trust prompt if shown, keep Camera open, and rerun this same Bridge-only readback. The earlier Android and Windows evidence is unchanged.
 
+## iPhone retry readback — 2026-11-07 13:21:39 America/Chicago (2026-11-07 19:21:39 UTC)
+
+The Creator reported that the iPhone Camera had been opened and requested one more Bridge-only attempt. The fresh live readback did not change the capability boundary:
+
+- `bridge_devices` still returned only the configured desktop passport `pc-primary`; `bridge_capabilities` still granted no physical Apple device, `device.apps.launch`, `device.screen.capture`, `device.ui.*`, or `vision.*` route. Health remained PASS with receipt `734ec569-0303-4545-93c2-64ca75a2dd44`.
+- Bridge-mediated Windows PnP readback still showed Apple USB Composite, Apple USB Device, and Apple iPhone WPD entries, all `OK`, but the Windows `Camera` class still contained only `Integrated Camera` and `HD Webcam eMeet C960`.
+- Bridge-mediated DirectShow enumeration still contained only `HD Webcam eMeet C960`, `Integrated Camera`, and `Galaxy Z Fold6 (Windows Virtual Camera)`; no Apple/iPhone video source appeared.
+- Bridge-mediated Apple tooling discovery returned `idevice_id`, `ideviceinfo`, `idevicescreenshot`, `ideviceinstaller`, and `ios-deploy` as `NOT_FOUND`.
+- The complete retry enumeration executed through session-start receipt `27d52713-82fa-4eff-82c4-0fe08c7ad5b9` and session-read receipt `93ca4c56-17eb-44e0-baa5-c62b2bc530d1`.
+
+**Retry outcome:** **BLOCKED — no Bridge-open or iPhone-frame evidence was produced.** The physical Camera app may be open on the phone, but the active LeeWay Device Bridge still has no authorized Apple app-launch, screen-observation, or iOS camera producer route. This retry does not change the three-platform gate.
+
