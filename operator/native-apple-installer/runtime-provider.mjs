@@ -57,7 +57,7 @@ function launchInstaller({binaryPath, request, requestId, twoFactor, signedBundl
     try { child = spawnBinary(binaryPath, [], {shell: false, windowsHide: true, stdio: ["pipe", "pipe", "ignore"]}); }
     catch { reject(Error("APPLE_INSTALLER_SPAWN_FAILED")); return; }
     let settled = false, outputSize = 0, pending = "", challenges = 0;
-    let installAck = false, bundleReadback = false, finishState = null;
+    let installAck = false, bundleReadback = false, signedReadbackBundleId = null, finishState = null;
     const timeout = setTimeout(() => fail("APPLE_INSTALLER_TIMEOUT"), timeoutMs);
     const fail = code => {
       if (settled) return;
@@ -83,7 +83,15 @@ function launchInstaller({binaryPath, request, requestId, twoFactor, signedBundl
       if (value.type !== "leeway.apple.installer" || typeof value.stage !== "string" ||
           typeof value.state !== "string") return fail("APPLE_INSTALLER_STATUS_INVALID");
       if (value.stage === "INSTALL" && value.state === "NATIVE_INSTALLER_ACKNOWLEDGED") installAck = true;
-      if (value.stage === "POST_INSTALL" && value.state === "LEEWAY_BUNDLE_PRESENT") bundleReadback = true;
+      if (value.stage === "POST_INSTALL" && value.state === "LEEWAY_BUNDLE_PRESENT") {
+        const observed = value.signedBundleId;
+        if (typeof observed !== "string" || !/^industries\.leeway\.devicebridge\.[A-Za-z0-9]{10}$/.test(observed) ||
+            (signedBundleId && observed !== signedBundleId)) {
+          return fail("APPLE_POST_INSTALL_BUNDLE_IDENTITY_MISMATCH");
+        }
+        signedReadbackBundleId = observed;
+        bundleReadback = true;
+      }
       if (value.stage === "FINAL") finishState = value.state;
     };
     child.stdout?.setEncoding("utf8");
@@ -111,7 +119,7 @@ function launchInstaller({binaryPath, request, requestId, twoFactor, signedBundl
       resolve({
         state: "HOST_INSTALL_OBSERVED_VERITAS_PENDING",
         nativeInstallAttempted: true,
-        installedBundleId: signedBundleId,
+        installedBundleId: signedReadbackBundleId,
         formulaState: "NOT_EVALUATED",
         veritasState: "NOT_INDEPENDENTLY_VERIFIED",
         canonicalReceiptState: "NOT_ADMITTED",
@@ -180,10 +188,16 @@ export function createAppleNativeInstallProvider({
       if (binary.sha256.toLowerCase() !== binarySha256.toLowerCase()) throw Error("APPLE_NATIVE_BINARY_HASH_MISMATCH");
       const cred = await getHostCredentials({requestId:input.requestId, deviceUDID});
       if (typeof cred?.appleId !== "string" || typeof cred?.applePassword !== "string" ||
-          !/^[A-Z0-9]{10}$/.test(cred.developerTeamId ?? "") ||
-          typeof cred?.anisetteUrl !== "string") throw Error("APPLE_SIGNING_CREDENTIAL_PROVIDER_UNAVAILABLE");
-      if (observation.installedAppState === "KNOWN" && observation.existingTeamId !== cred.developerTeamId) {
-        throw Error("APPLE_SIGNER_WOULD_REPLACE_DIFFERENT_BUNDLE_ID");
+          (cred.developerTeamId != null && !/^[A-Z0-9]{10}$/.test(cred.developerTeamId)) ||
+          (cred.anisetteUrl != null && typeof cred.anisetteUrl !== "string")) {
+        throw Error("APPLE_SIGNING_CREDENTIAL_PROVIDER_UNAVAILABLE");
+      }
+      // A free Apple Account normally has one Personal Team; the Rust worker
+      // discovers it after authentication. Known existing installs need an
+      // exact owner-selected signing team to prevent app-data migration.
+      if (observation.installedAppState === "KNOWN" &&
+          (cred.developerTeamId == null || observation.existingTeamId !== cred.developerTeamId)) {
+        throw Error("APPLE_EXISTING_SIGNING_TEAM_SELECTION_REQUIRED");
       }
       return launchInstaller({
         binaryPath, requestId:input.requestId, timeoutMs, spawnBinary, twoFactor:handleTwoFactor,
