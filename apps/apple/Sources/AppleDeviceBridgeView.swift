@@ -35,14 +35,16 @@ struct AppleDeviceBridgeView: View {
         NavigationStack {
             Form {
                 Section("Your LeeWay account") {
-                    SignInWithAppleButton(.signIn, onRequest: { request in
-                        appleSignIn.prepare(request)
-                    }, onCompletion: { result in
-                        appleSignIn.finish(result)
-                    })
-                    .signInWithAppleButtonStyle(.black)
-                    .frame(height: 48)
-                    .accessibilityLabel("Sign in with Apple for LeeWay")
+                    if appleSignIn.exchangeConfigured {
+                        SignInWithAppleButton(.signIn, onRequest: { request in
+                            appleSignIn.prepare(request)
+                        }, onCompletion: { result in
+                            appleSignIn.finish(result)
+                        })
+                        .signInWithAppleButtonStyle(.black)
+                        .frame(height: 48)
+                        .accessibilityLabel("Sign in with Apple for LeeWay")
+                    }
                     LabeledContent("Identity", value: appleSignIn.state)
                     Text(appleSignIn.detail)
                         .font(.footnote)
