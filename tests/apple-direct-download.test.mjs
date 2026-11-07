@@ -24,7 +24,7 @@ test("Apple controls deliver a release IPA rather than a project or release land
   assert.match(APPLE_IPA_URL, /^https:\/\/github\.com\/4citeB4U\/LEEWAY-DEVICE-BRIDGE\/releases\/download\/apple-latest\/LeeWayDeviceBridge-unsigned\.ipa$/);
   assert.equal((page.match(/data-apple-ipa-download/g) || []).length, 2);
   assert.match(page, /id="appleNativeDownload" data-apple-ipa-download/);
-  assert.match(page, /Download LeeWay Apple App \(\.IPA\)/);
+  assert.match(page, /Download Developer IPA \(\.IPA\)/);
   assert.match(page, /src="\.\/apple-download\.js"/);
   assert.doesNotMatch(page, /Check Apple Release<\/a>/);
   assert.match(page, /Apple signing and approved installation are still required/);
