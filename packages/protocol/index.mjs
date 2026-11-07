@@ -90,6 +90,13 @@ export const schemas = Object.freeze({
   'device.ui.swipe': z.object({ x1: coordinate, y1: coordinate, x2: coordinate, y2: coordinate, durationMs: z.number().int().min(100).max(2000).optional() }).strict(),
   'device.ui.text': z.object({ text: z.string().min(1).max(4096) }).strict(),
   'device.apps.list': empty,
+  // Executable only when a host-injected Apple installer provider passes Runtime C3 gates.
+  // Apple passwords, codes, signing identities and device UDIDs never enter MCP arguments.
+  'device.apps.install.apple': z.object({
+    packageId: z.literal('apple-native'),
+    expectedSha256: z.string().regex(/^[a-f0-9]{64}$/),
+    requestId: z.string().uuid(),
+  }).strict(),
   'device.apps.launch': z.object({ packageName: z.string().regex(/^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z0-9_]+)+$/).max(255) }).strict(),
   'model.status': empty,
   // Catalog membership does not imply admitted weights, residency, or inference authority.
