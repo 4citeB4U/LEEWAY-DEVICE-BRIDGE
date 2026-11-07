@@ -19,6 +19,7 @@
     "mcp": "node apps/desktop/mcp-server.mjs",
     "start:public-mcp": "node operator/hosting/start-public-mcp-ingress.mjs",
     "voice:auth-gateway": "node operator/voice-auth-gateway.mjs",
+    "voice:qualify-c3": "node scripts/qualify-c3-live.mjs",
     "test:voice-auth": "node --test tests/voice-auth-gateway.test.mjs tests/voice-passwordless-pairing.test.mjs tests/voice-app-registry.test.mjs",
     "voice:owner-start": "node operator/voice-auth-owner-start.mjs",
     "voice:owner-approve": "node operator/voice-owner-approval-desktop.mjs"
