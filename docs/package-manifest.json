@@ -126,6 +126,16 @@
         "ipaSizeBytes": 376246,
         "ipaSha256": "19b662919290fe13a8b155877f4831ef845e818f161f959226ec2e1aedeb524b",
         "note": "GitHub publishes the unsigned IPA; the owner-controlled iLoader route signs and installs it over USB."
+      },
+      "consumerDistribution": {
+        "state": "NOT_PUBLISHED",
+        "channel": "APPLE_APP_STORE",
+        "bundleId": "industries.leeway.devicebridge",
+        "appStoreId": null,
+        "installUrl": null,
+        "identityStatus": "NATIVE_APPLE_SIGN_IN_CLIENT_IMPLEMENTED_EXCHANGE_NOT_ADMITTED",
+        "signInRequiredForLocalMetal": false,
+        "customerInstallRequiresDeveloperMembership": false
       }
     }
   ],
