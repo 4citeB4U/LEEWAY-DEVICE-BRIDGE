@@ -1,0 +1,181 @@
+{
+  "header": {
+    "tag": "LEEWAY.APPLE_20261107_NATIVE_CONSUMER_DELIVERY_SOURCE_EVIDENCE",
+    "region": "LEEWAY.DEVICE_BRIDGE.APPLE.DISTRIBUTION",
+    "what": "Machine-readable engineering observations for existing LeeWay Device Bridge Apple source and optional native installer",
+    "why": "Separate proven source and CI outputs from unperformed physical/App Store execution",
+    "who": "Outside LeeWay support contributor, not Agent Lee",
+    "where": "evidence/installation/2026-11-07-apple-consumer-native-delivery.json",
+    "when": "2026-11-07",
+    "how": "GitHub connector source readback and Actions job results",
+    "authority": "ENGINEERING_SOURCE_OBSERVATION_ONLY",
+    "license": "MIT"
+  },
+  "repository": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "baseCommit": "467858146fdaae7cad1f63e346d3b5010b395803",
+  "branch": "creator/apple-iloader-native-delivery-20261107",
+  "pullRequest": "https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/pull/95",
+  "pullRequestDraft": true,
+  "sourceComponents": {
+    "appleIosApp": [
+      "apps/apple/Sources/AppleDeviceBridgeView.swift",
+      "apps/apple/Sources/AppleSignInCoordinator.swift",
+      "apps/apple/Sources/AppleUpdateCoordinator.swift",
+      "apps/apple/project.yml",
+      "apps/apple/LeeWayDeviceBridge.entitlements"
+    ],
+    "deviceBridge": [
+      "packages/protocol/index.mjs",
+      "apps/desktop/mcp-server.mjs",
+      "apps/desktop/runtime-composition.mjs",
+      "operator/physical-adapters.mjs",
+      "operator/installation-adapter.mjs"
+    ],
+    "nativeSigning": [
+      "operator/native-apple-installer/Cargo.toml",
+      "operator/native-apple-installer/src/main.rs",
+      "operator/native-apple-installer/runtime-provider.mjs"
+    ],
+    "identity": [
+      "operator/identity/apple-session-exchange.mjs"
+    ],
+    "publishing": [
+      "docs/index.html",
+      "docs/apple-download.js",
+      "docs/package-manifest.json",
+      ".github/workflows/apple-device-bridge-testflight.yml"
+    ]
+  },
+  "verifiedPublicArtifact": {
+    "release": "https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/tag/apple-latest",
+    "asset": "LeeWayDeviceBridge-unsigned.ipa",
+    "sha256": "19b662919290fe13a8b155877f4831ef845e818f161f959226ec2e1aedeb524b",
+    "sizeBytes": 376246,
+    "channel": "DEVELOPER_UNSIGNED",
+    "publicCustomerAppStoreState": "NOT_PUBLISHED",
+    "appStoreId": null,
+    "source": "GitHub release API and canonical package manifest",
+    "physicalInstallObserved": false
+  },
+  "inspectedUpstream": {
+    "iloader": "https://github.com/nab138/iloader",
+    "iloaderSourceCommit": "96ed06124d7a859692a5ec2864e1b47998d4904c",
+    "rustSigningLibrary": "https://github.com/nab138/isideload",
+    "packageVersion": "0.5.2",
+    "sourceLicense": "MIT",
+    "brandingDifferentLicense": true,
+    "reaCliExecutedThisSession": false
+  },
+  "positiveEvidence": [
+    {
+      "test": "Native Rust worker and Node source CI",
+      "runId": 42420771417,
+      "sha": "81a7599dc35450d7af645c562a6fb5fbb0e593e5",
+      "systems": [
+        "ubuntu",
+        "macos",
+        "windows"
+      ],
+      "outcome": "PASS",
+      "scope": "COMPILER_AND_TEST_FIXTURES"
+    },
+    {
+      "test": "Unsigned native Apple iOS build",
+      "runId": 42420757590,
+      "sha": "03ed73c5b6530e3d8621495232bcda7a86bf12e1",
+      "systems": [
+        "macos"
+      ],
+      "outcome": "PASS",
+      "scope": "UNSIGNED_IOS_BUILD_ONLY"
+    },
+    {
+      "test": "Canonical protocol/MCP three-OS CI",
+      "runId": 42420757622,
+      "sha": "03ed73c5b6530e3d8621495232bcda7a86bf12e1",
+      "systems": [
+        "ubuntu",
+        "macos",
+        "windows"
+      ],
+      "outcome": "PASS",
+      "scope": "SOURCE_PROTOCOL"
+    },
+    {
+      "test": "Dashboard and Apple storefront acceptance",
+      "runId": 42421089348,
+      "sha": "0570e230a82bb2da348d29f85f2de28d789f587e",
+      "systems": [
+        "ubuntu"
+      ],
+      "outcome": "PASS",
+      "scope": "BROWSER_SOURCE"
+    },
+    {
+      "test": "Dashboard latest Apple identity verifier source",
+      "runId": 42421504557,
+      "sha": "480e9f436b96c036a5bc6fba9807f175d553bb99",
+      "systems": [
+        "ubuntu"
+      ],
+      "outcome": "PASS",
+      "scope": "SYNTHETIC_JWT_CRYPTOGRAPHIC_TESTS"
+    }
+  ],
+  "failuresAndRepairs": [
+    {
+      "failure": "Rust compiler E0283 unbound callback generic",
+      "evidenceRunId": 42419865296,
+      "repair": "Explicit MaxCertsCallbackBox type; subsequent run 42420771417 PASS"
+    },
+    {
+      "failure": "Linux cargo dependency missing dbus-1 development headers",
+      "evidenceRunId": 42420249930,
+      "repair": "Install libdbus-1-dev and pkg-config on Linux CI; subsequent run 42420771417 PASS"
+    },
+    {
+      "failure": "Apple PWA test expected retired wording",
+      "evidenceRunId": 42420818547,
+      "repair": "Updated original source test for App Store customer path; subsequent dashboard run 42421089348 PASS"
+    },
+    {
+      "failure": "Android cross-lane source gate expected old Apple update labels",
+      "evidenceRunId": 42421445062,
+      "repair": "Updated tests/apple-update-source.test.mjs; latest Android retest result not yet verified"
+    }
+  ],
+  "notExecutedOrUnverified": {
+    "liveAppleDeveloperAccountEnrollment": "NOT_VERIFIED",
+    "privateAppleDistributionCredentials": "NOT_VERIFIED",
+    "appStoreConnectSubmission": "NOT_EXECUTED",
+    "officialCustomerAppStorePublication": "NOT_EXECUTED",
+    "appleSessionExchangeLiveHostMount": "NOT_EXECUTED",
+    "runtimeAppleSessionIssuer": "NOT_VERIFIED",
+    "ownerHostAppleInstallProvider": "NOT_BOUND_TO_LIVE_RUNTIME",
+    "deviceBridgeDiscovery": "LEEWAY_BRIDGE_DISCOVERY_REGISTRATION_UNVERIFIED",
+    "livePhysicalIphoneInstall": "NOT_EXECUTED",
+    "livePhysicalIpadInstall": "NOT_EXECUTED",
+    "newBuildMetalReadback": "NOT_EXECUTED",
+    "concurrentScaleLoadTest": "NOT_EXECUTED",
+    "independentVeritas": "NOT_EXECUTED",
+    "receiptAuthorityReceipt": "NOT_CREATED",
+    "learningLedger": "NOT_UPDATED"
+  },
+  "evidenceAgainst": [
+    "Synthetic host test response is not a physical Apple installation.",
+    "An Apple ID token is not a Device Bridge access token or executable grant.",
+    "Source compile tests are not App Store approval or signed distribution.",
+    "Unsigned GitHub IPA cannot be an ordinary customer App Store installation.",
+    "The user-visible live Device Bridge connector did not show an authorized Apple installer command.",
+    "Actual publisher credentials and Runtime identity backend have not been observed."
+  ],
+  "requiredNextChecks": [
+    "Fresh CI result at exact latest source commit",
+    "Owner-authorized Apple Program App ID, cert/profile and App Store Connect upload",
+    "Deploy Runtime-backed Apple token verifier and replay gate",
+    "Verify real official public App Store release/listing",
+    "Physical iPhone/iPad install, authenticated Device Bridge session and native Metal readback",
+    "Independent Veritas and Receipt Authority admission",
+    "Measured 700/15000000-user load/tenant-isolation tests"
+  ]
+}
