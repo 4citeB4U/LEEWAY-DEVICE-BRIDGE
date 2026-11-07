@@ -6,6 +6,12 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 import { Bridge, schemas } from '../../packages/protocol/index.mjs';
+import {
+  LEEWAY_MCP_INSTRUCTIONS,
+  LEEWAY_OPERATING_CONTRACT,
+  LEEWAY_OPERATING_CONTRACT_ID,
+  LEEWAY_OPERATING_CONTRACT_VERSION,
+} from '../../packages/protocol/operating-contract.mjs';
 import { RelayAdapter } from '../../packages/agent-relay/index.mjs';
 import { DesktopAdapter } from './adapter.mjs';
 import { PhysicalAndroidAdapter, PhysicalAppleAdapter } from '../../operator/physical-adapters.mjs';
@@ -64,8 +70,21 @@ function visionFrameResult(value) {
 
 export function createServer(bridge, { discoveryOnly = false, readOnlyCapabilities = [], complianceCardProvider = null, visionClientId = null } = {}) {
   const boundVisionClientId = typeof visionClientId === 'string' && visionClientId.trim() && visionClientId.length <= 128 ? visionClientId : null;
-  const server = new McpServer({ name: 'leeway-device-bridge', version: '0.1.0' });
+  const server = new McpServer({ name: 'leeway-device-bridge', version: '0.1.0' }, {
+    instructions: LEEWAY_MCP_INSTRUCTIONS,
+  });
   const result = value => ({ content: [{ type: 'text', text: JSON.stringify(value) }], ...(value.ok === false ? { isError: true } : {}) });
+  server.registerTool('leeway_operating_contract', {
+    title: 'LeeWay agent operating contract',
+    description: 'Read the versioned LeeWay engineering-loop and evidence contract delivered in MCP initialize instructions. Guidance does not grant capability or replace Runtime admission.',
+    inputSchema: {},
+  }, async () => result({
+    contractId: LEEWAY_OPERATING_CONTRACT_ID,
+    version: LEEWAY_OPERATING_CONTRACT_VERSION,
+    source: 'LEEWAY_DEVICE_BRIDGE_CANONICAL_PROTOCOL',
+    enforcementBoundary: 'CLIENT_GUIDANCE_AND_EXISTING_RUNTIME_ADMISSION',
+    contract: LEEWAY_OPERATING_CONTRACT,
+  }));
   server.registerTool('bridge_devices', { description: 'List configured device IDs. Configuration does not prove connectivity.', inputSchema: {} }, async () => result({ devices: [...bridge.devices.keys()] }));
   server.registerTool('bridge_capabilities', { description: 'Discover current capabilities for one device; grants and verification are distinct.', inputSchema: { deviceId: z.string().min(1).max(128) } }, async ({ deviceId }) => {
     try { return result(await bridge.discover(deviceId)); } catch { return result({ ok: false, error: 'DISCOVERY_FAILED' }); }

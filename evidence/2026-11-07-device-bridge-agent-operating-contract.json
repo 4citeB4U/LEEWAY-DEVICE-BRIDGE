@@ -1,0 +1,60 @@
+{
+  "recordType": "SANITIZED_SOURCE_ENGINEERING_EVIDENCE",
+  "recordId": "DEVICE_BRIDGE_AGENT_OPERATING_CONTRACT_2026-11-07",
+  "recordedAt": "2026-11-07T11:40:08-06:00",
+  "executor": "Codex",
+  "authority": "Creator-authorized Device Bridge source maintenance",
+  "repository": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "baseCommit": "1aceb2418805f4ce7ff411c4ee2e54e4e5a8bc19",
+  "workingBranch": "codex/windows-composer-contract-20261107",
+  "scope": "Deliver the LeeWay agent operating contract through the canonical MCP initialize path and the authenticated public Vercel MCP forwarder.",
+  "directiveSha256": "E8F3EE957A868A5AA147324178C01A731680A45CE58CE0826D5D30E6D5C627EA",
+  "contract": {
+    "id": "LEEWAY_DEVICE_BRIDGE_AGENT_OPERATING_CONTRACT",
+    "version": "1.0.0",
+    "sourceSha256": "55DAAE7A2182DD8D39CF33119539688F6BBACC3F2B2DFD989894E275A3A8FEB8",
+    "delivery": [
+      "shared MCP server initialize instructions",
+      "read-only leeway_operating_contract tool",
+      "Vercel authenticated JSON initialize response decoration",
+      "Vercel authenticated SSE initialize response decoration"
+    ],
+    "executionAuthorityChanged": false,
+    "clientObedienceEnforceableByMcpProse": false
+  },
+  "engineeringLoop": {
+    "investigate": "EVIDENCED",
+    "diagnose": "EVIDENCED",
+    "plan": "EVIDENCED",
+    "implement": "PASS_LOCAL",
+    "test": "PASS",
+    "validate": "PASS_SOURCE",
+    "repair": "PASS",
+    "retest": "PASS",
+    "verify": "BLOCKED_ON_PUBLICATION_AND_LIVE_CLIENT_READBACK",
+    "evidence": "EVIDENCED",
+    "checkpoint": "VERIFIED_READBACK",
+    "continue": "IN_PROGRESS"
+  },
+  "checks": [
+    { "command": "node --test tests/mcp/vercel-ingress.test.mjs tests/mcp/bridge.test.mjs tests/mcp/http-transport.test.mjs tests/mcp/remote-http.test.mjs", "result": "PASS", "passed": 36, "failed": 0, "scope": "MCP transport and Vercel initialization source tests" },
+    { "command": "npm run test:mcp", "result": "PASS", "passed": 152, "failed": 0, "scope": "full Device Bridge MCP source suite" },
+    { "command": "npm run test:cli", "result": "PASS", "passed": 7, "failed": 0, "scope": "Device Bridge CLI source suite" },
+    { "command": "git diff --check", "result": "PASS", "exitCode": 0, "scope": "patch whitespace check" },
+    { "command": "skill-creator quick_validate.py codex-engineering-loop", "result": "PASS", "exitCode": 0, "scope": "local Codex skill validation" },
+    { "command": "engineering-loop-mcp self-test.mjs", "result": "PASS", "passed": 12, "failed": 0, "scope": "local read-only checkpoint MCP" },
+    { "command": "Python tomllib config.toml parse", "result": "PASS", "scope": "Codex profile registration on disk; runtime reload not verified" }
+  ],
+  "knownBoundaries": [
+    "MCP initialize instructions are client guidance and do not force model compliance or control hidden reasoning.",
+    "Public production deployment and active Runtime upstream source are not yet verified.",
+    "Fresh authenticated initialize readback from ChatGPT, Gemini and Antigravity is not yet verified.",
+    "Active local host composition points to a separate dirty checkout with a source hash mismatch; it was preserved and not changed."
+  ],
+  "receipt": "NOT_CREATED",
+  "formula": "NOT_EVALUATED",
+  "veritas": "NOT_RUN",
+  "continuumAdmission": "NOT_EXECUTED",
+  "learningLedger": "NOT_UPDATED",
+  "nextAction": "Publish to canonical main, verify GitHub and Vercel for the exact commit, then inspect public initialization and reconcile the local source binding safely."
+}

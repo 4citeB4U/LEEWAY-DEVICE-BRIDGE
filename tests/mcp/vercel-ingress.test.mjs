@@ -16,6 +16,7 @@ import { createServer } from "node:http";
 import { once } from "node:events";
 import test from "node:test";
 import ingressFunction, { createMcpIngressHandler } from "../../api/mcp.mjs";
+import { LEEWAY_MCP_INSTRUCTIONS } from "../../packages/protocol/operating-contract.mjs";
 import { createOAuthProtectedResourceHandler } from "../../api/oauth-protected-resource.mjs";
 import {
   PUBLIC_MCP_METADATA_PATH,
@@ -106,11 +107,12 @@ test("OAuth metadata publishes the exact resource, issuer, and least-privilege r
 
 test("MCP forwarding preserves bearer/session/protocol headers and excludes host and cookies", async t => {
   let observed;
+  const serverInstructions = "Upstream Runtime instructions remain intact.";
   const mcpHandler = createMcpIngressHandler({
     env,
     fetchImpl: async (url, init) => {
       observed = { url: String(url), init };
-      return new Response('{"jsonrpc":"2.0","id":1,"result":{}}', {
+      return new Response(JSON.stringify({ jsonrpc: "2.0", id: 1, result: { instructions: serverInstructions } }), {
         status: 200,
         headers: {
           "content-type": "application/json",
@@ -133,7 +135,7 @@ test("MCP forwarding preserves bearer/session/protocol headers and excludes host
       "last-event-id": "event-test",
       cookie: "private-session=must-not-forward"
     },
-    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" })
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-03-26" } })
   });
   const headers = new Headers(observed.init.headers);
 
@@ -149,6 +151,56 @@ test("MCP forwarding preserves bearer/session/protocol headers and excludes host
   assert.equal(response.headers.get("mcp-session-id"), "session-test");
   assert.equal(response.headers.get("mcp-protocol-version"), "2025-03-26");
   assert.equal(response.headers.get("last-event-id"), "event-test");
+  const initialized = await response.json();
+  assert.ok(initialized.result.instructions.startsWith(serverInstructions));
+  assert.ok(initialized.result.instructions.includes(LEEWAY_MCP_INSTRUCTIONS));
+});
+
+test("Vercel injects the LeeWay contract into a Streamable HTTP SSE initialize response", async t => {
+  const upstreamResult = {
+    jsonrpc: "2.0", id: 7,
+    result: { protocolVersion: "2025-03-26", capabilities: {}, serverInfo: { name: "runtime-upstream", version: "1" }, instructions: "Upstream Runtime instructions remain intact." }
+  };
+  const mcpHandler = createMcpIngressHandler({
+    env,
+    fetchImpl: async () => new Response(`event: message\r\ndata: ${JSON.stringify(upstreamResult)}\r\n\r\n`, {
+      status: 200,
+      headers: { "content-type": "text/event-stream" }
+    })
+  });
+  const serverUrl = await startServer(mcpHandler, t);
+  const response = await fetch(`${serverUrl}/mcp`, {
+    method: "POST",
+    headers: { authorization: "Bearer test-only-token", "content-type": "application/json", accept: "application/json, text/event-stream" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 7, method: "initialize", params: { protocolVersion: "2025-03-26" } })
+  });
+  const eventStream = await response.text();
+  const dataLine = eventStream.split(/\r?\n/).find(line => line.startsWith("data:"));
+  const initialized = JSON.parse(dataLine.slice(5).trim());
+
+  assert.equal(response.status, 200);
+  assert.match(eventStream, /event: message/);
+  assert.ok(initialized.result.instructions.startsWith("Upstream Runtime instructions remain intact."));
+  assert.ok(initialized.result.instructions.includes(LEEWAY_MCP_INSTRUCTIONS));
+});
+
+test("Vercel bounds an oversized initialize response before adding instructions", async t => {
+  const mcpHandler = createMcpIngressHandler({
+    env,
+    fetchImpl: async () => new Response("x".repeat(1024 * 1024 + 1), {
+      status: 200,
+      headers: { "content-type": "application/json" }
+    })
+  });
+  const serverUrl = await startServer(mcpHandler, t);
+  const response = await fetch(`${serverUrl}/mcp`, {
+    method: "POST",
+    headers: { authorization: "Bearer test-only-token", "content-type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 8, method: "initialize", params: { protocolVersion: "2025-03-26" } })
+  });
+
+  assert.equal(response.status, 502);
+  assert.deepEqual(await response.json(), { error: "UPSTREAM_INITIALIZE_RESPONSE_INVALID" });
 });
 
 test("upstream OAuth challenges are rewritten to the public metadata URL", async t => {

@@ -21,8 +21,17 @@ test('real SDK stdio tools/list and tools/call fail-closed without canonical C3 
   const transport = new StdioClientTransport({ command: process.execPath, args: [path.resolve('apps/desktop/mcp-server.mjs'), path.join(root, 'config.json')], stderr: 'pipe' });
   t.after(() => client.close());
   await client.connect(transport);
+  assert.match(client.getInstructions() || '', /LeeWay Device Bridge Agent Operating Contract/);
+  assert.match(client.getInstructions() || '', /INVESTIGATE.*CONTINUE/);
   const listing = await client.listTools();
+  assert.ok(listing.tools.some(x => x.name === 'leeway_operating_contract'));
   assert.ok(listing.tools.some(x => x.name === 'device_files_write' && x.inputSchema.properties.deviceId));
+  const contractResult = await client.callTool({ name: 'leeway_operating_contract', arguments: {} });
+  const contract = JSON.parse(contractResult.content[0].text);
+  assert.equal(contract.contractId, 'LEEWAY_DEVICE_BRIDGE_AGENT_OPERATING_CONTRACT');
+  assert.equal(contract.version, '1.0.0');
+  assert.match(contract.contract, /VERIFIED, OBSERVED, INFERRED, BLOCKED or FAILED/);
+  assert.equal(contract.enforcementBoundary, 'CLIENT_GUIDANCE_AND_EXISTING_RUNTIME_ADMISSION');
   const invoke = async (name, args) => {
     const r = await client.callTool({ name, arguments: args });
     return { ...JSON.parse(r.content[0].text), isError: r.isError };

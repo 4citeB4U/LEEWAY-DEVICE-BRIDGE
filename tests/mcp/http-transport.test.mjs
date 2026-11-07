@@ -75,7 +75,10 @@ const decode = result => JSON.parse(result.content[0].text);
 
 test('HTTP MCP uses one dispatcher for all registered device adapters', async t => {
   const f=await fixture(t), c=await f.connect();
+  assert.match(c.getInstructions() || '', /LeeWay Device Bridge Agent Operating Contract/);
+  assert.match(c.getInstructions() || '', /INVESTIGATE → DIAGNOSE → PLAN → IMPLEMENT → TEST → VALIDATE → REPAIR → RETEST → VERIFY → EVIDENCE → CHECKPOINT → CONTINUE/);
   const tools=await c.listTools();
+  assert.ok(tools.tools.some(x=>x.name==='leeway_operating_contract'));
   assert.ok(tools.tools.some(x=>x.name==='device_health'));
   const ids=decode(await c.callTool({name:'bridge_devices',arguments:{}})).devices;
   assert.equal(ids.length,5);

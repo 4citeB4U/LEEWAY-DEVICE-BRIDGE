@@ -13,6 +13,7 @@ LICENSE: MIT
 import { Readable, Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { resolvePublicMcpResourceConfig } from "../operator/identity/public-mcp-resource-config.mjs";
+import { LEEWAY_MCP_INSTRUCTIONS } from "../packages/protocol/operating-contract.mjs";
 
 const MAX_BODY_BYTES = 1024 * 1024;
 const UPSTREAM_TIMEOUT_MS = 30_000;
@@ -135,6 +136,41 @@ function forwardedResponseHeaders(upstream, resourceConfig) {
   return headers;
 }
 
+function attachLeeWayInstructions(initializeResult, requestId) {
+  if (initializeResult?.jsonrpc !== "2.0" || initializeResult.id !== requestId ||
+      !initializeResult.result || typeof initializeResult.result !== "object" || Array.isArray(initializeResult.result)) return false;
+  const upstreamInstructions = typeof initializeResult.result.instructions === "string"
+    ? initializeResult.result.instructions.trim()
+    : "";
+  initializeResult.result.instructions = upstreamInstructions
+    ? `${upstreamInstructions}\n\n${LEEWAY_MCP_INSTRUCTIONS}`
+    : LEEWAY_MCP_INSTRUCTIONS;
+  return true;
+}
+
+function augmentInitializeEventStream(bytes, requestId) {
+  const sections = bytes.toString("utf8").split(/(\r?\n\r?\n)/);
+  let changed = false;
+  for (let index = 0; index < sections.length; index += 2) {
+    const block = sections[index];
+    const lines = block.split(/\r?\n/);
+    const dataIndexes = lines.map((line, lineIndex) => line.startsWith("data:") ? lineIndex : -1).filter(lineIndex => lineIndex >= 0);
+    if (!dataIndexes.length) continue;
+    const data = dataIndexes.map(lineIndex => lines[lineIndex].slice(5).replace(/^ /, "")).join("\n");
+    let message;
+    try { message = JSON.parse(data); } catch { continue; }
+    if (!attachLeeWayInstructions(message, requestId)) continue;
+
+    const firstDataIndex = dataIndexes[0];
+    const insertionIndex = lines.slice(0, firstDataIndex).filter(line => !line.startsWith("data:")).length;
+    const retained = lines.filter(line => !line.startsWith("data:"));
+    retained.splice(insertionIndex, 0, `data: ${JSON.stringify(message)}`);
+    sections[index] = retained.join(block.includes("\r\n") ? "\r\n" : "\n");
+    changed = true;
+  }
+  return changed ? Buffer.from(sections.join(""), "utf8") : null;
+}
+
 export function createMcpIngressHandler({ env = process.env, fetchImpl = globalThis.fetch } = {}) {
   return async function handleMcpIngress(req, res) {
     if (req.method !== "POST") {
@@ -194,6 +230,45 @@ export function createMcpIngressHandler({ env = process.env, fetchImpl = globalT
     const contentType = upstream.headers.get("content-type") || "application/json";
     if (!/^(application\/json|text\/event-stream)(?:\s*;|$)/i.test(contentType)) {
       return jsonResponse(res, 502, { error: "UPSTREAM_CONTENT_TYPE_INVALID" });
+    }
+
+    const mcpRequest = JSON.parse(body.toString("utf8"));
+    const isJson = /^application\/json(?:\s*;|$)/i.test(contentType);
+    const isEventStream = /^text\/event-stream(?:\s*;|$)/i.test(contentType);
+    if (mcpRequest.method === "initialize" && upstream.status === 200 && (isJson || isEventStream)) {
+      const chunks = [];
+      let responseBytes = 0;
+      try {
+        if (upstream.body) {
+          for await (const chunk of Readable.fromWeb(upstream.body)) {
+            responseBytes += chunk.length;
+            if (responseBytes > MAX_BODY_BYTES) throw new Error("UPSTREAM_BODY_TOO_LARGE");
+            chunks.push(Buffer.from(chunk));
+          }
+        }
+      } catch {
+        return jsonResponse(res, 502, { error: "UPSTREAM_INITIALIZE_RESPONSE_INVALID" });
+      }
+      const rawInitialize = Buffer.concat(chunks);
+      let augmentedInitialize = null;
+      if (isJson) {
+        try {
+          const initializeResult = JSON.parse(rawInitialize.toString("utf8"));
+          if (attachLeeWayInstructions(initializeResult, mcpRequest.id)) {
+            augmentedInitialize = Buffer.from(JSON.stringify(initializeResult), "utf8");
+          }
+        } catch { /* Preserve the bounded upstream response unchanged. */ }
+      } else {
+        augmentedInitialize = augmentInitializeEventStream(rawInitialize, mcpRequest.id);
+      }
+      if (augmentedInitialize) {
+        res.writeHead(upstream.status, forwardedResponseHeaders(upstream, resourceConfig));
+        res.end(augmentedInitialize);
+        return;
+      }
+      res.writeHead(upstream.status, forwardedResponseHeaders(upstream, resourceConfig));
+      res.end(rawInitialize);
+      return;
     }
 
     res.writeHead(upstream.status, forwardedResponseHeaders(upstream, resourceConfig));

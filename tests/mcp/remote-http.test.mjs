@@ -59,10 +59,14 @@ test('real SDK HTTP initializes and advertises only canonical discovery tools af
   assert.equal(originDenied.status, 403);
   const initialize = await rpc('initialize', 2);
   assert.equal(initialize.status, 200);
-  assert.equal((await initialize.json()).result.serverInfo.name, 'leeway-device-bridge');
+  const initializeBody = await initialize.json();
+  assert.equal(initializeBody.result.serverInfo.name, 'leeway-device-bridge');
+  assert.match(initializeBody.result.instructions, /LeeWay Device Bridge Agent Operating Contract/);
+  assert.match(initializeBody.result.instructions, /INVESTIGATE.*CONTINUE/);
   const listed = await rpc('tools/list', 3);
   assert.equal(listed.status, 200);
   const tools = (await listed.json()).result.tools.map(tool => tool.name);
+  assert.ok(tools.includes('leeway_operating_contract'));
   assert.ok(tools.includes('bridge_capabilities'));
   assert.ok(tools.includes('bridge_devices'));
   assert.ok(tools.includes('device_health'));
