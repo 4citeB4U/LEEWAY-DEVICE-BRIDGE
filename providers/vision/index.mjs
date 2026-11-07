@@ -34,14 +34,16 @@ export class VisionSensoryProvider {
     this.bridgeSessionId = requireNonEmpty(options.bridgeSessionId, 'BRIDGE_SESSION_ID_REQUIRED');
     this.ownerId = requireNonEmpty(options.ownerId, 'OWNER_ID_REQUIRED');
     this.authorityValidator = options.authorityValidator || null;
-    this.connector = options.connector || null;
+    this.connector = null;
+    if (options.connector !== undefined && options.connector !== null) this.bindConnector(options.connector);
   }
 
   /**
    * Bind an external verified VisionBridgeConnector.
    */
   bindConnector(connector) {
-    if (!connector || typeof connector !== 'object') {
+    if (!connector || typeof connector !== 'object' ||
+        ['listSources', 'getCapabilities', 'startSession', 'observeFrame', 'stopSession'].some(method => typeof connector[method] !== 'function')) {
       throw new Error('INVALID_CONNECTOR');
     }
     this.connector = connector;
@@ -52,19 +54,20 @@ export class VisionSensoryProvider {
    * Enumerate provider capabilities adhering to contracts/provider.schema.json.
    */
   describe() {
+    const capabilities = this.connector ? [
+      'vision.sources.list',
+      'vision.session.start',
+      'vision.frames.observe',
+      'vision.session.stop',
+      ...(typeof this.connector.describeScene === 'function' ? ['vision.scene.describe'] : []),
+      ...(typeof this.connector.detectObjects === 'function' ? ['vision.objects.detect'] : [])
+    ] : [];
     return {
       providerId: this.providerId,
       class: this.class,
       status: this.status,
       transports: ['webrtc', 'loopback', 'direct-show'],
-      capabilities: [
-        'vision.sources.list',
-        'vision.session.start',
-        'vision.frames.observe',
-        'vision.scene.describe',
-        'vision.objects.detect',
-        'vision.session.stop'
-      ],
+      capabilities,
       requiresPhysicalAdapter: true,
       lastVerifiedAt: null
     };
@@ -77,11 +80,11 @@ export class VisionSensoryProvider {
     const isBound = this.connector !== null;
     return {
       providerId: this.providerId,
-      ok: true,
-      statusCode: 200,
+      ok: isBound,
+      statusCode: isBound ? 200 : 503,
       path: '/health',
       body: {
-        healthy: true,
+        healthy: isBound,
         connectorBound: isBound,
         status: isBound ? 'ACTIVE' : 'AVAILABLE'
       },
@@ -119,6 +122,16 @@ export class VisionSensoryProvider {
         const sessionId = requireNonEmpty(args.sessionId, 'SESSION_ID_REQUIRED');
         const frame = this.connector.observeFrame(clientId, sessionId);
         return { ok: true, route, frame };
+      }
+      case 'vision.scene.describe': {
+        if (typeof this.connector.describeScene !== 'function') throw new Error('VISION_SCENE_BACKEND_NOT_BOUND');
+        const sessionId = requireNonEmpty(args.sessionId, 'SESSION_ID_REQUIRED');
+        return { ok: true, route, scene: await this.connector.describeScene(clientId, sessionId) };
+      }
+      case 'vision.objects.detect': {
+        if (typeof this.connector.detectObjects !== 'function') throw new Error('VISION_OBJECT_BACKEND_NOT_BOUND');
+        const sessionId = requireNonEmpty(args.sessionId, 'SESSION_ID_REQUIRED');
+        return { ok: true, route, detection: await this.connector.detectObjects(clientId, sessionId) };
       }
       case 'vision.session.stop': {
         const sessionId = requireNonEmpty(args.sessionId, 'SESSION_ID_REQUIRED');
