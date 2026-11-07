@@ -120,6 +120,16 @@
       ],
       "outcome": "PASS",
       "scope": "SYNTHETIC_JWT_CRYPTOGRAPHIC_TESTS"
+    },
+    {
+      "test": "Android build and cross-lane Apple update-source recovery",
+      "runId": 42421658159,
+      "sha": "2c3b324c60b39c9ecf0fce698ac2f22dc3ce8e7b",
+      "systems": [
+        "ubuntu"
+      ],
+      "outcome": "PASS",
+      "scope": "ANDROID_BUILD_AND_SOURCE_CONTRACTS"
     }
   ],
   "failuresAndRepairs": [
@@ -141,7 +151,7 @@
     {
       "failure": "Android cross-lane source gate expected old Apple update labels",
       "evidenceRunId": 42421445062,
-      "repair": "Updated tests/apple-update-source.test.mjs; latest Android retest result not yet verified"
+      "repair": "Updated tests/apple-update-source.test.mjs for separate App Store and developer IPA; Android Build 42421658159 PASS at commit 2c3b324c60b39c9ecf0fce698ac2f22dc3ce8e7b"
     }
   ],
   "notExecutedOrUnverified": {
