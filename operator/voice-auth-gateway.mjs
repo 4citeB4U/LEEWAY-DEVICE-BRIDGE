@@ -31,7 +31,7 @@ const boundedBody=async(req)=>{
 export function createVoiceAuthGateway({
  passwordHash,passwordSalt,fetchImpl=fetch,pairing=null,
  registeredApps={'leeway.voice.studio':FRONTEND},sessionDurationMs=30*60*1000,
- upstream='http://127.0.0.1:5173/__leeway/voice-turn',clock=now,sourceCommit=null
+ upstream='http://127.0.0.1:5173/__leeway/voice-turn',voiceFabric='http://127.0.0.1:8890',clock=now,sourceCommit=null
 }={}){
  if(sourceCommit!==null&&!/^[a-f0-9]{40}$/.test(sourceCommit))throw Error('VOICE_SOURCE_COMMIT_INVALID');
  if(!/^[a-f0-9]{128}$/.test(passwordHash||'')||!(/^[a-f0-9]{32,128}$/.test(passwordSalt||'')))
@@ -39,6 +39,9 @@ export function createVoiceAuthGateway({
  const u=new URL(upstream);
  if(u.protocol!=='http:'||u.hostname!=='127.0.0.1'||u.port!=='5173'||
   u.pathname!=='/__leeway/voice-turn'||u.search)throw Error('UNTRUSTED_VOICE_UPSTREAM');
+ const vf=new URL(voiceFabric);
+ if(vf.protocol!=='http:'||vf.hostname!=='127.0.0.1'||vf.port!=='8890'||
+  vf.pathname!=='/'||vf.search||vf.hash)throw Error('UNTRUSTED_VOICE_FABRIC');
  const sessions=new Map(),failures=new Map();
  const permittedOrigins=new Set(Object.values(registeredApps));
  const allowOrigin=req=>permittedOrigins.has(req.headers.origin);
@@ -121,10 +124,22 @@ export function createVoiceAuthGateway({
   if(route===ROUTES.synthesisStatus&&method==='GET'){
    if(!session)return deny(res,401,'VOICE_SESSION_REQUIRED');
    try{
-    const reply=await fetchImpl('http://127.0.0.1:8877/api/local/status',{signal:AbortSignal.timeout(5000),redirect:'error'});
-    if(!reply.ok)return deny(res,503,'KOKORO_UNAVAILABLE');
-    const state=await reply.json();
-    return json(res,200,{schema:'leeway.voice.synthesis-status.v1',ready:state?.kokoro?.ready===true,voices:state?.kokoro?.voices||[]},headers);
+    const [healthReply,bindingReply]=await Promise.all([
+     fetchImpl(new URL('/health',vf),{signal:AbortSignal.timeout(5000),redirect:'error'}),
+     fetchImpl(new URL('/voice/binding',vf),{signal:AbortSignal.timeout(5000),redirect:'error'})
+    ]);
+    if(!healthReply.ok||!bindingReply.ok)return deny(res,503,'LEEWAY_VOICE_FABRIC_UNAVAILABLE');
+    const [health,bindingDoc]=await Promise.all([healthReply.json(),bindingReply.json()]);
+    const binding=bindingDoc?.voiceBinding;
+    const ready=health?.identity==='LEEWAY_MACHINE_CONSCIOUSNESS'&&health?.voice?.ready===true&&
+     binding?.authority==='LEEWAY_VOICE_FABRIC'&&binding?.agentId==='agent-lee'&&
+     binding?.productionAdmitted===true&&binding?.qualificationOnly===false&&
+     typeof binding?.voicePackageId==='string';
+    if(!ready)return deny(res,503,'LEEWAY_VOICE_BINDING_UNQUALIFIED');
+    return json(res,200,{schema:'leeway.voice.synthesis-status.v1',ready:true,
+     authority:'LEEWAY_VOICE_FABRIC',agentId:binding.agentId,
+     voicePackageId:binding.voicePackageId,provider:binding.provider,voiceId:binding.voiceId,
+     selectionRevision:binding.selectionRevision,playbackVerified:false},headers);
    }catch{return deny(res,503,'KOKORO_UNAVAILABLE')}
   }
   if(route===ROUTES.synthesize&&method==='POST'){
@@ -133,17 +148,39 @@ export function createVoiceAuthGateway({
    if(!equal(req.headers['x-leeway-voice-csrf']||'',session.csrf))return deny(res,403,'VOICE_CSRF_DENIED');
    if(!(req.headers['content-type']||'').startsWith('application/json'))return deny(res,415,'JSON_REQUIRED');
    let data;try{data=await boundedBody(req)}catch{return deny(res,400,'VOICE_BODY_INVALID')}
-   if(data?.schema!=='leeway.voice.synthesize.v1'||!/^kokoro-(?:af|am|bf|bm)_[a-z0-9]+$/.test(data.voicePackageId||'')||typeof data.text!=='string'||!data.text.trim()||data.text.length>1200)
+   if(data?.schema!=='leeway.voice.synthesize.v1'||data.agentId!=='agent-lee'||
+    !/^kokoro-(?:af|am|bf|bm)_[a-z0-9]+$/.test(data.voicePackageId||'')||typeof data.text!=='string'||!data.text.trim()||data.text.length>1200)
     return deny(res,422,'VOICE_SYNTHESIS_INVALID');
    try{
-    const reply=await fetchImpl('http://127.0.0.1:8877/api/local/synthesize',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({voicePackageId:data.voicePackageId,text:data.text}),signal:AbortSignal.timeout(90000),redirect:'error'});
-    if(!reply.ok)return deny(res,503,'KOKORO_SYNTHESIS_UNAVAILABLE');
+    const [healthReply,bindingReply]=await Promise.all([
+     fetchImpl(new URL('/health',vf),{signal:AbortSignal.timeout(5000),redirect:'error'}),
+     fetchImpl(new URL('/voice/binding',vf),{signal:AbortSignal.timeout(5000),redirect:'error'})
+    ]);
+    if(!healthReply.ok||!bindingReply.ok)return deny(res,503,'LEEWAY_VOICE_FABRIC_UNAVAILABLE');
+    const [health,bindingDoc]=await Promise.all([healthReply.json(),bindingReply.json()]);
+    const binding=bindingDoc?.voiceBinding;
+    if(health?.identity!=='LEEWAY_MACHINE_CONSCIOUSNESS'||health?.voice?.ready!==true||
+     binding?.authority!=='LEEWAY_VOICE_FABRIC'||binding?.agentId!==data.agentId||
+     binding?.productionAdmitted!==true||binding?.qualificationOnly!==false)
+     return deny(res,503,'LEEWAY_VOICE_BINDING_UNQUALIFIED');
+    if(binding.voicePackageId!==data.voicePackageId)return deny(res,409,'VOICE_SELECTION_MISMATCH');
+    const reply=await fetchImpl(new URL('/render-voice',vf),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:data.text}),signal:AbortSignal.timeout(90000),redirect:'error'});
+    if(!reply.ok)return deny(res,503,'LEEWAY_VOICE_RENDER_UNAVAILABLE');
     const size=Number(reply.headers?.get?.('content-length')||0);
-    if(size>24000000)return deny(res,502,'KOKORO_AUDIO_TOO_LARGE');
-    const raw=await reply.text();if(raw.length>24000000)return deny(res,502,'KOKORO_AUDIO_TOO_LARGE');
+    if(size>24000000)return deny(res,502,'LEEWAY_AUDIO_TOO_LARGE');
+    const raw=await reply.text();if(raw.length>24000000)return deny(res,502,'LEEWAY_AUDIO_TOO_LARGE');
     const audio=JSON.parse(raw);
-    if(typeof audio.audioContent!=='string'||audio.audioContent.length>23000000||!/^[A-Za-z0-9+/=]+$/.test(audio.audioContent)||!Number.isFinite(audio.sampleRate))return deny(res,502,'KOKORO_AUDIO_INVALID');
-    return json(res,200,{schema:'leeway.voice.synthesis-result.v1',audioContent:audio.audioContent,sampleRate:audio.sampleRate},headers);
+    if(audio?.voiceAuthority!=='LEEWAY_VOICE_FABRIC'||audio?.agentId!==data.agentId||
+     audio?.voicePackageId!==binding.voicePackageId||audio?.selectionRevision!==binding.selectionRevision||
+     audio?.productionAdmitted!==true||audio?.qualificationOnly!==false||audio?.format!=='wav'||
+     typeof audio.audioContent!=='string'||audio.audioContent.length>23000000||
+     !/^[A-Za-z0-9+/]+={0,2}$/.test(audio.audioContent)||!Number.isFinite(audio.sampleRate))
+     return deny(res,502,'LEEWAY_AUDIO_IDENTITY_OR_FORMAT_INVALID');
+    return json(res,200,{schema:'leeway.voice.synthesis-result.v1',agentId:audio.agentId,
+     authority:audio.voiceAuthority,voicePackageId:audio.voicePackageId,
+     selectionRevision:audio.selectionRevision,audioContent:audio.audioContent,
+     sampleRate:audio.sampleRate,format:audio.format,state:audio.state,
+     playbackVerified:false},headers);
    }catch{return deny(res,503,'KOKORO_SYNTHESIS_UNAVAILABLE')}
   }
   if(route===ROUTES.turn&&method==='POST'){
