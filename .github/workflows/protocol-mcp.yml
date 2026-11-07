@@ -1,9 +1,9 @@
 name: Portable protocol and MCP
 on:
   pull_request:
-    paths: ['packages/**', 'apps/desktop/**', 'tests/mcp/**', 'tests/vision-sensory-provider-source.test.mjs', 'providers/vision/**', 'package*.json', '.github/workflows/protocol-mcp.yml']
+    paths: ['packages/**', 'apps/desktop/**', 'tests/mcp/**', 'tests/cli/**', 'operator/device-bridge-cli.mjs', 'tests/vision-sensory-provider-source.test.mjs', 'providers/vision/**', 'package*.json', '.github/workflows/protocol-mcp.yml']
   push:
-    paths: ['packages/**', 'apps/desktop/**', 'tests/mcp/**', 'tests/vision-sensory-provider-source.test.mjs', 'providers/vision/**', 'package*.json', '.github/workflows/protocol-mcp.yml']
+    paths: ['packages/**', 'apps/desktop/**', 'tests/mcp/**', 'tests/cli/**', 'operator/device-bridge-cli.mjs', 'tests/vision-sensory-provider-source.test.mjs', 'providers/vision/**', 'package*.json', '.github/workflows/protocol-mcp.yml']
   workflow_dispatch:
 permissions:
   contents: read
