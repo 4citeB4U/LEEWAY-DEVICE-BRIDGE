@@ -84,6 +84,7 @@ test('input denies an unobserved target and performs exact readback before accep
   const result = await sessions.input({ app, pid, observationId: observation.observationId, targetId: lastTargetId, text });
   assert.equal(result.textSha256, hash(text));
   assert.match(scripts[1], /WINDOW_IDENTITY_MISMATCH/);
+  assert.match(scripts[1], /MainWindowHandle/);
   assert.match(scripts[1], /WINDOW_TARGET_NOT_UNIQUE/);
   assert.match(scripts[1], /WINDOW_INPUT_READBACK_MISMATCH/);
   assert.match(scripts[1], /SetValue\(\$text\)/);

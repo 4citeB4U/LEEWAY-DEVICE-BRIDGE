@@ -88,6 +88,8 @@ $maxControls = ${Math.max(1, Math.min(200, Number(maxControls) || 100))}
 $root = [System.Windows.Automation.AutomationElement]::RootElement
 Write-Output 'LEEWAY_UI_STARTED'
 function FindWindow([int] $processId, [long] $expectedHandle) {
+  $process = Get-Process -Id $processId -ErrorAction Stop
+  if ([long]$process.MainWindowHandle -ne $expectedHandle) { throw 'WINDOW_IDENTITY_MISMATCH' }
   $condition = [System.Windows.Automation.PropertyCondition]::new([System.Windows.Automation.AutomationElement]::ProcessIdProperty, $processId)
   $windows = $root.FindAll([System.Windows.Automation.TreeScope]::Children, $condition)
   $matches = @(); foreach ($candidate in $windows) { if ([long]$candidate.Current.NativeWindowHandle -eq $expectedHandle) { $matches += $candidate } }

@@ -25,7 +25,7 @@ Observed in the recovered Bridge qualification record:
 The clean `main` source did not contain the Windows UI adapter candidate, so this branch adds that capability to the existing `DesktopAdapter` and the existing strict protocol registry. It does not create another executor.
 
 - UIA operations are limited to allowlisted process names and the selected process ID.
-- `observe` binds a short-lived, random `observationId` to process start time, main-window handle, title, and exact observed element attributes. It returns opaque target IDs only for visible enabled writable Edit controls and visible enabled Invoke-capable buttons.
+- `observe` binds a short-lived, random `observationId` to process start time, current main-window handle, title, and exact observed element attributes. Each action rechecks that the process still owns that main-window handle. It returns opaque target IDs only for visible enabled writable Edit controls and visible enabled Invoke-capable buttons.
 - `input` requires a still-live observation and one of its exact Edit target IDs. It revalidates the process, window, target uniqueness and writable `ValuePattern`, sets text, then compares the complete value readback and SHA-256.
 - `submit` is a separate call. It requires the same observed Edit target, one explicitly selected observed button target, and the exact hash returned after successful text readback. It rechecks the current value before invoking that button.
 - Observations expire after 30 seconds, are one-use for input/submission, and are capped at 20 retained entries. PowerShell execution is bounded to 15 seconds and output to 128 KiB.
