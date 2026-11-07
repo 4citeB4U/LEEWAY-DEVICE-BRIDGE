@@ -1,0 +1,44 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.DEVICE_BRIDGE.APPLE_NATIVE_INSTALLER.CI
+# TAG: LEEWAY.APPLE.INSTALLER.NATIVE_BUILD_GATE
+# 5WH:
+# WHAT = Compile-check the Device Bridge-owned iLoader-derived native signing worker.
+# WHY = Reject unbuildable native code before registration or owner physical qualification.
+# WHO = LeeWay Engineering contributors under Creator standards.
+# WHERE = .github/workflows/apple-native-installer-check.yml.
+# WHEN = 2026-11-07.
+# HOW = Pinned checkout, bounded cargo check, source smoke checks, no credentials or device access.
+# LICENSE = MIT.
+name: Apple Native Installer Source Qualification
+on:
+  push:
+    paths:
+      - 'operator/native-apple-installer/**'
+      - 'tests/apple-native-installer-source.test.mjs'
+      - '.github/workflows/apple-native-installer-check.yml'
+  pull_request:
+    paths:
+      - 'operator/native-apple-installer/**'
+      - 'tests/apple-native-installer-source.test.mjs'
+      - '.github/workflows/apple-native-installer-check.yml'
+permissions:
+  contents: read
+jobs:
+  native-signing-worker:
+    name: Compile native Apple installer on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Record Rust toolchain
+        run: cargo --version
+      - name: Compile check without device commands
+        run: cargo check --manifest-path operator/native-apple-installer/Cargo.toml
+      - name: Validate source boundaries
+        run: node --test tests/apple-native-installer-source.test.mjs
