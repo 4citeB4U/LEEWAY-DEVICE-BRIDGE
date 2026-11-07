@@ -4,7 +4,7 @@
 const COMPOSITION_KEYS = new Set([
   'admission', 'receiptSink', 'formulaPreGate', 'veritasPreGate', 'consentProvider',
   'deviceRegistry', 'adapterRegistry', 'trustedIssuerRegistry', 'replayGuard',
-  'complianceCardGate', 'complianceCardProvider', 'visionProviders', 'visionClientId',
+  'complianceCardGate', 'complianceCardProvider', 'visionProviders', 'visionClientId', 'appleInstallProviders',
 ]);
 
 function ownDataValue(input, key) {
@@ -37,6 +37,13 @@ export function requireTrustedRuntimeComposition(input = {}) {
          !provider || ['execute', 'describe', 'health'].some(method => typeof provider[method] !== 'function')))) {
     throw new Error('TRUSTED_VISION_PROVIDER_CONFIGURATION_INVALID');
   }
+  if (values.appleInstallProviders !== undefined &&
+      (!(values.appleInstallProviders instanceof Map) ||
+       [...values.appleInstallProviders].some(([deviceId, provider]) =>
+         typeof deviceId !== 'string' || !deviceId.trim() ||
+         !provider || ['execute', 'describe', 'health'].some(method => typeof provider[method] !== 'function')))) {
+    throw new Error('TRUSTED_APPLE_INSTALL_PROVIDER_CONFIGURATION_INVALID');
+  }
   if (values.complianceCardProvider && typeof values.complianceCardGate !== 'function') {
     throw new Error('TRUSTED_RUNTIME_COMPOSITION_REQUIRED');
   }
@@ -44,7 +51,7 @@ export function requireTrustedRuntimeComposition(input = {}) {
   const direct = typeof values.admission === 'function';
   const c3 = typeof values.formulaPreGate === 'function' && typeof values.veritasPreGate === 'function';
   const directHasProviderFields = Object.keys(values).some(key =>
-    !['admission', 'receiptSink', 'complianceCardGate', 'complianceCardProvider', 'visionProviders', 'visionClientId'].includes(key));
+    !['admission', 'receiptSink', 'complianceCardGate', 'complianceCardProvider', 'visionProviders', 'visionClientId', 'appleInstallProviders'].includes(key));
   if (direct === c3 || (direct && directHasProviderFields) ||
       (!direct && !c3) ||
       ['formulaPreGate', 'veritasPreGate', 'consentProvider', 'complianceCardGate', 'complianceCardProvider'].some(key =>
