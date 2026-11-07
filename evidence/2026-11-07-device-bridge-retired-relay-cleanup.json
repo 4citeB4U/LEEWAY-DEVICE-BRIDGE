@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "evidenceType": "DEVICE_BRIDGE_SOURCE_REPAIR_CHECKPOINT",
-  "observedAt": "2026-11-07T18:54:08Z",
+  "observedAt": "2026-11-07T19:22:42Z",
   "timezone": "America/Chicago",
   "repository": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
   "baseCommit": "17182f84ac3ba35c63d7c59a0de988e06bc36c03",
@@ -33,7 +33,7 @@
   "qualification": {
     "remotePhoneRelay": "NOT_BOUND",
     "remotePhoneCapabilities": "NOT_QUALIFIED",
-    "androidPackageBuild": "PENDING_MAIN_PUSH_WORKFLOW",
+    "androidPackageBuild": "PASS_BUILT_AND_PUBLISHED_MANIFEST_READBACK_VERIFIED",
     "physicalPhoneOperation": "NOT_EXECUTED",
     "productionConversation": "NOT_QUALIFIED",
     "c3": "NOT_QUALIFIED",
@@ -43,7 +43,7 @@
     "learningLedger": "NOT_UPDATED"
   },
   "followUp": {
-    "observedAt": "2026-11-07T19:14:05Z",
+    "observedAt": "2026-11-07T19:22:42Z",
     "baseCommit": "1a0b37c9edabd8a54be3c27370f3c425c9679742",
     "priorMainWorkflow": {
       "runId": 42403668977,
@@ -66,7 +66,24 @@
       "cliSuite": {"status": "PASS", "passed": 7, "failed": 0},
       "bashSyntaxLfNormalized": "PASS",
       "diffCheck": "PASS",
-      "followUpMainWorkflow": "PENDING"
+      "followUpMainWorkflow": {"runId": 42405329355, "sourceCommit": "83b91fdd87f8e1c1a706b0bac9cd3dcfb6703fd7", "status": "SUCCESS"}
+    },
+    "productionReadback": {
+      "canonicalMainCommitAtReadback": "a86bf0444114441d6018d0283fd82423f68e50ca",
+      "vercelDeploymentStatus": "SUCCESS",
+      "pagesWorkflow": {"runId": 42405559520, "headCommit": "a86bf0444114441d6018d0283fd82423f68e50ca", "status": "SUCCESS"},
+      "secondaryPagesGate": {"runId": 42405559959, "headCommit": "a86bf0444114441d6018d0283fd82423f68e50ca", "status": "SUCCESS"},
+      "manifestGetHttpStatus": 200,
+      "apkHeadHttpStatus": 200,
+      "package": {
+        "sourceCommit": "83b91fdd87f8e1c1a706b0bac9cd3dcfb6703fd7",
+        "sourceRunId": 42405329355,
+        "version": "0.9.8-pocket-rc8",
+        "versionCode": 23,
+        "sizeBytes": 66428981,
+        "sha256": "bc35a5a93f2f3d54c968e43ab7d58316007dd935a2991b2c659b5acfefce6156",
+        "manifestAndApkContentLengthMatch": true
+      }
     },
     "liveDeviceRead": {
       "status": "OBSERVED_LIMITED_DISCOVERY",
