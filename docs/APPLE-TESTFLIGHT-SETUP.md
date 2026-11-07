@@ -35,3 +35,13 @@ Do not paste any of these values into chat, source files, issues, pull requests,
 `.github/workflows/apple-device-bridge-testflight.yml` is manual-only. Once the account and secrets exist, choose the workflow in GitHub Actions, provide a release version and unique positive build number, then run it. It archives `LeeWayDeviceBridgeApple`, uploads the `.ipa` to App Store Connect, and preserves only the sanitized archive log as an Actions artifact.
 
 The initial run must still be checked in App Store Connect before inviting testers. A successful upload does not prove TestFlight processing, installation, iPhone execution, Formula authorization, model execution, or independent receipt verification.
+
+## Customer App Store edition and Sign in with Apple (2026-11-07)
+
+The manual workflow now selects the `appstore` in-app update channel instead of developer IPA updates. It rejects an unbound `LEEWAY_APPLE_IDENTITY_EXCHANGE_ENDPOINT` configuration; the GitHub Actions environment variable must be an owner-approved HTTPS identity service endpoint ending with `/v1/device-bridge/apple/session`. That endpoint must validate Apple's JWT signature, issuer, audience and nonce against Apple's keys, reject replay and untrusted tokens, and issue a canonical LeeWay Runtime session—not a client-side self-asserted login.
+
+Enable **Sign in with Apple** for the existing `industries.leeway.devicebridge` App ID, then regenerate the distribution profile to include the entitlement declared in `apps/apple/LeeWayDeviceBridge.entitlements`. Do not create a second LeeWay native App ID or change a working installation's bundle identity.
+
+The same App Store Connect upload can be admitted for TestFlight processing and eventually submitted to App Review. Until the owner has an enrolled Developer Program account, required distribution secrets, an approved App Store listing ID and actual Apple review, there is no customer App Store package to promote. Only after publication should the canonical package manifest mark `consumerDistribution.state=PUBLISHED` and bind its exact `apps.apple.com` URL. No fake App Store ID or token belongs in source control.
+
+An App Store build must receive separate physical device, native Metal, identity/registration, Formula, Veritas and receipt custody qualification. The developer IPA/iLoader route is independent. See [Apple consumer distribution](APPLE-CONSUMER-DISTRIBUTION-20261107.md).
