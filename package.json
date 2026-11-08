@@ -9,6 +9,9 @@
     "packages/*",
     "apps/desktop"
   ],
+  "dependencies": {
+    "ws": "8.22.0"
+  },
   "scripts": {
     "test:mcp": "node --test tests/mcp/*.test.mjs",
     "test:installation-adapter": "node --test tests/installation-adapter.test.mjs",

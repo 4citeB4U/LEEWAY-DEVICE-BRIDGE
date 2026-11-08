@@ -13,6 +13,9 @@
   "functions": {
     "api/mcp.mjs": {
       "maxDuration": 60
+    },
+    "api/device-relay.mjs": {
+      "maxDuration": 300
     }
   }
 }
