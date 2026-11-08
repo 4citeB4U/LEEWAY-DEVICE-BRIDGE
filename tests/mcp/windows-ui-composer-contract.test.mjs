@@ -177,6 +177,12 @@ test('Chrome response read uses one identity preamble and remains bound to the s
   assert.match(scripts[2], /\$editElements = @\(\$window\.FindAll/);
   assert.match(scripts[3], /\$editElements = @\(\$window\.FindAll/);
   assert.equal((scripts[3].match(/LEEWAY_UI_STARTED/g) || []).length, 1);
+  assert.match(scripts[3], /\$userTurnSeen = \$false/);
+  assert.match(scripts[3], /\$userTurnSeen = \$true; \$matched = @\(\)/);
+  assert.match(scripts[3], /\$assistant -and \$userTurnSeen/);
+  assert.equal((scripts[3].match(/BROWSER_ADDRESS_BAR_NOT_UNIQUE/g) || []).length, 2);
+  assert.match(scripts[3], /\$boundedResponseText = \$responseText\.Substring/);
+  assert.match(scripts[3], /responseTextTruncated/);
 });
 
 test('Chrome response read fails closed before a bound submission exists', async () => {

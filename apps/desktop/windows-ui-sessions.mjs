@@ -286,21 +286,23 @@ EmitResult (@{ ok = $true; result = @{ app = '${args.app}'; pid = $targetPid; wi
 $responseNonce = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${nonce}'))
 $deadline = [DateTime]::UtcNow.AddMilliseconds(${Number(args.timeoutMs)})
 do {
+  ${this.identityCheckScript(observation)}
   $descendants = $window.FindAll([System.Windows.Automation.TreeScope]::Descendants, [System.Windows.Automation.Condition]::TrueCondition)
-  $assistant = $false; $matched = @(); $visibleText = @()
+  $assistant = $false; $userTurnSeen = $false; $matched = @()
   foreach ($element in $descendants) {
     if ([string]$element.Current.ControlType.ProgrammaticName -ne 'ControlType.Text' -or $element.Current.IsOffscreen) { continue }
     $name = [string]$element.Current.Name
     if ([string]::IsNullOrWhiteSpace($name)) { continue }
-    if ($name -match '^(ChatGPT|Gemini|Copilot) said:') { $assistant = $true; $matched = @(); continue }
-    if ($name -match '^(You said:|User said:)') { $assistant = $false; continue }
-    if ($assistant -and $name.Contains($responseNonce)) { $matched += $name }
+    if ($name -match '^(ChatGPT|Gemini|Copilot) said:') { $assistant = $true; continue }
+    if ($name -match '^(You said:|User said:)') { $assistant = $false; $userTurnSeen = $true; $matched = @(); continue }
+    if ($assistant -and $userTurnSeen -and $name.Contains($responseNonce)) { $matched += $name }
   }
   if ($matched.Count -gt 0) {
     $responseText = ($matched -join [Environment]::NewLine)
-    $sha = [System.Security.Cryptography.SHA256]::Create(); try { $responseSha256 = ([BitConverter]::ToString($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($responseText)))).Replace('-', '').ToLowerInvariant() } finally { $sha.Dispose() }
+    $boundedResponseText = $responseText.Substring(0, [Math]::Min(8192, $responseText.Length))
+    $sha = [System.Security.Cryptography.SHA256]::Create(); try { $responseSha256 = ([BitConverter]::ToString($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($boundedResponseText)))).Replace('-', '').ToLowerInvariant() } finally { $sha.Dispose() }
     Write-Output 'LEEWAY_UI_BEFORE_RESULT'
-    EmitResult (@{ ok = $true; result = @{ app = 'chrome'; pid = $targetPid; windowHandle = [long]$window.Current.NativeWindowHandle; surfaceUrl = $surfaceUrl; responseState = 'ASSISTANT_TEXT_NONCE_OBSERVED'; responseNonce = $responseNonce; responseText = $responseText.Substring(0, [Math]::Min(8192, $responseText.Length)); responseTextSha256 = $responseSha256 } })
+    EmitResult (@{ ok = $true; result = @{ app = 'chrome'; pid = $targetPid; windowHandle = [long]$window.Current.NativeWindowHandle; surfaceUrl = $surfaceUrl; responseState = 'ASSISTANT_TEXT_NONCE_OBSERVED'; responseNonce = $responseNonce; responseText = $boundedResponseText; responseTextTruncated = $responseText.Length -gt $boundedResponseText.Length; responseTextSha256 = $responseSha256 } })
     exit
   }
   Start-Sleep -Milliseconds 100
@@ -360,10 +362,15 @@ ${textSetup}${action}
   }
 
   identityScript(observation) {
+    return `${scriptPreamble('chrome', observation.pid)}
+${this.identityCheckScript(observation)}`;
+  }
+
+  identityCheckScript(observation) {
     const processName = b64(observation.processName);
     const processStarted = b64(observation.processStartedUtc);
     const title = b64(observation.title);
-    return `${scriptPreamble('chrome', observation.pid)}
+    return `
 $expectedProcessName = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${processName}'))
 $expectedStart = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${processStarted}'))
 $expectedTitle = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${title}'))
