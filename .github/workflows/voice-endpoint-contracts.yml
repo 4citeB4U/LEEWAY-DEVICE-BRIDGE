@@ -1,0 +1,54 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: DEVICE.BRIDGE.VOICE.CI
+# TAG: DEVICE.BRIDGE.VOICE.ENDPOINT.CONTRACTS
+# 5WH:
+# WHAT = Qualify authenticated Voice Fabric read-only endpoint source.
+# WHY = Catch cross-platform regression in existing voice owner/session contracts.
+# WHO = LeeWay Industries; governed source CI.
+# WHERE = .github/workflows/voice-endpoint-contracts.yml
+# WHEN = 2026-11-05
+# HOW = No-secret Node 22 tests on Linux, Windows and macOS without device/audio execution.
+# AUTHORIZED_ROLES: Source testing only; no deployment, production signing or live verification.
+# LICENSE: MIT
+name: Voice endpoint source contracts
+on:
+  pull_request:
+    paths:
+      - 'operator/voice-auth-gateway.mjs'
+      - 'operator/voice-auth-owner-start.mjs'
+      - 'tests/voice-*.test.mjs'
+      - 'package.json'
+      - '.github/workflows/voice-endpoint-contracts.yml'
+  push:
+    branches:
+      - 'review/voice-get-status-catalog-20261105'
+    paths:
+      - 'operator/voice-auth-gateway.mjs'
+      - 'tests/voice-*.test.mjs'
+      - 'package.json'
+      - '.github/workflows/voice-endpoint-contracts.yml'
+permissions:
+  contents: read
+jobs:
+  voice-source:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Parse Voice Fabric gateway and endpoint tests
+        run: |
+          node --check operator/voice-auth-gateway.mjs
+          node --check tests/voice-get-discovery.test.mjs
+      - name: Existing voice authentication and new GET endpoint contracts
+        run: npm run test:voice-auth
+      - name: Preserve owner-pinned canonical Voice Fabric readback
+        run: node --test tests/voice-canonical-read-proxy.test.mjs

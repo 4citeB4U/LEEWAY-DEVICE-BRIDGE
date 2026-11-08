@@ -14,7 +14,7 @@ import http from 'node:http';
 import {randomBytes,scryptSync,timingSafeEqual,createHash} from 'node:crypto';
 
 const FRONTEND='https://4citeb4u.github.io';
-const ROUTES=Object.freeze({login:'/v1/voice/login',session:'/v1/voice/session',turn:'/v1/voice/turn',pairStart:'/v1/voice/pair/start',pairClaim:'/v1/voice/pair/claim',capabilities:'/v1/voice/capabilities',synthesize:'/v1/voice/synthesize',synthesisStatus:'/v1/voice/synthesis-status',canonicalVoice:'/v1/voice/canonical-binding'});
+const ROUTES=Object.freeze({login:'/v1/voice/login',session:'/v1/voice/session',turn:'/v1/voice/turn',pairStart:'/v1/voice/pair/start',pairClaim:'/v1/voice/pair/claim',capabilities:'/v1/voice/capabilities',synthesize:'/v1/voice/synthesize',synthesisStatus:'/v1/voice/synthesis-status',canonicalVoice:'/v1/voice/canonical-binding',status:'/v1/voice/status',voices:'/v1/voice/voices'});
 const now=()=>Date.now();
 const sha=data=>createHash('sha256').update(data).digest('hex');
 const equal=(a,b)=>{const x=Buffer.from(String(a)),y=Buffer.from(String(b));return x.length===y.length&&timingSafeEqual(x,y)};
@@ -52,6 +52,32 @@ export function createVoiceAuthGateway({
   if(session.expires<=clock()){sessions.delete(sha(token));return null}
   return session;
  };
+
+ // Fixed loopback Voice Fabric reads only. The caller cannot supply an upstream
+ // URL, owner identity, file path or provider endpoint through these operations.
+ async function readLocalVoiceJson(route){
+  const reply=await fetchImpl('http://127.0.0.1:8877'+route,{
+   method:'GET',headers:{accept:'application/json'},
+   signal:AbortSignal.timeout(5000),redirect:'error'
+  });
+  if(!reply.ok||!/^application\/json(?:\s*;|$)/i.test(reply.headers?.get?.('content-type')||''))
+   throw Error('LOCAL_VOICE_JSON_UNAVAILABLE');
+  const length=reply.headers.get('content-length');
+  if(length!==null&&(!/^\d+$/.test(length)||Number(length)>16384))
+   throw Error('LOCAL_VOICE_RESPONSE_TOO_LARGE');
+  if(!reply.body)throw Error('LOCAL_VOICE_RESPONSE_EMPTY');
+  const chunks=[];let bytes=0;
+  for await(const part of reply.body){
+   const chunk=Buffer.from(part);bytes+=chunk.length;
+   if(bytes>16384)throw Error('LOCAL_VOICE_RESPONSE_TOO_LARGE');
+   chunks.push(chunk);
+  }
+  if(bytes===0)throw Error('LOCAL_VOICE_RESPONSE_EMPTY');
+  const state=JSON.parse(Buffer.concat(chunks).toString('utf8'));
+  if(!state||typeof state!=='object'||Array.isArray(state))
+   throw Error('LOCAL_VOICE_RESPONSE_INVALID');
+  return state;
+ }
  async function handler(req,res){
   const headers=allowOrigin(req)?{'access-control-allow-origin':req.headers.origin,
    'access-control-allow-credentials':'true'}:{};
@@ -71,7 +97,7 @@ export function createVoiceAuthGateway({
   if(route===ROUTES.capabilities&&method==='GET')return json(res,200,{
    schema:'leeway.voice.api.v1',status:'AUTHENTICATION_REQUIRED',
    authorization:'OWNER_DEVICE_APPROVAL',
-   scope:'voice:turn:readonly',session:ROUTES.session,
+   scope:'voice:turn:readonly',session:ROUTES.session,status:ROUTES.status,voices:ROUTES.voices,
    pairStart:ROUTES.pairStart,pairClaim:ROUTES.pairClaim,turn:ROUTES.turn,
    registeredAppCount:Object.keys(registeredApps).length,
    deviceActionsAllowed:false
@@ -135,6 +161,49 @@ export function createVoiceAuthGateway({
      binding:{voicePackageId:binding.voicePackageId},recordRevision:binding.revision,
      publication:'OWNER_STUDIO_AUTHORIZED_ONLY',deviceExecutionAuthorized:false},headers);
    }catch{return deny(res,503,'CANONICAL_VOICE_READBACK_UNAVAILABLE')}
+  }
+
+  // Authenticated read-only discovery. Readiness is a fresh local Studio
+  // observation, not evidence of audible playback or production Veritas.
+  if(route===ROUTES.status&&method==='GET'){
+   if(!session)return deny(res,401,'VOICE_SESSION_REQUIRED');
+   if(session.scope&&session.scope!=='voice:turn:readonly')return deny(res,403,'VOICE_SCOPE_DENIED');
+   try{
+    const state=await readLocalVoiceJson('/api/local/status');
+    const kokoroReady=state.kokoro?.ready===true,xttsReady=state.xtts?.ready===true;
+    return json(res,200,{
+     schema:'leeway.voice.status.v1',authority:'LEEWAY_DEVICE_BRIDGE_VOICE',
+     sourceAuthority:'LEEWAY_VOICE_FABRIC',observation:'LOCAL_STUDIO_HTTP_READBACK',
+     providerReportedReady:{kokoro:kokoroReady,xtts:xttsReady},
+     synthesisCandidateAvailable:kokoroReady||xttsReady,
+     fullDuplexQualified:false,physicalPlaybackVerified:false,
+     productionExecutionQualified:false,deviceExecutionAuthorized:false
+    },headers);
+   }catch{return deny(res,503,'VOICE_LOCAL_STATUS_UNAVAILABLE')}
+  }
+  if(route===ROUTES.voices&&method==='GET'){
+   if(!session)return deny(res,401,'VOICE_SESSION_REQUIRED');
+   if(session.scope&&session.scope!=='voice:turn:readonly')return deny(res,403,'VOICE_SCOPE_DENIED');
+   try{
+    const state=await readLocalVoiceJson('/api/local/voices');
+    if(!Array.isArray(state.voices)||state.voices.length>64)
+     return deny(res,503,'VOICE_CATALOG_INVALID');
+    const seen=new Set(),voices=[];
+    for(const voice of state.voices){
+     const voiceId=voice?.voiceId,id=voice?.id,name=voice?.name;
+     if(typeof voiceId!=='string'||!/^(?:af|am|bf|bm)_[a-z0-9]+$/.test(voiceId)||
+        id!=='kokoro-'+voiceId||voice.provider!=='kokoro'||
+        typeof name!=='string'||name.trim().length===0||name.length>160||seen.has(id))
+      return deny(res,503,'VOICE_CATALOG_INVALID');
+     seen.add(id);
+     voices.push({id,voiceId,name:name.trim(),provider:'kokoro',packageType:'MODEL_VOICE'});
+    }
+    return json(res,200,{
+     schema:'leeway.voice.catalog.v1',authority:'LEEWAY_VOICE_FABRIC',
+     observation:'LOCAL_STUDIO_CATALOG_READBACK',qualification:'CATALOG_ONLY',
+     voices,deviceExecutionAuthorized:false
+    },headers);
+   }catch{return deny(res,503,'VOICE_CATALOG_UNAVAILABLE')}
   }
   if(route===ROUTES.synthesisStatus&&method==='GET'){
    if(!session)return deny(res,401,'VOICE_SESSION_REQUIRED');
