@@ -46,6 +46,26 @@ test('protocol requires fresh observation and exact target IDs for input and sub
     actionTargetId, expectedTextSha256: 'bad' }).success, false);
 });
 
+test('protocol keeps browser read chrome-only, nonce-bound, and timeout-bounded', () => {
+  const base = { app: 'chrome', pid, observationId: '11111111-1111-4111-8111-111111111111',
+    expectedTextSha256: 'a'.repeat(64), responseNonce: 'LWC5-R21-READ-BOUND-01' };
+  assert.equal(schemas['device.windows.window.read'].safeParse(base).success, true);
+  assert.equal(schemas['device.windows.window.read'].safeParse({ ...base, app: 'chatgpt' }).success, false);
+  assert.equal(schemas['device.windows.window.read'].safeParse({ ...base, responseNonce: 'short' }).success, false);
+  assert.equal(schemas['device.windows.window.read'].safeParse({ ...base, timeoutMs: 99 }).success, false);
+  assert.equal(schemas['device.windows.window.read'].safeParse({ ...base, timeoutMs: 10001 }).success, false);
+  assert.equal(schemas['device.windows.window.read'].safeParse({ ...base, unexpected: true }).success, false);
+});
+
+test('Chrome observation requires an explicit expected URL before any host probe', async () => {
+  let calls = 0;
+  const sessions = new WindowsUiSessions({
+    executeScript: async () => { calls += 1; return observedSurface({ appName: 'chrome', processName: 'chrome' }); },
+  });
+  await assert.rejects(() => sessions.observe({ app: 'chrome', pid, maxControls: 100 }), /BROWSER_URL_REQUIRED/);
+  assert.equal(calls, 0);
+});
+
 test('observation returns opaque short-lived IDs only for writable visible Edit controls', async () => {
   let now = 1000;
   const seenScripts = [];
@@ -127,4 +147,85 @@ test('Antigravity surface with no writable controls cannot produce an input targ
   assert.deepEqual(observation.editableTargets, []);
   await assert.rejects(() => sessions.input({ app: 'antigravity', pid, observationId: observation.observationId,
     targetId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', text: 'must not be sent' }), /WINDOW_TARGET_NOT_OBSERVED/);
+});
+
+test('Chrome response read uses one identity preamble and remains bound to the submitted observation', async () => {
+  const surfaceUrl = 'https://chatgpt.com/c/test-conversation';
+  const responseNonce = 'LWC5-R11-READ-BOUND-01';
+  const text = `Creator-approved ${responseNonce}`;
+  const scripts = [];
+  const sessions = new WindowsUiSessions({
+    executeScript: async script => {
+      scripts.push(script);
+      if (scripts.length === 1) return {
+        ...observedSurface({ appName: 'chrome', processName: 'chrome', editableTargets: [edit()], actionTargets: [button()] }),
+        surfaceUrl,
+      };
+      if (scripts.length === 2) return { targetId, inputLength: text.length, textSha256: hash(text), textReadback: 'EXACT_VALUE_PATTERN_READBACK' };
+      if (scripts.length === 3) return { submitted: true, targetId, actionTargetId, textSha256: hash(text), resultState: 'ACTION_INVOKED_NOT_CONVERSATION_PROOF' };
+      return { app: 'chrome', pid, windowHandle: 5678, surfaceUrl, responseState: 'ASSISTANT_TEXT_NONCE_OBSERVED', responseNonce, responseText: text, responseTextSha256: hash(text) };
+    },
+  });
+  const observation = await sessions.observe({ app: 'chrome', pid, expectedUrl: surfaceUrl, expectedTitle: 'Known conversation', maxControls: 100 });
+  const targetId = observation.editableTargets[0].targetId;
+  const actionTargetId = observation.actionTargets[0].targetId;
+  await sessions.input({ app: 'chrome', pid, observationId: observation.observationId, targetId, text });
+  await sessions.submit({ app: 'chrome', pid, observationId: observation.observationId, targetId, actionTargetId, expectedTextSha256: hash(text) });
+  const result = await sessions.read({ app: 'chrome', pid, observationId: observation.observationId, expectedTextSha256: hash(text), responseNonce, timeoutMs: 1000 });
+  assert.equal(result.responseState, 'ASSISTANT_TEXT_NONCE_OBSERVED');
+  assert.match(scripts[1], /\$editElements = @\(\$window\.FindAll/);
+  assert.match(scripts[2], /\$editElements = @\(\$window\.FindAll/);
+  assert.match(scripts[3], /\$editElements = @\(\$window\.FindAll/);
+  assert.equal((scripts[3].match(/LEEWAY_UI_STARTED/g) || []).length, 1);
+  assert.match(scripts[3], /\$userTurnSeen = \$false/);
+  assert.match(scripts[3], /\$userTurnSeen = \$true; \$matched = @\(\)/);
+  assert.match(scripts[3], /\$assistant -and \$userTurnSeen/);
+  assert.equal((scripts[3].match(/BROWSER_ADDRESS_BAR_NOT_UNIQUE/g) || []).length, 2);
+  assert.match(scripts[3], /\$boundedResponseText = \$responseText\.Substring/);
+  assert.match(scripts[3], /responseTextTruncated/);
+});
+
+test('Chrome response read fails closed before a bound submission exists', async () => {
+  const surfaceUrl = 'https://chatgpt.com/c/test-conversation';
+  const sessions = new WindowsUiSessions({
+    executeScript: async () => ({
+      ...observedSurface({ appName: 'chrome', processName: 'chrome', editableTargets: [edit()], actionTargets: [button()] }),
+      surfaceUrl,
+    }),
+  });
+  const observation = await sessions.observe({ app: 'chrome', pid, expectedUrl: surfaceUrl, expectedTitle: 'Known conversation', maxControls: 100 });
+  await assert.rejects(() => sessions.read({ app: 'chrome', pid, observationId: observation.observationId,
+    expectedTextSha256: 'a'.repeat(64), responseNonce: 'LWC5-R21-READ-BOUND-02', timeoutMs: 1000 }),
+  /BROWSER_READ_NOT_BOUND_TO_SUBMISSION/);
+});
+
+test('Chrome response read rejects a response whose nonce does not match the request', async () => {
+  const surfaceUrl = 'https://chatgpt.com/c/test-conversation';
+  const requestedNonce = 'LWC5-R30-REQUEST-NONCE';
+  const returnedNonce = 'LWC5-R30-OTHER-NONCE';
+  const text = `Creator-approved ${returnedNonce}`;
+  let calls = 0;
+  const sessions = new WindowsUiSessions({
+    executeScript: async () => {
+      calls += 1;
+      if (calls === 1) return {
+        ...observedSurface({ appName: 'chrome', processName: 'chrome', editableTargets: [edit()], actionTargets: [button()] }),
+        surfaceUrl,
+      };
+      if (calls === 2) return {
+        targetId: targetIdValue, inputLength: text.length, textSha256: hash(text), textReadback: 'EXACT_VALUE_PATTERN_READBACK',
+      };
+      if (calls === 3) return {
+        submitted: true, targetId: targetIdValue, actionTargetId, textSha256: hash(text), resultState: 'ACTION_INVOKED_NOT_CONVERSATION_PROOF',
+      };
+      return { app: 'chrome', pid, windowHandle: 5678, surfaceUrl, responseState: 'ASSISTANT_TEXT_NONCE_OBSERVED', responseNonce: returnedNonce, responseText: text, responseTextSha256: hash(text) };
+    },
+  });
+  const observation = await sessions.observe({ app: 'chrome', pid, expectedUrl: surfaceUrl, expectedTitle: 'Known conversation', maxControls: 100 });
+  const targetIdValue = observation.editableTargets[0].targetId;
+  const actionTargetId = observation.actionTargets[0].targetId;
+  await sessions.input({ app: 'chrome', pid, observationId: observation.observationId, targetId: targetIdValue, text });
+  await sessions.submit({ app: 'chrome', pid, observationId: observation.observationId, targetId: targetIdValue, actionTargetId, expectedTextSha256: hash(text) });
+  await assert.rejects(() => sessions.read({ app: 'chrome', pid, observationId: observation.observationId,
+    expectedTextSha256: hash(text), responseNonce: requestedNonce, timeoutMs: 1000 }), /BROWSER_RESPONSE_READBACK_INVALID/);
 });
