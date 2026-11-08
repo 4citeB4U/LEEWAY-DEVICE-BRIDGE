@@ -14,12 +14,15 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+    buildFeatures {
+        buildConfig = true
+    }
     defaultConfig {
         applicationId = "industries.leeway.devicebridge"
         minSdk = 29
         targetSdk = 35
-        versionCode = 23
-        versionName = "0.9.8-pocket-rc8"
+        versionCode = 25
+        versionName = "0.10.0-agent-update-rc1"
     }
 }
 dependencies {
