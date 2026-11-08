@@ -2,9 +2,9 @@
   "schemaVersion": "0.2.0",
   "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
   "relayRole": "TRANSPORT_ONLY",
-  "relayUrl": null,
-  "relaySource": null,
-  "relayDeployment": "NOT_BOUND",
+  "relayUrl": "wss://leeway-device-bridge.vercel.app/api/device-relay",
+  "relaySource": "github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE@e1332e640eb32fdd49c26af06fefaae81c5c5637",
+  "relayDeployment": "VERCEL_PRODUCTION",
   "protocol": "OWNER_BOUND_WEBSOCKET_RELAY",
   "phoneRole": "phone",
   "clientRole": "client",
@@ -12,16 +12,16 @@
   "requiresOwnerPairingToken": true,
   "phoneAutoReconnect": true,
   "phoneBootRestart": true,
-  "relayAuthority": "NONE",
+  "relayAuthority": "TRANSPORT_ONLY",
   "remoteQualifiedCapabilities": [],
   "truthBoundary": {
-    "relaySourceBuild": "SOURCE_ONLY",
+    "relaySourceBuild": "PRODUCTION_ROUTE_HEALTH_OBSERVED",
     "durableQueueRuntime": "NOT_VERIFIED",
     "physicalPhoneDurableReconnect": "NOT_VERIFIED"
   },
   "formulaGate": "LW-F8_REQUIRED_QA69_EXECUTE_QA0_HOLD",
   "replayProtection": "COMMAND_ID_FIRST_SEEN_REQUIRED",
   "ownerStop": "DISABLES_AGENT_AUTHORITY_AND_REMOTE_RELAY",
-  "deliveryMode": "NOT_BOUND",
-  "volatileRoomState": null
+  "deliveryMode": "VERCEL_FUNCTION_WEBSOCKET_V1",
+  "volatileRoomState": true
 }
