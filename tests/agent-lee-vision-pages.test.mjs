@@ -36,3 +36,17 @@ test("non-LLM pixel monitor reads actual frames, not inferred objects",()=>{
   assert.match(html,/Math\.abs\(r-previous\[i\]\)/);
   assert.match(html,/FACE MODEL OFF/);
 });
+test("resizable eye fixed-left menu is additive to camera pipeline", () => {
+  const css = fs.readFileSync(new URL("../docs/vision/floating-widget.css",import.meta.url),"utf8");
+  const js = fs.readFileSync(new URL("../docs/vision/floating-widget.js",import.meta.url),"utf8");
+  assert.match(html,/floating-widget\.css/);
+  assert.match(html,/floating-widget\.js/);
+  assert.match(html,/P\.pixelMetrics/);
+  assert.match(js,/window\.AgentLeeFloatingWidget/);
+  assert.match(js,/window\.AgentLeeOpticalPad\.openPane/);
+  assert.match(js,/visionRailGrip/);
+  assert.match(css,/#visionEyeResize/);
+  assert.match(css,/#visionEdgeRail/);
+  assert.match(css,/left:0!important/);
+  assert.doesNotMatch(js,/getUserMedia\s*\(/);
+});
