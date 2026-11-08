@@ -123,7 +123,7 @@ function browserIdentityScript(expectedUrl, expectedTitle = null) {
   const expectedTitleB64 = expectedTitle === null ? null : b64(expectedTitle);
   return `
 $expectedSurfaceUrl = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${expectedUrlB64}'))
-$addressCondition = [System.Windows.Automation.PropertyCondition]::new([System.Windows.Automation.AutomationElement]::ControlTypeProperty, [System.Windows.Automation.ControlType]::Edit)
+$editElements = @($window.FindAll([System.Windows.Automation.TreeScope]::Descendants, [System.Windows.Automation.Condition]::TrueCondition) | Where-Object { $_.Current.ControlType -eq [System.Windows.Automation.ControlType]::Edit })
 $addressMatches = @()
 $edits = @($editElements)
 foreach ($candidate in $edits) {

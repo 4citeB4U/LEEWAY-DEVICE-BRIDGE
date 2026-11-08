@@ -164,6 +164,9 @@ test('Chrome response read uses one identity preamble and remains bound to the s
   await sessions.submit({ app: 'chrome', pid, observationId: observation.observationId, targetId, actionTargetId, expectedTextSha256: hash(text) });
   const result = await sessions.read({ app: 'chrome', pid, observationId: observation.observationId, expectedTextSha256: hash(text), responseNonce, timeoutMs: 1000 });
   assert.equal(result.responseState, 'ASSISTANT_TEXT_NONCE_OBSERVED');
+  assert.match(scripts[1], /\$editElements = @\(\$window\.FindAll/);
+  assert.match(scripts[2], /\$editElements = @\(\$window\.FindAll/);
+  assert.match(scripts[3], /\$editElements = @\(\$window\.FindAll/);
   assert.equal((scripts[3].match(/LEEWAY_UI_STARTED/g) || []).length, 1);
 });
 
