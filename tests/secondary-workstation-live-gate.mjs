@@ -46,9 +46,11 @@ try{
 
   // OPTIONAL: Android native extension must not block base workstation
   const pkg=await waitFor('package-manifest.json',[
-    'OPTIONAL_NATIVE_EXTENSION_BUILD_QUALIFIED',
-    '0.8.5',
-    'b65710deba8579d0e2eb38cf289d976e3622b25d1ed6f8d5d2ef9114033f5bec'
+    'android-latest-debug',
+    'QUALIFIED_ARTIFACT_OWNER_INSTALL_REQUIRED',
+    '"nativeVerification": true',
+    '"githubActionsQualification"',
+    '"state": "VERIFIED"'
   ]);
   console.log('OPTIONAL_ANDROID_EXTENSION=AVAILABLE');
 }catch(e){
