@@ -40,6 +40,16 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
+      - name: Prove canonical main still matches the qualifying release source
+        shell: bash
+        run: |
+          set -euo pipefail
+          ACTUAL_SHA="$(git rev-parse HEAD)"
+          if [ "$ACTUAL_SHA" != "$QUALIFYING_SOURCE_SHA" ]; then
+            echo "APPLE_INSTALLER_MAIN_SOURCE_DRIFT" >&2
+            exit 1
+          fi
+          printf 'Publish from exact qualified commit %s\n' "$ACTUAL_SHA"
       - name: Download qualified three-OS host archives
         shell: bash
         run: |
