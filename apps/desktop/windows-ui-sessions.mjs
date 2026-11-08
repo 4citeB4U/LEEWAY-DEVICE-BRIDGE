@@ -16,6 +16,7 @@ const APPS = Object.freeze({
   codex: Object.freeze(['Codex', 'ChatGPT']),
   chatgpt: Object.freeze(['ChatGPT']),
   antigravity: Object.freeze(['Antigravity']),
+  chrome: Object.freeze(['chrome']),
 });
 const MAX_OUTPUT = 131072;
 const OBSERVATION_TTL_MS = 30000;
@@ -116,6 +117,32 @@ function EmitResult($payload) { Write-Output ("LEEWAY_UI_RESULT:" + ($payload | 
 const b64 = value => Buffer.from(value, 'utf8').toString('base64');
 const sha256 = value => createHash('sha256').update(value, 'utf8').digest('hex');
 
+function browserIdentityScript(expectedUrl, expectedTitle = null) {
+  if (typeof expectedUrl !== 'string' || expectedUrl.length < 1) throw Error('BROWSER_URL_REQUIRED');
+  const expectedUrlB64 = b64(expectedUrl);
+  const expectedTitleB64 = expectedTitle === null ? null : b64(expectedTitle);
+  return `
+$expectedSurfaceUrl = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${expectedUrlB64}'))
+$addressCondition = [System.Windows.Automation.PropertyCondition]::new([System.Windows.Automation.AutomationElement]::ControlTypeProperty, [System.Windows.Automation.ControlType]::Edit)
+$addressMatches = @()
+$edits = @($editElements)
+foreach ($candidate in $edits) {
+  if ($candidate.Current.Name -ceq 'Address and search bar' -and $candidate.Current.IsEnabled -and -not $candidate.Current.IsOffscreen) {
+    $addressValue = $null
+    if ($candidate.TryGetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern, [ref]$addressValue) -and -not $addressValue.Current.IsReadOnly) { $addressMatches += $candidate }
+  }
+}
+if ($addressMatches.Count -ne 1) { throw 'BROWSER_ADDRESS_BAR_NOT_UNIQUE' }
+$addressValue = $null
+if (-not $addressMatches[0].TryGetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern, [ref]$addressValue)) { throw 'BROWSER_ADDRESS_BAR_UNREADABLE' }
+$surfaceUrl = [string]$addressValue.Current.Value
+if ($surfaceUrl -notmatch '^[a-zA-Z][a-zA-Z0-9+.-]*://') { $surfaceUrl = 'https://' + $surfaceUrl }
+if ($surfaceUrl -cne $expectedSurfaceUrl) { throw 'BROWSER_URL_IDENTITY_MISMATCH' }
+${expectedTitleB64 === null ? '' : `$expectedBrowserTitle = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${expectedTitleB64}'))
+if ([string]$window.Current.Name -cne $expectedBrowserTitle) { throw 'BROWSER_TITLE_IDENTITY_MISMATCH' }`}
+`;
+}
+
 export class WindowsUiSessions {
   constructor({ executeScript = executePowerShell, now = Date.now } = {}) {
     this.executeScript = executeScript;
@@ -137,29 +164,49 @@ EmitResult (@{ ok = $true; result = @{ app = '${args.app}'; windows = @($items);
   }
 
   async observe(args) {
+    if (args.app === 'chrome' && typeof args.expectedUrl !== 'string') throw Error('BROWSER_URL_REQUIRED');
     const script = `${scriptPreamble(args.app, args.pid, args.maxControls)}
 $process = Get-Process -Id $targetPid -ErrorAction Stop
 if ($allowedNames -notcontains $process.ProcessName) { throw 'WINDOW_PROCESS_NOT_ALLOWED' }
 $window = $null; $windows = $root.FindAll([System.Windows.Automation.TreeScope]::Children, [System.Windows.Automation.Condition]::TrueCondition)
 foreach ($candidate in $windows) { if ([int]$candidate.Current.ProcessId -eq $targetPid -and [long]$candidate.Current.NativeWindowHandle -eq [long]$process.MainWindowHandle) { $window = $candidate; break } }
 if ($null -eq $window -or $process.MainWindowHandle -eq 0) { throw 'WINDOW_NOT_FOUND' }
-$controls = @(); $editable = @(); $actions = @()
 $descendants = $window.FindAll([System.Windows.Automation.TreeScope]::Descendants, [System.Windows.Automation.Condition]::TrueCondition)
+$totalControls = $descendants.Count
+$controls = @(); $editable = @(); $actions = @()
+$editElements = @()
 foreach ($element in $descendants) {
-  $data = ControlData $element
-  if ($controls.Count -lt [Math]::Min($maxControls, 60)) { $controls += $data }
-  if ($data.controlType -eq 'ControlType.Edit' -and $data.enabled -and -not $data.offscreen -and $data.valuePatternAvailable -and -not $data.valuePatternReadOnly -and $editable.Count -lt 30) { $editable += $data }
-  if ($data.controlType -eq 'ControlType.Button' -and $data.enabled -and -not $data.offscreen -and $data.invokePatternAvailable -and $actions.Count -lt 30) { $actions += $data }
+  try { if ([string]$element.Current.ControlType.ProgrammaticName -eq 'ControlType.Edit') { $editElements += $element } } catch { continue }
 }
+foreach ($element in $editElements) {
+  try {
+    $data = ControlData $element
+    if ($controls.Count -lt [Math]::Min($maxControls, 60)) { $controls += $data }
+    if ($data.enabled -and -not $data.offscreen -and $data.valuePatternAvailable -and -not $data.valuePatternReadOnly -and $editable.Count -lt 30) { $editable += $data }
+  } catch { continue }
+}
+$buttonElements = @()
+foreach ($element in $descendants) {
+  try { if ([string]$element.Current.ControlType.ProgrammaticName -eq 'ControlType.Button') { $buttonElements += $element } } catch { continue }
+}
+foreach ($element in $buttonElements) {
+  try {
+    $data = ControlData $element
+    if ($controls.Count -lt [Math]::Min($maxControls, 60)) { $controls += $data }
+    if ($data.enabled -and -not $data.offscreen -and $data.invokePatternAvailable -and $actions.Count -lt 30) { $actions += $data }
+  } catch { continue }
+}
+${args.app === 'chrome' ? browserIdentityScript(args.expectedUrl, args.expectedTitle) : ''}
 $startUtc = $process.StartTime.ToUniversalTime().ToString('o')
 Write-Output 'LEEWAY_UI_BEFORE_RESULT'
-EmitResult (@{ ok = $true; result = @{ app = '${args.app}'; pid = $targetPid; processName = [string]$process.ProcessName; processStartedUtc = $startUtc; windowHandle = [long]$window.Current.NativeWindowHandle; title = [string]$window.Current.Name; controls = @($controls); editableTargets = @($editable); actionTargets = @($actions); totalControls = $descendants.Count; truncated = $descendants.Count -gt $controls.Count } })
+EmitResult (@{ ok = $true; result = @{ app = '${args.app}'; pid = $targetPid; processName = [string]$process.ProcessName; processStartedUtc = $startUtc; windowHandle = [long]$window.Current.NativeWindowHandle; title = [string]$window.Current.Name; surfaceUrl = ${args.app === 'chrome' ? '$surfaceUrl' : '$null'}; controls = @($controls); editableTargets = @($editable); actionTargets = @($actions); totalControls = $totalControls; truncated = $totalControls -gt $controls.Count } })
 `;
     const result = await this.executeScript(script);
     if (result?.app !== args.app || result?.pid !== args.pid || !Number.isSafeInteger(result.windowHandle)
       || typeof result.processName !== 'string' || typeof result.processStartedUtc !== 'string'
       || typeof result.title !== 'string' || !Array.isArray(result.editableTargets) || !Array.isArray(result.actionTargets))
       throw Error('WINDOW_OBSERVATION_INVALID');
+    if (args.app === 'chrome' && result.surfaceUrl !== args.expectedUrl) throw Error('BROWSER_URL_IDENTITY_MISMATCH');
     this.expireObservations();
     const observationId = randomUUID();
     const editableTargets = result.editableTargets.map(control => ({ ...control, targetId: randomUUID() }));
@@ -168,6 +215,7 @@ EmitResult (@{ ok = $true; result = @{ app = '${args.app}'; pid = $targetPid; pr
       app: result.app, pid: result.pid, processName: result.processName,
       processStartedUtc: result.processStartedUtc, windowHandle: result.windowHandle,
       title: result.title, expiresAt: this.now() + OBSERVATION_TTL_MS,
+      surfaceUrl: result.surfaceUrl ?? null, expectedTitle: args.expectedTitle ?? null,
       editableTargets: new Map(editableTargets.map(control => [control.targetId, control])),
       actionTargets: new Map(actionTargets.map(control => [control.targetId, control])),
       inputUsed: false, submitted: false,
@@ -225,6 +273,43 @@ EmitResult (@{ ok = $true; result = @{ app = '${args.app}'; pid = $targetPid; wi
     const result = await this.executeScript(script);
     if (result?.submitted !== true || result?.textSha256 !== observation.textSha256) throw Error('WINDOW_SUBMISSION_RESULT_INVALID');
     observation.submitted = true;
+    if (args.app !== 'chrome') this.observations.delete(args.observationId);
+    return result;
+  }
+
+  async read(args) {
+    const observation = this.getObservation(args.observationId, args.app, args.pid);
+    if (args.app !== 'chrome') throw Error('BROWSER_READ_CHROME_ONLY');
+    if (!observation.submitted || observation.textSha256 !== args.expectedTextSha256) throw Error('BROWSER_READ_NOT_BOUND_TO_SUBMISSION');
+    const nonce = b64(args.responseNonce);
+    const script = `${this.identityScript(observation)}
+$responseNonce = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${nonce}'))
+$deadline = [DateTime]::UtcNow.AddMilliseconds(${Number(args.timeoutMs)})
+do {
+  $descendants = $window.FindAll([System.Windows.Automation.TreeScope]::Descendants, [System.Windows.Automation.Condition]::TrueCondition)
+  $assistant = $false; $matched = @(); $visibleText = @()
+  foreach ($element in $descendants) {
+    if ([string]$element.Current.ControlType.ProgrammaticName -ne 'ControlType.Text' -or $element.Current.IsOffscreen) { continue }
+    $name = [string]$element.Current.Name
+    if ([string]::IsNullOrWhiteSpace($name)) { continue }
+    if ($name -match '^(ChatGPT|Gemini|Copilot) said:') { $assistant = $true; $matched = @(); continue }
+    if ($name -match '^(You said:|User said:)') { $assistant = $false; continue }
+    if ($assistant -and $name.Contains($responseNonce)) { $matched += $name }
+  }
+  if ($matched.Count -gt 0) {
+    $responseText = ($matched -join [Environment]::NewLine)
+    $sha = [System.Security.Cryptography.SHA256]::Create(); try { $responseSha256 = ([BitConverter]::ToString($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($responseText)))).Replace('-', '').ToLowerInvariant() } finally { $sha.Dispose() }
+    Write-Output 'LEEWAY_UI_BEFORE_RESULT'
+    EmitResult (@{ ok = $true; result = @{ app = 'chrome'; pid = $targetPid; windowHandle = [long]$window.Current.NativeWindowHandle; surfaceUrl = $surfaceUrl; responseState = 'ASSISTANT_TEXT_NONCE_OBSERVED'; responseNonce = $responseNonce; responseText = $responseText.Substring(0, [Math]::Min(8192, $responseText.Length)); responseTextSha256 = $responseSha256 } })
+    exit
+  }
+  Start-Sleep -Milliseconds 100
+} while ([DateTime]::UtcNow -lt $deadline)
+throw 'BROWSER_RESPONSE_NONCE_NOT_OBSERVED'
+`;
+    const result = await this.executeScript(script);
+    if (result?.responseState !== 'ASSISTANT_TEXT_NONCE_OBSERVED' || result?.responseNonce !== args.responseNonce || result?.surfaceUrl !== observation.surfaceUrl)
+      throw Error('BROWSER_RESPONSE_READBACK_INVALID');
     this.observations.delete(args.observationId);
     return result;
   }
@@ -262,6 +347,7 @@ $expectedTitle = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64Str
 $process = ProcessAllowed $targetPid $expectedProcessName $expectedStart
 $window = FindWindow $targetPid ${observation.windowHandle}
 if ([string]$window.Current.Name -cne $expectedTitle) { throw 'WINDOW_IDENTITY_MISMATCH' }
+${observation.app === 'chrome' ? browserIdentityScript(observation.surfaceUrl, observation.expectedTitle) : ''}
 $targetName = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${name}'))
 $targetAutomationId = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${automationId}'))
 $editCondition = [System.Windows.Automation.PropertyCondition]::new([System.Windows.Automation.AutomationElement]::ControlTypeProperty, [System.Windows.Automation.ControlType]::Edit)
@@ -270,6 +356,21 @@ foreach ($candidate in $edits) { if ($candidate.Current.Name -ceq $targetName -a
 if ($matches.Count -ne 1) { throw 'WINDOW_TARGET_NOT_UNIQUE' }
 $target = $matches[0]
 ${textSetup}${action}
+`;
+  }
+
+  identityScript(observation) {
+    const processName = b64(observation.processName);
+    const processStarted = b64(observation.processStartedUtc);
+    const title = b64(observation.title);
+    return `${scriptPreamble('chrome', observation.pid)}
+$expectedProcessName = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${processName}'))
+$expectedStart = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${processStarted}'))
+$expectedTitle = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${title}'))
+$process = ProcessAllowed $targetPid $expectedProcessName $expectedStart
+$window = FindWindow $targetPid ${observation.windowHandle}
+if ([string]$window.Current.Name -cne $expectedTitle) { throw 'WINDOW_IDENTITY_MISMATCH' }
+${browserIdentityScript(observation.surfaceUrl, observation.expectedTitle)}
 `;
   }
 

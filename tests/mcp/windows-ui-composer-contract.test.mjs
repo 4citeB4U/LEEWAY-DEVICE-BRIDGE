@@ -46,6 +46,17 @@ test('protocol requires fresh observation and exact target IDs for input and sub
     actionTargetId, expectedTextSha256: 'bad' }).success, false);
 });
 
+test('protocol keeps browser read chrome-only, nonce-bound, and timeout-bounded', () => {
+  const base = { app: 'chrome', pid, observationId: '11111111-1111-4111-8111-111111111111',
+    expectedTextSha256: 'a'.repeat(64), responseNonce: 'LWC5-R21-READ-BOUND-01' };
+  assert.equal(schemas['device.windows.window.read'].safeParse(base).success, true);
+  assert.equal(schemas['device.windows.window.read'].safeParse({ ...base, app: 'chatgpt' }).success, false);
+  assert.equal(schemas['device.windows.window.read'].safeParse({ ...base, responseNonce: 'short' }).success, false);
+  assert.equal(schemas['device.windows.window.read'].safeParse({ ...base, timeoutMs: 99 }).success, false);
+  assert.equal(schemas['device.windows.window.read'].safeParse({ ...base, timeoutMs: 10001 }).success, false);
+  assert.equal(schemas['device.windows.window.read'].safeParse({ ...base, unexpected: true }).success, false);
+});
+
 test('observation returns opaque short-lived IDs only for writable visible Edit controls', async () => {
   let now = 1000;
   const seenScripts = [];
@@ -127,4 +138,45 @@ test('Antigravity surface with no writable controls cannot produce an input targ
   assert.deepEqual(observation.editableTargets, []);
   await assert.rejects(() => sessions.input({ app: 'antigravity', pid, observationId: observation.observationId,
     targetId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', text: 'must not be sent' }), /WINDOW_TARGET_NOT_OBSERVED/);
+});
+
+test('Chrome response read uses one identity preamble and remains bound to the submitted observation', async () => {
+  const surfaceUrl = 'https://chatgpt.com/c/test-conversation';
+  const responseNonce = 'LWC5-R11-READ-BOUND-01';
+  const text = `Creator-approved ${responseNonce}`;
+  const scripts = [];
+  const sessions = new WindowsUiSessions({
+    executeScript: async script => {
+      scripts.push(script);
+      if (scripts.length === 1) return {
+        ...observedSurface({ appName: 'chrome', processName: 'chrome', editableTargets: [edit()], actionTargets: [button()] }),
+        surfaceUrl,
+      };
+      if (scripts.length === 2) return { targetId, inputLength: text.length, textSha256: hash(text), textReadback: 'EXACT_VALUE_PATTERN_READBACK' };
+      if (scripts.length === 3) return { submitted: true, targetId, actionTargetId, textSha256: hash(text), resultState: 'ACTION_INVOKED_NOT_CONVERSATION_PROOF' };
+      return { app: 'chrome', pid, windowHandle: 5678, surfaceUrl, responseState: 'ASSISTANT_TEXT_NONCE_OBSERVED', responseNonce, responseText: text, responseTextSha256: hash(text) };
+    },
+  });
+  const observation = await sessions.observe({ app: 'chrome', pid, expectedUrl: surfaceUrl, expectedTitle: 'Known conversation', maxControls: 100 });
+  const targetId = observation.editableTargets[0].targetId;
+  const actionTargetId = observation.actionTargets[0].targetId;
+  await sessions.input({ app: 'chrome', pid, observationId: observation.observationId, targetId, text });
+  await sessions.submit({ app: 'chrome', pid, observationId: observation.observationId, targetId, actionTargetId, expectedTextSha256: hash(text) });
+  const result = await sessions.read({ app: 'chrome', pid, observationId: observation.observationId, expectedTextSha256: hash(text), responseNonce, timeoutMs: 1000 });
+  assert.equal(result.responseState, 'ASSISTANT_TEXT_NONCE_OBSERVED');
+  assert.equal((scripts[3].match(/LEEWAY_UI_STARTED/g) || []).length, 1);
+});
+
+test('Chrome response read fails closed before a bound submission exists', async () => {
+  const surfaceUrl = 'https://chatgpt.com/c/test-conversation';
+  const sessions = new WindowsUiSessions({
+    executeScript: async () => ({
+      ...observedSurface({ appName: 'chrome', processName: 'chrome', editableTargets: [edit()], actionTargets: [button()] }),
+      surfaceUrl,
+    }),
+  });
+  const observation = await sessions.observe({ app: 'chrome', pid, expectedUrl: surfaceUrl, expectedTitle: 'Known conversation', maxControls: 100 });
+  await assert.rejects(() => sessions.read({ app: 'chrome', pid, observationId: observation.observationId,
+    expectedTextSha256: 'a'.repeat(64), responseNonce: 'LWC5-R21-READ-BOUND-02', timeoutMs: 1000 }),
+  /BROWSER_READ_NOT_BOUND_TO_SUBMISSION/);
 });
