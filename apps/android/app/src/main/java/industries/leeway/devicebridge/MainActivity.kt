@@ -24,6 +24,7 @@ import androidx.appcompat.app.AppCompatActivity
 class MainActivity : AppCompatActivity() {
     private lateinit var output: TextView
     private var speechRecognizer: SpeechRecognizer? = null
+    private var updateDialogShowing = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,6 +84,7 @@ class MainActivity : AppCompatActivity() {
                 "OFF"
             }
             runtimeState.text =
+                "AGENT LEE: " + BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ")\\n" +
                 "LOCAL MODEL: " + modelLabel + "\\nREMOTE RELAY: " + remoteLabel + "\\nDEVICE: " + remote.optString("deviceId")
         }
         refreshRuntimeState()
@@ -185,6 +187,21 @@ class MainActivity : AppCompatActivity() {
             text = "LOCAL MODEL STATUS"
             setOnClickListener {
                 output.text = ModelRuntime.status(this@MainActivity).toString(2)
+            }
+        }
+
+        val agentUpdate = Button(this).apply {
+            text = "UPDATE AGENT LEE"
+            setOnClickListener {
+                output.text = "Checking for Agent Lee update...\nCurrent: " +
+                    BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ")"
+                Thread {
+                    val result = AgentLeeUpdate.checkAndInstall(this@MainActivity)
+                    runOnUiThread {
+                        output.text = result.toString(2)
+                        refreshRuntimeState()
+                    }
+                }.start()
             }
         }
 
@@ -432,6 +449,22 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        val checkUpdates = Button(this).apply {
+            text = "CHECK GITHUB FOR UPDATES"
+            setOnClickListener {
+                output.text = "Checking the GitHub update manifest..."
+                GitHubUpdateChecker.check(this@MainActivity, force = true, notifyOnly = false) { info ->
+                    runOnUiThread {
+                        if (info == null) {
+                            output.text = "LeeWay Device Bridge is current, or the GitHub update manifest is unavailable."
+                        } else {
+                            showUpdatePrompt(info)
+                        }
+                    }
+                }
+            }
+        }
+
         val showToken = Button(this).apply {
             text = "SHOW PAIRING TOKEN"
             setOnClickListener {
@@ -476,14 +509,17 @@ class MainActivity : AppCompatActivity() {
             addView(pairingPanel)
             listOf(
                 discover, diagnostics, files, authorizeDeviceOperator, authorizeMediaOperator, receipts, authorizeBluetooth, bluetooth, networkDiscovery,
-                modelStatus, modelDownload, modelTest, speakTest, talkToLee, enableSideMic,
+                agentUpdate, modelStatus, modelDownload, modelTest, speakTest, talkToLee, enableSideMic,
                 authorizeWorkstationKeeper, enableSecondaryWorkstation, remoteEnable, remoteStatus, remoteDisable,
-                enable, startBridge, selfTest, showToken, stopBridge, stop
+                enable, startBridge, selfTest, checkUpdates, showToken, stopBridge, stop
             ).forEach { addView(it) }
             addView(output)
         }
 
         setContentView(ScrollView(this).apply { addView(root) })
+        GitHubUpdateChecker.check(this, force = false, notifyOnly = false) { info ->
+            if (info != null) runOnUiThread { showUpdatePrompt(info) }
+        }
 
         when (intent?.getStringExtra("leeway_action")) {
             "TALK_TO_AGENT_LEE" -> {
@@ -492,6 +528,9 @@ class MainActivity : AppCompatActivity() {
             "SHOW_PAIRING" -> {
                 pairingPanel.requestFocus()
                 output.text = "Pairing mode opened by Termux. Tap COPY PAIRING TOKEN, then return to Termux."
+            }
+            "SHOW_UPDATE" -> {
+                GitHubUpdateChecker.consumePending(this)?.let { showUpdatePrompt(it) }
             }
             "POCKET_BOOTSTRAP" -> {
                 val nonce = intent?.getStringExtra("leeway_nonce").orEmpty()
@@ -582,6 +621,50 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::output.isInitialized) {
+            GitHubUpdateChecker.consumePending(this)?.let { showUpdatePrompt(it) }
+        }
+    }
+
+    private fun showUpdatePrompt(info: org.json.JSONObject) {
+        if (!::output.isInitialized || updateDialogShowing) return
+        updateDialogShowing = true
+        val version = info.optString("versionName", "new version")
+        val sizeBytes = info.optLong("sizeBytes", -1L)
+        val sizeLabel = if (sizeBytes > 0) " (${sizeBytes / 1024 / 1024} MB)" else ""
+        android.app.AlertDialog.Builder(this)
+            .setTitle("LeeWay Device Bridge update available")
+            .setMessage("GitHub has version $version$sizeLabel. Download and open Android's owner-confirmed installer?")
+            .setNegativeButton("Later") { _, _ ->
+                updateDialogShowing = false
+                ReceiptStore.record(this, "device.apps.update", "DEFERRED", "Owner deferred GitHub Android update")
+            }
+            .setPositiveButton("Update") { _, _ ->
+                updateDialogShowing = false
+                output.text = "Downloading and verifying the GitHub APK..."
+                Thread {
+                    val result = runCatching {
+                        PackageInstallBroker.installFromUrl(
+                            this,
+                            info.getString("url"),
+                            info.getString("sha256")
+                        )
+                    }.getOrElse { error ->
+                        org.json.JSONObject()
+                            .put("ok", false)
+                            .put("error", error.message ?: error.javaClass.simpleName)
+                    }
+                    runOnUiThread {
+                        output.text = result.toString(2)
+                    }
+                }.start()
+            }
+            .setOnCancelListener { updateDialogShowing = false }
+            .show()
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {

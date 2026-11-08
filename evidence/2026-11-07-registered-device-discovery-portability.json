@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "leeway.engineering.evidence.v1",
+  "recordType": "SANITIZED_SOURCE_AND_DEPLOYMENT_OBSERVATION",
+  "observedAt": "2026-11-07T20:52:07Z",
+  "authority": "LEEWAY_DEVICE_BRIDGE_AND_RUNTIME_FABRIC_SOURCE_RECORDS",
+  "objective": "Prevent adapter configuration or workstation identity from being treated as device registration.",
+  "sourceCommits": {
+    "deviceBridge": {
+      "main": "65b4fdd4c2c15314e0124f760c8fdb34d9d40e86",
+      "registrationGuard": "b153c0d0f1d9b0ab82456bca3fd71d695a0bfc1d",
+      "cliRegistrationLabel": "fae6dccecafb0fb0bc23e56ed49a36f46cffd7f3"
+    },
+    "runtimeFabric": "141c3986601972393d97921db1dddd64eee42d6b"
+  },
+  "localValidation": {
+    "deviceBridgeTestMcp": { "result": "PASS", "passed": 156, "failed": 0 },
+    "deviceBridgeTestCli": { "result": "PASS", "passed": 7, "failed": 0 },
+    "runtimeRouting": { "result": "PASS", "passed": 10, "failed": 0 },
+    "runtimeDiscovery": { "result": "PASS", "passed": 19, "failed": 0 },
+    "runtimeBuild": "PASS",
+    "diffCheck": "PASS"
+  },
+  "githubActions": [
+    { "repository": "4citeB4U/LEEWAY-DEVICE-BRIDGE", "runId": 42412656184, "name": "Portable protocol and MCP", "result": "PASS", "platforms": ["ubuntu-latest", "windows-latest", "macos-latest"] },
+    { "repository": "4citeB4U/LEEWAY-DEVICE-BRIDGE", "runId": 42412656004, "name": "pages build and deployment", "result": "PASS" },
+    { "repository": "4citeB4U/LEEWAY-DEVICE-BRIDGE", "runId": 42412296826, "name": "Apple Device Bridge Qualification", "result": "PASS", "commit": "b153c0d0f1d9b0ab82456bca3fd71d695a0bfc1d" },
+    { "repository": "4citeB4U/LEEWAY-DEVICE-BRIDGE", "runId": 42412296894, "name": "Android Build", "result": "PASS", "commit": "b153c0d0f1d9b0ab82456bca3fd71d695a0bfc1d" },
+    { "repository": "4citeB4U/Leeway-Runtime-Fabric", "runId": 42412306567, "name": "Runtime Fabric Vercel", "result": "PASS" }
+  ],
+  "deployments": {
+    "deviceBridge": { "id": "dpl_29iUWXKKLpqb4yq5BRyeqAK9Gddc", "state": "READY", "commit": "b153c0d0f1d9b0ab82456bca3fd71d695a0bfc1d", "target": "production" },
+    "runtimeFabric": { "candidateCommit": "141c3986601972393d97921db1dddd64eee42d6b", "state": "FAILED", "reason": "Deployment rate limited — retry in 24 hours.", "currentReadyDeployment": "dpl_HFuRGw1kjTPnLezcVf8N4dQkxctT", "currentReadyCommit": "6c46218d144bd031a8887c57d35ea98b32235903" }
+  },
+  "liveReadOnlyObservation": {
+    "devices": ["pc-primary"],
+    "reachability": "CONFIGURED_NOT_PHYSICALLY_PROBED",
+    "interpretation": "ACTIVE_RUNTIME_OR_UPSTREAM_STILL_EXPOSES_OLD_FALLBACK",
+    "identityVerified": false
+  },
+  "qualification": {
+    "sourceContract": "PASS",
+    "runtimeProductionAdoption": "BLOCKED",
+    "physicalDeviceRegistration": "UNVERIFIED",
+    "formulaEvaluation": "NOT_RUN",
+    "independentVeritas": "NOT_RUN",
+    "canonicalReceipt": "NOT_CREATED",
+    "learningLedger": "NOT_UPDATED",
+    "c3": "NOT_QUALIFIED"
+  },
+  "nextAction": "Retry Runtime Fabric deployment after the reported 24-hour Vercel cooldown, then read back the trusted registration list through the authenticated connector."
+}

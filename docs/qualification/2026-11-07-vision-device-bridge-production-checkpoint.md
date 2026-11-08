@@ -141,3 +141,200 @@ The Creator reported that the iPhone Camera had been opened and requested one mo
 
 **Retry outcome:** **BLOCKED — no Bridge-open or iPhone-frame evidence was produced.** The physical Camera app may be open on the phone, but the active LeeWay Device Bridge still has no authorized Apple app-launch, screen-observation, or iOS camera producer route. This retry does not change the three-platform gate.
 
+## Apple package and camera transport implementation checkpoint — 2026-11-07 13:51:13 America/Chicago (2026-11-07 19:51:13 UTC)
+
+**Requested gate:** Update the Apple Device Bridge source and GitHub publication path so the owner can download the revised package, install it on the iPhone, pair the native camera provider to the Device Bridge, and then qualify a real camera session.
+
+### Implemented source
+
+- Added `apps/apple/Sources/AppleCameraCapture.swift`: owner-started AVFoundation front/back camera capture, bounded JPEG frames (8 MiB maximum), SHA-256 frame hashes, and local `vision.session.start`, `vision.frames.observe`, and `vision.session.stop` receipts.
+- Added `apps/apple/Sources/AppleCameraBridgeServer.swift`: owner-started local TCP listener with Bonjour service `_leeway-camera._tcp`, per-installation pairing token, bounded newline-delimited JSON protocol, and only the four explicit `vision.*` operations.
+- Added the Apple host client to `operator/physical-adapters.mjs`. `PhysicalAppleAdapter` advertises the four Vision routes only when an explicit `tcp://` endpoint and an environment-backed 32–128 character token are paired. No endpoint or credential is embedded as a default.
+- Extended the owner configuration contract in `apps/desktop/mcp-server.mjs` with `cameraEndpoint` and `cameraTokenEnv`; added the `device.camera` partial capability state to `operator/adapter-registry.json`.
+- Updated the Apple package manifest/schema, camera permission and local-network/Bonjour metadata, capability route documentation, and GitHub qualification/SideStore publication descriptions.
+
+### Executed source evidence
+
+- Apple source, transport, package, and checkpoint tests: **16 passed, 0 failed**.
+- `npm run test:mcp`: **153 passed, 0 failed**.
+- `npm run test:cli`: **7 passed, 0 failed**.
+- `node --test tests/physical-apple-usb.test.mjs`: **3 passed, 0 failed**.
+- Modified JSON manifests parsed successfully; `git diff --check` passed.
+- The transport test performed a real localhost TCP request/response and verified the exact token-authenticated envelope. This is source/host transport evidence, not iPhone evidence.
+
+### Capability and evidence state
+
+| Boundary | Configured | Running | Executed | Verified | Production-ready |
+|---|---:|---:|---:|---:|---:|
+| Apple native camera source | yes | no physical iPhone readback | source tests | source-qualified | platform gate pending |
+| Apple authenticated host transport | yes | localhost test only | localhost test | source-qualified | physical pairing pending |
+| GitHub Apple IPA workflow | yes | not run on this Windows host | not yet | not yet | pending macOS workflow |
+| Installed/trusted iPhone package | no readback | no readback | no | no | no |
+| Live iPhone `vision.frames.observe` through active Bridge | route implemented | no | no | no | no |
+
+### Accepted and rejected decisions
+
+- Accepted: the download channel remains the existing `apple-latest` release, containing `LeeWayDeviceBridge-unsigned.ipa`, `LEEWAY-APPLE-PACKAGE-MANIFEST.json`, and `sidestore-source.json` after the successful macOS qualification workflow and publication workflow.
+- Accepted: installation remains owner-controlled through the existing Apple signing path, including the owner’s SideStore/iLoader route; a GitHub download is not treated as an installed or trusted iPhone app.
+- Rejected: USB/WPD presence, a local Swift source test, a passing GitHub source test, or a generated IPA will be treated as proof of a running iPhone camera, host pairing, advancing frame, physical stop, Formula approval, Veritas approval, or autonomous any-LLM production readiness.
+
+### Next executable action
+
+Push this change to Device Bridge `main`; wait for the GitHub macOS Apple qualification and SideStore publication workflows; download the published IPA and manifest; install/sign through the owner-controlled Apple route; open the app, grant Camera and Local Network permission, start **Host Camera Bridge**, enroll the displayed endpoint and token in the owner-controlled Bridge configuration, and execute `vision.sources.list` → `vision.session.start` → advancing `vision.frames.observe` → `vision.session.stop` with independent receipt verification. Until that physical readback exists, the Apple and three-platform production gates remain **NOT FULLY QUALIFIED**.
+
+## Apple GitHub build and publication readback — 2026-11-07 13:57:17 America/Chicago (2026-11-07 19:57:17 UTC)
+
+The source was pushed to Device Bridge `main` at `71ba32caab8368ee9f9b5e1e47319d40486cfc16`; local `HEAD` and `origin/main` match, and the worktree is clean.
+
+- Initial qualification run `42408297213` failed during XcodeGen because the new generated Info.plist declaration lacked its required `info.path`. The failure was read from the GitHub job log, repaired in `apps/apple/project.yml`, and not treated as a successful build.
+- The corrected Apple Device Bridge Qualification run `42408536653` passed: source/package tests, XcodeGen, macOS Swift compilation, unsigned iPhone build, IPA packaging, and artifact upload.
+- The dependent Publish Apple SideStore Update Channel run `42408631944` passed.
+- The `apple-latest` release assets are present and uploaded: `LeeWayDeviceBridge-unsigned.ipa`, `LEEWAY-APPLE-PACKAGE-MANIFEST.json`, and `sidestore-source.json`.
+- The published manifest records version `0.1.48`, build `48`, `signingState: UNSIGNED_OWNER_CONTROLLED_SIGNING_REQUIRED`, `nativeCameraService: INCLUDED`, `nativeCameraTransport: INCLUDED`, and source revision `71ba32caab8368ee9f9b5e1e47319d40486cfc16`.
+- Downloaded IPA SHA-256: `e7d2075ed6d8bbe71242e54f2ae011f03222fe37ecdbdcfcce0b5344f018339d`; it matches the published manifest and GitHub release asset digest.
+
+This closes the source, macOS build, package, and GitHub publication gates. It does not close owner signing/install, iPhone permission, local-network pairing, live advancing-frame, physical-stop, independent receipt verification, Formula/Veritas, or any-LLM production gates. The next exact action is owner installation from the published release, followed by the paired Bridge `vision.*` session readback described above.
+
+## GitHub-managed package update channel checkpoint — 2026-11-07 14:25:44 America/Chicago (2026-11-07 20:25:44 UTC)
+
+**Identity and authority:** Creator-directed LeeWay Device Bridge engineering work in 4citeB4U/LEEWAY-DEVICE-BRIDGE; canonical source authority is the repository main branch and its GitHub Actions qualification/publication workflows.
+
+**Requested gate:** Native packages must discover GitHub updates from the phone, present an owner confirmation, and use the platform-native installation route without requiring iLoader or a computer for Android, and without claiming that ordinary iOS code can self-replace a signed application.
+
+### Implemented
+
+- Added the public contracts/package-manifest.schema.json and upgraded docs/package-manifest.json to schema 0.3.0.
+- Added docs/PACKAGE-UPDATE-PROTOCOL.md documenting update states, platform boundaries, verification, and owner confirmation.
+- Android now checks the GitHub Pages manifest on foreground and owner-authorized relay reconnect, compares versionCode, verifies HTTPS and SHA-256, notifies the owner, and opens Android's native installer only after the owner taps Update.
+- Apple now checks the same manifest on app foreground and offers the existing SideStore source or GitHub release. The app explicitly reports that iOS cannot replace its own signed executable.
+- The PWA service worker cache was advanced to v19-update-channel and explicitly calls registration.update() after registration.
+- Android and Apple publication workflows now update the unified manifest from the actual qualified artifact, with a shared publication concurrency group.
+- Windows, macOS, and Linux remain explicitly SOURCE_ONLY; no native package or native self-updater is claimed for them. The Read Aloud Android companion remains a separate package channel.
+
+### Executed and independent evidence
+
+- Full repository source tests: passed.
+- npm run test:mcp: 153 passed, 0 failed.
+- npm run test:cli: 7 passed, 0 failed after updating the stale pre-publication Apple assertion.
+- Targeted package/update/page/source tests: passed.
+- Local native Android build: not executed because this Windows host has neither Gradle nor a Gradle wrapper. This is a local capability boundary; it is not a build claim.
+- GitHub Android Build 42410270094: success; Android package compiled, tests ran, and package publication completed.
+- GitHub Apple Device Bridge Qualification 42410270027: success; Apple source/package tests, XcodeGen, macOS Swift compilation, unsigned iPhone build, IPA packaging, and upload completed.
+- GitHub Publish Apple SideStore Update Channel 42410397138: success; release assets and unified manifest publication completed.
+- GitHub Android Build 42410553049: success after repairing formula evidence generation.
+- GitHub Pages deployment 42410687684: success.
+- Fresh HTTPS readback of https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/package-manifest.json returned HTTP 200, schema 0.3.0, updatedAtUtc 2026-11-07T20:21:33Z, Android size/formula size 66445365, identical Android artifact/formula SHA-256 63d8f8b4ae9338f78b89ed677a3724f1ddb351b33d7eb3abe75a555c18c2ae73, and Apple version/build 0.1.49/49.
+- Source commit 4206184, evidence-repair commit 40fa733, and generated publication commits are present on origin/main; the latest observed remote head is 0089dda.
+
+### Capability and evidence state
+
+| Boundary | Configured | Running | Executed | Verified | Production-ready |
+|---|---:|---:|---:|---:|---:|
+| GitHub Pages update manifest | yes | live | HTTPS readback | yes | distribution metadata ready |
+| Android update checker and installer handoff | yes | only in qualified build artifact | GitHub compile/source tests | GitHub build qualified | physical install pending |
+| Apple foreground checker and SideStore handoff | yes | only in qualified IPA | GitHub macOS build/source tests | GitHub package/publication qualified | owner signing/install pending |
+| Web/PWA update route | yes | Pages deployment passed | source tests/live manifest | Pages deployment qualified | browser lifecycle remains device-dependent |
+| Windows/macOS/Linux native self-update | no | no native package | source-only route documented | not applicable | BLOCKED — native packages are not published |
+| Installed Android/Apple package and live phone runtime | owner-dependent | no new phone readback in this checkpoint | no physical update action | not verified | BLOCKED — owner install/reconnect/receipt evidence pending |
+
+### Accepted and rejected decisions
+
+- Accepted: GitHub is the package-discovery and artifact-publication source for all available routes; owners can update Android directly from the phone through Android's installer after a prompt.
+- Accepted: Apple updates remain GitHub-published and phone-directed through SideStore; iLoader is not required by the source contract when SideStore is healthy, but iOS signing/installation remains owner-controlled.
+- Accepted: automatic checking and owner prompts do not equal automatic installation.
+- Rejected: GitHub Actions success, a manifest digest, a live Pages response, or an IPA/APK download will be treated as proof that a phone installed, trusted, paired, or reconnected the new package.
+
+### Exact next executable action
+
+On Android, install the newly published APK from the Device Bridge update prompt and verify Android reports the replacement without uninstalling the existing package. On iPhone, open the app after the owner-controlled SideStore route is healthy, accept the GitHub update prompt, then grant permissions and execute the paired vision.sources.list → vision.session.start → advancing vision.frames.observe → vision.session.stop readback. Preserve the installer and runtime receipts. Until those physical steps are completed, the phone runtime and three-platform camera/production gates remain NOT FULLY QUALIFIED.
+
+## Apple GitHub/iLoader route correction checkpoint — 2026-11-07 14:54:25 America/Chicago (2026-11-07 20:54:25 UTC)
+
+**Identity and authority:** Creator-directed LeeWay Device Bridge engineering work in `4citeB4U/LEEWAY-DEVICE-BRIDGE`; source authority is the local canonical worktree and the repository `main` branch. Local correction commit after rebasing onto remote `main`: `71371552ff5226c3ee8a73194c126af4e87440ce`.
+
+**Requested gate:** Apple package updates must originate from GitHub and use the already-qualified iLoader installation path. SideStore must not be an active dependency, installer handoff, or update manifest route.
+
+### Diagnosis
+
+- The previous native Swift updater had already been partly corrected, but the active manifest, publication workflow, protocol text, and tests still named SideStore as the Apple route.
+- The repository's direct-delivery evidence identifies iLoader over USB as the currently verified Apple signing/install path and identifies Metal as the native local runtime after the app is installed.
+- GitHub can publish and supply the unsigned IPA and its digest. An ordinary iOS app cannot replace its own signed executable; iLoader remains the owner-controlled signing/install authority.
+
+### Implemented
+
+- Renamed the publication workflow to `.github/workflows/apple-github-iloader-channel.yml` and removed SideStore source generation/upload.
+- Changed iOS/iPadOS manifest routes to `CHECK_PROMPT_AND_ILOADER_GITHUB_IMPORT` and the Apple package action to `OPEN_GITHUB_IPA_AND_REQUEST_ILOADER_OWNER_CONFIRMATION`.
+- Native Apple updater now reads the HTTPS GitHub IPA URL, exposes **Open GitHub Release / Download IPA**, **Copy GitHub IPA URL**, and **Open iLoader Delivery Instructions**, and no longer constructs a `sidestore://` URL.
+- Updated active Apple delivery/update protocol and PWA copy to identify GitHub as package source and iLoader as the signing/install route. SideStore documents were reduced to archived historical notices.
+- Renamed the focused publication test to `tests/apple-github-iloader-update-channel.test.mjs` and updated source contracts.
+
+### Executed evidence
+
+- Focused Apple/update/page/source tests: **5 passed, 0 failed**.
+- Full repository source tests: **133 passed, 0 failed**.
+- `npm run test:mcp`: **153 passed, 0 failed**.
+- `npm run test:cli`: **7 passed, 0 failed**.
+- JSON manifest parse check: **PASS**.
+- `git diff --cached --check`: **PASS**.
+- No native iOS/macOS compile was executed on this Windows host; GitHub macOS qualification remains the required build gate after push.
+
+### Capability and evidence state
+
+| Boundary | Configured | Running | Executed | Verified | Production-ready |
+|---|---:|---:|---:|---:|---:|
+| GitHub Apple package source | yes | existing release metadata | prior GitHub publication | source contract corrected locally | pending new GitHub workflow run |
+| iLoader Apple signing/install route | documented and selected | not active in this session | prior route evidence | route documented; no new install readback | owner install pending |
+| Native Apple Metal runtime | in package source | no new iPhone readback | prior source/receipt evidence | not a new-build verification | physical readback pending |
+| SideStore update channel | archived | not used by active source | no new action | explicitly excluded from active route | not applicable |
+
+### Accepted and rejected decisions
+
+- Accepted: GitHub remains the package publication and discovery authority; the Apple app points the owner to the GitHub IPA and iLoader guide.
+- Accepted: existing iLoader certificate, pairing, and saved session are preserved; the update path does not reset or replace them.
+- Rejected: SideStore source URLs, SideStore release assets, or SideStore phone-side sign-in are required for LeeWay Apple updates.
+- Rejected: passing source tests or a GitHub release will be treated as proof of a new physical iPhone install, launch, Metal readback, camera session, or autonomous any-LLM production qualification.
+
+### Exact next executable action
+
+Push commits `71371552ff5226c3ee8a73194c126af4e87440ce` and `40e1f6427a44cf2d7362d9e9a54425198a5644ae` to `origin/main`, then wait for the GitHub macOS Apple qualification/publication and Pages deployment workflows. Read back the published manifest and release, install the downloaded IPA through the existing iLoader USB session, launch LeeWay Device Bridge, and capture a fresh Metal/camera receipt before making any new physical-runtime claim.
+
+## GitHub/iLoader publication and live manifest readback — 2026-11-07 15:00:12 America/Chicago (2026-11-07 21:00:12 UTC)
+
+**Remote head:** `120081bc36d152ac6000d82d0d98a8e31a98684a` on `origin/main`, including the generated Apple publication commit after the correction push.
+
+### Remote execution evidence
+
+- Apple Device Bridge Qualification run `42413442161`: **success** on correction head `594fe5ec19a93afd115af0b23a4128c6bb6ad54e`.
+- Android Build run `42413442172`: **success** on the correction head.
+- Publish Apple GitHub iLoader Package Channel run `42413534963`: **success**.
+- Pages deployment run `42413605082`: **success** for the generated publication head.
+- Device Console UI Acceptance run `42413442245`: **success**.
+- The superseded Pages run `42413557822` was cancelled by the newer publication-triggered deployment; this is not a source failure.
+
+### Release and live Pages evidence
+
+- `apple-latest` release updated successfully. It now contains exactly `LeeWayDeviceBridge-unsigned.ipa` and `LEEWAY-APPLE-PACKAGE-MANIFEST.json`; the stale `sidestore-source.json` asset was removed explicitly.
+- Release notes now state owner-controlled iLoader signing and USB installation.
+- Live Pages manifest returned HTTP 200 at `2026-11-07T20:58:36Z`.
+- Live iOS/iPadOS route: `CHECK_PROMPT_AND_ILOADER_GITHUB_IMPORT`.
+- Live Apple action: `OPEN_GITHUB_IPA_AND_REQUEST_ILOADER_OWNER_CONFIRMATION`.
+- Live Apple artifact: version `0.1.51`, build `51`, size `376246` bytes, SHA-256 `19b662919290fe13a8b155877f4831ef845e818f161f959226ec2e1aedeb524b`.
+- Live manifest note: GitHub publishes the unsigned IPA; the owner-controlled iLoader route signs and installs it over USB.
+
+### Final state for this correction
+
+**VERIFIED:** repository source, manifest contract, GitHub Apple qualification, GitHub iLoader publication workflow, release cleanup, and live Pages route now agree on GitHub → iLoader → native Apple app → Metal runtime.
+
+**NOT VERIFIED:** a new physical iLoader install on the iPhone, native launch of build `51`, fresh Metal receipt from build `51`, camera pairing/readback, and any-LLM autonomous production qualification. Those require the connected iPhone and owner-controlled iLoader session; no source or GitHub result is being promoted to that physical evidence.
+
+### Exact next executable action
+
+Download the live `LeeWayDeviceBridge-unsigned.ipa` from `apple-latest`, import it through the existing iLoader USB session without revoking the certificate or pairing, open the app, and capture the new build/version plus Metal and camera receipts. The active repository route no longer requires or advertises SideStore.
+
+## Active-route wording cleanup — 2026-11-07 15:01:11 America/Chicago (2026-11-07 21:01:11 UTC)
+
+The final active-route scan found two stale SideStore boundary phrases in iLoader documentation. They were removed from `docs/INSTALLATION-ADAPTER.md` and `docs/ILOADER-PERSISTENCE.md`. Historical SideStore incident records remain explicitly archived and are not part of the active updater, workflow, manifest, release assets, or PWA route.
+
+## Active-route scan closed — 2026-11-07 15:02:02 America/Chicago (2026-11-07 21:02:02 UTC)
+
+Commit `2f7d572b056f7dc9902cc69f2d1baf87f0aacc40` removed the final prohibition-only SideStore sentence from the active iLoader persistence guide. The scoped scan now returns **PASS: active route has no SideStore references**. `origin/main` and the local worktree match at this commit; the pre-existing untracked `state/` test residue remains outside the commit.

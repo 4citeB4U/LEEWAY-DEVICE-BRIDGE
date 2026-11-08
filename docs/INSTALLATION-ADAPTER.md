@@ -30,7 +30,7 @@ Generic Apple USB presence is only a diagnostic marker and **does not** prove ex
 | macOS | `macos-native-installer` | `MACOS_NATIVE_INSTALLER` |
 | Linux | `linux-native-installer` | `LINUX_NATIVE_PACKAGE_MANAGER` |
 
-The desktop provider routes remain dry-run only until their native adapters are implemented and qualified. The iOS route recognizes iLoader as the current Windows USB fallback; it does not call iLoader or represent SideStore as healthy.
+The desktop provider routes remain dry-run only until their native adapters are implemented and qualified. The iOS route recognizes iLoader as the current Windows USB fallback; the LeeWay bridge does not call iLoader or claim installer readiness on its own.
 
 ## Apple preflight states
 

@@ -25,5 +25,12 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_CFBundleShortVersionString: "$(MARKETING_VERSION)"
         INFOPLIST_KEY_CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        INFOPLIST_KEY_NSCameraUsageDescription: "LeeWay Device Bridge uses the iPhone camera only after you open and authorize the native camera provider."
         TARGETED_DEVICE_FAMILY: "1"
         SUPPORTS_MACCATALYST: NO
+    info:
+      path: Info.plist
+      properties:
+        NSLocalNetworkUsageDescription: "LeeWay Device Bridge uses the local network only after you start and authorize the owner camera transport."
+        NSBonjourServices:
+          - _leeway-camera._tcp

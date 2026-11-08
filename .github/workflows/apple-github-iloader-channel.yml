@@ -1,0 +1,126 @@
+name: Publish Apple GitHub iLoader Package Channel
+
+concurrency:
+  group: leeway-device-bridge-package-publication
+  cancel-in-progress: false
+
+on:
+  workflow_run:
+    workflows: ["Apple Device Bridge Qualification"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      qualifying_run_id:
+        description: "Successful Apple Device Bridge Qualification run ID"
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      QUALIFYING_RUN_ID: ${{ github.event_name == 'workflow_dispatch' && inputs.qualifying_run_id || github.event.workflow_run.id }}
+      RELEASE_TAG: apple-latest
+    steps:
+      - name: Check out the canonical package manifest
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Download the qualified unsigned Apple package
+        run: |
+          set -euo pipefail
+          gh run download "$QUALIFYING_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --pattern "leeway-device-bridge-apple-unsigned-*" --dir package
+          find package -type f -print
+
+      - name: Publish the stable GitHub package channel
+        run: |
+          set -euo pipefail
+          if ! gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+              --title "LeeWay Apple Native Update Channel" \
+              --notes "Current qualified unsigned iPhone package for owner-controlled iLoader signing and USB installation." \
+              --prerelease
+          fi
+          IPA_PATH="$(find package -name LeeWayDeviceBridge-unsigned.ipa -print -quit)"
+          MANIFEST_PATH="$(find package -name LEEWAY-APPLE-PACKAGE-MANIFEST.json -print -quit)"
+          gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --clobber \
+            "$IPA_PATH#LeeWayDeviceBridge-unsigned.ipa" \
+            "$MANIFEST_PATH#LEEWAY-APPLE-PACKAGE-MANIFEST.json"
+
+      - name: Publish unified GitHub Pages update manifest
+        run: |
+          set -euo pipefail
+          IPA_PATH="$(find package -name LeeWayDeviceBridge-unsigned.ipa -print -quit)"
+          MANIFEST_PATH="$(find package -name LEEWAY-APPLE-PACKAGE-MANIFEST.json -print -quit)"
+          IPA_URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/LeeWayDeviceBridge-unsigned.ipa"
+          RELEASE_URL="https://github.com/${GITHUB_REPOSITORY}/releases/tag/${RELEASE_TAG}"
+          PACKAGE_MANIFEST_URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/LEEWAY-APPLE-PACKAGE-MANIFEST.json"
+          export IPA_PATH MANIFEST_PATH IPA_URL RELEASE_URL PACKAGE_MANIFEST_URL QUALIFYING_RUN_ID
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          package_manifest = json.loads(Path(os.environ["MANIFEST_PATH"]).read_text(encoding="utf-8"))
+          artifact = package_manifest["artifact"]
+          ipa_path = Path(os.environ["IPA_PATH"])
+          digest = hashlib.sha256(ipa_path.read_bytes()).hexdigest()
+          manifest_path = Path("docs/package-manifest.json")
+          manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+          package = next(item for item in manifest["packages"] if item["platform"] == "ios")
+          package.update({
+              "status": "QUALIFIED_ARTIFACT_OWNER_INSTALL_REQUIRED",
+              "source": "github-release",
+              "downloadUrl": os.environ["IPA_URL"],
+              "releaseUrl": os.environ["RELEASE_URL"],
+              "metadataUrl": os.environ["PACKAGE_MANIFEST_URL"],
+              "sha256": digest,
+              "sizeBytes": ipa_path.stat().st_size,
+              "versionName": artifact["version"],
+              "versionCode": int(artifact["build"]),
+              "githubActionsQualification": {
+                  "state": "VERIFIED",
+                  "runId": int(os.environ["QUALIFYING_RUN_ID"]),
+                  "sourceRevision": package_manifest["sourceRevision"],
+                  "ipaSizeBytes": ipa_path.stat().st_size,
+                  "ipaSha256": digest,
+                  "note": "GitHub publishes the unsigned IPA; the owner-controlled iLoader route signs and installs it over USB."
+              }
+          })
+          manifest["updatedAtUtc"] = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+          manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+          PY
+          git config user.name "LeeWay Veritas"
+          git config user.email "actions@users.noreply.github.com"
+          git add docs/package-manifest.json
+          if git diff --cached --quiet; then
+            echo "Unified update manifest unchanged."
+            exit 0
+          fi
+          git commit -m "Publish verified Apple Device Bridge update metadata"
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "Could not publish the Apple update manifest after three guarded push attempts." >&2
+              exit 1
+            fi
+            git fetch origin main
+            git rebase origin/main
+          done

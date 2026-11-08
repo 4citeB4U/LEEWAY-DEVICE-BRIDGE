@@ -56,7 +56,7 @@ function buildBootstrap(profile,pkg){
   };
 }
 if("serviceWorker" in navigator){
-  navigator.serviceWorker.register("./sw.js").catch(()=>{});
+  navigator.serviceWorker.register("./sw.js").then(registration=>registration.update()).catch(()=>{});
 }
 
 const appleState=message=>{const el=$("#applePwaState");if(el)el.textContent=message;};

@@ -39,6 +39,7 @@ async function fixture(t, options = {}) {
         }
       })), {
         admission: async ({capability}) => capability === 'device.health',
+        deviceRegistry: new Map(ids.map(id => [id, { platform: 'test-platform' }])),
         ...(options.cardRequired ? {
           complianceCardGate: async ({complianceCard}) => complianceCard?.taskId === 'http-card'
             ? {valid:true,cardHash:digest(complianceCard),authority:'LEEWAY_RUNTIME_FABRIC'}

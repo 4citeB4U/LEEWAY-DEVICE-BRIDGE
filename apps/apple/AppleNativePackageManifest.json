@@ -16,6 +16,8 @@
   "components": {
     "deviceBridge": "INCLUDED",
     "nativeMetalService": "INCLUDED",
+    "nativeCameraService": "INCLUDED",
+    "nativeCameraTransport": "INCLUDED",
     "agentLeeRuntime": "RUNTIME_NOT_INSTALLED",
     "formula": "EXTERNAL_AUTHORITY_REQUIRED",
     "veritas": "EXTERNAL_AUTHORITY_REQUIRED",
@@ -24,6 +26,8 @@
   "evidenceGates": [
     "MACOS_SOURCE_BUILD",
     "IPA_LAYOUT_AND_DIGEST",
+    "NATIVE_CAMERA_PERMISSION_AND_CAPTURE_SOURCE",
+    "NATIVE_CAMERA_AUTHENTICATED_TRANSPORT_SOURCE",
     "OWNER_CONTROLLED_SIGNING_AND_INSTALL",
     "PHYSICAL_METAL_READBACK",
     "INDEPENDENT_RECEIPT_VERIFICATION"

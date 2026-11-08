@@ -1,37 +1,13 @@
-# LeeWay Apple SideStore update channel
+# Archived Apple SideStore update channel
 
-## What updates automatically when SideStore is healthy
+This file is retained as historical evidence only. SideStore is not the active LeeWay Device Bridge update route and is not required for current Apple package delivery.
 
-The LeeWay PWA is served from GitHub Pages. Its browser shell updates from GitHub when Safari retrieves the updated site and service worker.
+Use [Apple direct iLoader delivery](./APPLE-DIRECT-ILOADER-DELIVERY.md) for the live path:
 
-Native Apple code is delivered differently. Each successful **Apple Device Bridge Qualification** build triggers the GitHub workflow **Publish Apple SideStore Update Channel**. That workflow publishes three immutable release assets under the stable `apple-latest` release tag:
+1. Open the GitHub `apple-latest` release.
+2. Download `LeeWayDeviceBridge-unsigned.ipa` and verify its package manifest digest.
+3. Import the IPA into the existing iLoader installation over USB.
+4. Let iLoader sign and install the replacement on the connected iPhone.
+5. Open LeeWay Device Bridge and run the Metal probe when a new native execution observation is required.
 
-- `LeeWayDeviceBridge-unsigned.ipa`
-- `LEEWAY-APPLE-PACKAGE-MANIFEST.json`
-- `sidestore-source.json`
-
-The SideStore source reports the IPA’s actual bundle version, build number, SHA-256 manifest, date, and size. GitHub is the build and package authority; SideStore is the owner-controlled iPhone signer and installer **only after its separate phone-side Apple Account sign-in works**.
-
-## Current iPhone fallback
-
-This iPhone currently has a SideStore `-80045` sign-in blocker after the official 0.7.0-alpha upgrade. Use [Apple direct iLoader delivery](./APPLE-DIRECT-ILOADER-DELIVERY.md) to install LeeWay packages through the verified Windows USB route. The GitHub release remains the package authority; iLoader signs and installs it.
-
-## One-time phone setup
-
-1. Ensure SideStore can sign and refresh applications and LocalDevVPN is connected.
-2. On the LeeWay Device Bridge PWA, tap **ADD LEEWAY UPDATE CHANNEL**. It opens SideStore with the LeeWay source URL.
-3. Add the source once. The app should appear as **LeeWay Device Bridge**.
-4. Use SideStore’s update control when it reports a newer LeeWay version. Do not delete the installed app first; that preserves its local app data when SideStore can update the same bundle identifier.
-
-> **Do not enter `sidestore-source.json` in an Anisette Server field.** It is a LeeWay app-update catalog, not an Apple-account authentication service. Anisette settings must use only the built-in SideStore/iLoader providers or an intentionally deployed Anisette endpoint.
-
-Before the first install or an update, use the [Apple SideStore preflight](./APPLE-SIDESTORE-PREFLIGHT.md). It makes the account, device, Anisette, certificate, and installer stages explicit.
-
-## Boundaries
-
-- SideStore may refresh the free development signing period in the background when its VPN and background conditions permit. Its refresh is separate from application-code updates. [SideStore FAQ](https://docs.sidestore.io/docs/faq)
-- SideStore requires its LocalDevVPN when installing, updating, or refreshing applications. [SideStore prerequisites](https://docs.sidestore.io/docs/installation/prerequisites)
-- iOS does not allow this app to download and execute replacement native code itself. The Apple package remains signed and installed through SideStore. [Apple App Review Guideline 2.5.2](https://developer.apple.com/app-store/review/guidelines/uk/)
-- TestFlight is Apple’s managed automatic distribution route, but it requires an Apple Developer Program/App Store Connect distribution setup. [Apple TestFlight](https://developer.apple.com/testflight/)
-
-This channel changes delivery mechanics only. It does not qualify Formula, Veritas, model inference, a call, email delivery, or a Device Bridge receipt.
+The current native app points to the GitHub release and iLoader instructions. No `sidestore://` URL or SideStore source is part of the active updater contract.

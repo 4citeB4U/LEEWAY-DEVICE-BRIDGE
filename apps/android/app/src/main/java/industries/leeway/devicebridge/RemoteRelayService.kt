@@ -47,6 +47,7 @@ class RemoteRelayService : Service() {
     override fun onCreate() {
         super.onCreate()
         createChannel()
+        GitHubUpdateChecker.check(this, force = false, notifyOnly = true)
         startAsForeground("Checking owner-bound relay configuration")
         val workstation = WorkstationKeeper.ensure(this)
         ReceiptStore.record(
@@ -195,6 +196,7 @@ class RemoteRelayService : Service() {
             "hello-ack" -> {
                 reconnectDelayMs = 1_000L
                 RemoteRelayState.setConnection(this, true, "AUTHENTICATED")
+                GitHubUpdateChecker.check(this, force = false, notifyOnly = true)
                 updateNotification("LeeWay remote bridge connected")
                 ReceiptStore.record(
                     this,

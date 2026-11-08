@@ -1,5 +1,9 @@
 name: Android Build
 
+concurrency:
+  group: leeway-device-bridge-package-publication
+  cancel-in-progress: false
+
 on:
   push:
     paths:
@@ -119,9 +123,42 @@ jobs:
             "sourceCommit": "${{ github.sha }}"
           }
           JSON
+          python3 - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          manifest_path = Path("docs/package-manifest.json")
+          metadata_path = Path("docs/downloads/leeway-device-bridge-android-latest.json")
+          manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+          metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+          package = next(item for item in manifest["packages"] if item["platform"] == "android")
+          package.update({
+              "status": "QUALIFIED_ARTIFACT_OWNER_INSTALL_REQUIRED",
+              "source": "github-pages",
+              "downloadUrl": "./downloads/leeway-device-bridge-android-latest-debug.apk",
+              "sha256": metadata["sha256"],
+              "sizeBytes": metadata["sizeBytes"],
+              "versionName": metadata["versionName"],
+              "versionCode": metadata["versionCode"],
+              "githubActionsQualification": {
+                  "state": "VERIFIED",
+                  "runId": int(metadata["sourceRunId"]),
+                  "headSha": metadata["sourceCommit"],
+                  "apkSizeBytes": metadata["sizeBytes"],
+                  "apkSha256": metadata["sha256"],
+                  "note": "The Android app checks this manifest on foreground and reconnect, downloads the verified APK, and opens Android's owner-confirmed installer. It does not silently install or erase app data."
+              }
+          })
+          formula = package.setdefault("formulaQualification", {})
+          formula["measuredBytes"] = metadata["sizeBytes"]
+          formula["measuredSha256"] = metadata["sha256"]
+          manifest["updatedAtUtc"] = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+          manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+          PY
           git config user.name "LeeWay Veritas"
           git config user.email "actions@users.noreply.github.com"
-          git add docs/downloads/leeway-device-bridge-android-latest-debug.apk docs/downloads/leeway-device-bridge-android-latest.json
+          git add docs/downloads/leeway-device-bridge-android-latest-debug.apk docs/downloads/leeway-device-bridge-android-latest.json docs/package-manifest.json
           if git diff --cached --quiet; then
             echo "Published APK unchanged."
             exit 0

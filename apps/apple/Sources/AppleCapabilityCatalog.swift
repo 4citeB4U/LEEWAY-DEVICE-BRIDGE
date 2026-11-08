@@ -26,6 +26,11 @@ enum AppleCapabilityCatalog {
             detail: "LeeWay actions can be exposed to Siri and Shortcuts through App Intents."
         ),
         AppleCapability(
+            id: "device.camera",
+            state: .available,
+            detail: "Owner-started AVFoundation capture with bounded JPEG frames and hash-bound local receipts. Host streaming requires a separately paired Device Bridge transport."
+        ),
+        AppleCapability(
             id: "device.communications.call",
             state: .ownerHandoff,
             detail: "The app can hand a supplied phone number to the system Phone handler. The owner completes the call in Apple’s interface."

@@ -44,7 +44,7 @@ test('CLI catalog reads existing publication evidence without claiming install',
   assert.equal(result.status, 0);
   const doc = JSON.parse(result.stdout);
   assert.ok(doc.packages.some(p => p.platform === 'android'));
-  assert.ok(doc.packages.some(p => p.platform === 'ios' && p.manifestHasDownloadAndSha256 === false));
+  assert.ok(doc.packages.some(p => p.platform === 'ios' && p.manifestHasDownloadAndSha256 === true));
   assert.ok(doc.packages.every(p => p.installationVerified === false));
 });
 test('CLI reveals configured device IDs but never secrets or claims connected', async t => {
@@ -84,7 +84,7 @@ test('catalog verification hashes bytes and refuses stale manifest claims', asyn
   assert.equal(fail.status, 1);
   assert.equal(JSON.parse(fail.stdout).packages[0].state, 'ARTIFACT_MISMATCH');
 });
-test('CLI probe opens a real local stdio session without claiming remote connection', async t => {
+test('CLI probe opens a real local stdio session without promoting config into registration', async t => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'leeway-cli-probe-'));
   t.after(() => fs.rm(dir, { recursive: true, force: true }));
   await fs.mkdir(path.join(dir, 'workspace'));
@@ -94,7 +94,10 @@ test('CLI probe opens a real local stdio session without claiming remote connect
   assert.equal(result.status, 0, result.stderr);
   const value = JSON.parse(result.stdout);
   assert.equal(value.transport, 'LOCAL_STDIO_MCP_CONNECTED');
-  assert.deepEqual(value.devicesConfigured, ['probe-host']);
+  assert.deepEqual(value.registeredDevices, []);
+  assert.equal(value.registrationState, 'REGISTRATION_AUTHORITY_UNBOUND');
+  assert.equal(value.registrationAuthority, null);
+  assert.equal(value.reachability, 'NOT_PROBED');
   assert.ok(value.toolsEnumerated > 5);
   assert.equal(value.chatgptConnectorRegistered, 'NOT_TESTED');
 });
@@ -112,7 +115,11 @@ test('CLI entrypoint serves real MCP tools and command remains fail-closed', asy
   assert.ok(listed.tools.some(t => t.name === 'bridge_devices'));
   assert.ok(listed.tools.some(t => t.name === 'device_process_execute'));
   const deviceList = await client.callTool({ name: 'bridge_devices', arguments: {} });
-  assert.deepEqual(JSON.parse(deviceList.content[0].text).devices, ['cli-host']);
+  const discovery = JSON.parse(deviceList.content[0].text);
+  assert.deepEqual(discovery.devices, []);
+  assert.equal(discovery.registrationState, 'REGISTRATION_AUTHORITY_UNBOUND');
+  assert.equal(discovery.registrationAuthority, null);
+  assert.equal(discovery.reachability, 'NOT_PROBED');
   const response = await client.callTool({ name: 'device_files_write', arguments: { deviceId: 'cli-host', arguments: { path: 'unapproved.txt', text: 'no' } } });
   assert.equal(JSON.parse(response.content[0].text).error, 'ADMISSION_DENIED');
   await assert.rejects(fs.access(path.join(dir, 'workspace/unapproved.txt')));

@@ -16,7 +16,7 @@ Use this guide to keep the Windows iLoader setup ready for LeeWay Device Bridge 
 
 - Do not reset Anisette state just because iLoader is restarted.
 - Do not delete stored pairing data as a normal update step.
-- Do not revoke the active certificate to solve a SideStore sign-in problem.
+- Do not revoke the active certificate as a routine repair step.
 
 Those actions remove working state and can force a fresh Apple authorization.
 
@@ -24,9 +24,9 @@ Those actions remove working state and can force a fresh Apple authorization.
 
 iLoader can retain the selected service, saved login through Windows Credential Manager, and pairing information. Apple can still reject or expire an authorization session, and the phone may require a new trust prompt after an operating-system or pairing change. That is an Apple service boundary, not a LeeWay application update.
 
-## SideStore boundary
+## Active LeeWay route
 
-SideStore sign-in is separate from iLoader. The current LeeWay native Apple update route is direct iLoader IPA import. Do not block a Device Bridge update on SideStore while its upstream session error remains unresolved.
+The current LeeWay native Apple update route is direct iLoader IPA import from the GitHub `apple-latest` release.
 
 ## Evidence basis
 

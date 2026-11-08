@@ -21,6 +21,7 @@ const devices = [
   { id: 'iphone-usb-test', type: 'physical-apple', platform: 'ios' }
 ];
 const adapterRegistry = loadAdapterRegistry();
+const registeredDeviceRegistry = new Map(devices.map(device => [device.id, { platform: device.platform }]));
 
 test('physical USB READ routes require actual Formula and Veritas callback decisions', async () => {
   const calls = [];
@@ -32,7 +33,7 @@ test('physical USB READ routes require actual Formula and Veritas callback decis
     calls.push({ gate: 'veritas-fixture', ...input });
     return true;
   };
-  const admit = createProductionAdmission(devices, { adapterRegistry, formulaPreGate, veritasPreGate });
+  const admit = createProductionAdmission(devices, { adapterRegistry, deviceRegistry: registeredDeviceRegistry, formulaPreGate, veritasPreGate });
   for (const device of devices) {
     for (const capability of ['device.info', 'device.health']) {
       assert.equal(await admit({ deviceId: device.id, capability, args: {} }), true);
@@ -44,10 +45,10 @@ test('physical USB READ routes require actual Formula and Veritas callback decis
 
 test('physical USB paths fail closed when either mandatory independent gate fails', async () => {
   const denyFormula = createProductionAdmission(devices, {
-    adapterRegistry, formulaPreGate: async () => ({ passed: false }), veritasPreGate: async () => true
+    adapterRegistry, deviceRegistry: registeredDeviceRegistry, formulaPreGate: async () => ({ passed: false }), veritasPreGate: async () => true
   });
   const denyVeritas = createProductionAdmission(devices, {
-    adapterRegistry, formulaPreGate: async () => ({ passed: true }), veritasPreGate: async () => false
+    adapterRegistry, deviceRegistry: registeredDeviceRegistry, formulaPreGate: async () => ({ passed: true }), veritasPreGate: async () => false
   });
   const missingGates = createProductionAdmission(devices, { adapterRegistry });
   for (const device of devices) {
@@ -56,7 +57,7 @@ test('physical USB paths fail closed when either mandatory independent gate fail
     }
   }
   const alwaysAllowFixture = createProductionAdmission(devices, {
-    adapterRegistry, formulaPreGate: async () => ({ passed: true }), veritasPreGate: async () => true
+    adapterRegistry, deviceRegistry: registeredDeviceRegistry, formulaPreGate: async () => ({ passed: true }), veritasPreGate: async () => true
   });
   assert.equal(await alwaysAllowFixture({ deviceId: 'not-registered', capability: 'device.health', args: {} }), false);
   assert.equal(await alwaysAllowFixture({ deviceId: 'iphone-usb-test', capability: 'vision.session.start', args: {} }), false);

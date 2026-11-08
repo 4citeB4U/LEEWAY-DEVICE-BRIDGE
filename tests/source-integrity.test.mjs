@@ -2,14 +2,15 @@ import fs from "node:fs";
 import assert from "node:assert/strict";
 const mustExist=[
  "AGENTS.md","ARCHITECTURE.md","SECURITY.md",
- "contracts/device.schema.json","contracts/capability.schema.json",
+ "contracts/device.schema.json","contracts/capability.schema.json","contracts/package-manifest.schema.json",
  "contracts/session.schema.json","contracts/receipt.schema.json",
  "contracts/bootstrap.schema.json","contracts/device-passport.schema.json","contracts/apple-native-package.schema.json",
- "docs/index.html","docs/device-discovery.js","docs/package-manifest.json",
+ "docs/index.html","docs/device-discovery.js","docs/package-manifest.json","docs/PACKAGE-UPDATE-PROTOCOL.md",
  "apps/android/app/src/main/AndroidManifest.xml",
  "apps/android/app/src/main/java/industries/leeway/devicebridge/DevicePassport.kt",
  "apps/android/app/src/main/java/industries/leeway/devicebridge/BootstrapStore.kt",
- "apps/android/app/src/main/java/industries/leeway/devicebridge/MainActivity.kt"
+ "apps/android/app/src/main/java/industries/leeway/devicebridge/MainActivity.kt",
+ "apps/android/app/src/main/java/industries/leeway/devicebridge/GitHubUpdateChecker.kt"
 ];
 for(const p of mustExist) assert.ok(fs.existsSync(p),`missing ${p}`);
 for(const p of fs.readdirSync("contracts").filter(x=>x.endsWith(".json"))){
