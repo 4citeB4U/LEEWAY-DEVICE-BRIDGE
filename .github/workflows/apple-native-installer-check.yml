@@ -37,6 +37,8 @@ jobs:
   native-signing-worker:
     name: Compile native Apple installer on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    env:
+      SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     timeout-minutes: 40
     strategy:
       fail-fast: false
@@ -46,6 +48,17 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Prove exact source checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          ACTUAL_SHA="$(git rev-parse HEAD)"
+          if [ "$ACTUAL_SHA" != "$SOURCE_SHA" ]; then
+            echo "QUALIFIED_SOURCE_SHA_MISMATCH" >&2
+            exit 1
+          fi
+          printf 'Qualified source %s\n' "$ACTUAL_SHA"
       - name: Install Linux keyring build headers
         if: runner.os == 'Linux'
         run: |
@@ -99,7 +112,7 @@ jobs:
               launcher.chmod(0o755)
               with tarfile.open(archive,"w:gz") as t:
                   for item in [binary,launcher,readme]: t.add(item,arcname=item.name,recursive=False)
-          meta = {"platform":platform,"sourceSha":os.environ["GITHUB_SHA"],
+          meta = {"platform":platform,"sourceSha":os.environ["SOURCE_SHA"],
                   "binarySha256":sha,"binarySizeBytes":binary.stat().st_size,
                   "archiveSha256":hashlib.sha256(archive.read_bytes()).hexdigest(),
                   "archiveBytes":archive.stat().st_size,
