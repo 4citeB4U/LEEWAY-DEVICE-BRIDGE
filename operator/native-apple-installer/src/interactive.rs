@@ -21,7 +21,7 @@ use sha2::{Digest, Sha256};
 use crate::{perform, Request, INTERACTIVE_MODE};
 use std::sync::atomic::Ordering;
 
-const MANIFEST_URL: &str = "https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/package-manifest.json";
+const MANIFEST_URL: &str = "https://raw.githubusercontent.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/main/docs/package-manifest.json";
 const IPA_URL: &str = "https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/download/apple-latest/LeeWayDeviceBridge-unsigned.ipa";
 const MAX_BYTES: u64 = 104_857_600;
 
