@@ -174,6 +174,56 @@
         "workstation.boot.reconnect"
       ],
       "boundaryNote": "Does not grant root, protected system-service access, other-app private storage, credentials/MFA, or privileged Android UI/hardware control. Route those through separately authorized Device Bridge providers."
+    },
+    {
+      "id": "leeway-model-hub",
+      "class": "internal-model-service",
+      "role": "Existing LeeWay model catalog and authenticated inference authority for governed workforce clients",
+      "status": "SOURCE_REGISTERED_RUNTIME_BINDING_UNVERIFIED",
+      "sourceRepository": "4citeB4U/LeeWay-Model-Hub",
+      "sourcePath": "src/server.mjs",
+      "sourceGitBlobSha": "a27c0cf89d9a38f0ff77377b0df9a96a6766b651",
+      "publicUi": "https://4citeb4u.github.io/LeeWay-Model-Hub/",
+      "interfaces": [
+        "GET /v1/catalog",
+        "GET /v1/models",
+        "GET /v1/status",
+        "POST /v1/models/activate",
+        "POST /v1/chat"
+      ],
+      "qualifiedProducer": "LEEWAY_MODEL_HUB_EXISTING_HOST_REQUIRED",
+      "activeModelResidency": "SINGLE_SELECTED_MODEL_ALL_MODELS_PAUSED_NOT_VERIFIED",
+      "runtimeBinding": "NOT_PROBED",
+      "ownerApprovalRequired": true,
+      "modelDownloadActionProvided": false,
+      "executionEnabled": false,
+      "statusNote": "GitHub Pages hosts a widget/catalog only. Model execution and GPU qualification require original authenticated Runtime and qualified Model Hub host."
+    },
+    {
+      "id": "leeway-logistics",
+      "class": "internal-business-spatial-service",
+      "role": "Existing LeeWay Transit World, logistics business context, routes and authorized location grounding",
+      "status": "SOURCE_REGISTERED_RUNTIME_BINDING_UNVERIFIED",
+      "sourceRepository": "4citeB4U/LEEWAY-LOGISTICS-",
+      "sourcePath": "apps/transit-world",
+      "sourceGitBlobSha": "5b2d859b0b0582fc77451ca29a319d0803f0f243",
+      "publicUi": "https://4citeb4u.github.io/LEEWAY-LOGISTICS-/",
+      "interfaces": [
+        "TRANSIT_WORLD_BROWSER_UI",
+        "TRUSTED_BUSINESS_RECORDS_UNBOUND",
+        "DEVICE_LOCATION_PROVIDER_UNBOUND"
+      ],
+      "runtimeBinding": "NOT_PROBED",
+      "deviceLocation": {
+        "permission": "EXPLICIT_USER_CONSENT_REQUIRED",
+        "accuracy": "UNVERIFIED",
+        "freshness": "UNVERIFIED",
+        "source": "DEVICE_BRIDGE_PROVIDER_NOT_BOUND",
+        "sharing": "DENIED_BY_DEFAULT"
+      },
+      "trainingDataNotLive": true,
+      "executionEnabled": false,
+      "statusNote": "Transit World Pages may show demo data. No Bridge-native physical position, real CRM mutation or live fleet claim is made."
     }
   ]
 }
