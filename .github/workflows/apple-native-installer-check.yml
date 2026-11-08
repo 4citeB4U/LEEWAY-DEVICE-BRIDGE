@@ -96,6 +96,9 @@ jobs:
           readme.write_text(
               "LeeWay Apple Native Installer\n"
               "Connect and trust your iPhone/iPad over USB. Open the launcher for your operating system.\n"
+              "Before starting: the device must be discoverable through usbmuxd / Apple Mobile Device support.\n"
+              "Windows: install Apple's device support through iTunes or Apple Devices if USB discovery is unavailable.\n"
+              "macOS: Apple device services are included. Linux: install and run usbmuxd if not provided.\n"
               "Choose your device, verify Apple's account prompt and enter the 2FA code locally.\n"
               "A free Apple Account can sign sideloaded apps; paid Developer enrollment or App Store Connect is not required.\n"
               "Free provisioning is temporary and typically needs renewal in seven days.\n"
