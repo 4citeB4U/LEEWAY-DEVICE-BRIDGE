@@ -48,10 +48,10 @@ test("owner secrets flow only by private process stdin and don't reach printed m
 
 test("official host installer uses canonical GitHub source and private credentials",()=>{
   const interactive=readFileSync("operator/native-apple-installer/src/interactive.rs","utf8");
-  assert.match(interactive,/raw\\.githubusercontent\\.com\\/4citeB4U\\/LEEWAY-DEVICE-BRIDGE\\/main\\/docs\\/package-manifest\\.json/);
-  assert.match(interactive,/download_official_ipa\\(\\)/);
+  assert.match(interactive,/raw\.githubusercontent\.com\/4citeB4U\/LEEWAY-DEVICE-BRIDGE\/main\/docs\/package-manifest\.json/);
+  assert.match(interactive,/download_official_ipa\(\)/);
   assert.match(interactive,/rpassword::prompt_password/);
-  assert.match(interactive,/UsbmuxdConnection::default\\(\\)/);
-  assert.match(interactive,/sha2|Sha256::new\\(\\)/);
-  assert.doesNotMatch(interactive,/isideload::Session|sign_and_install\\(|isideload::SigningIdentity/);
+  assert.match(interactive,/UsbmuxdConnection::default\(\)/);
+  assert.match(interactive,/sha2|Sha256::new\(\)/);
+  assert.doesNotMatch(interactive,/isideload::Session|sign_and_install\(|isideload::SigningIdentity/);
 });
