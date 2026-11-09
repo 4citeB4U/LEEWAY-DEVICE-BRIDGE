@@ -22,6 +22,8 @@ const REQUEST_HEADER_ALLOWLIST = [
   "content-type",
   "accept",
   "mcp-protocol-version",
+  "mcp-method",
+  "mcp-name",
   "mcp-session-id",
   "last-event-id"
 ];
@@ -63,7 +65,7 @@ function browserCorsHeaders(origin) {
   return {
     "access-control-allow-origin": origin,
     "access-control-allow-methods": "POST, OPTIONS",
-    "access-control-allow-headers": "Authorization, Content-Type, Accept, MCP-Protocol-Version, MCP-Session-Id, Last-Event-Id",
+    "access-control-allow-headers": "Authorization, Content-Type, Accept, MCP-Protocol-Version, Mcp-Method, Mcp-Name, MCP-Session-Id, Last-Event-Id",
     "access-control-expose-headers": "WWW-Authenticate, MCP-Protocol-Version, MCP-Session-Id, Last-Event-Id",
     "vary": "Origin"
   };
