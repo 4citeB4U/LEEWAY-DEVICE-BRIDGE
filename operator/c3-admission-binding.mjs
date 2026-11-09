@@ -50,6 +50,17 @@ function resolveCapabilityMetadata(platform, capability, registry) {
   };
 }
 
+function hasSourceBoundWindowsIdentity(deviceId, device) {
+  if (device?.platform !== 'windows') return true;
+  return deviceId === 'pc-primary' &&
+    device.identityVerified === true &&
+    device.registrationState === 'TRUSTED_REGISTRY_READ' &&
+    device.identitySource === 'WINDOWS_CIM_READONLY' &&
+    device.passportAuthority === 'OWNER_SIGNED_WINDOWS_PASSPORT' &&
+    typeof device.ownerSubject === 'string' && device.ownerSubject.length > 0 &&
+    typeof device.passportSha256 === 'string' && /^[a-f0-9]{64}$/i.test(device.passportSha256);
+}
+
 /**
  * Create a canonical C3 admission callback for Bridge instances.
  *
@@ -106,6 +117,11 @@ export function createC3AdmissionBinding({
     if (!platform || typeof platform !== "string") {
       return false;
     }
+
+    // Windows pc-primary may enter C3 only after the trusted host registry
+    // carries a fresh adapter observation. A configured ID, passport-shaped
+    // object, or caller claim cannot satisfy this boundary.
+    if (!hasSourceBoundWindowsIdentity(deviceId, device)) return false;
 
     // 5. Derive capability metadata strictly from registry
     const meta = resolveCapabilityMetadata(platform, capability, registry);

@@ -1,20 +1,52 @@
 {
-  "$schema":"https://json-schema.org/draft/2020-12/schema",
-  "$id":"https://leeway.local/contracts/device-passport.schema.json",
-  "title":"LeeWay Verified Device Passport Candidate",
-  "type":"object",
-  "required":["schemaVersion","authority","manufacturer","model","device","product","androidRelease","sdkInt","supportedAbis"],
-  "properties":{
-    "schemaVersion":{"type":"string"},
-    "authority":{"enum":["NATIVE_ANDROID_OBSERVED","NATIVE_APPLE_OBSERVED","VERIFIED_DEVICE_PASSPORT"]},
-    "manufacturer":{"type":"string"},
-    "model":{"type":"string"},
-    "device":{"type":"string"},
-    "product":{"type":"string"},
-    "hardware":{"type":"string"},
-    "androidRelease":{"type":"string"},
-    "sdkInt":{"type":"integer"},
-    "securityPatch":{"type":"string"},
-    "supportedAbis":{"type":"array","items":{"type":"string"}}
-  }
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leeway.local/contracts/device-passport.schema.json",
+  "title": "LeeWay Verified Device Passport Candidate",
+  "type": "object",
+  "additionalProperties": true,
+  "oneOf": [
+    {
+      "required": [
+        "schemaVersion", "authority", "manufacturer", "model", "device",
+        "product", "androidRelease", "sdkInt", "supportedAbis"
+      ],
+      "properties": {
+        "schemaVersion": { "type": "string" },
+        "authority": {
+          "enum": ["NATIVE_ANDROID_OBSERVED", "NATIVE_APPLE_OBSERVED", "VERIFIED_DEVICE_PASSPORT"]
+        },
+        "manufacturer": { "type": "string" },
+        "model": { "type": "string" },
+        "device": { "type": "string" },
+        "product": { "type": "string" },
+        "hardware": { "type": "string" },
+        "androidRelease": { "type": "string" },
+        "sdkInt": { "type": "integer" },
+        "securityPatch": { "type": "string" },
+        "supportedAbis": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    {
+      "required": [
+        "schemaVersion", "authority", "platform", "deviceId", "ownerSubject",
+        "issuedAt", "expiresAt", "keyId", "computerUuid", "biosSerialNumber",
+        "manufacturer", "model", "signature"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "1.0.0" },
+        "authority": { "const": "OWNER_SIGNED_WINDOWS_PASSPORT" },
+        "platform": { "const": "windows" },
+        "deviceId": { "const": "pc-primary" },
+        "ownerSubject": { "type": "string", "minLength": 1 },
+        "issuedAt": { "type": "string", "format": "date-time" },
+        "expiresAt": { "type": "string", "format": "date-time" },
+        "keyId": { "type": "string", "minLength": 1 },
+        "computerUuid": { "type": "string", "minLength": 1 },
+        "biosSerialNumber": { "type": "string", "minLength": 1 },
+        "manufacturer": { "type": "string", "minLength": 1 },
+        "model": { "type": "string", "minLength": 1 },
+        "signature": { "type": "string", "minLength": 1 }
+      }
+    }
+  ]
 }

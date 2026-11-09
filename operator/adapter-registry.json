@@ -177,43 +177,30 @@
       "adapterId": "leeway.operator.windows",
       "platform": "windows",
       "version": "0.1.0",
-      "implementationStatus": "PROPOSED",
-      "authorityBoundary": "Current user token plus Windows UI Automation and explicit elevation for administrator-only actions.",
+      "implementationStatus": "PARTIAL",
+      "authorityBoundary": "Read-only Windows CIM/BIOS identity observation bound to an owner-signed pc-primary passport; no mutation or elevation is implied.",
       "nativeMechanisms": [
-        "Microsoft UI Automation",
-        "PowerShell",
-        "Win32",
-        "Windows App SDK"
+        "PowerShell CIM",
+        "Win32_ComputerSystemProduct",
+        "Win32_BIOS",
+        "Win32_ComputerSystem",
+        "Win32_OperatingSystem"
       ],
       "capabilities": {
-        "device.files.read": {
+        "device.health": {
           "state": "SUPPORTED",
-          "requiresHumanConsent": false
+          "requiresHumanConsent": false,
+          "notes": "Requires fresh Windows CIM/BIOS identity evidence and an owner-signed pc-primary passport; discovery alone is not verification."
         },
-        "device.files.write": {
+        "device.info": {
           "state": "SUPPORTED",
-          "requiresHumanConsent": false
-        },
-        "device.screen.observe": {
-          "state": "SUPPORTED",
-          "requiresHumanConsent": true
-        },
-        "device.ui.control": {
-          "state": "SUPPORTED",
-          "requiresHumanConsent": true
-        },
-        "device.apps.launch": {
-          "state": "SUPPORTED",
-          "requiresHumanConsent": false
-        },
-        "device.apps.install": {
-          "state": "SUPPORTED",
-          "requiresHumanConsent": true
+          "requiresHumanConsent": false,
+          "notes": "Read-only host identity observation; no configured desktop name or registry row can promote identityVerified."
         }
       },
-      "evidenceState": "PROPOSED",
-      "implementationPath": null,
-      "documentation": "docs/DEVICE-OPERATOR.md"
+      "evidenceState": "OBSERVED",
+      "implementationPath": "operator/windows-pc-primary.mjs",
+      "documentation": "docs/PASSPORT.md"
     },
     {
       "adapterId": "leeway.operator.macos",

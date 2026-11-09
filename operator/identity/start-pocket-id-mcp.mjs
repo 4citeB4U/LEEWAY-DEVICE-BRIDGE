@@ -16,10 +16,10 @@ import { pathToFileURL } from 'node:url';
 import { createConfiguredBridge } from '../../apps/desktop/mcp-server.mjs';
 import { createPocketIdMcpServer } from './create-pocket-id-mcp-server.mjs';
 
-export async function startPocketIdMcp({ configPath, issuer, resource, ownerSubject, port = 4271 } = {}) {
+export async function startPocketIdMcp({ configPath, issuer, resource, ownerSubject, tokenAudiences = [], port = 4271 } = {}) {
   if (!Number.isInteger(port) || port < 1024 || port > 65535) throw Error('LOCAL_PORT_INVALID');
   const bridge = await createConfiguredBridge(configPath);
-  const server = createPocketIdMcpServer({ bridge, issuer, resource, ownerSubject });
+  const server = createPocketIdMcpServer({ bridge, issuer, resource, ownerSubject, tokenAudiences });
   try {
     await new Promise((resolve, reject) => {
       server.once('error', reject);
@@ -37,6 +37,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
     issuer: process.env.LEEWAY_POCKET_ID_ISSUER,
     resource: process.env.LEEWAY_MCP_RESOURCE,
     ownerSubject: process.env.LEEWAY_POCKET_ID_OWNER_SUB,
+    tokenAudiences: String(process.env.LEEWAY_POCKET_ID_TOKEN_AUDIENCES || '').split(/[\n,]/).map(value => value.trim()).filter(Boolean),
     port: Number(process.env.LEEWAY_MCP_LOCAL_PORT || 4271),
   }).then(() => {
     console.error('LeeWay authenticated read-only MCP listening on loopback');

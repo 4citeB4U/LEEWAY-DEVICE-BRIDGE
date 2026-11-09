@@ -201,3 +201,8 @@ export class AppleCameraTransport {
     });
   }
 }
+
+// Kept as a separate source-bound implementation so the existing Android and
+// Apple transports retain their current contracts. Runtime host composition may
+// import this adapter after it has injected the owner passport trust registry.
+export { WindowsPcPrimaryAdapter } from './windows-pc-primary.mjs';

@@ -18,6 +18,15 @@ function requireHttps(input, field) {
   if (url.protocol !== 'https:' || url.username || url.password || url.hash || url.search) throw Error(field + '_HTTPS_REQUIRED');
   return url.href.replace(/\/$/, '');
 }
+
+function normalizeTokenAudiences(values) {
+  const candidates = Array.isArray(values)
+    ? values
+    : String(values || '').split(/[\n,]/);
+  return new Set(candidates.map(value => String(value || '').trim())
+    .filter(value => /^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$/.test(value)));
+}
+
 function parsePart(part) {
   if (!/^[A-Za-z0-9_-]+$/.test(part) || part.length > 8192) throw Error('MALFORMED_JWT');
   const bytes = Buffer.from(part, 'base64url');
@@ -29,13 +38,49 @@ function bearer(req) {
   if (typeof header !== 'string' || !/^Bearer [A-Za-z0-9_\-.]+$/.test(header)) return null;
   return header.slice(7);
 }
+
+function permissionAliases(permission) {
+  if (permission === 'device.bridge.read' || permission === 'device.discovery.read') {
+    return new Set(['device.bridge.read', 'device.discovery.read']);
+  }
+  return new Set([permission]);
+}
+
+function roleNames(value) {
+  if (typeof value === 'string') return value.split(/\s+/).filter(Boolean);
+  if (Array.isArray(value)) return value.flatMap(roleNames);
+  if (value && typeof value === 'object') return Object.keys(value);
+  return [];
+}
+
+function hasPermission(claims, permission) {
+  const accepted = permissionAliases(permission);
+  const scopeValue = typeof claims.scope === 'string'
+    ? claims.scope
+    : typeof claims.scp === 'string'
+      ? claims.scp
+      : '';
+  if (scopeValue.split(/\s+/).some(scope => accepted.has(scope))) return true;
+
+  // ZITADEL may carry project roles instead of a literal OAuth scope.
+  // Accept only the exact read-only LeeWay aliases; never infer authority
+  // from arbitrary claims or from a broader role.
+  for (const [claimName, claimValue] of Object.entries(claims || {})) {
+    if (claimName !== 'urn:zitadel:iam:org:project:roles'
+      && !/^urn:zitadel:iam:org:project:[^:]+:roles$/.test(claimName)) continue;
+    if (roleNames(claimValue).some(role => accepted.has(role))) return true;
+  }
+  return false;
+}
+
 /**
  * No fallback to session cookies, ID tokens, unsigned tokens, or unqualified scopes.
  * Caller must supply resource + approved owner sub from actual enrollment.
  */
-export function createPocketIdAuthenticator({ issuer, resource, ownerSubject, permission = 'device.bridge.read', fetchImpl = fetch, now = () => Date.now() } = {}) {
+export function createPocketIdAuthenticator({ issuer, resource, ownerSubject, permission = 'device.bridge.read', tokenAudiences = [], fetchImpl = fetch, now = () => Date.now() } = {}) {
   const expectedIssuer = requireHttps(issuer, 'ISSUER');
   const expectedResource = requireHttps(resource, 'RESOURCE');
+  const acceptedAudiences = new Set([expectedResource, ...normalizeTokenAudiences(tokenAudiences)]);
   if (!ownerSubject || typeof ownerSubject !== 'string' || ownerSubject.length > 256) throw Error('OWNER_SUBJECT_REQUIRED');
   if (!/^[a-z][a-z0-9._:-]{2,127}$/.test(permission)) throw Error('PERMISSION_REQUIRED');
   const discoveryUrl = expectedIssuer + '/.well-known/openid-configuration';
@@ -50,11 +95,12 @@ export function createPocketIdAuthenticator({ issuer, resource, ownerSubject, pe
       const claims = parsePart(parts[1]);
       if (protectedHeader.alg !== 'RS256' || !protectedHeader.kid || protectedHeader.typ === 'JWT+UNSIGNED') return false;
       if (claims.iss !== expectedIssuer || claims.sub !== ownerSubject) return false;
-      if (!(Array.isArray(claims.aud) ? claims.aud.includes(expectedResource) : claims.aud === expectedResource)) return false;
+      const audiences = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
+      if (!audiences.some(audience => acceptedAudiences.has(audience))) return false;
       const seconds = Math.floor(now() / 1000);
       if (!Number.isSafeInteger(claims.exp) || claims.exp <= seconds || !Number.isSafeInteger(claims.iat) || claims.iat > seconds + 30) return false;
       if (claims.nbf !== undefined && (!Number.isSafeInteger(claims.nbf) || claims.nbf > seconds + 30)) return false;
-      if (!String(claims.scope || '').split(/\s+/).includes(permission)) return false;
+      if (!hasPermission(claims, permission)) return false;
       if (keyCache.until <= now()) {
         const discoveryResponse = await fetchImpl(discoveryUrl, { signal: AbortSignal.timeout(5000), redirect: 'error' });
         if (!discoveryResponse.ok) return false;

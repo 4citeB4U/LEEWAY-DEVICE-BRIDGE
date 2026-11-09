@@ -7,6 +7,17 @@ const COMPOSITION_KEYS = new Set([
   'complianceCardGate', 'complianceCardProvider', 'visionProviders', 'visionClientId',
 ]);
 
+const HOST_INJECTED_C3_KEYS = Object.freeze([
+  'deviceRegistry',
+  'adapterRegistry',
+  'formulaPreGate',
+  'veritasPreGate',
+  'receiptSink',
+  'trustedIssuerRegistry',
+  'replayGuard',
+  'consentProvider',
+]);
+
 function ownDataValue(input, key) {
   const descriptor = Object.getOwnPropertyDescriptor(input, key);
   if (!descriptor) return undefined;
@@ -53,4 +64,72 @@ export function requireTrustedRuntimeComposition(input = {}) {
   }
 
   return Object.freeze({ ...values, mode: direct ? 'direct' : 'c3' });
+}
+
+function isRegistryObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value) &&
+    (Array.isArray(value.adapters) || (value.adapters !== null && typeof value.adapters === 'object'));
+}
+
+function isDeviceRegistry(value) {
+  if (value instanceof Map) {
+    return value.size > 0 && [...value.entries()].every(([id, record]) =>
+      typeof id === 'string' && id.length > 0 && record !== null && typeof record === 'object' &&
+      typeof record.platform === 'string' && record.platform.trim().length > 0);
+  }
+  return Array.isArray(value) && value.length > 0 && value.every(record =>
+    record !== null && typeof record === 'object' &&
+    typeof (record.id ?? record.deviceId) === 'string' &&
+    (record.id ?? record.deviceId).length > 0 &&
+    typeof record.platform === 'string' && record.platform.trim().length > 0);
+}
+
+function isTrustedIssuerRegistry(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value) &&
+    Object.keys(value).length > 0;
+}
+
+function isReplayGuard(value) {
+  return value !== null && typeof value === 'object' &&
+    typeof value.has === 'function' && typeof value.consume === 'function';
+}
+
+/**
+ * Validate the candidate-only bridge seam used by trusted host startup.
+ *
+ * This is intentionally stricter than requireTrustedRuntimeComposition().
+ * Discovery and legacy test fixtures may use the broader validator, but an
+ * execution-capable Runtime-to-Device-Bridge seam must receive every C3
+ * dependency from host code. Config JSON and MCP requests cannot fill any of
+ * these slots, and a direct callback cannot substitute for the C3 providers.
+ */
+export function requireHostInjectedC3Composition(input = {}) {
+  const composition = requireTrustedRuntimeComposition(input);
+  if (composition.mode !== 'c3') {
+    throw new Error('TRUSTED_RUNTIME_C3_COMPOSITION_REQUIRED');
+  }
+
+  const missing = HOST_INJECTED_C3_KEYS.filter(key => !Object.hasOwn(composition, key));
+  if (missing.length > 0) {
+    throw new Error(`TRUSTED_RUNTIME_C3_DEPENDENCIES_REQUIRED:${missing.join(',')}`);
+  }
+  if (!isDeviceRegistry(composition.deviceRegistry)) {
+    throw new Error('TRUSTED_RUNTIME_DEVICE_REGISTRY_REQUIRED');
+  }
+  if (!isRegistryObject(composition.adapterRegistry)) {
+    throw new Error('TRUSTED_RUNTIME_ADAPTER_REGISTRY_REQUIRED');
+  }
+  if (!isTrustedIssuerRegistry(composition.trustedIssuerRegistry)) {
+    throw new Error('TRUSTED_RUNTIME_ISSUER_REGISTRY_REQUIRED');
+  }
+  if (!isReplayGuard(composition.replayGuard)) {
+    throw new Error('TRUSTED_RUNTIME_REPLAY_GUARD_REQUIRED');
+  }
+  for (const key of ['formulaPreGate', 'veritasPreGate', 'consentProvider', 'receiptSink']) {
+    if (typeof composition[key] !== 'function') {
+      throw new Error(`TRUSTED_RUNTIME_${key.replace(/[A-Z]/g, letter => '_' + letter).toUpperCase()}_REQUIRED`);
+    }
+  }
+
+  return composition;
 }

@@ -149,4 +149,17 @@ test('startup refuses command exposure without verified host-injected Runtime co
     }),
     /TRUSTED_COMPLIANCE_CARD_COMPOSITION_REQUIRED/
   );
+  await assert.rejects(
+    startUniversalPocketIdMcp({
+      enableExecution: true,
+      port: 4272,
+      runtimeInput: {
+        admission: async () => true,
+        receiptSink: async () => {},
+        complianceCardGate: async () => true,
+        complianceCardProvider: async () => ({}),
+      },
+    }),
+    /TRUSTED_RUNTIME_C3_COMPOSITION_REQUIRED/
+  );
 });

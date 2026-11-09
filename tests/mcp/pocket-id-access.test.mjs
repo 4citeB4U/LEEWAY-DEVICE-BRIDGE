@@ -44,11 +44,31 @@ test('Pocket ID API JWT requires valid issuer, audience, owner and permission', 
   assert.equal(await auth(req(token({ aud: 'https://wrong.example.test/mcp' }))), false);
   assert.equal(await auth(req(token({ sub: 'another-owner' }))), false);
   assert.equal(await auth(req(token({ scope: 'openid' }))), false);
+  assert.equal(await auth(req(token({ scope: 'openid device.discovery.read' }))), true);
+  assert.equal(await auth(req(token({
+    scope: 'openid',
+    'urn:zitadel:iam:org:project:roles': { 'device.bridge.read': {} }
+  }))), true);
+  assert.equal(await auth(req(token({
+    scope: 'openid',
+    'urn:zitadel:iam:org:project:roles': { 'device.bridge.execute': {} }
+  }))), false);
   assert.equal(await auth(req(token({ exp: now / 1000 - 1 }))), false);
   assert.equal(await auth({ headers: {} }), false);
   const tampered = token().split('.');
   tampered[1] = encode({ iss: issuer, sub: 'owner-123', aud: resource, scope: 'device.bridge.read', iat: now/1000, exp: now/1000+300 });
   assert.equal(await auth(req(tampered.join('.'))), false);
+
+  const numericAudienceAuth = createPocketIdAuthenticator({
+    issuer,
+    resource,
+    ownerSubject: 'owner-123',
+    tokenAudiences: ['397623943239906543'],
+    fetchImpl,
+    now: () => now
+  });
+  assert.equal(await numericAudienceAuth(req(token({ aud: '397623943239906543' }))), true);
+  assert.equal(await numericAudienceAuth(req(token({ aud: '397623943239906544' }))), false);
 });
 
 test('Pocket ID verifier rejects missing owner enrollment, insecure issuer and insecure resource', () => {
