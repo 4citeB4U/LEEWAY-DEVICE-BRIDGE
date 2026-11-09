@@ -1,7 +1,13 @@
+import { createRequire } from 'node:module';
+import { createServer } from 'node:http';
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { Bridge, digest } from '../../packages/protocol/index.mjs';
 import { createRuntimeComplianceCardIntegration } from '../../operator/runtime-compliance-card-provider.mjs';
 
+const require = createRequire(import.meta.url);
+const runtimeValidationModule = process.env.LEEWAY_RUNTIME_CARD_VALIDATION_MODULE;
+const runtimeRoot = process.env.LEEWAY_RUNTIME_ROOT;
 const manifest = {
   rootObjectId: 'LACF.ROOT.001.LEEWAY_AGENTIC_COMMUNICATIONS_FABRIC',
   receiptRoot: 'receipts/runtime-enforcement',
@@ -59,5 +65,172 @@ test('Runtime gate marks a card valid only after exact manifest-backed readback'
     baseUrl:'http://127.0.0.1:4011',manifest,
     fetchImpl:async()=>({ok:true,json:async()=>({valid:true,card:{...card,action:'tool.execution'}})}),
   });
-  assert.equal(await mismatched.complianceCardGate({complianceCard:card}),false);
+  assert.equal(await mismatched.complianceCardGate({
+    complianceCard:card,deviceId:'pc-primary',capability:'voice.speak',args:{text:'hello'}
+  }),false);
+});
+
+test('operation metadata mismatch fails before Runtime validation request', async () => {
+  let requests = 0;
+  const integration = createRuntimeComplianceCardIntegration({
+    baseUrl:'http://127.0.0.1:4011',manifest,idFactory:()=> 'context-id',
+    fetchImpl:async()=>{ requests++; return {ok:false}; }
+  });
+  const args = { text:'hello' };
+  const card = await integration.complianceCardProvider({
+    deviceId:'pc-primary',capability:'voice.speak',args
+  });
+
+  for (const context of [
+    { deviceId:'other-device',capability:'voice.speak',args },
+    { deviceId:'pc-primary',capability:'device.files.write',args },
+    { deviceId:'pc-primary',capability:'voice.speak',args:{text:'changed'} },
+    { deviceId:'pc-primary',capability:'voice.speak',args:undefined },
+  ]) {
+    assert.equal(await integration.complianceCardGate({complianceCard:card,...context}),false);
+  }
+  assert.equal(await integration.complianceCardGate({
+    deviceId:'pc-primary',capability:'voice.speak',args
+  }),false);
+  assert.equal(requests,0);
+});
+
+test('Runtime denials and unavailable responses fail closed', async () => {
+  const card = await createRuntimeComplianceCardIntegration({
+    baseUrl:'http://127.0.0.1:4011',manifest,idFactory:()=> 'denial-id'
+  }).complianceCardProvider({deviceId:'pc-primary',capability:'voice.speak',args:{text:'hello'}});
+  for (const fetchImpl of [
+    async()=>({ok:false,status:428}),
+    async()=>({ok:false,status:503}),
+    async()=>{throw new Error('connection refused');},
+  ]) {
+    const integration = createRuntimeComplianceCardIntegration({
+      baseUrl:'http://127.0.0.1:4011',manifest,fetchImpl
+    });
+    assert.equal(await integration.complianceCardGate({
+      complianceCard:card,deviceId:'pc-primary',capability:'voice.speak',args:{text:'hello'}
+    }),false);
+  }
+});
+
+test('Runtime response card tampering fails closed', async () => {
+  const integration = createRuntimeComplianceCardIntegration({
+    baseUrl:'http://127.0.0.1:4011',manifest,idFactory:()=> 'tamper-id',
+    fetchImpl:async(_url,init)=>{
+      const card=JSON.parse(init.body).leewayComplianceCard;
+      return {ok:true,json:async()=>({valid:true,card:{...card,taskId:'tampered'}})};
+    }
+  });
+  const args={text:'hello'};
+  const card=await integration.complianceCardProvider({
+    deviceId:'pc-primary',capability:'voice.speak',args
+  });
+  assert.equal(await integration.complianceCardGate({
+    complianceCard:card,deviceId:'pc-primary',capability:'voice.speak',args
+  }),false);
+});
+
+test('mismatched operation context is rejected before adapter dispatch', async () => {
+  let dispatched = 0;
+  let validationRequests = 0;
+  const integration = createRuntimeComplianceCardIntegration({
+    baseUrl:'http://127.0.0.1:4011',manifest,idFactory:()=> 'dispatch-id',
+    fetchImpl:async(_url,init)=>{
+      validationRequests++;
+      const card=JSON.parse(init.body).leewayComplianceCard;
+      return {ok:true,json:async()=>({valid:true,card})};
+    }
+  });
+  const card = await integration.complianceCardProvider({
+    deviceId:'host-a',capability:'device.files.read',args:{path:'one.txt'}
+  });
+  const devices = ['host-a','host-b'].map(id=>({
+    id,grants:['device.files.read','device.files.info'],
+    adapter:{
+      discover:async()=>['device.files.read','device.files.info'],
+      execute:async()=>{dispatched++;return {text:'fixture'};}
+    }
+  }));
+  const bridge = new Bridge(devices,{
+    complianceCardGate:integration.complianceCardGate,
+    admission:async()=>true,receiptSink:async()=>{}
+  });
+
+  for (const [deviceId,capability,args] of [
+    ['host-b','device.files.read',{path:'one.txt'}],
+    ['host-a','device.files.info',{path:'one.txt'}],
+    ['host-a','device.files.read',{path:'two.txt'}],
+  ]) {
+    const result=await bridge.call(deviceId,capability,args,{complianceCard:card});
+    assert.equal(result.error,'COMPLIANCE_CARD_INVALID');
+    assert.equal(result.operationMayHaveExecuted,false);
+  }
+  assert.equal(validationRequests,0);
+  assert.equal(dispatched,0);
+});
+
+test('actual Runtime handler validates device.info but missing native admission still blocks dispatch', {
+  skip: runtimeValidationModule && runtimeRoot ? false : 'Runtime source worktree environment is not configured'
+}, async () => {
+  const {createRuntimeComplianceCardValidationHandler}=require(runtimeValidationModule);
+  const handler=createRuntimeComplianceCardValidationHandler({rootDir:runtimeRoot});
+  let requests=0;
+  const server=createServer(async(req,res)=>{
+    requests++;
+    const chunks=[];
+    for await(const chunk of req) chunks.push(chunk);
+    req.body=JSON.parse(Buffer.concat(chunks).toString('utf8'));
+    handler(req,{
+      status(code){res.statusCode=code;return this;},
+      json(body){res.setHeader('content-type','application/json');res.end(JSON.stringify(body));return this;}
+    });
+  });
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  const {port}=server.address();
+  const integration=createRuntimeComplianceCardIntegration({
+    baseUrl:`http://127.0.0.1:${port}`,manifest,idFactory:()=> 'actual-http-id'
+  });
+
+  try {
+    const args={};
+    const card=await integration.complianceCardProvider({
+      deviceId:'pc-primary',capability:'device.info',args
+    });
+    const decision=await integration.complianceCardGate({
+      complianceCard:card,deviceId:'pc-primary',capability:'device.info',args
+    });
+    assert.equal(decision.valid,true);
+    assert.equal(decision.cardHash,digest(card));
+    assert.equal(decision.authority,'LEEWAY_RUNTIME_FABRIC');
+    assert.equal(await integration.complianceCardGate({
+      complianceCard:{...card,governancePolicy:'UNTRUSTED_POLICY'},
+      deviceId:'pc-primary',capability:'device.info',args
+    }),false);
+    assert.equal(await integration.complianceCardGate({
+      deviceId:'pc-primary',capability:'device.info',args
+    }),false);
+    assert.equal(requests,2);
+
+    let adapterCalls=0;
+    const bridge=new Bridge([{
+      id:'pc-primary',
+      grants:['device.info'],
+      adapter:{
+        discover:async()=>['device.info'],
+        execute:async()=>{adapterCalls++;return {device:'fixture'};}
+      }
+    }],{
+      complianceCardGate:integration.complianceCardGate,
+      admission:async()=>false,
+      receiptSink:async()=>{}
+    });
+    const outcome=await bridge.call('pc-primary','device.info',args,{complianceCard:card});
+    assert.equal(outcome.ok,false);
+    assert.equal(outcome.error,'ADMISSION_DENIED');
+    assert.equal(outcome.operationMayHaveExecuted,false);
+    assert.equal(adapterCalls,0);
+    assert.equal(requests,3);
+  } finally {
+    await new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));
+  }
 });

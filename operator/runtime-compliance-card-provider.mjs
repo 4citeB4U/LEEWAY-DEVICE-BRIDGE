@@ -94,8 +94,13 @@ export function createRuntimeComplianceCardIntegration({
     return buildCard({ manifest, agentId, deviceId, capability, args, id: idFactory() });
   };
 
-  const complianceCardGate = async ({ complianceCard }) => {
-    if (!complianceCard || typeof complianceCard !== 'object' || Array.isArray(complianceCard)) return false;
+  const complianceCardGate = async ({ complianceCard, deviceId, capability, args }) => {
+    if (!complianceCard || typeof complianceCard !== 'object' || Array.isArray(complianceCard) ||
+        typeof deviceId !== 'string' || typeof capability !== 'string' ||
+        !args || typeof args !== 'object' || Array.isArray(args)) return false;
+    const metadata = complianceCard.metadata;
+    if (!metadata || metadata.deviceId !== deviceId || metadata.capability !== capability ||
+        metadata.argumentsSha256 !== digest(args)) return false;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
