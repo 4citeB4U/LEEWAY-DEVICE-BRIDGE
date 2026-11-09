@@ -10,6 +10,8 @@ const runtimeValidationModule = process.env.LEEWAY_RUNTIME_CARD_VALIDATION_MODUL
 const runtimeRoot = process.env.LEEWAY_RUNTIME_ROOT;
 const controlToken = 'bridge-card-test-control-token';
 const createIntegration = (options = {}) => createRuntimeComplianceCardIntegration({
+  baseUrl:'http://127.0.0.1:4011',
+  approvedRuntimeOrigin:'http://127.0.0.1:4011',
   controlToken,
   ...options
 });
@@ -59,8 +61,42 @@ test('trusted provider scopes voice status and speech cards from Runtime manifes
 
 test('trusted provider requires a startup control-token binding', () => {
   assert.throws(() => createRuntimeComplianceCardIntegration({
-    baseUrl:'http://127.0.0.1:4011',manifest
+    baseUrl:'http://127.0.0.1:4011',
+    approvedRuntimeOrigin:'http://127.0.0.1:4011',
+    manifest
   }), /RUNTIME_CONTROL_TOKEN_REQUIRED/);
+});
+
+test('Runtime validation requires an exact, unambiguous host-approved origin', () => {
+  let fetchCalls = 0;
+  const fetchImpl = async () => { fetchCalls++; return {status:200}; };
+  const valid = {
+    baseUrl:'http://127.0.0.1:4011',
+    approvedRuntimeOrigin:'http://127.0.0.1:4011',
+    manifest, controlToken, fetchImpl
+  };
+  assert.throws(() => createRuntimeComplianceCardIntegration({
+    ...valid, approvedRuntimeOrigin:undefined
+  }), /RUNTIME_FABRIC_ORIGIN_NOT_APPROVED/);
+
+  for (const options of [
+    { baseUrl:'http://user:secret@127.0.0.1:4011' },
+    { baseUrl:'http://127.0.0.1:4011/path' },
+    { baseUrl:'http://127.0.0.1:4011?secret=hidden' },
+    { baseUrl:'http://127.0.0.1:4011#fragment' },
+    { approvedRuntimeOrigin:'http://127.0.0.1:4011/' },
+    { approvedRuntimeOrigin:'http://user:secret@127.0.0.1:4011' },
+    { approvedRuntimeOrigin:'http://127.0.0.1:4011/path' },
+    { approvedRuntimeOrigin:'http://127.0.0.1:4011?secret=hidden' },
+    { approvedRuntimeOrigin:'http://127.0.0.1:4011#fragment' },
+    { approvedRuntimeOrigin:'http://other-host:4011' },
+    { baseUrl:'http://public.example:4011', approvedRuntimeOrigin:'http://public.example:4011' }
+  ]) {
+    assert.throws(() => createRuntimeComplianceCardIntegration({
+      ...valid, ...options
+    }), /RUNTIME_FABRIC_(?:ORIGIN_NOT_APPROVED|URL_INVALID)/);
+  }
+  assert.equal(fetchCalls,0);
 });
 
 test('long device identities retain exact metadata and unique bounded receipt paths', async () => {
@@ -102,6 +138,9 @@ test('Runtime gate marks a card valid only after exact manifest-backed readback'
   assert.equal(request.url,'http://127.0.0.1:4011/runtime/validate-object-chain');
   assert.deepEqual(request.body,{leewayComplianceCard:card});
   assert.equal(request.init.headers.authorization, `Bearer ${controlToken}`);
+  assert.equal(JSON.stringify(request.body).includes(controlToken),false);
+  assert.equal(JSON.stringify(card).includes(controlToken),false);
+  assert.equal(JSON.stringify(decision).includes(controlToken),false);
   const mismatched=createIntegration({
     baseUrl:'http://127.0.0.1:4011',manifest,
     fetchImpl:async()=>({status:200,json:async()=>({valid:true,card:{...card,action:'tool.execution'}})}),
@@ -109,6 +148,70 @@ test('Runtime gate marks a card valid only after exact manifest-backed readback'
   assert.equal(await mismatched.complianceCardGate({
     complianceCard:card,deviceId:'pc-primary',capability:'voice.speak',args:{text:'hello'}
   }),false);
+});
+
+test('gate rejects capability-policy and risk mismatches before Runtime fetch', async () => {
+  let requests = 0;
+  let dispatches = 0;
+  const integration = createIntegration({
+    manifest,idFactory:()=> 'policy-mismatch-id',
+    fetchImpl:async()=>{ requests++; return {status:200}; }
+  });
+  const args={path:'safe.txt',text:'fixture'};
+  const card=await integration.complianceCardProvider({
+    deviceId:'pc-primary',capability:'device.files.write',args
+  });
+  const bridge = new Bridge([{
+    id:'pc-primary',
+    grants:['device.files.write'],
+    adapter:{
+      discover:async()=>['device.files.write'],
+      execute:async()=>{ dispatches++; return {status:'unexpected'}; }
+    }
+  }],{
+    complianceCardGate:integration.complianceCardGate,
+    admission:async()=>true,
+    receiptSink:async()=>{}
+  });
+  const alterations = [
+    {action:'service.health'},
+    {channelObjectId:'LACF.CHANNEL.006.LEEWAY_TELEMETRY'},
+    {sourceObjectId:'LACF.UI.002.LEEWAY_VOICE_CLONE_CONFIGURATION'},
+    {governancePolicy:'LEEWAY_L2_TELEMETRY_ADMISSION_POLICY'},
+    {telemetryKey:'L8.LEEWAY.TELEMETRY.PULSE'},
+    {verificationMode:'DETERMINISTIC_CHECKSUM'},
+    {riskLevel:'LOW'}
+  ];
+  for (const patch of alterations) {
+    const result = await bridge.call('pc-primary','device.files.write',args,{
+      complianceCard:{...card,...patch}
+    });
+    assert.equal(result.error,'COMPLIANCE_CARD_INVALID');
+  }
+  assert.equal(requests,0);
+  assert.equal(dispatches,0);
+});
+
+test('token stays out of validation payload and failures even when fetch errors contain it', async () => {
+  let requestBody;
+  const integration = createIntegration({
+    manifest,
+    fetchImpl:async(_url,init)=>{
+      requestBody=init.body;
+      throw new Error(`fetch failed for ${controlToken}`);
+    }
+  });
+  const args={text:'hello'};
+  const card=await integration.complianceCardProvider({
+    deviceId:'pc-primary',capability:'voice.speak',args
+  });
+  const result=await integration.complianceCardGate({
+    complianceCard:card,deviceId:'pc-primary',capability:'voice.speak',args
+  });
+  assert.equal(result,false);
+  assert.equal(requestBody.includes(controlToken),false);
+  assert.equal(JSON.stringify(card).includes(controlToken),false);
+  assert.equal(JSON.stringify(result).includes(controlToken),false);
 });
 
 test('operation metadata mismatch fails before Runtime validation request', async () => {
@@ -263,7 +366,9 @@ test('actual Runtime handler validates device.info but missing native admission 
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   const {port}=server.address();
   const integration=createIntegration({
-    baseUrl:`http://127.0.0.1:${port}`,manifest,idFactory:()=> 'actual-http-id'
+    baseUrl:`http://127.0.0.1:${port}`,
+    approvedRuntimeOrigin:`http://127.0.0.1:${port}`,
+    manifest,idFactory:()=> 'actual-http-id'
   });
 
   try {
@@ -281,10 +386,11 @@ test('actual Runtime handler validates device.info but missing native admission 
       complianceCard:{...card,governancePolicy:'UNTRUSTED_POLICY'},
       deviceId:'pc-primary',capability:'device.info',args
     }),false);
+    assert.equal(requests,1);
     assert.equal(await integration.complianceCardGate({
       deviceId:'pc-primary',capability:'device.info',args
     }),false);
-    assert.equal(requests,2);
+    assert.equal(requests,1);
 
     let adapterCalls=0;
     const bridge=new Bridge([{
@@ -304,7 +410,7 @@ test('actual Runtime handler validates device.info but missing native admission 
     assert.equal(outcome.error,'ADMISSION_DENIED');
     assert.equal(outcome.operationMayHaveExecuted,false);
     assert.equal(adapterCalls,0);
-    assert.equal(requests,3);
+    assert.equal(requests,2);
   } finally {
     await new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));
   }

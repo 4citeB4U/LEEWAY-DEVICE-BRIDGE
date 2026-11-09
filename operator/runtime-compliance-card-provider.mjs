@@ -34,6 +34,41 @@ function classify(capability) {
   return { action: 'tool.execution', channel: CHANNELS.governance, source: 'LACF.UI.003.LEEWAY_FABRIC_OPERATIONS_CONSOLE' };
 }
 
+function riskForCapability(capability) {
+  const destructive = /(?:\.delete|\.terminate|\.unload|\.move)$/.test(capability);
+  const active = /(?:\.write|\.input|\.invoke|\.speak|\.execute|\.start|\.stop|\.create|\.activate)$/.test(capability);
+  return destructive ? 'HIGH' : active ? 'MEDIUM' : 'LOW';
+}
+
+function resolveApprovedValidationUrl(baseUrl, approvedRuntimeOrigin) {
+  if (typeof baseUrl !== 'string' || !baseUrl.trim() || baseUrl !== baseUrl.trim() ||
+      typeof approvedRuntimeOrigin !== 'string' || !approvedRuntimeOrigin.trim() ||
+      approvedRuntimeOrigin !== approvedRuntimeOrigin.trim()) {
+    throw new Error('RUNTIME_FABRIC_ORIGIN_NOT_APPROVED');
+  }
+
+  let base;
+  let approved;
+  try {
+    base = new URL(baseUrl);
+    approved = new URL(approvedRuntimeOrigin);
+  } catch {
+    throw new Error('RUNTIME_FABRIC_URL_INVALID');
+  }
+
+  const isUnambiguousOrigin = (url) =>
+    !url.username && !url.password && !url.search && !url.hash && url.pathname === '/';
+  if (!isUnambiguousOrigin(base) || !isUnambiguousOrigin(approved) ||
+      approvedRuntimeOrigin !== approved.origin || base.origin !== approved.origin) {
+    throw new Error('RUNTIME_FABRIC_ORIGIN_NOT_APPROVED');
+  }
+  if (!['http:', 'https:'].includes(base.protocol) ||
+      (base.protocol === 'http:' && !['127.0.0.1', 'localhost', '[::1]'].includes(base.hostname))) {
+    throw new Error('RUNTIME_FABRIC_URL_INVALID');
+  }
+  return new URL('/runtime/validate-object-chain', base);
+}
+
 function buildCard({ manifest, agentId, deviceId, capability, args, id }) {
   if (!manifest || typeof manifest !== 'object' || !Array.isArray(manifest.requiredComplianceCardFields) ||
       !manifest.rootObjectId || !manifest.receiptRoot || !Array.isArray(manifest.actionTypes)) {
@@ -59,8 +94,6 @@ function buildCard({ manifest, agentId, deviceId, capability, args, id }) {
     .slice(0, maxReceiptPrefixLength);
   const safeReceiptName = `${safeReceiptPrefix}${receiptSuffix}`;
   const receiptRoot = String(manifest.receiptRoot).replace(/\\/g, '/').replace(/\/$/, '');
-  const destructive = /(?:\.delete|\.terminate|\.unload|\.move)$/.test(capability);
-  const active = /(?:\.write|\.input|\.invoke|\.speak|\.execute|\.start|\.stop|\.create|\.activate)$/.test(capability);
   const card = {
     agentId,
     taskId,
@@ -74,7 +107,7 @@ function buildCard({ manifest, agentId, deviceId, capability, args, id }) {
     verificationMode: policy.verificationMode,
     proofCommand: `device-bridge ${capability} Runtime validation`,
     receiptPath: `${receiptRoot}/${safeReceiptName}`,
-    riskLevel: destructive ? 'HIGH' : active ? 'MEDIUM' : 'LOW',
+    riskLevel: riskForCapability(capability),
     failureMode: 'FAIL_CLOSED',
     metadata: {
       schema: 'leeway.runtime.operation-context.v1',
@@ -90,22 +123,17 @@ function buildCard({ manifest, agentId, deviceId, capability, args, id }) {
 }
 
 export function createRuntimeComplianceCardIntegration({
-  baseUrl, manifest, controlToken, agentId = 'Codex', fetchImpl = globalThis.fetch, timeoutMs = 5000,
+  baseUrl, approvedRuntimeOrigin, manifest, controlToken, agentId = 'Codex', fetchImpl = globalThis.fetch, timeoutMs = 5000,
   idFactory = randomUUID,
 } = {}) {
-  if (typeof baseUrl !== 'string' || !baseUrl.trim()) throw new Error('RUNTIME_FABRIC_URL_REQUIRED');
-  const base = new URL(baseUrl);
-  if (!['http:', 'https:'].includes(base.protocol) ||
-      (base.protocol === 'http:' && !['127.0.0.1', 'localhost', '[::1]', '::1'].includes(base.hostname))) {
-    throw new Error('RUNTIME_FABRIC_URL_INVALID');
-  }
+  // The host supplies this allowlisted origin explicitly; operation input cannot select it.
+  const validationUrl = resolveApprovedValidationUrl(baseUrl, approvedRuntimeOrigin);
   if (typeof fetchImpl !== 'function' || !Number.isInteger(timeoutMs) || timeoutMs < 100 || timeoutMs > 30000) {
     throw new Error('RUNTIME_CARD_CLIENT_INVALID');
   }
   if (typeof agentId !== 'string' || !agentId.trim()) throw new Error('RUNTIME_CARD_AGENT_REQUIRED');
   // The host injects this binding; task and card data must never supply it.
   if (typeof controlToken !== 'string' || !controlToken.trim()) throw new Error('RUNTIME_CONTROL_TOKEN_REQUIRED');
-  const validationUrl = new URL('/runtime/validate-object-chain', base);
 
   const complianceCardProvider = async ({ deviceId, capability, args }) => {
     if (typeof deviceId !== 'string' || typeof capability !== 'string' || !args || typeof args !== 'object') {
@@ -122,6 +150,17 @@ export function createRuntimeComplianceCardIntegration({
     if (!metadata || metadata.schema !== 'leeway.runtime.operation-context.v1' ||
         metadata.deviceId !== deviceId || metadata.capability !== capability ||
         metadata.argumentsSha256 !== digest(args)) return false;
+    const binding = classify(capability);
+    const policy = manifest?.channels?.[binding.channel];
+    if (!policy || !Array.isArray(manifest?.actionTypes) ||
+        !manifest.actionTypes.includes(binding.action) ||
+        complianceCard.action !== binding.action ||
+        complianceCard.channelObjectId !== binding.channel ||
+        complianceCard.sourceObjectId !== binding.source ||
+        complianceCard.governancePolicy !== policy.governancePolicy ||
+        complianceCard.telemetryKey !== policy.telemetryKey ||
+        complianceCard.verificationMode !== policy.verificationMode ||
+        complianceCard.riskLevel !== riskForCapability(capability)) return false;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
