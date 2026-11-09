@@ -46,6 +46,29 @@ function readHeader(headers, name) {
   return typeof value === "string" ? value : undefined;
 }
 
+function resolveBrowserOriginAllowlist(env) {
+  const raw = String(env.LEEWAY_MCP_ALLOWED_BROWSER_ORIGINS || "");
+  const origins = new Set();
+  for (const candidate of raw.split(",").map(value => value.trim()).filter(Boolean)) {
+    let parsed;
+    try { parsed = new URL(candidate); } catch { continue; }
+    if (parsed.protocol !== "https:" || parsed.origin !== candidate || parsed.pathname !== "/" || parsed.search || parsed.hash) continue;
+    origins.add(parsed.origin);
+  }
+  return origins;
+}
+
+function browserCorsHeaders(origin) {
+  if (!origin) return {};
+  return {
+    "access-control-allow-origin": origin,
+    "access-control-allow-methods": "POST, OPTIONS",
+    "access-control-allow-headers": "Authorization, Content-Type, Accept, MCP-Protocol-Version, MCP-Session-Id, Last-Event-Id",
+    "access-control-expose-headers": "WWW-Authenticate, MCP-Protocol-Version, MCP-Session-Id, Last-Event-Id",
+    "vary": "Origin"
+  };
+}
+
 function resolveUpstreamUrl(env) {
   const value = String(env.LEEWAY_MCP_UPSTREAM || "").trim();
   if (!value) return { configured: false, reason: "LEEWAY_RUNTIME_UPSTREAM_UNBOUND" };
@@ -173,27 +196,40 @@ function augmentInitializeEventStream(bytes, requestId) {
 
 export function createMcpIngressHandler({ env = process.env, fetchImpl = globalThis.fetch } = {}) {
   return async function handleMcpIngress(req, res) {
-    if (req.method !== "POST") {
-      return jsonResponse(res, 405, { error: "METHOD_NOT_ALLOWED" }, { allow: "POST" });
+    const origin = readHeader(req.headers, "origin");
+    const allowedOrigins = resolveBrowserOriginAllowlist(env);
+    const corsHeaders = browserCorsHeaders(origin);
+    const reply = (status, body, extraHeaders = {}) => jsonResponse(res, status, body, { ...corsHeaders, ...extraHeaders });
+
+    if (origin && !allowedOrigins.has(origin)) {
+      return reply(403, { error: "BROWSER_ORIGIN_NOT_ADMITTED" });
     }
-    if (typeof readHeader(req.headers, "origin") === "string") {
-      return jsonResponse(res, 403, { error: "BROWSER_ORIGIN_NOT_ADMITTED" });
+    if (req.method === "OPTIONS") {
+      if (!origin) return reply(405, { error: "METHOD_NOT_ALLOWED" }, { allow: "POST, OPTIONS" });
+      return res.writeHead(204, {
+        ...corsHeaders,
+        "cache-control": "no-store",
+        allow: "POST, OPTIONS"
+      }).end();
+    }
+    if (req.method !== "POST") {
+      return reply(405, { error: "METHOD_NOT_ALLOWED" }, { allow: "POST, OPTIONS" });
     }
 
     const resourceConfig = resolvePublicMcpResourceConfig(env);
     if (!resourceConfig.configured) {
-      return jsonResponse(res, 503, { error: resourceConfig.reason });
+      return reply(503, { error: resourceConfig.reason });
     }
 
     const authorization = readHeader(req.headers, "authorization");
     if (!authorization || !/^Bearer [A-Za-z0-9_~+./=-]+$/.test(authorization)) {
-      return jsonResponse(res, 401, { error: "BEARER_REQUIRED" }, {
+      return reply(401, { error: "BEARER_REQUIRED" }, {
         "www-authenticate": bearerChallenge(resourceConfig.metadataUrl)
       });
     }
 
     if (!String(readHeader(req.headers, "content-type") || "").toLowerCase().startsWith("application/json")) {
-      return jsonResponse(res, 415, { error: "JSON_REQUIRED" });
+      return reply(415, { error: "JSON_REQUIRED" });
     }
 
     let body;
@@ -201,17 +237,17 @@ export function createMcpIngressHandler({ env = process.env, fetchImpl = globalT
       body = await readRequestBody(req);
     } catch (error) {
       const tooLarge = error instanceof Error && error.message === "MCP_BODY_TOO_LARGE";
-      return jsonResponse(res, tooLarge ? 413 : 400, {
+      return reply(tooLarge ? 413 : 400, {
         error: tooLarge ? "MCP_BODY_TOO_LARGE" : "MCP_BODY_INVALID"
       });
     }
 
     const upstreamConfig = resolveUpstreamUrl(env);
     if (!upstreamConfig.configured) {
-      return jsonResponse(res, 503, { error: upstreamConfig.reason });
+      return reply(503, { error: upstreamConfig.reason });
     }
     if (typeof fetchImpl !== "function") {
-      return jsonResponse(res, 503, { error: "FETCH_UNAVAILABLE" });
+      return reply(503, { error: "FETCH_UNAVAILABLE" });
     }
 
     let upstream;
@@ -224,12 +260,12 @@ export function createMcpIngressHandler({ env = process.env, fetchImpl = globalT
         signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS)
       });
     } catch {
-      return jsonResponse(res, 502, { error: "LEEWAY_RUNTIME_UPSTREAM_UNAVAILABLE" });
+      return reply(502, { error: "LEEWAY_RUNTIME_UPSTREAM_UNAVAILABLE" });
     }
 
     const contentType = upstream.headers.get("content-type") || "application/json";
     if (!/^(application\/json|text\/event-stream)(?:\s*;|$)/i.test(contentType)) {
-      return jsonResponse(res, 502, { error: "UPSTREAM_CONTENT_TYPE_INVALID" });
+      return reply(502, { error: "UPSTREAM_CONTENT_TYPE_INVALID" });
     }
 
     const mcpRequest = JSON.parse(body.toString("utf8"));
@@ -247,7 +283,7 @@ export function createMcpIngressHandler({ env = process.env, fetchImpl = globalT
           }
         }
       } catch {
-        return jsonResponse(res, 502, { error: "UPSTREAM_INITIALIZE_RESPONSE_INVALID" });
+        return reply(502, { error: "UPSTREAM_INITIALIZE_RESPONSE_INVALID" });
       }
       const rawInitialize = Buffer.concat(chunks);
       let augmentedInitialize = null;
@@ -262,16 +298,16 @@ export function createMcpIngressHandler({ env = process.env, fetchImpl = globalT
         augmentedInitialize = augmentInitializeEventStream(rawInitialize, mcpRequest.id);
       }
       if (augmentedInitialize) {
-        res.writeHead(upstream.status, forwardedResponseHeaders(upstream, resourceConfig));
+        res.writeHead(upstream.status, { ...forwardedResponseHeaders(upstream, resourceConfig), ...corsHeaders });
         res.end(augmentedInitialize);
         return;
       }
-      res.writeHead(upstream.status, forwardedResponseHeaders(upstream, resourceConfig));
+      res.writeHead(upstream.status, { ...forwardedResponseHeaders(upstream, resourceConfig), ...corsHeaders });
       res.end(rawInitialize);
       return;
     }
 
-    res.writeHead(upstream.status, forwardedResponseHeaders(upstream, resourceConfig));
+    res.writeHead(upstream.status, { ...forwardedResponseHeaders(upstream, resourceConfig), ...corsHeaders });
     const sizeGuard = new Transform({
       transform(chunk, _encoding, callback) {
         this.bytes = (this.bytes || 0) + chunk.length;
