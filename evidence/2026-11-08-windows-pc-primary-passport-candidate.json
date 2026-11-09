@@ -1,0 +1,45 @@
+{
+  "schema": "leeway.device-bridge.windows-pc-primary-candidate.v1",
+  "workId": "LEEWAY-SELFHOST-CORE-FOUR-W00",
+  "agentLane": "F4-DEVICE-BRIDGE",
+  "repository": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "branch": "fix/zitadel-token-audience-allowlist",
+  "sourceHeadBeforeWork": "f5414be26513078cf9d5b450debb173eddfcdddb",
+  "preflight": "LeeWay Standards → LeeWay Engineering → Receipt Authority qualification start → LEEWAY-VERITAS independent evidence/trust gate → LeeWay Learning Ledger admission boundary → LeeWay-Production-Final-Execution-Layer handoff contract → owning repository contributor notes/issues/PRs",
+  "changedFiles": {
+    "operator/windows-pc-primary.mjs": "F0D6215A66D951C8C90556ACACCA60A293D0A19B04C9DE4677EB615DCF71AB12",
+    "tests/windows-pc-primary.test.mjs": "5BF654447FD02D6CAB3FE8148D52E034E124DDA06B4B8BD58D8A6CB14163D74A",
+    "contracts/device-passport.schema.json": "7DB598CD46AAB44C1A58D1E1CFF4BA7221D1116E7649F7CE0FEC899EBC05B8DC",
+    "operator/adapter-registry.json": "A3BD8ACA81662F35EAB2A3B816189EFB5F32865BEB4EA8ED83C32F81A235EB58"
+  },
+  "checks": [
+    { "command": "node --check operator/windows-pc-primary.mjs", "exitCode": 0 },
+    { "command": "node --check operator/c3-admission-binding.mjs", "exitCode": 0 },
+    { "command": "node --check apps/desktop/mcp-server.mjs", "exitCode": 0 },
+    { "command": "node --check operator/physical-adapters.mjs", "exitCode": 0 },
+    { "command": "node --test tests/windows-pc-primary.test.mjs", "exitCode": 0, "passed": 6, "failed": 0 },
+    { "command": "node --test tests/mcp/registered-device-discovery.test.mjs", "exitCode": 0, "passed": 3, "failed": 0 },
+    { "command": "node --test tests/c3-admission-binding.test.mjs tests/c3-unsigned-consent-regression.test.mjs", "exitCode": 0, "passed": 2, "failed": 0 },
+    { "command": "node --test tests/physical-apple-usb.test.mjs tests/mcp/physical-usb-composition.test.mjs tests/mcp/physical-usb-c3-admission.test.mjs", "exitCode": 0, "passed": 9, "failed": 0 },
+    { "command": "npm run test:mcp", "exitCode": 0, "passed": 165, "failed": 0 },
+    { "command": "git diff --check", "exitCode": 0 }
+  ],
+  "hostProbe": {
+    "source": "WINDOWS_CIM_READONLY",
+    "platform": "windows",
+    "computerUuidPresent": true,
+    "biosSerialPresent": true,
+    "manufacturerPresent": true,
+    "modelPresent": true,
+    "mutation": false
+  },
+  "identityState": "CANDIDATE_VERIFIER_IMPLEMENTED_NO_PRODUCTION_PASSPORT",
+  "runtimeBinding": "NOT_IMPLEMENTED_IN_THIS_REPOSITORY_ONLY_LANE",
+  "veritas": "NOT_RUN",
+  "receipt": "NOT_CREATED",
+  "learningLedger": "NOT_UPDATED",
+  "production": "NOT_QUALIFIED",
+  "deployment": "NOT_PERFORMED",
+  "merge": "NOT_PERFORMED",
+  "push": "NOT_PERFORMED"
+}

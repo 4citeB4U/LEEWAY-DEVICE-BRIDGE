@@ -11,7 +11,7 @@ AUTHORITY: Host-injected canonical Runtime Fabric gates; no public listener or p
 LICENSE: MIT
 */
 import http from 'node:http';
-import { createConfiguredBridge } from '../../apps/desktop/mcp-server.mjs';
+import { createConfiguredBridge, createHostInjectedConfiguredBridge } from '../../apps/desktop/mcp-server.mjs';
 import { requireTrustedRuntimeComposition } from '../../apps/desktop/runtime-composition.mjs';
 import { createPocketIdUniversalHandler } from './create-pocket-id-universal-handler.mjs';
 
@@ -30,7 +30,11 @@ export async function startUniversalPocketIdMcp({
   if (enableExecution && (!trusted?.complianceCardGate || !trusted?.complianceCardProvider)) {
     throw Error('TRUSTED_COMPLIANCE_CARD_COMPOSITION_REQUIRED');
   }
-  const bridge = await createConfiguredBridge(configPath, trusted);
+  // Execution startup uses the bounded host-injected C3 seam. Discovery-only
+  // startup keeps the existing read-only path and cannot expose command tools.
+  const bridge = enableExecution
+    ? await createHostInjectedConfiguredBridge(configPath, runtimeInput)
+    : await createConfiguredBridge(configPath, trusted);
   const handler = createPocketIdUniversalHandler({
     issuer, resource, ownerSubject, fetchImpl,
     executionEnabled: enableExecution,

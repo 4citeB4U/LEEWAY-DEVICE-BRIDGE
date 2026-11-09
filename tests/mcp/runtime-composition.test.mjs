@@ -1,6 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { requireTrustedRuntimeComposition } from '../../apps/desktop/runtime-composition.mjs';
+import {
+  requireHostInjectedC3Composition,
+  requireTrustedRuntimeComposition,
+} from '../../apps/desktop/runtime-composition.mjs';
+
+const allow = async () => true;
+const receiptSink = async () => {};
 
 test('trusted MCP startup refuses missing authority or evidence providers',()=>{
  const admission=async()=>true,receiptSink=async()=>{};
@@ -47,4 +53,50 @@ test('trusted Runtime card provider is accepted only with a matching validation 
  assert.equal(result.complianceCardProvider,complianceCardProvider);
  assert.equal(result.complianceCardGate,complianceCardGate);
  assert.throws(()=>requireTrustedRuntimeComposition({admission,receiptSink,complianceCardProvider}),/TRUSTED_RUNTIME_COMPOSITION_REQUIRED/);
+});
+
+test('candidate execution seam requires the complete host-injected C3 dependency set', () => {
+ const deviceRegistry = new Map([['pc-primary', { platform: 'windows' }]]);
+ const adapterRegistry = { adapters: [{ platform: 'windows', capabilities: { 'device.info': { state: 'AVAILABLE' } } }] };
+ const trustedIssuerRegistry = { 'issuer.test': { issuerId: 'issuer.test' } };
+ const replayGuard = { has: () => false, consume: () => true };
+ const full = {
+   deviceRegistry, adapterRegistry,
+   formulaPreGate: allow, veritasPreGate: allow,
+   receiptSink, trustedIssuerRegistry, replayGuard,
+   consentProvider: async () => null,
+ };
+
+ const actual = requireHostInjectedC3Composition(full);
+ assert.equal(actual.mode, 'c3');
+ assert.equal(actual.deviceRegistry, deviceRegistry);
+ assert.equal(actual.adapterRegistry, adapterRegistry);
+ assert.equal(actual.trustedIssuerRegistry, trustedIssuerRegistry);
+ assert.equal(actual.replayGuard, replayGuard);
+ assert.equal(typeof actual.consentProvider, 'function');
+
+ for (const key of Object.keys(full)) {
+   if (key === 'deviceRegistry' || key === 'adapterRegistry' || key === 'formulaPreGate' ||
+       key === 'veritasPreGate' || key === 'receiptSink' || key === 'trustedIssuerRegistry' ||
+       key === 'replayGuard' || key === 'consentProvider') {
+     const incomplete = { ...full };
+     delete incomplete[key];
+     assert.throws(() => requireHostInjectedC3Composition(incomplete), /TRUSTED_RUNTIME_/);
+   }
+ }
+ assert.throws(() => requireHostInjectedC3Composition({ admission: allow, receiptSink }), /TRUSTED_RUNTIME_C3_COMPOSITION_REQUIRED/);
+ assert.throws(() => requireHostInjectedC3Composition({ ...full, ownerApproved: true }), /TRUSTED_RUNTIME_COMPOSITION_INVALID/);
+});
+
+test('candidate execution seam rejects authority supplied as config-shaped data', () => {
+ const base = {
+   deviceRegistry: new Map([['pc-primary', { platform: 'windows' }]]),
+   adapterRegistry: { adapters: [] },
+   formulaPreGate: allow, veritasPreGate: allow, receiptSink,
+   trustedIssuerRegistry: { issuer: {} },
+   replayGuard: { has: () => false, consume: () => true },
+   consentProvider: async () => null,
+ };
+ assert.throws(() => requireHostInjectedC3Composition({ ...base, configPath: 'authority.json' }), /TRUSTED_RUNTIME_COMPOSITION_INVALID/);
+ assert.throws(() => requireHostInjectedC3Composition({ ...base, request: { veritas: true } }), /TRUSTED_RUNTIME_COMPOSITION_INVALID/);
 });

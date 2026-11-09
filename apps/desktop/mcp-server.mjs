@@ -16,7 +16,10 @@ import { RelayAdapter } from '../../packages/agent-relay/index.mjs';
 import { DesktopAdapter } from './adapter.mjs';
 import { PhysicalAndroidAdapter, PhysicalAppleAdapter } from '../../operator/physical-adapters.mjs';
 import { createC3AdmissionBinding } from '../../operator/c3-admission-binding.mjs';
-import { requireTrustedRuntimeComposition } from './runtime-composition.mjs';
+import {
+  requireHostInjectedC3Composition,
+  requireTrustedRuntimeComposition,
+} from './runtime-composition.mjs';
 
 function screenResult(value) {
   if (value.ok !== true) return null;
@@ -74,9 +77,25 @@ function trustedRegistryEntries(deviceRegistry) {
   return [];
 }
 
+function trustedRegistryRecord(deviceRegistry, deviceId) {
+  return trustedRegistryEntries(deviceRegistry).find(([id]) => id === deviceId)?.[1] ?? null;
+}
+
+function hasSourceBoundWindowsIdentity(deviceId, record) {
+  if (record?.platform !== 'windows') return true;
+  return deviceId === 'pc-primary' &&
+    record.identityVerified === true &&
+    record.registrationState === 'TRUSTED_REGISTRY_READ' &&
+    record.identitySource === 'WINDOWS_CIM_READONLY' &&
+    record.passportAuthority === 'OWNER_SIGNED_WINDOWS_PASSPORT' &&
+    typeof record.ownerSubject === 'string' && record.ownerSubject.length > 0 &&
+    typeof record.passportSha256 === 'string' && /^[a-f0-9]{64}$/i.test(record.passportSha256);
+}
+
 function hasTrustedDeviceRegistration(deviceRegistry, bridge, deviceId) {
-  const record = trustedRegistryEntries(deviceRegistry).find(([id]) => id === deviceId)?.[1];
-  return bridge.devices.has(deviceId) && typeof record?.platform === 'string' && record.platform.trim().length > 0;
+  const record = trustedRegistryRecord(deviceRegistry, deviceId);
+  return bridge.devices.has(deviceId) && typeof record?.platform === 'string' &&
+    record.platform.trim().length > 0 && hasSourceBoundWindowsIdentity(deviceId, record);
 }
 
 export function createServer(bridge, { discoveryOnly = false, readOnlyCapabilities = [], complianceCardProvider = null, visionClientId = null, deviceRegistry = bridge.deviceRegistry ?? null } = {}) {
@@ -99,7 +118,7 @@ export function createServer(bridge, { discoveryOnly = false, readOnlyCapabiliti
   server.registerTool('bridge_devices', { description: 'List configured adapters only when their device ID also exists in the trusted Runtime device registry. Configuration alone is not registration, and registration does not prove live reachability.', inputSchema: {} }, async () => {
     const registryBound = deviceRegistry instanceof Map || Array.isArray(deviceRegistry);
     const devices = trustedRegistryEntries(deviceRegistry)
-      .filter(([id, record]) => bridge.devices.has(id) && typeof record?.platform === 'string' && record.platform.trim().length > 0)
+      .filter(([id]) => hasTrustedDeviceRegistration(deviceRegistry, bridge, id))
       .map(([id]) => id);
     return result({
       devices,
@@ -111,7 +130,15 @@ export function createServer(bridge, { discoveryOnly = false, readOnlyCapabiliti
   server.registerTool('bridge_capabilities', { description: 'Discover current capabilities for one device; grants and verification are distinct.', inputSchema: { deviceId: z.string().min(1).max(128) } }, async ({ deviceId }) => {
     try {
       const discovery = await bridge.discover(deviceId);
-      return result({ ...discovery, registrationState: hasTrustedDeviceRegistration(deviceRegistry, bridge, deviceId) ? 'REGISTERED_IN_TRUSTED_RUNTIME' : 'NOT_IN_TRUSTED_RUNTIME_REGISTRY' });
+      const record = trustedRegistryRecord(deviceRegistry, deviceId);
+      const identityVerified = hasTrustedDeviceRegistration(deviceRegistry, bridge, deviceId);
+      return result({
+        ...discovery,
+        registrationState: identityVerified ? 'REGISTERED_IN_TRUSTED_RUNTIME' : 'NOT_IN_TRUSTED_RUNTIME_REGISTRY',
+        identityVerified,
+        identitySource: identityVerified ? record.identitySource : null,
+        executionAdmission: identityVerified ? 'NOT_CONFERRED_BY_DISCOVERY' : 'IDENTITY_UNVERIFIED',
+      });
     } catch { return result({ ok: false, error: 'DISCOVERY_FAILED' }); }
   });
   // Never advertise agent-facing optical operations without an identity supplied by trusted Runtime or authenticated MCP ingress.
@@ -236,6 +263,20 @@ export async function createConfiguredBridge(configPath, runtimeInput = null) {
     receiptSink: runtimeComposition?.receiptSink ?? (evidence => fs.appendFile(receiptPath, JSON.stringify(evidence) + '\n', { mode: 0o600 })),
   });
   return bridge;
+}
+
+/**
+ * Candidate-only Runtime-to-Device-Bridge seam.
+ *
+ * The config file contributes adapter construction metadata only. All
+ * execution authority is supplied by a trusted host composition and is
+ * validated before the existing bridge factory is called. This helper is not
+ * a production promotion mechanism and intentionally has no request-facing
+ * inputs for authority providers.
+ */
+export async function createHostInjectedConfiguredBridge(configPath, runtimeInput) {
+  const trusted = requireHostInjectedC3Composition(runtimeInput);
+  return createConfiguredBridge(configPath, trusted);
 }
 
 export async function start(configPath, runtimeInput = null) {
