@@ -1,0 +1,27 @@
+{
+  "workId": "LEEWAY-SELFHOST-CORE-FOUR-W00",
+  "recordType": "DEVICE_BRIDGE_SOURCE_TEST_EVIDENCE",
+  "timestamp": "2026-11-09T11:30:00-06:00",
+  "repository": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "baseSha": "7d499f3c867947556f997577a331bd6623536ed3",
+  "scope": "Gemini browser MCP origin admission candidate",
+  "liveObservation": {
+    "metadataPath": {"status": 200, "resource": "https://leeway-device-bridge.vercel.app/mcp"},
+    "postWithGeminiOriginNoBearer": {"status": 403, "error": "BROWSER_ORIGIN_NOT_ADMITTED"},
+    "postWithoutOriginNoBearer": {"status": 401, "error": "BEARER_REQUIRED"},
+    "optionsWithGeminiOrigin": {"status": 405, "error": "METHOD_NOT_ALLOWED"}
+  },
+  "candidateRepair": {
+    "env": "LEEWAY_MCP_ALLOWED_BROWSER_ORIGINS",
+    "candidateValue": "https://gemini.google.com",
+    "defaultBehavior": "empty allowlist remains fail-closed"
+  },
+  "test": {"command": "npm run test:mcp", "exitCode": 0, "passed": 176, "failed": 0, "cancelled": 0, "skipped": 0},
+  "diffCheck": {"command": "git diff --check", "exitCode": 0},
+  "authority": "SOURCE_TEST_ONLY",
+  "receiptState": "RECEIPT NOT CREATED",
+  "learningState": "LEARNING LEDGER NOT UPDATED",
+  "veritasState": "INDEPENDENT VERITAS DECISION NOT ISSUED",
+  "productionState": "NOT DEPLOYED",
+  "nextAction": "owner-review, provision protected allowlist, deploy reviewed commit, then re-probe Gemini handshake"
+}

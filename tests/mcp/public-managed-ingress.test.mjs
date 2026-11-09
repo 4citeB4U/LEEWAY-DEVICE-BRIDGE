@@ -132,6 +132,31 @@ test('origin and unsupported methods deny public MCP ingress without upstream ca
  });
  assert.equal(wrongOrigin.status,403);
  assert.equal((await fetch(base+'/mcp',{method:'GET'})).status,405);
+ assert.equal((await fetch(base+'/mcp',{method:'OPTIONS'})).status,405);
+ assert.equal(calls,0);
+});
+
+test('admitted Gemini browser origin receives CORS preflight and remains bearer-gated',async t=>{
+ const browserEnv={...env,LEEWAY_MCP_ALLOWED_BROWSER_ORIGINS:'https://gemini.google.com'};
+ let calls=0;
+ const base=await fixture(t,{env:browserEnv,fetchImpl:async()=>{calls++;throw Error('MUST_NOT_FETCH');}});
+ const preflight=await fetch(base+'/mcp',{
+  method:'OPTIONS',
+  headers:{origin:'https://gemini.google.com','access-control-request-method':'POST','access-control-request-headers':'authorization,content-type,mcp-protocol-version'}
+ });
+ assert.equal(preflight.status,204);
+ assert.equal(preflight.headers.get('access-control-allow-origin'),'https://gemini.google.com');
+ assert.match(preflight.headers.get('access-control-allow-methods')||'',/POST/);
+ assert.match(preflight.headers.get('access-control-allow-headers')||'',/Authorization/);
+
+ const anonymous=await fetch(base+'/mcp',{
+  method:'POST',
+  headers:{origin:'https://gemini.google.com','content-type':'application/json'},
+  body:'{}'
+ });
+ assert.equal(anonymous.status,401);
+ assert.equal(anonymous.headers.get('access-control-allow-origin'),'https://gemini.google.com');
+ assert.match(anonymous.headers.get('www-authenticate')||'',/resource_metadata=/);
  assert.equal(calls,0);
 });
 
