@@ -132,7 +132,7 @@ test('owner, host binding, expiry and signature mismatches fail closed', async (
   await verify({ ownerSubject: 'different-owner', error: /WINDOWS_PASSPORT_OWNER_MISMATCH/ });
   await verify({ observed: { ...observed, model: 'different-host' }, error: /WINDOWS_PASSPORT_HOST_MISMATCH/ });
   await verify({ passport: signedPassport({ expiresAt: '2026-11-08T19:30:00.000Z' }), error: /WINDOWS_PASSPORT_EXPIRED_OR_NOT_YET_VALID/ });
-  await verify({ passport: { ...passport, signature: passport.signature.slice(0, -1) + (passport.signature.endsWith('A') ? 'B' : 'A') }, error: /WINDOWS_PASSPORT_SIGNATURE_INVALID/ });
+  await verify({ passport: { ...passport, signature: (passport.signature.startsWith('A') ? 'B' : 'A') + passport.signature.slice(1) }, error: /WINDOWS_PASSPORT_SIGNATURE_INVALID/ });
   await verify({ trustRegistry: { [KEY_ID]: { ...trustRegistry[KEY_ID], status: 'REVOKED' } }, error: /WINDOWS_PASSPORT_ISSUER_UNTRUSTED/ });
 });
 
