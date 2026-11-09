@@ -112,12 +112,14 @@ test('original bounded forwarder preserves bearer but never forwards cookies',as
  });
  const response=await fetch(base+'/mcp',{
   method:'POST',
-  headers:{authorization:'Bearer fake-owner-token','content-type':'application/json',cookie:'private=forbidden'},
+  headers:{authorization:'Bearer fake-owner-token','content-type':'application/json','mcp-method':'tools/list','mcp-name':'','cookie':'private=forbidden'},
   body:JSON.stringify({jsonrpc:'2.0',id:3,method:'tools/list'})
  });
  assert.equal(response.status,200);
  assert.equal(observed.url,UPSTREAM);
  assert.equal(observed.init.headers.authorization,'Bearer fake-owner-token');
+ assert.equal(observed.init.headers['mcp-method'],'tools/list');
+ assert.equal(observed.init.headers['mcp-name'],'');
  assert.equal(observed.init.headers.cookie,undefined);
  assert.equal(observed.init.redirect,'error');
 });
@@ -142,12 +144,14 @@ test('admitted Gemini browser origin receives CORS preflight and remains bearer-
  const base=await fixture(t,{env:browserEnv,fetchImpl:async()=>{calls++;throw Error('MUST_NOT_FETCH');}});
  const preflight=await fetch(base+'/mcp',{
   method:'OPTIONS',
-  headers:{origin:'https://gemini.google.com','access-control-request-method':'POST','access-control-request-headers':'authorization,content-type,mcp-protocol-version'}
+  headers:{origin:'https://gemini.google.com','access-control-request-method':'POST','access-control-request-headers':'authorization,content-type,mcp-protocol-version,mcp-method,mcp-name'}
  });
  assert.equal(preflight.status,204);
  assert.equal(preflight.headers.get('access-control-allow-origin'),'https://gemini.google.com');
  assert.match(preflight.headers.get('access-control-allow-methods')||'',/POST/);
  assert.match(preflight.headers.get('access-control-allow-headers')||'',/Authorization/);
+  assert.match(preflight.headers.get('access-control-allow-headers')||'',/Mcp-Method/);
+  assert.match(preflight.headers.get('access-control-allow-headers')||'',/Mcp-Name/);
 
  const anonymous=await fetch(base+'/mcp',{
   method:'POST',
