@@ -63,6 +63,29 @@ test('trusted provider requires a startup control-token binding', () => {
   }), /RUNTIME_CONTROL_TOKEN_REQUIRED/);
 });
 
+test('long device identities retain exact metadata and unique bounded receipt paths', async () => {
+  const ids = [
+    '11111111-1111-4111-8111-111111111111',
+    '22222222-2222-4222-8222-222222222222'
+  ];
+  const integration = createIntegration({
+    baseUrl:'http://127.0.0.1:4011',manifest,idFactory:()=>ids.shift()
+  });
+  const deviceId = `device-${'x'.repeat(121)}`;
+  const cards = await Promise.all([
+    integration.complianceCardProvider({deviceId,capability:'device.info',args:{}}),
+    integration.complianceCardProvider({deviceId,capability:'device.info',args:{}})
+  ]);
+  assert.deepEqual(cards.map(card=>card.metadata.deviceId),[deviceId,deviceId]);
+  const receiptPaths = cards.map(card=>card.receiptPath);
+  assert.notEqual(receiptPaths[0],receiptPaths[1]);
+  for (const receiptPath of receiptPaths) {
+    const fileName = receiptPath.split('/').at(-1);
+    assert.ok(fileName.length <= 240);
+    assert.match(fileName,/-(?:11111111-1111-4111-8111-111111111111|22222222-2222-4222-8222-222222222222)\.json$/);
+  }
+});
+
 test('Runtime gate marks a card valid only after exact manifest-backed readback', async () => {
   let request;
   const integration = createIntegration({

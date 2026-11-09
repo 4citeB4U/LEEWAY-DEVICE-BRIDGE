@@ -48,8 +48,16 @@ function buildCard({ manifest, agentId, deviceId, capability, args, id }) {
   if (typeof capability !== 'string' || !/^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/.test(capability)) {
     throw new Error('RUNTIME_CARD_CAPABILITY_INVALID');
   }
+  if (typeof id !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9-]{0,127}$/.test(id)) {
+    throw new Error('RUNTIME_CARD_ID_INVALID');
+  }
   const taskId = `bridge-${id}`;
-  const safeReceiptName = `${deviceId}-${capability}-${id}`.replace(/[^a-zA-Z0-9._-]/g, '-').slice(0, 120);
+  const receiptSuffix = `-${id}.json`;
+  const maxReceiptPrefixLength = 240 - receiptSuffix.length;
+  const safeReceiptPrefix = `${deviceId}-${capability}`
+    .replace(/[^a-zA-Z0-9._-]/g, '-')
+    .slice(0, maxReceiptPrefixLength);
+  const safeReceiptName = `${safeReceiptPrefix}${receiptSuffix}`;
   const receiptRoot = String(manifest.receiptRoot).replace(/\\/g, '/').replace(/\/$/, '');
   const destructive = /(?:\.delete|\.terminate|\.unload|\.move)$/.test(capability);
   const active = /(?:\.write|\.input|\.invoke|\.speak|\.execute|\.start|\.stop|\.create|\.activate)$/.test(capability);
@@ -65,7 +73,7 @@ function buildCard({ manifest, agentId, deviceId, capability, args, id }) {
     telemetryKey: policy.telemetryKey,
     verificationMode: policy.verificationMode,
     proofCommand: `device-bridge ${capability} Runtime validation`,
-    receiptPath: `${receiptRoot}/${safeReceiptName}.json`,
+    receiptPath: `${receiptRoot}/${safeReceiptName}`,
     riskLevel: destructive ? 'HIGH' : active ? 'MEDIUM' : 'LOW',
     failureMode: 'FAIL_CLOSED',
     metadata: {
