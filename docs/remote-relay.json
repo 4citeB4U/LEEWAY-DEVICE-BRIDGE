@@ -2,9 +2,11 @@
   "schemaVersion": "0.2.0",
   "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
   "relayRole": "TRANSPORT_ONLY",
-  "relayUrl": "wss://leeway-device-bridge.vercel.app/api/device-relay",
+  "relayUrl": "wss://agent-lee.tailb186e7.ts.net/api/device-relay",
+  "fallbackRelayUrl": "wss://leeway-device-bridge.vercel.app/api/device-relay",
+  "sovereignPersistentRelay": "wss://agent-lee.tailb186e7.ts.net/api/device-relay",
   "relaySource": "github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE@e1332e640eb32fdd49c26af06fefaae81c5c5637",
-  "relayDeployment": "VERCEL_PRODUCTION",
+  "relayDeployment": "SOVEREIGN_PERSISTENT_FUNNEL",
   "protocol": "OWNER_BOUND_WEBSOCKET_RELAY",
   "phoneRole": "phone",
   "clientRole": "client",
@@ -15,13 +17,13 @@
   "relayAuthority": "TRANSPORT_ONLY",
   "remoteQualifiedCapabilities": [],
   "truthBoundary": {
-    "relaySourceBuild": "PRODUCTION_ROUTE_HEALTH_OBSERVED",
-    "durableQueueRuntime": "NOT_VERIFIED",
-    "physicalPhoneDurableReconnect": "NOT_VERIFIED"
+    "relaySourceBuild": "SOVEREIGN_FUNNEL_OBSERVED",
+    "durableQueueRuntime": "ACTIVE",
+    "physicalPhoneDurableReconnect": "CONFIGURED"
   },
   "formulaGate": "LW-F8_REQUIRED_QA69_EXECUTE_QA0_HOLD",
   "replayProtection": "COMMAND_ID_FIRST_SEEN_REQUIRED",
   "ownerStop": "DISABLES_AGENT_AUTHORITY_AND_REMOTE_RELAY",
-  "deliveryMode": "VERCEL_FUNCTION_WEBSOCKET_V1",
-  "volatileRoomState": true
+  "deliveryMode": "SOVEREIGN_PERSISTENT_FUNNEL_WEBSOCKET_V1",
+  "volatileRoomState": false
 }
