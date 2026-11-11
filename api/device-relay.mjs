@@ -9,7 +9,13 @@ AUTHORITY: Transport only. The phone remains the execution and Formula boundary.
 */
 import { createServer } from 'node:http';
 import { createHash, timingSafeEqual, randomUUID } from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { WebSocketServer, WebSocket } from 'ws';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const MAX_PAYLOAD_BYTES = 64 * 1024;
 const HELLO_TIMEOUT_MS = 10_000;
@@ -84,7 +90,23 @@ function closeReplaced(connection) {
 
 function createRelayServer({ rooms = new Map() } = {}) {
   const server = createServer((req, res) => {
-    if (req.method === 'GET' && (req.url === '/api/device-relay' || req.url === '/api/device-relay/')) {
+    // Check original URL from reverse proxy headers if path was stripped
+    const origPath = req.headers['x-forwarded-uri'] || req.headers['x-original-uri'] || req.url;
+    if (req.method === 'GET' && (req.url === '/api/hp-agent.mjs' || req.url === '/hp-agent.mjs' || origPath.includes('hp-agent.mjs'))) {
+      try {
+        const hpAgentPath = path.resolve(__dirname, '../operator/hp-standalone-agent.mjs');
+        const content = fs.readFileSync(hpAgentPath, 'utf8');
+        res.writeHead(200, {
+          'content-type': 'application/javascript; charset=utf-8',
+          'access-control-allow-origin': '*',
+          'cache-control': 'no-store',
+        });
+        return res.end(content);
+      } catch (err) {
+        return json(res, 500, { ok: false, error: err.message });
+      }
+    }
+    if (req.method === 'GET' && (req.url === '/api/device-relay' || req.url === '/api/device-relay/' || req.url === '/' || req.url === '')) {
       return json(res, 200, {
         ok: true,
         service: 'leeway-device-bridge-relay',
@@ -93,7 +115,15 @@ function createRelayServer({ rooms = new Map() } = {}) {
         authority: 'TRANSPORT_ONLY',
         volatileRoomState: true,
         supportsWebSocket: true,
-        activeRooms: rooms.size,
+        activeRoomsCount: rooms.size,
+        activeRooms: Array.from(rooms.keys()).map(id => {
+          const r = rooms.get(id);
+          return {
+            deviceId: id,
+            hasPhone: r.phone?.ws?.readyState === WebSocket.OPEN,
+            hasClient: r.client?.ws?.readyState === WebSocket.OPEN
+          };
+        }),
         truthBoundary: 'RUNTIME_OBSERVED_ONLY',
       });
     }

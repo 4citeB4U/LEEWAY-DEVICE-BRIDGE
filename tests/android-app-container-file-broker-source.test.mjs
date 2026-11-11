@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const root = 'apps/android/app/src/main/java/industries/leeway/devicebridge';
+const broker = fs.readFileSync(`${root}/AppContainerFileBroker.kt`, 'utf8');
+const remote = fs.readFileSync(`${root}/RemoteCommandRouter.kt`, 'utf8');
+const local = fs.readFileSync(`${root}/LocalBridgeServer.kt`, 'utf8');
+assert.match(broker, /File\(context\.filesDir, "bridge-files"\)/);
+assert.match(broker, /FILE_PATH_OUTSIDE_APP_CONTAINER/);
+assert.match(broker, /FILE_READBACK_MISMATCH/);
+assert.match(broker, /fd\.sync\(\)/);
+assert.match(remote, /"device\.files\.read", "device\.files\.write"/);
+assert.match(remote, /AppContainerFileBroker\.read/);
+assert.match(remote, /AppContainerFileBroker\.write/);
+assert.doesNotMatch(local, /CAPABILITY_NOT_IMPLEMENTED_BY_CURRENT_CANONICAL_ANDROID_ROUTER/);
+console.log('PASS Android app-container file broker source contract');

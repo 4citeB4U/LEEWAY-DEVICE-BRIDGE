@@ -11,6 +11,7 @@ object RemoteCommandRouter {
         "device.screen.capture", "device.ui.snapshot", "device.ui.back", "device.ui.home", "device.ui.recents",
         "device.ui.tap", "device.ui.swipe", "device.ui.text",
         "device.apps.list", "device.apps.launch", "device.apps.install.status", "device.apps.install",
+        "device.files.read", "device.files.write",
         "device.media.scan", "device.media.delete.request",
         "model.status", "model.install", "model.inference", "voice.status", "voice.speak", "agent.chat"
     )
@@ -31,6 +32,8 @@ object RemoteCommandRouter {
                 arguments.has("x2") && arguments.has("y2")
             "device.ui.text" -> text.isNotEmpty()
             "device.apps.launch" -> arguments.optString("packageName").isNotBlank()
+            "device.files.read" -> arguments.optString("path").isNotBlank()
+            "device.files.write" -> arguments.optString("path").isNotBlank() && arguments.has("text") && arguments.optString("text").toByteArray(Charsets.UTF_8).size <= 65_536
             "device.media.delete.request" -> arguments.optJSONArray("uris")?.length()?.let { it > 0 } == true
             "device.apps.install" -> arguments.optString("url").startsWith("https://") &&
                 arguments.optString("sha256").matches(Regex("^[A-Fa-f0-9]{64}$"))
@@ -74,6 +77,8 @@ object RemoteCommandRouter {
                 "device.ui.text" -> DeviceOperatorAccessibilityService.setFocusedText(text)
                 "device.apps.list" -> AppOperator.listLaunchable(context)
                 "device.apps.launch" -> AppOperator.launch(context, arguments.getString("packageName"))
+                "device.files.read" -> AppContainerFileBroker.read(context, arguments.getString("path"))
+                "device.files.write" -> AppContainerFileBroker.write(context, arguments.getString("path"), arguments.getString("text"))
                 "device.apps.install.status" -> PackageInstallBroker.status(context)
                 "device.apps.install" -> PackageInstallBroker.installFromUrl(
                     context,

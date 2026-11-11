@@ -54,7 +54,8 @@ class MainActivity : AppCompatActivity() {
             textSize = 18f
         }
         val pairingTokenView = TextView(this).apply {
-            text = pairingToken
+            text = "••••••••••••••••"
+            contentDescription = "Pairing token hidden"
             textSize = 18f
             setTextIsSelectable(true)
             setPadding(0, 16, 0, 16)
@@ -469,6 +470,7 @@ class MainActivity : AppCompatActivity() {
             text = "SHOW PAIRING TOKEN"
             setOnClickListener {
                 pairingTokenView.text = pairingToken
+                pairingTokenView.contentDescription = "Pairing token visible"
                 pairingPanel.requestFocus()
                 output.text = "Pairing token is shown above. Tap COPY PAIRING TOKEN."
             }
