@@ -11,52 +11,50 @@ HOW: Existing config + fail-closed admission + strict Pocket ID JWT + local HTTP
 AUTHORITY: No command execution; no public listener; HTTPS termination must be separately qualified
 LICENSE: MIT
 */
-import fs from 'node:fs';
 import path from 'node:path';
-import { createHash } from 'node:crypto';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import { createConfiguredBridge } from '../../apps/desktop/mcp-server.mjs';
+import { pathToFileURL } from 'node:url';
+import { createHostInjectedConfiguredBridge } from '../../apps/desktop/mcp-server.mjs';
+import { requireHostInjectedC3Composition } from '../../apps/desktop/runtime-composition.mjs';
 import { createPocketIdMcpServer } from './create-pocket-id-mcp-server.mjs';
-import { readWindowsHostIdentity } from '../windows-pc-primary.mjs';
-import { DEFAULT_REPLAY_GUARD, getEnrolledRegistry } from '../trusted-issuer-registry.mjs';
 
-export async function buildHostInjectedC3Composition() {
-  const observed = await readWindowsHostIdentity();
-  const ownerSubject = process.env.LEEWAY_POCKET_ID_OWNER_SUB || '397621082842543343';
-  const passportSha256 = createHash('sha256').update(JSON.stringify(observed)).digest('hex');
+function registryRecord(deviceRegistry, deviceId) {
+  if (deviceRegistry instanceof Map) return deviceRegistry.get(deviceId) ?? null;
+  if (Array.isArray(deviceRegistry)) {
+    return deviceRegistry.find(record => (record?.id ?? record?.deviceId) === deviceId) ?? null;
+  }
+  return null;
+}
 
-  const record = {
-    platform: 'windows',
-    identityVerified: true,
-    registrationState: 'TRUSTED_REGISTRY_READ',
-    identitySource: 'WINDOWS_CIM_READONLY',
-    passportAuthority: 'OWNER_SIGNED_WINDOWS_PASSPORT',
-    ownerSubject,
-    passportSha256,
-  };
-
-  const adapterRegistryPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../adapter-registry.json');
-  const adapterRegistry = JSON.parse(await fs.promises.readFile(adapterRegistryPath, 'utf8'));
-
-  return {
-    deviceRegistry: new Map([['pc-primary', record]]),
-    adapterRegistry,
-    formulaPreGate: async () => true,
-    veritasPreGate: async () => true,
-    receiptSink: async (evidence) => {
-      const receiptPath = process.env.LEEWAY_C3_RECEIPT_PATH || path.resolve(process.cwd(), 'receipts/c3-receipts.jsonl');
-      await fs.promises.mkdir(path.dirname(receiptPath), { recursive: true });
-      await fs.promises.appendFile(receiptPath, JSON.stringify(evidence) + '\n', { mode: 0o600 });
-    },
-    trustedIssuerRegistry: getEnrolledRegistry(),
-    replayGuard: DEFAULT_REPLAY_GUARD,
-    consentProvider: async () => null,
-  };
+/**
+ * Accept only an existing owner-controlled Runtime composition.
+ *
+ * The trusted host must derive pc-primary through the canonical Windows
+ * passport verifier before injection. This launcher never manufactures an
+ * owner subject, identity decision, Formula/Veritas result or receipt sink.
+ */
+export function buildHostInjectedC3Composition({ ownerSubject, runtimeInput } = {}) {
+  if (typeof ownerSubject !== 'string' || !ownerSubject.trim() ||
+      ownerSubject !== ownerSubject.trim() || ownerSubject.length > 256) {
+    throw new Error('OWNER_SUBJECT_REQUIRED');
+  }
+  const trusted = requireHostInjectedC3Composition(runtimeInput);
+  const record = registryRecord(trusted.deviceRegistry, 'pc-primary');
+  if (!record || record.platform !== 'windows' || record.identityVerified !== true ||
+      record.registrationState !== 'TRUSTED_REGISTRY_READ' ||
+      record.identitySource !== 'WINDOWS_CIM_READONLY' ||
+      record.passportAuthority !== 'OWNER_SIGNED_WINDOWS_PASSPORT' ||
+      record.registrationAuthority !== 'TRUSTED_RUNTIME_DEVICE_REGISTRY' ||
+      record.ownerSubject !== ownerSubject ||
+      !/^[a-f0-9]{64}$/i.test(record.passportSha256 || '')) {
+    throw new Error('TRUSTED_RUNTIME_WINDOWS_PASSPORT_REQUIRED');
+  }
+  return trusted;
 }
 
 export async function startPocketIdMcp({ configPath, issuer, resource, ownerSubject, tokenAudiences = [], port = 4271, runtimeInput = null } = {}) {
   if (!Number.isInteger(port) || port < 1024 || port > 65535) throw Error('LOCAL_PORT_INVALID');
-  const bridge = await createConfiguredBridge(configPath, runtimeInput);
+  const trusted = buildHostInjectedC3Composition({ ownerSubject, runtimeInput });
+  const bridge = await createHostInjectedConfiguredBridge(configPath, trusted);
   const server = createPocketIdMcpServer({ bridge, issuer, resource, ownerSubject, tokenAudiences });
   try {
     await new Promise((resolve, reject) => {
@@ -72,14 +70,6 @@ export async function startPocketIdMcp({ configPath, issuer, resource, ownerSubj
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   (async () => {
-    let runtimeInput = null;
-    if (process.platform === 'win32') {
-      try {
-        runtimeInput = await buildHostInjectedC3Composition();
-      } catch (err) {
-        console.error('Host C3 composition auto-binding skipped:', err.message);
-      }
-    }
     await startPocketIdMcp({
       configPath: process.env.LEEWAY_DEVICE_BRIDGE_CONFIG,
       issuer: process.env.LEEWAY_POCKET_ID_ISSUER,
@@ -87,7 +77,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
       ownerSubject: process.env.LEEWAY_POCKET_ID_OWNER_SUB,
       tokenAudiences: String(process.env.LEEWAY_POCKET_ID_TOKEN_AUDIENCES || '').split(/[\n,]/).map(value => value.trim()).filter(Boolean),
       port: Number(process.env.LEEWAY_MCP_LOCAL_PORT || 4271),
-      runtimeInput,
+      runtimeInput: null,
     });
     console.error('LeeWay authenticated C3 read-only MCP listening on loopback');
   })().catch(() => {
