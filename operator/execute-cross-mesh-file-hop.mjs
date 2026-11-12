@@ -24,7 +24,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, "..");
 const RELAY_WS = process.env.LEEWAY_RELAY_WS || "ws://127.0.0.1:8008/api/device-relay";
 const RELAY_HTTP = process.env.LEEWAY_RELAY_HTTP || "http://127.0.0.1:8008/api/device-relay";
-const MESH_TOKEN = process.env.LEEWAY_MESH_TOKEN || "leeway-mesh-token-7K2LF3G25U";
+const MESH_TOKEN = process.env.LEEWAY_MESH_TOKEN || null;
 
 function sha256(data) {
   return crypto.createHash("sha256").update(typeof data === "string" ? data : JSON.stringify(data)).digest("hex");
