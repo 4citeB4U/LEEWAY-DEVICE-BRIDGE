@@ -1,0 +1,28 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.DEVICE_BRIDGE.RELEASE.CI
+# TAG: LEEWAY.DEVICE_BRIDGE.RELEASE.SECRET_CUSTODY_CI.V1
+# DISCOVERY_PIPELINE: Voice → Intent → Location → Vertical → Ranking → Render
+# 5WH:
+# WHAT = Enforce source-level signing custody restrictions before release changes can merge.
+# WHY = Reject tracked private keys and dangerous false security assertions.
+# WHO = Original Device Bridge CI and release custodian.
+# WHERE = .github/workflows/release-signing-custody.yml.
+# WHEN = 2026-11-12.
+# HOW = Read-only Git tracked-file check; no secret access, code signing or package distribution.
+# LICENSE: Existing repository terms remain unchanged.
+name: Device Bridge Release Signing Custody
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  release-signing-custody:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/check-release-signing-custody.mjs
