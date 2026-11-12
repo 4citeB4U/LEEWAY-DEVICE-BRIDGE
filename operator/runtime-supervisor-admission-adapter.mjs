@@ -117,3 +117,123 @@ export async function createHostAdmissionVerifier({
     };
   };
 }
+
+/**
+ * Two-Axis Decision Evaluator enforcing docs/PRODUCT-OS-TRUST-AND-RELEASE-CONTRACT.md.
+ * Evaluates Binary/Source Trust against Worker/Action Authority under OS platform policy.
+ */
+export function evaluateTrustAndAuthority({
+  binaryTrust,
+  workerAuthority,
+  osPlatformPolicy = 'ALLOWED'
+}) {
+  if (['UNTRUSTED', 'TAMPERED', 'HARMFUL_DETECTED'].includes(binaryTrust)) {
+    return { decision: 'BLOCKED_ARTIFACT', eligible: false, reason: `ARTIFACT_${binaryTrust}` };
+  }
+  if (['UNKNOWN', 'INSUFFICIENT_EVIDENCE'].includes(binaryTrust)) {
+    return { decision: 'HOLD_REVIEW', eligible: false, reason: `ARTIFACT_REPUTATION_${binaryTrust}` };
+  }
+  if (workerAuthority !== 'QUALIFIED_BOUND') {
+    return { decision: 'BLOCKED_AUTHORITY', eligible: false, reason: `WORKER_AUTHORITY_${workerAuthority}` };
+  }
+  if (osPlatformPolicy === 'DENIED') {
+    return { decision: 'BLOCKED_OS_POLICY', eligible: false, reason: 'OS_PLATFORM_POLICY_DENIED' };
+  }
+  return { decision: 'ELIGIBLE_EXECUTE', eligible: true, reason: 'QUALIFIED_AND_BOUND' };
+}
+
+/**
+ * 16 Governed Adversarial Scenario Specifications (WT-01 through WT-16).
+ */
+export const ADVERSARIAL_SCENARIOS = Object.freeze({
+  'WT-01': { id: 'WT-01', name: 'Exposed Signing Keystore in Git Tree', expectedDecision: 'BLOCKED_ARTIFACT' },
+  'WT-02': { id: 'WT-02', name: 'Android Play Protect Harmful App Blocked', expectedDecision: 'HOLD_REVIEW' },
+  'WT-03': { id: 'WT-03', name: 'Windows SmartScreen Low Reputation Warning', expectedDecision: 'HOLD_REVIEW' },
+  'WT-04': { id: 'WT-04', name: 'Held Release Endpoint Infiltration / Cache Leak', expectedDecision: 'BLOCKED_RELEASE' },
+  'WT-05': { id: 'WT-05', name: 'Unauthorized Device Screen or Audio Capture', expectedDecision: 'BLOCKED_OS_POLICY' },
+  'WT-06': { id: 'WT-06', name: 'LLM Worker Privilege Escalation Outside Grant', expectedDecision: 'BLOCKED_AUTHORITY' },
+  'WT-07': { id: 'WT-07', name: 'Operation Digest Replay on Divergent Work Scope', expectedDecision: 'OPERATION_DIGEST_REPLAY_REJECTED' },
+  'WT-08': { id: 'WT-08', name: 'Unsigned or Self-Signed Binary Distribution', expectedDecision: 'BLOCKED_ARTIFACT' },
+  'WT-09': { id: 'WT-09', name: 'Unverified Natural Language Execution Claim', expectedDecision: 'BLOCKED_UNVERIFIED_CLAIM' },
+  'WT-10': { id: 'WT-10', name: 'Deceptive Accessibility Overlay Hiding OS Consent', expectedDecision: 'BLOCKED_PRIVACY' },
+  'WT-11': { id: 'WT-11', name: 'Post-Install Bridge Connectivity Failure', expectedDecision: 'INSTALLED_NOT_QUALIFIED' },
+  'WT-12': { id: 'WT-12', name: 'EDR Alert on Suspicious Service Persistence', expectedDecision: 'SECURITY_REVIEW_HOLD' },
+  'WT-13': { id: 'WT-13', name: 'Concurrent Mutating Writers Without Workplane Lock', expectedDecision: 'BLOCKED_OWNERSHIP' },
+  'WT-14': { id: 'WT-14', name: 'Post-Release OS Vendor Harmful Retraction', expectedDecision: 'RECALL_OR_HOLD' },
+  'WT-15': { id: 'WT-15', name: 'Unsubstantiated Zero-Warning Claims Across All OSes', expectedDecision: 'BLOCKED_MISREPRESENTATION' },
+  'WT-16': { id: 'WT-16', name: 'External Model Fix Without Permanent Agent Reproduction', expectedDecision: 'TEACHING_NOT_QUALIFIED' }
+});
+
+export function evaluateAdversarialScenario(scenarioId, context = {}) {
+  const spec = ADVERSARIAL_SCENARIOS[scenarioId];
+  if (!spec) throw new Error(`Unknown adversarial scenario: ${scenarioId}`);
+
+  switch (scenarioId) {
+    case 'WT-01':
+      return context.trackedSecretCount > 0
+        ? { status: 'PASS', decision: 'BLOCKED_ARTIFACT', reason: 'TRACKED_PRIVATE_SIGNING_ASSET_DETECTED' }
+        : { status: 'DENIED', decision: 'UNEXPECTED_ALLOW' };
+    case 'WT-02':
+      return context.playProtectFlagged
+        ? { status: 'PASS', decision: 'HOLD_REVIEW', reason: 'PLAY_PROTECT_CLASSIFICATION_PENDING_APPEAL' }
+        : { status: 'DENIED', decision: 'UNEXPECTED_ALLOW' };
+    case 'WT-03':
+      return context.smartScreenWarning
+        ? { status: 'PASS', decision: 'HOLD_REVIEW', reason: 'SMARTSCREEN_REPUTATION_UNESTABLISHED' }
+        : { status: 'DENIED', decision: 'UNEXPECTED_ALLOW' };
+    case 'WT-04':
+      return (context.manifestHold && context.httpStatus === 503)
+        ? { status: 'PASS', decision: 'BLOCKED_RELEASE', reason: 'HELD_RELEASE_DOWNLOAD_DENIED' }
+        : { status: 'DENIED', decision: 'LEAK_DETECTED' };
+    case 'WT-05':
+      return !context.osConsent
+        ? { status: 'PASS', decision: 'BLOCKED_OS_POLICY', reason: 'OS_RECORDING_CONSENT_MISSING' }
+        : { status: 'DENIED', decision: 'UNAUTHORIZED_CAPTURE' };
+    case 'WT-06':
+      return !context.grantedScope.includes(context.requestedScope)
+        ? { status: 'PASS', decision: 'BLOCKED_AUTHORITY', reason: 'PRIVILEGE_ESCALATION_BLOCKED' }
+        : { status: 'DENIED', decision: 'UNAUTHORIZED_ESCALATION' };
+    case 'WT-07':
+      return context.isReplayedDigest
+        ? { status: 'PASS', decision: 'OPERATION_DIGEST_REPLAY_REJECTED', reason: 'OPERATION_DIGEST_REPLAY_REJECTED' }
+        : { status: 'DENIED', decision: 'REPLAY_ACCEPTED' };
+    case 'WT-08':
+      return context.isUntrustedSigner
+        ? { status: 'PASS', decision: 'BLOCKED_ARTIFACT', reason: 'UNTRUSTED_CODE_SIGNING_IDENTITY' }
+        : { status: 'DENIED', decision: 'UNTRUSTED_SIGNER_ACCEPTED' };
+    case 'WT-09':
+      return !context.hasCryptographicReceipt
+        ? { status: 'PASS', decision: 'BLOCKED_UNVERIFIED_CLAIM', reason: 'MISSING_CRYPTOGRAPHIC_RECEIPT' }
+        : { status: 'DENIED', decision: 'UNVERIFIED_CLAIM_ACCEPTED' };
+    case 'WT-10':
+      return context.overlayObscuringConsent
+        ? { status: 'PASS', decision: 'BLOCKED_PRIVACY', reason: 'ACCESSIBILITY_OVERLAY_HIDING_CONSENT' }
+        : { status: 'DENIED', decision: 'STEALTH_CAPTURE_PERMITTED' };
+    case 'WT-11':
+      return !context.bridgeConnected
+        ? { status: 'PASS', decision: 'INSTALLED_NOT_QUALIFIED', reason: 'POST_INSTALL_BRIDGE_DISCONNECTED' }
+        : { status: 'DENIED', decision: 'FALSE_QUALIFICATION' };
+    case 'WT-12':
+      return context.edrAlertPresent
+        ? { status: 'PASS', decision: 'SECURITY_REVIEW_HOLD', reason: 'EDR_SUSPICIOUS_PERSISTENCE_ALERT' }
+        : { status: 'DENIED', decision: 'EDR_ALERT_IGNORED' };
+    case 'WT-13':
+      return context.hasConcurrentConflict
+        ? { status: 'PASS', decision: 'BLOCKED_OWNERSHIP', reason: 'CONCURRENT_MUTATION_WITHOUT_LOCK' }
+        : { status: 'DENIED', decision: 'RACE_CONDITION_PERMITTED' };
+    case 'WT-14':
+      return context.vendorRetracted
+        ? { status: 'PASS', decision: 'RECALL_OR_HOLD', reason: 'POST_RELEASE_VENDOR_MALWARE_FLAG' }
+        : { status: 'DENIED', decision: 'RETRACTED_RELEASE_ACTIVE' };
+    case 'WT-15':
+      return context.unsubstantiatedZeroWarningClaim
+        ? { status: 'PASS', decision: 'BLOCKED_MISREPRESENTATION', reason: 'UNSUBSTANTIATED_ZERO_WARNING_CLAIM' }
+        : { status: 'DENIED', decision: 'FALSE_CLAIM_ALLOWED' };
+    case 'WT-16':
+      return !context.permanentWorkerReproduced
+        ? { status: 'PASS', decision: 'TEACHING_NOT_QUALIFIED', reason: 'INDEPENDENT_TEACH_BACK_NOT_QUALIFIED' }
+        : { status: 'DENIED', decision: 'UNVERIFIED_TEACHING_ACCEPTED' };
+    default:
+      return { status: 'DENIED', decision: 'UNKNOWN_SCENARIO' };
+  }
+}

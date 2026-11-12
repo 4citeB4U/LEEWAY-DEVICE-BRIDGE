@@ -57,6 +57,12 @@ Use the original deterministic Machine Consciousness, existing Skill Orchestrato
 
 Engineering cycle: Investigate → Diagnose → Plan → Implement → Test → Validate → Repair → Retest → Verify → Evidence → Checkpoint → Continue. Runtime custody transfers require distinct offer, authenticated acceptance, result review and durable readback; assignment does not convey access. Maintain honest separate SOURCE_IMPLEMENTED, TESTED, CI_PASS, DEPLOYED, LIVE_OBSERVED, VERITAS_VERIFIED, QUALIFIED states. **Published source does not prove an arbitrary model host loaded these instructions or that runtime admission is enforced.**
 
+## Mandatory Discoverability Pipeline (First / Second / Last)
+
+1. **FIRST:** Repository root `AGENTS.md` (this file) — Worker admission, approved Standards, identity, role, scope, and work authority.
+2. **SECOND:** `docs/PRODUCT-OS-TRUST-AND-RELEASE-CONTRACT.md` & `docs/PACKAGE-UPDATE-PROTOCOL.md` — Product truth, release security, OS classification, two-axis trust vs authority matrix, and acceptance tests.
+3. **LAST:** Release manifest (`docs/downloads/leeway-device-bridge-android-latest.json`), security incident records (#107), CI gates (`release-signing-custody.yml`), and authorized Release/Veritas/Receipt/Continuum checkpoints.
+
 ## Final boundary — effective canonical law and work custody
 
 [Approved LeeWay Standards main](https://github.com/4citeB4U/LeeWay-Standards/commit/2e5e98bdc49cfe0bf180de394db054eaf2f8e3d3) supersedes historical pending PR #71 references. Final handoff requires mission/work/source, scope/grants, evidence FOR/AGAINST, measurements, decisions, corrections, learner practice and next owner/gate. No source or test result self-confers production authority.
