@@ -1,9 +1,9 @@
 import fs from "node:fs";
 import assert from "node:assert/strict";
 const script=fs.readFileSync("clients/remote-controller/termux-one-pull.sh","utf8");
-assert.match(script,/Waiting for Android update confirmation/);
-assert.match(script,/Waiting for Android uninstall confirmation/);
-assert.match(script,/Waiting for Android install confirmation/);
+assert.match(script,/Awaiting owner-approved install/);
+assert.doesNotMatch(script,/Waiting for Android uninstall confirmation/);
+assert.match(script,/NO UNINSTALL performed/);
 assert.match(script,/\[LeeWay\]\[RUNNING\]/);
 assert.match(script,/setInterval/);
 assert.match(script,/TERMUX_BOOTSTRAP/);
