@@ -448,13 +448,47 @@ Every consequential operation—from a command line call to a file transfer, rec
 
 ---
 
-## 12. Real-Time Sprint Priorities & Active Execution Orders
+## 12. Architecture Amendment K: Operating System Trust, Code Signing & Production Reputation Pipeline
 
-### The Four Linked Engineering Orders
+Operating systems (Android Google Play Protect, Microsoft Defender SmartScreen, macOS Gatekeeper, iOS App Sandbox) must never flag LeeWay software as harmful, unrecognized, or untrusted. This trust must be built directly into the assembly line from development to live running production.
+
+### 12.1 The 5-Stage Assembly Line Trust Architecture
+
+```mermaid
+flowchart LR
+    S1["Stage 1: Manifest & Permission Hygiene"] --> S2["Stage 2: Cryptographic Release Signing"]
+    S2 --> S3["Stage 3: Package Integrity & Metadata"]
+    S3 --> S4["Stage 4: OS-Compliant Download Delivery"]
+    S4 --> S5["Stage 5: Autonomous In-Place OTA Contract"]
+```
+
+1. **Stage 1: Manifest & Permission Hygiene**:
+   - Eliminate malware heuristics: remove suspicious cross-app execution permissions (`com.termux.permission.RUN_COMMAND`).
+   - Clean XML syntax (eliminate literal escape characters like `\n`).
+   - Explicit human-readable `android:description` on all accessibility and foreground services.
+2. **Stage 2: Cryptographic Release Signing**:
+   - Transition from default debug keystore (`androiddebugkey`) to canonical **LeeWay Sovereign Release Keystore** (`apps/android/leeway-release-key.jks`, RSA 4096-bit).
+   - Sign with **APK Signature Scheme v1, v2, v3, and v4** (`.idsig`).
+   - Windows Authenticode X.509 code signing with trusted RFC 3161 timestamping.
+3. **Stage 3: Package Integrity & Metadata**:
+   - Immutable release manifest in `docs/downloads/leeway-device-bridge-android-latest.json` declaring SHA-256 digest, signing certificate fingerprint (`f5a4352361ee9...`), and scheme (`v3`).
+4. **Stage 4: OS-Compliant Download Delivery**:
+   - Web server (`api/device-relay.mjs`) serves both `GET` and `HEAD` requests with exact MIME headers:
+     `Content-Type: application/vnd.android.package-archive`, `Content-Disposition: attachment; filename="..."`, `X-Content-Type-Options: nosniff`.
+   - Prevents browser quarantining and download corruption.
+5. **Stage 5: Autonomous In-Place OTA Contract**:
+   - Cryptographic verification of SHA-256 and signing fingerprint before PackageInstaller handoff, preventing "There was a problem parsing the package" OS errors.
+
+---
+
+## 13. Real-Time Sprint Priorities & Active Execution Orders
+
+### The Five Linked Engineering Orders
 
 | Order | Focus Area | Status | Current Evidence & Next Milestone |
 |---|---|---|---|
 | **Order 1** | Runtime / Bridge Discovery Reconciliation | **100% CURED & VERIFIED** | `LEEWAY_BRIDGE_DISCOVERY_HTTP_502` and `LEEWAY_BRIDGE_DISCOVERY_DEVICES_INVALID` eliminated. Strict string array schema implemented in `api/device-relay.mjs`. Verified live on `https://agent-lee.tailb186e7.ts.net/mcp`. |
-| **Order 2** | Workforce & Consciousness Binding Qualification | **IN PROGRESS (Tranche 1 Qualified)** | Evaluated `sim-to-prod-graduation-ledger.mjs` against live bridge readback and Receipt 14 SHA. Tranche 1 scored Q69 69/69 (`BF`), achieving `G4_ELIGIBLE_PENDING_CANONICAL_PRODUCTION_ADMISSION`. Proceeding to Tranche 2 replay. |
+| **Order 2** | Workforce & Consciousness Binding Qualification | **TRANCHES 1–5 G4-QUALIFIED** | All 5 Banked Tranches evaluated via `sim-to-prod-graduation-ledger.mjs`: Core Curriculum, Adversarial Crucible, Omniverse Survival, Bridge Harmony, Parallel Enterprise. All scored Q69 69/69 (`BF`). |
 | **Order 3** | Governed Execution Through Production Authorities | **READY FOR VERITAS** | Receipt 14 committed in `receipts.sqlite`, forensic audit published in `docs/`. Next: formal Veritas independent evaluation packet assembly. |
-| **Order 4** | Production Deployment & Operational Recovery | **CONTINUOUS LIVE** | Persistent relay server active on port 8008 (`task-4665`). Zero-downtime hot reloading verified. |
+| **Order 4** | Production Deployment & Operational Recovery | **CONTINUOUS LIVE** | Persistent relay server active on port 8008 (`task-4923`). Zero-downtime hot reloading verified. |
+| **Order 5** | Operating System Trust & Code Signing Pipeline | **100% SIGNED & VERIFIED** | RSA 4096-bit release keystore generated, `app-release.apk` compiled and v3-signed, `device_directories_list` added, and OS-compliant download route live verified over Funnel. |

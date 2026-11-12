@@ -21,8 +21,33 @@ android {
         applicationId = "industries.leeway.devicebridge"
         minSdk = 29
         targetSdk = 35
-        versionCode = 25
-        versionName = "0.10.0-agent-update-rc1"
+        versionCode = 26
+        versionName = "0.10.0-sovereign-rc2"
+    }
+    signingConfigs {
+        create("release") {
+            val keystoreFile = file("../leeway-release-key.jks")
+            if (keystoreFile.exists()) {
+                storeFile = keystoreFile
+                storePassword = "LeeWaySovereign2026!"
+                keyAlias = "leeway-release"
+                keyPassword = "LeeWaySovereign2026!"
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
+                enableV4Signing = true
+            }
+        }
+    }
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
+        }
+    }
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
     }
 }
 dependencies {

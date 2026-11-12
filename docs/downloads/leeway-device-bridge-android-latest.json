@@ -1,9 +1,12 @@
 {
-  "version": "0.10.0-rc2",
+  "version": "0.10.0-sovereign-rc2",
   "versionCode": 26,
-  "updatedAt": "2026-11-12T13:38:39Z",
-  "sizeBytes": 66683736,
-  "sha256": "320da4b374cca2f10d1a9051af3dae0f5db9f1aa5701bf6161b9610d6398fc7b",
-  "url": "https://agent-lee.tailb186e7.ts.net/downloads/leeway-device-bridge-android-latest-debug.apk",
-  "releaseNotes": "Phase 1: Added Device-Owned DigitalBrainStore SQLite database and remote read endpoints"
+  "updatedAt": "2026-11-12T19:28:40Z",
+  "sizeBytes": 63329592,
+  "sha256": "385366e745a0040f08241810e8e3b002ac0298de431e9d1b28f9e391fe480311",
+  "signingCertFingerprint": "f5a4352361ee92b30e2618d240ecade7e3e1dcbf0591cfb952d7a819797cb479",
+  "signer": "CN=LeeWay Sovereign Device Bridge, OU=Engineering, O=LeeWay Industries, L=Chicago, ST=Illinois, C=US",
+  "signingScheme": "v3",
+  "url": "https://agent-lee.tailb186e7.ts.net/downloads/leeway-device-bridge-android-latest-release.apk",
+  "releaseNotes": "Sovereign Signed Release: RSA 4096-bit code signing, removed debug keystore, secured manifest permissions, eliminating Play Protect harmful app warnings."
 }

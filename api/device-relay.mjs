@@ -387,6 +387,36 @@ function createRelayServer({ rooms = new Map() } = {}) {
         return;
       }
     }
+    if ((req.method === 'GET' || req.method === 'HEAD') && (req.url.startsWith('/downloads/') || origPath.includes('/downloads/'))) {
+      try {
+        const parsedUrl = new URL(req.url, 'http://127.0.0.1');
+        const filename = path.basename(parsedUrl.pathname);
+        const filePath = path.resolve(__dirname, '../docs/downloads', filename);
+        if (!fs.existsSync(filePath)) {
+          return json(res, 404, { ok: false, error: 'DOWNLOAD_NOT_FOUND', file: filename });
+        }
+        const stat = fs.statSync(filePath);
+        const ext = path.extname(filename).toLowerCase();
+        const contentType = ext === '.apk' ? 'application/vnd.android.package-archive' :
+                            ext === '.json' ? 'application/json; charset=utf-8' :
+                            ext === '.txt' ? 'text/plain; charset=utf-8' : 'application/octet-stream';
+        res.writeHead(200, {
+          'content-type': contentType,
+          'content-length': stat.size,
+          'content-disposition': `attachment; filename="${filename}"`,
+          'access-control-allow-origin': '*',
+          'x-content-type-options': 'nosniff',
+          'cache-control': 'public, max-age=3600'
+        });
+        if (req.method === 'HEAD') {
+          return res.end();
+        }
+        const stream = fs.createReadStream(filePath);
+        return stream.pipe(res);
+      } catch (err) {
+        return json(res, 500, { ok: false, error: err.message });
+      }
+    }
     if (req.method === 'GET' && (req.url === '/dashboard' || req.url === '/dashboard.html' || (req.url === '/' && req.headers['accept']?.includes('text/html')))) {
       try {
         const dashPath = path.resolve(__dirname, '../apps/desktop/dashboard.html');
