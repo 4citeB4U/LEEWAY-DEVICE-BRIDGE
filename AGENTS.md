@@ -23,7 +23,7 @@ Continuity → Context Engineering → Formula Governance → Agent Operating Lo
 
 ## Completion law
 
-Investigate → Diagnose → Plan → Implement → Test → Validate → Repair → Retest → Verify → Evidence.
+Investigate → Diagnose → Plan → Implement → Test → Validate → Repair → Retest → Verify → Evidence → Checkpoint → Continue. The earlier ten-step shorthand remains historical; approved R01–R25 and the twelve-stage cycle require explicit checkpoint and continuation.
 
 At material transitions ask:
 - What are we not discovering?
@@ -60,8 +60,16 @@ Engineering cycle: Investigate → Diagnose → Plan → Implement → Test → 
 ## Mandatory Discoverability Pipeline (First / Second / Last)
 
 1. **FIRST:** Repository root `AGENTS.md` (this file) — Worker admission, approved Standards, identity, role, scope, and work authority.
-2. **SECOND:** `docs/PRODUCT-OS-TRUST-AND-RELEASE-CONTRACT.md` & `docs/PACKAGE-UPDATE-PROTOCOL.md` — Product truth, release security, OS classification, two-axis trust vs authority matrix, and acceptance tests.
-3. **LAST:** Release manifest (`docs/downloads/leeway-device-bridge-android-latest.json`), security incident records (#107), CI gates (`release-signing-custody.yml`), and authorized Release/Veritas/Receipt/Continuum checkpoints.
+2. **SECOND:** [Engineering CONTRACT-OR-006](https://github.com/4citeB4U/LeeWay-Engineering/blob/main/contracts/CONTRACT-OR-006-SIX-ORGAN-PRODUCTION-INTERFACE.md) (six organ interfaces, eight idea-to-production layers), `docs/PRODUCT-OS-TRUST-AND-RELEASE-CONTRACT.md` & `docs/PACKAGE-UPDATE-PROTOCOL.md` (actual platform packaging and OS trust), [Learning LG-00–LG-10](https://github.com/4citeB4U/LeeWay-Learning-Ledger/blob/main/docs/ORDERED-LEARNING-AUTHORITY-CONTRACT.md), and [Agent Skills teaching packet](https://github.com/4citeB4U/LeeWay-Agent-Skills/blob/main/skills/leeway-learning-ledger/references/teaching-transfer-packet.schema.json). Follow the **existing** owner-specific GPU, Network, Storage, Vision, Voice, Access and digital-device exception contracts. Source documents cannot authorize a real device command.
+3. **LAST:** Exact release manifest (`docs/downloads/leeway-device-bridge-android-latest.json`), source-and-CI truth, security incidents [#107](https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/issues/107) and [#109](https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/issues/109), the **actual** Runtime↔Bridge target/device operation and poststate, applicable negative tests, original Veritas/Receipt/Continuum/Learning readback, source/deployment revision and production accepting owner. Missing grants, signatures or native hardware must be BLOCKED/NOT_EXECUTED, not called cleared.
+
+## Product integrity and current source/release holds
+
+A valid dashboard, signed package, passing CI or relay room **does not** establish a real native hardware operation. Public download admission for all APK names is governed by `operator/public-apk-release-policy.mjs`; source CI cannot certify Google Play Protect, SmartScreen, Apple signing, or the actual running Funnel revision. A fallback shared mesh token or source-defined worker wildcard is **not** a genuine Pocket-ID/ZITADEL/Runtime grant. Refer to the owning [security incident #109](https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/issues/109); unfinished credential-rotation review must not be bypassed.
+
+Per Creator's sovereign-hardware exception, the Digital Brain and Diagnostics are entirely and exclusively **device-owned**, with native device-specific paths. All other modules and skills remain hardware/OS/path agnostic. Never consolidate these protected stores into a global agent's property, silently purge them during app cleanup, or misrepresent a proxy/room as an installed native iPhone or HP daemon.
+
+**Source acceptance ≠ runtime effect:** record each organ and whole-product layer at SOURCE_READ, CI_TESTED, HOST_QUALIFIED, PHYSICAL_POSTSTATE_OBSERVED, INDEPENDENT_VERITAS_QUALIFIED, PRODUCTION_RELEASED independently. The first unqualified boundary determines what may be claimed.
 
 ## Final boundary — effective canonical law and work custody
 
