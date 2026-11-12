@@ -8,5 +8,20 @@
   "signer": "CN=LeeWay Sovereign Device Bridge, OU=Engineering, O=LeeWay Industries, L=Chicago, ST=Illinois, C=US",
   "signingScheme": "v3",
   "url": "https://agent-lee.tailb186e7.ts.net/downloads/leeway-device-bridge-android-latest-release.apk",
-  "releaseNotes": "Sovereign Signed Release: RSA 4096-bit code signing, removed debug keystore, secured manifest permissions, eliminating Play Protect harmful app warnings."
+  "releaseNotes": "Security hold: original signing identity requires custody review and rotation; Android OS/Play Protect warning clearance has NOT been verified. Do not promote or install this candidate as a trusted production release.",
+  "releaseState": "SECURITY_HOLD_SIGNING_IDENTITY_EXPOSED",
+  "downloadEnabled": false,
+  "securityHold": {
+    "reason": "REPOSITORY_EMBEDDED_RELEASE_KEYSTORE_AND_PLAINTEXT_SIGNING_CREDENTIAL",
+    "requires": [
+      "remove tracked private signing asset from current tree and protect history",
+      "replace signer under authorized custodial approval",
+      "determine Android package update identity continuity and installed-user migration",
+      "rebuild, independently scan and physically retest",
+      "resolve actual Play Protect/OS warnings with vendor evidence"
+    ],
+    "falsePositiveClaim": "UNVERIFIED",
+    "independentOSClassification": "NOT_OBSERVED",
+    "productionAuthorized": false
+  }
 }
