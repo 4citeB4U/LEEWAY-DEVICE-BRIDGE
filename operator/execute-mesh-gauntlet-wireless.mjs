@@ -23,7 +23,7 @@ const BASE_DIR = path.resolve(__dirname, "..");
 const ARTIFACT_DIR = "C:/Users/Leona/.gemini/antigravity/brain/6d29f998-8fb3-41b0-80c8-8106412647b1";
 const RELAY_HTTP = process.env.LEEWAY_RELAY_HTTP || "http://127.0.0.1:8008/api/device-relay";
 const RELAY_WS = process.env.LEEWAY_RELAY_WS || "ws://127.0.0.1:8008/api/device-relay";
-const DEFAULT_TOKEN = "leeway-mesh-token-7K2LF3G25U";
+const DEFAULT_TOKEN = (process.env.LEEWAY_MESH_TOKEN || null);
 
 function sha256(data) {
   return crypto.createHash("sha256").update(typeof data === "string" ? data : JSON.stringify(data)).digest("hex");
