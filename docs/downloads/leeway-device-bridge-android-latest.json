@@ -1,9 +1,9 @@
 {
   "versionName": "0.10.0-sovereign-rc2",
   "versionCode": 26,
-  "sha256": "d2e8b4a2110f698d9aee6a30090c1a87026ccf709f83025f84c590d555b7c366",
+  "sha256": "938fc3b765b3df61003c2fa6880a8abf3ae9a8c1427542be620a27f7de3ca85a",
   "sizeBytes": 66445858,
   "downloadUrl": "./leeway-device-bridge-android-latest-debug.apk",
-  "sourceRunId": "43305577117",
-  "sourceCommit": "292e9d9e6e02527705782ab16da36559dc4a92e9"
+  "sourceRunId": "43308557689",
+  "sourceCommit": "07f76bef0b54025aed8c0d6c2df40abb91495bca"
 }
