@@ -25,7 +25,7 @@ const STATUS_FILE = path.join(STATE_DIR, "apple-device-status.json");
 const POLL_INTERVAL_MS = 5000;
 const RELAY_URL = process.env.LEEWAY_RELAY_URL || "ws://127.0.0.1:8008/api/device-relay";
 const DEVICE_ID = "phone-apple-iphone";
-const TOKEN = process.env.LEEWAY_MESH_TOKEN || "leeway-mesh-token-7K2LF3G25U";
+const TOKEN = process.env.LEEWAY_MESH_TOKEN || null;
 
 export class AppleDeviceSupervisor {
   constructor({ pollIntervalMs = POLL_INTERVAL_MS } = {}) {
