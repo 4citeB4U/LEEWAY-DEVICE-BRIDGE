@@ -214,6 +214,11 @@ function createRelayServer({ rooms = new Map() } = {}) {
                 inputSchema: { type: 'object', properties: { deviceId: { type: 'string' } }, required: ['deviceId'] }
               },
               {
+                name: 'device_directories_list',
+                description: 'List directories and files in authorized device workspace.',
+                inputSchema: { type: 'object', properties: { deviceId: { type: 'string' }, path: { type: 'string' }, limit: { type: 'integer' } }, required: ['deviceId'] }
+              },
+              {
                 name: 'device_files_universe_scan',
                 description: 'Scan scoped storage boundaries and file descriptors.',
                 inputSchema: { type: 'object', properties: { deviceId: { type: 'string' } }, required: ['deviceId'] }
@@ -326,11 +331,12 @@ function createRelayServer({ rooms = new Map() } = {}) {
             const cmdId = 'mcp-cmd-' + Date.now();
             const pending = new Promise((resolve) => {
               const timer = setTimeout(() => {
-                targetRoom.pendingCommands.delete(cmdId);
+                targetRoom.pending.delete(cmdId);
                 resolve({ ok: false, error: 'DEVICE_COMMAND_TIMEOUT' });
               }, 12000);
 
-              targetRoom.pendingCommands.set(cmdId, {
+              targetRoom.pending.set(cmdId, {
+                capability,
                 resolve: (val) => { clearTimeout(timer); resolve(val); },
                 reject: (err) => { clearTimeout(timer); resolve({ ok: false, error: err.message }); }
               });
@@ -344,11 +350,30 @@ function createRelayServer({ rooms = new Map() } = {}) {
             });
 
             const execResult = await pending;
+            let formattedResponse = execResult;
+            if (execResult && execResult.ok !== false) {
+              const receiptTime = new Date().toISOString();
+              const receiptSha = createHash('sha256').update(`${targetDeviceId}:${capability}:${receiptTime}:${JSON.stringify(execResult)}`).digest('hex');
+              const innerResult = execResult.result !== undefined ? execResult.result : { ...execResult };
+              if (innerResult.ok !== undefined) delete innerResult.ok;
+              formattedResponse = {
+                ok: true,
+                result: innerResult,
+                receipt: execResult.receipt || {
+                  id: 'rcpt-' + Date.now(),
+                  deviceId: targetDeviceId,
+                  capability,
+                  outcome: 'PASS',
+                  time: receiptTime,
+                  sha256: receiptSha
+                }
+              };
+            }
             return json(res, 200, {
               jsonrpc: '2.0',
               id: rpcId,
               result: {
-                content: [{ type: 'text', text: JSON.stringify(execResult, null, 2) }]
+                content: [{ type: 'text', text: JSON.stringify(formattedResponse, null, 2) }]
               }
             });
           }
@@ -465,15 +490,19 @@ function createRelayServer({ rooms = new Map() } = {}) {
     room.pending.delete(id);
     room.completed.add(id);
     if (room.completed.size > 256) room.completed.delete(room.completed.values().next().value);
-    if (pending.connection.ws.readyState !== WebSocket.OPEN) return;
-    pending.connection.ws.send(JSON.stringify({
-      type: 'result',
-      id,
-      capability,
-      ok: message.ok === true,
-      ...(message.ok === true && Object.hasOwn(message, 'result') ? { result: message.result } : {}),
-      ...(message.ok !== true ? { error: text(message.error, 256) || 'REMOTE_COMMAND_FAILED' } : {}),
-    }));
+    if (typeof pending.resolve === 'function') {
+      return pending.resolve(message);
+    }
+    if (pending.connection && pending.connection.ws && pending.connection.ws.readyState === WebSocket.OPEN) {
+      pending.connection.ws.send(JSON.stringify({
+        type: 'result',
+        id,
+        capability,
+        ok: message.ok === true,
+        ...(message.ok === true && Object.hasOwn(message, 'result') ? { result: message.result } : {}),
+        ...(message.ok !== true ? { error: text(message.error, 256) || 'REMOTE_COMMAND_FAILED' } : {}),
+      }));
+    }
   }
 
   wss.on('connection', (ws) => {

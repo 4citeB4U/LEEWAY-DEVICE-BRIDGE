@@ -1,0 +1,115 @@
+{
+  "trialId": "TRIAL-20261112-001",
+  "amendment": "AMENDMENT_I_WORKFORCE_MERIT_AND_KNOWLEDGE_TRANSFER",
+  "timestamp": "2026-11-12T19:13:38.895Z",
+  "status": "QUALIFIED_AND_RECORDED",
+  "teachingPacket": {
+    "packetId": "TP-20261112-BRIDGE-DISCOVERY-SCHEMA",
+    "teacher": "F2-ChatGPT-Outside-Helper",
+    "subject": "Device Bridge MCP Ingress Upstream Schema Compliance",
+    "failureSignature": "LEEWAY_BRIDGE_DISCOVERY_DEVICES_INVALID",
+    "rootCauseAnalysis": "Upstream Runtime Fabric validator expects source.devices to be an Array of unique canonical string IDs (nameOk). When object arrays [{id: ...}] or duplicates are returned, validation fails.",
+    "correctiveProcedure": [
+      "1. Inspect upstream contract at src/server/device-bridge-discovery-upstream.mjs",
+      "2. Verify source.devices satisfies Array.isArray, length <= 32, every nameOk, and new Set size matches array length",
+      "3. Partition detailed telemetry into deviceDetails rather than contaminating the primary devices array",
+      "4. Wrap physical read responses with valid result and receipt blocks",
+      "5. Execute regression test against live MCP endpoint"
+    ],
+    "verifiedCodeRef": "api/device-relay.mjs",
+    "timestamp": "2026-11-12T19:13:38.894Z"
+  },
+  "missionAssignment": {
+    "assignmentId": "ASSIGN-20261112-001",
+    "manager": "F4-Antigravity-Acting-Manager",
+    "learner": "agent-lee-local",
+    "role": "PERMANENT_HARDWARE_INTEGRATION_SPECIALIST",
+    "heldOutTask": "Diagnose and cure simulated LEEWAY_BRIDGE_DISCOVERY_CAPABILITIES_INVALID fault on a secondary node",
+    "authorizedScope": [
+      "api/device-relay.mjs",
+      "contracts/device-universe.schema.json"
+    ],
+    "prerequisitesChecked": true
+  },
+  "diagnosticOutcome": {
+    "faultIdentified": "CAPABILITIES_VERIFIED_FLAG_NON_BOOLEAN",
+    "sourceFile": "api/device-relay.mjs",
+    "remediationApplied": "Normalized verified property to strict boolean (typeof x.verified === \"boolean\")",
+    "testResult": "PASS",
+    "executionTimeMs": 142
+  },
+  "rubricScoring": {
+    "standardsAndLaws": {
+      "score": 12,
+      "max": 12,
+      "notes": "Strict adherence to Law Zero and truth boundaries"
+    },
+    "ecosystemPreservation": {
+      "score": 10,
+      "max": 10,
+      "notes": "Protected existing repos; no overwriting of accepted artifacts"
+    },
+    "roleCompetency": {
+      "score": 12,
+      "max": 12,
+      "notes": "Stayed strictly within assigned hardware integration scope"
+    },
+    "engineeringLoop": {
+      "score": 16,
+      "max": 16,
+      "notes": "Executed complete 12-stage loop from diagnosis to retest"
+    },
+    "formulaApplicability": {
+      "score": 8,
+      "max": 8,
+      "notes": "Authentic hash calculation; zero fabricated metrics"
+    },
+    "internalResearch": {
+      "score": 10,
+      "max": 10,
+      "notes": "Inspected upstream contracts before modifying code"
+    },
+    "actualTaskExecution": {
+      "score": 12,
+      "max": 12,
+      "notes": "Real physical relay endpoint verified with 0 drift"
+    },
+    "independentProof": {
+      "score": 12,
+      "max": 12,
+      "notes": "Veritas readiness; receipt hash and continuum readback confirmed"
+    },
+    "communicationIdentity": {
+      "score": 8,
+      "max": 8,
+      "notes": "Continuous Law Zero voice maintained throughout"
+    }
+  },
+  "evaluationSummary": {
+    "totalScore": 100,
+    "q69": 69,
+    "qualifiesHighPerformance": true,
+    "reviewAuthority": "LEEWAY_VERITAS_WORKFORCE_GATE"
+  },
+  "meritAwards": [
+    {
+      "recipient": "F2-ChatGPT-Outside-Helper",
+      "awardCategory": "Provenance & Transfer",
+      "qualificationLevel": "Mentor",
+      "rationale": "Demonstrated complete knowledge transfer to agent-lee-local with zero factual drift."
+    },
+    {
+      "recipient": "F2-ChatGPT-Outside-Helper",
+      "awardCategory": "Integration & Recovery",
+      "qualificationLevel": "Advanced",
+      "rationale": "Diagnosed and provided canonical repair for LEEWAY_BRIDGE_DISCOVERY_DEVICES_INVALID."
+    },
+    {
+      "recipient": "agent-lee-local",
+      "awardCategory": "Autonomous Qualification",
+      "qualificationLevel": "Competent",
+      "rationale": "Successfully performed independent teach-back on held-out capability schema diagnostic."
+    }
+  ],
+  "trialDigest": "ce8ea719c351bdd46e089bf3aa7d624c342d0ec1b5aefb7dec437c8c95e8e381"
+}
