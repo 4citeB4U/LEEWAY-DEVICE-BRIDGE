@@ -88,9 +88,29 @@ function signApk(unsigned,signed){
   if(!cert)throw Error('SIGNER_CERT_UNAVAILABLE');
   return cert;
 }
+// A production Device Bridge APK must retain its approved release signer.
+// The original owner may sign a separate Pocket Agent lane; it must NOT
+// locally re-sign an already signed Device Bridge candidate.
+function verifySignedReleaseApk(file, expectedFingerprint){
+  const env={...process.env,LD_LIBRARY_PATH:SHIM};
+  const r=spawnSync(APKSIGNER,['verify','--verbose','--print-certs',file],{env,encoding:'utf8'});
+  if(r.status!==0)throw Error('ANDROID_RELEASE_SIGNATURE_INVALID');
+  const fp=(r.stdout+r.stderr).match(/Signer #1 certificate SHA-256 digest:\\s*([a-f0-9]+)/i)?.[1]?.toLowerCase();
+  if(!fp||fp!==String(expectedFingerprint).toLowerCase())
+    throw Error('ANDROID_RELEASE_SIGNER_MISMATCH');
+  return fp;
+}
+
 async function prepareOne(source,currentCode){
   const metadataUrl=process.env[source.env]||source.defaultUrl;
   const {body:meta,finalUrl}=await fetchJson(metadataUrl);
+  if(source.id==='device-bridge'){
+    const expectedSigner=String(meta.signingCertificateSha256||'').toLowerCase();
+    if(meta.releaseState!=='AUTHORIZED_RELEASED'||meta.downloadEnabled!==true||
+       meta.publicReleaseAuthorized!==true||
+       !validSha(expectedSigner)||!String(meta.authorizedReleaseEvidenceRef||'').trim())
+      throw Error('DEVICE_BRIDGE_RELEASE_NOT_AUTHORIZED');
+  }
   const versionCode=Number(meta.versionCode);
   const versionName=String(meta.versionName||'').trim();
   const sourceSha=String(meta.sha256||'').trim().toLowerCase();
@@ -99,14 +119,27 @@ async function prepareOne(source,currentCode){
   const raw=String(meta.downloadUrl||'').trim();
   const downloadUrl=resolveUrl(finalUrl,raw);
   if(!downloadUrl.startsWith('https://'))throw Error('APK_HTTPS_REQUIRED');
+  if(source.id==='device-bridge' &&
+     (!new URL(downloadUrl).pathname.toLowerCase().endsWith('.apk')||
+      new URL(downloadUrl).pathname.toLowerCase().includes('debug')))
+    throw Error('DEVICE_BRIDGE_NONRELEASE_APK_FORBIDDEN');
   const unsigned=path.join(CACHE,source.id+'-'+sourceSha+'.unsigned.apk');
   const signed=path.join(CACHE,source.id+'-'+sourceSha+'.signed.apk');
+  // Do not reuse a preexisting locally re-signed debug APK as an approved
+  // production Device Bridge candidate just because its source hash matches.
+  if(source.id==='device-bridge'){
+    fs.rmSync(signed,{force:true});
+    fs.rmSync(signed+'.json',{force:true});
+  }
   if(!fs.existsSync(signed)){
     await download(downloadUrl,unsigned);
     const actual=shaFile(unsigned);
     if(actual!==sourceSha){fs.rmSync(unsigned,{force:true});throw Error('SOURCE_SHA256_MISMATCH')}
-    const signerCertSha256=signApk(unsigned,signed);
-    fs.rmSync(unsigned,{force:true});
+    const signerCertSha256=source.id==='device-bridge'
+      ? verifySignedReleaseApk(unsigned,meta.signingCertificateSha256)
+      : signApk(unsigned,signed);
+    if(source.id==='device-bridge') fs.renameSync(unsigned,signed);
+    else fs.rmSync(unsigned,{force:true});
     fs.writeFileSync(signed+'.json',JSON.stringify({sourceSha256:sourceSha,signerCertSha256},null,2),{mode:0o600});
   }
   const side=JSON.parse(fs.readFileSync(signed+'.json','utf8'));
