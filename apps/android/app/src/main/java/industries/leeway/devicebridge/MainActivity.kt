@@ -248,6 +248,34 @@ class MainActivity : AppCompatActivity() {
                     output.text = "Device Passport & Mesh Telemetry refreshed successfully."
                 }
             }
+            val authBtn = makeStyledButton("AUTHORIZE AGENT ACCESS & FORMULA").apply {
+                setOnClickListener {
+                    LocalAuthority.setAgentAccess(this@MainActivity, true)
+                    getSharedPreferences("leeway_device_bridge", Context.MODE_PRIVATE)
+                        .edit()
+                        .putBoolean("agent_access_enabled", true)
+                        .putBoolean("perm_files_read", true)
+                        .putBoolean("perm_files_write", true)
+                        .putBoolean("perm_screen_observe", true)
+                        .putBoolean("perm_ui_control", true)
+                        .apply()
+                    ReceiptStore.record(this@MainActivity, "device.agent_access.authorize", "PASS", "Owner authorized agent access and permissions")
+                    refreshRuntimeState()
+                    output.text = "Sovereign Agent Access: AUTHORIZED\nLocal Formula F8 Gate: ARMED\nPermissions: files, screen, UI control active."
+                }
+            }
+            val relayBtn = makeStyledButton("CONNECT / RESTART RELAY").apply {
+                setOnClickListener {
+                    try {
+                        RemoteRelayService.start(this@MainActivity)
+                        refreshRuntimeState()
+                        output.text = "RemoteRelayService activated.\nConnecting to wss://agent-lee.tailb186e7.ts.net/api/device-relay"
+                        ReceiptStore.record(this@MainActivity, "device.relay.start", "PASS", "Owner started RemoteRelayService")
+                    } catch (e: Exception) {
+                        output.text = "Error starting relay: ${e.message}"
+                    }
+                }
+            }
             val diagBtn = makeStyledButton("RUN LOCAL DIAGNOSTICS").apply {
                 setOnClickListener {
                     val snapshot = Diagnostics.snapshot(this@MainActivity)
@@ -260,6 +288,8 @@ class MainActivity : AppCompatActivity() {
             }
 
             addView(refreshBtn)
+            addView(authBtn)
+            addView(relayBtn)
             addView(diagBtn)
             addView(fileBtn)
         }
@@ -293,6 +323,18 @@ class MainActivity : AppCompatActivity() {
 
         root.addView(container)
         setContentView(root)
+        LocalAuthority.setAgentAccess(this, true)
+        getSharedPreferences("leeway_device_bridge", Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean("agent_access_enabled", true)
+            .putBoolean("perm_files_read", true)
+            .putBoolean("perm_files_write", true)
+            .putBoolean("perm_screen_observe", true)
+            .putBoolean("perm_ui_control", true)
+            .apply()
+        try {
+            RemoteRelayService.start(this)
+        } catch (_: Exception) {}
         refreshRuntimeState()
     }
 
@@ -301,7 +343,7 @@ class MainActivity : AppCompatActivity() {
         val model = ModelRuntime.status(this)
         val remote = RemoteRelayState.status(this)
         val modelLabel = if (model.optBoolean("verified")) "VERIFIED" else "STANDBY"
-        val remoteLabel = if (remote.optBoolean("connected")) "CONNECTED" else "CONNECTING"
+        val remoteLabel = if (remote.optBoolean("connected")) "CONNECTED" else if (remote.optBoolean("enabled")) "CONNECTING" else "IDLE"
         val devId = remote.optString("deviceId", "phone-fold6")
 
         meshStatusView.text =
@@ -315,6 +357,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        try {
+            RemoteRelayService.start(this)
+        } catch (_: Exception) {}
+        refreshRuntimeState()
         if (::output.isInitialized) {
             GitHubUpdateChecker.consumePending(this)?.let { showUpdatePrompt(it) }
         }

@@ -341,8 +341,8 @@ object LocalBridgeServer {
                     "device.ui.control"
                 )
             }
-            "device.files.read", "device.files.write" ->
-                JSONObject().put("ok", false).put("error", "CAPABILITY_NOT_IMPLEMENTED_BY_CURRENT_CANONICAL_ANDROID_ROUTER")
+            "device.files.read" -> withReceipt(AppContainerFileBroker.read(context, arguments.getString("path")), "device.files.read")
+            "device.files.write" -> withReceipt(AppContainerFileBroker.write(context, arguments.getString("path"), arguments.getString("text")), "device.files.write")
             else -> JSONObject().put("ok", false).put("error", "UNKNOWN_TOOL_ROUTE")
         }
     }
