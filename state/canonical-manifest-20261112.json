@@ -8,9 +8,9 @@
   "evidenceState": "SOURCE_PINNED_AND_LOCAL_OBSERVED",
   "warning": "These SHAs prove source identity and commit integrity under Law Zero.",
   "repos": {
-    "4citeB4U/LEEWAY-DEVICE-BRIDGE": "1e7584eb2e5bb0203f752945ea4b3040fa78fe62",
+    "4citeB4U/LEEWAY-DEVICE-BRIDGE": "7e137ea3ce8f33ceef12a7629b3ae3ec2ca046fe",
     "4citeB4U/Receipt-Authority": "2d448db0be041680b4ec51853c95b30d5bdb85f1",
-    "4citeB4U/Leeway-Runtime-Fabric": "ad534042ce4858f921785ab1aa9461731ec27599",
+    "4citeB4U/Leeway-Runtime-Fabric": "00786bf1827c197c29ac06516fe8066c3ac6322f",
     "4citeB4U/LeeWay-Engineering": "64ffc3a42e96bae8acc0ed8558bd2d954692534f",
     "4citeB4U/LeeWay-Learning-Ledger": "20dfad7b54201688280ea8f7d9f4be4a8b0a476f",
     "4citeB4U/LeeWay-Edge-GPU": "61d8127d1a8b22a378e7c4a18399ec4e8a1a4c23",
