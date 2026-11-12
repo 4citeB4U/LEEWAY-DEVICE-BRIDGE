@@ -11,6 +11,13 @@ node_modules/
 *.sqlite
 *.sqlite-wal
 *.sqlite-shm
+*.db
+*.db-wal
+*.db-shm
+state/lkg-snapshots/
+state/relay-runtime-lkg.json
+state/consent-replay-ledger.jsonl
+state/consent-replay-ledger.jsonl.locks/
 tests/qualification-pc-*.json
 
 # Release signing private keys and credentials must never be version-controlled.

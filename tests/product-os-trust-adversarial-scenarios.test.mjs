@@ -178,4 +178,34 @@ describe('16 Governed Adversarial "What If?" Scenarios (WT-01 to WT-16)', () => 
     assert.equal(res.status, 'PASS');
     assert.equal(res.decision, 'TEACHING_NOT_QUALIFIED');
   });
+
+  test('WT-17: Single-Survivor A.N.T. Colony Regeneration & Usurpation SIGKILL', () => {
+    assert.equal(Object.keys(ADVERSARIAL_SCENARIOS).includes('WT-17'), true);
+
+    const usurp = evaluateAdversarialScenario('WT-17', {
+      holographicSeedComplete: true,
+      coordinatorAlive: true,
+      requestedRoleMutation: 'CASTE_COORDINATOR'
+    });
+    assert.equal(usurp.status, 'PASS');
+    assert.equal(usurp.decision, 'SIGKILL_REVOKE_AND_WIPE');
+
+    const unqualified = evaluateAdversarialScenario('WT-17', {
+      holographicSeedComplete: true,
+      coordinatorAlive: false,
+      heartbeatElapsedMs: 50000,
+      formulaGovernanceEligible: 0
+    });
+    assert.equal(unqualified.status, 'PASS');
+    assert.equal(unqualified.decision, 'MORPHOGENESIS_BLOCKED');
+
+    const regenerated = evaluateAdversarialScenario('WT-17', {
+      holographicSeedComplete: true,
+      coordinatorAlive: false,
+      heartbeatElapsedMs: 46000,
+      formulaGovernanceEligible: 1
+    });
+    assert.equal(regenerated.status, 'PASS');
+    assert.equal(regenerated.decision, 'REGENERATED_CASTE_COORDINATOR');
+  });
 });

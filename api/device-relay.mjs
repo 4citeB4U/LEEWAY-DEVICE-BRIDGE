@@ -12,6 +12,7 @@ import { createHash, timingSafeEqual, randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { publicApkReleaseAuthorized } from '../operator/public-apk-release-policy.mjs';
+import { enforceSovereignConstitution } from '../scripts/enforce-sovereign-colony-constitution.mjs';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer, WebSocket } from 'ws';
 
@@ -246,6 +247,28 @@ function createRelayServer({ rooms = new Map() } = {}) {
           if (rpc.method === 'tools/call') {
             const { name, arguments: args = {} } = rpc.params || {};
             const targetDeviceId = args.deviceId || 'pc-primary';
+            const mutatingTool = name === 'device_files_write' || name === 'device_apps_launch';
+            if (args.constitutionEnvelope || (mutatingTool && process.env.LEEWAY_ENFORCE_CONSTITUTION === '1')) {
+              const constDecision = enforceSovereignConstitution(args.constitutionEnvelope);
+              if (!constDecision.admitted) {
+                return json(res, 200, {
+                  jsonrpc: '2.0',
+                  id: rpcId,
+                  result: {
+                    content: [{
+                      type: 'text',
+                      text: JSON.stringify({
+                        ok: false,
+                        error: constDecision.action,
+                        violations: constDecision.violations,
+                        standardsSource: constDecision.standardsSource
+                      })
+                    }],
+                    isError: true
+                  }
+                });
+              }
+            }
 
             if (name === 'bridge_devices') {
               // Canonical string IDs only to satisfy Runtime Fabric upstream validator:

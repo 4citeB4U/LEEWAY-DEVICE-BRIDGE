@@ -1,0 +1,43 @@
+name: Sovereign Constitution WAL and Phoenix Gate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'operator/**'
+      - 'scripts/enforce-sovereign-colony-constitution.mjs'
+      - 'scripts/phoenix-recovery-supervisor.mjs'
+      - 'tests/runtime-supervisor-admission-integration.test.mjs'
+      - 'tests/veritas-gatekeeper-and-citizen-learning.test.mjs'
+      - 'tests/product-os-trust-adversarial-scenarios.test.mjs'
+      - 'tests/phoenix-recovery-and-constitution.test.mjs'
+      - '.github/workflows/sovereign-constitution-wal-gate.yml'
+  pull_request:
+    paths:
+      - 'operator/**'
+      - 'scripts/enforce-sovereign-colony-constitution.mjs'
+      - 'scripts/phoenix-recovery-supervisor.mjs'
+      - 'tests/runtime-supervisor-admission-integration.test.mjs'
+      - 'tests/veritas-gatekeeper-and-citizen-learning.test.mjs'
+      - 'tests/product-os-trust-adversarial-scenarios.test.mjs'
+      - 'tests/phoenix-recovery-and-constitution.test.mjs'
+      - '.github/workflows/sovereign-constitution-wal-gate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  sovereign-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Run Constitutional, SQLite WAL, Veritas, Citizen, WT-01..17 & Phoenix Tests
+        run: |
+          node --test \
+            tests/runtime-supervisor-admission-integration.test.mjs \
+            tests/veritas-gatekeeper-and-citizen-learning.test.mjs \
+            tests/product-os-trust-adversarial-scenarios.test.mjs \
+            tests/phoenix-recovery-and-constitution.test.mjs

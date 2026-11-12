@@ -14,6 +14,7 @@ LICENSE: MIT
 */
 
 import { createHash } from 'node:crypto';
+import { openSovereignWalStore } from './sqlite-wal-store.mjs';
 
 export const CANONICAL_STANDARDS_REF = '4citeB4U/LeeWay-Standards@159a6420b2b29003e22973ac087356128333fe34';
 export const CANONICAL_GRANT_REF = 'GRANT-CREATOR-20261112-SOVEREIGN-BRIDGE-EXEC';
@@ -48,11 +49,13 @@ export function computeOperationDigest(task, handlerId) {
 export async function createHostAdmissionVerifier({
   authorizedWorkforce = AUTHORIZED_WORKFORCE,
   standardsRef = CANONICAL_STANDARDS_REF,
-  grantRef = CANONICAL_GRANT_REF
+  grantRef = CANONICAL_GRANT_REF,
+  dbPath,
+  walStore
 } = {}) {
-  const usedDigests = new Set();
+  const store = walStore || openSovereignWalStore(dbPath);
 
-  return async function hostAdmissionVerifier({
+  async function hostAdmissionVerifier({
     workerId,
     workId,
     handlerId,
@@ -85,16 +88,23 @@ export async function createHostAdmissionVerifier({
       };
     }
 
-    // Prevent operation-digest replay attacks across discrete task executions
+    // Prevent operation-digest replay attacks across restarts using durable SQLite WAL
     const replayKey = `${workId}:${handlerId}:${operationDigest}`;
-    if (usedDigests.has(replayKey)) {
+    if (store.hasUsedDigest(replayKey)) {
       return {
         status: 'DENIED',
         reason: 'OPERATION_DIGEST_REPLAY_REJECTED',
+        persistence: store.persistence,
         operationDigest
       };
     }
-    usedDigests.add(replayKey);
+    store.recordUsedDigest({
+      replayKey,
+      workId,
+      workerId,
+      handlerId,
+      digest: operationDigest
+    });
 
     return {
       status: 'PASS',
@@ -105,6 +115,7 @@ export async function createHostAdmissionVerifier({
       policySatisfied: true,
       evidencePlanBound: true,
       issuerTrusted: true,
+      persistence: store.persistence,
       workerId,
       workId,
       handlerId,
@@ -115,7 +126,11 @@ export async function createHostAdmissionVerifier({
       role: workerRecord.role,
       parentObjectiveId
     };
-  };
+  }
+
+  hostAdmissionVerifier.walStore = store;
+  hostAdmissionVerifier.close = () => store.close();
+  return hostAdmissionVerifier;
 }
 
 /**
@@ -161,7 +176,8 @@ export const ADVERSARIAL_SCENARIOS = Object.freeze({
   'WT-13': { id: 'WT-13', name: 'Concurrent Mutating Writers Without Workplane Lock', expectedDecision: 'BLOCKED_OWNERSHIP' },
   'WT-14': { id: 'WT-14', name: 'Post-Release OS Vendor Harmful Retraction', expectedDecision: 'RECALL_OR_HOLD' },
   'WT-15': { id: 'WT-15', name: 'Unsubstantiated Zero-Warning Claims Across All OSes', expectedDecision: 'BLOCKED_MISREPRESENTATION' },
-  'WT-16': { id: 'WT-16', name: 'External Model Fix Without Permanent Agent Reproduction', expectedDecision: 'TEACHING_NOT_QUALIFIED' }
+  'WT-16': { id: 'WT-16', name: 'External Model Fix Without Permanent Agent Reproduction', expectedDecision: 'TEACHING_NOT_QUALIFIED' },
+  'WT-17': { id: 'WT-17', name: 'Single-Survivor A.N.T. Colony Regeneration & Usurpation SIGKILL', expectedDecision: 'REGENERATED_OR_SIGKILL' }
 });
 
 export function evaluateAdversarialScenario(scenarioId, context = {}) {
@@ -233,6 +249,35 @@ export function evaluateAdversarialScenario(scenarioId, context = {}) {
       return !context.permanentWorkerReproduced
         ? { status: 'PASS', decision: 'TEACHING_NOT_QUALIFIED', reason: 'INDEPENDENT_TEACH_BACK_NOT_QUALIFIED' }
         : { status: 'DENIED', decision: 'UNVERIFIED_TEACHING_ACCEPTED' };
+    case 'WT-17': {
+      if (!context.holographicSeedComplete) {
+        return { status: 'PASS', decision: 'COLONY_SEED_INCOMPLETE_BLOCKED', reason: 'HOLOGRAPHIC_SEED_INCOMPLETE' };
+      }
+      if (context.coordinatorAlive === true && context.requestedRoleMutation === 'CASTE_COORDINATOR') {
+        return {
+          status: 'PASS',
+          decision: 'SIGKILL_REVOKE_AND_WIPE',
+          reason: 'ILLEGAL_QUEEN_USURPATION_WHILE_COORDINATOR_ALIVE'
+        };
+      }
+      const timeoutMet = Number(context.heartbeatElapsedMs ?? 0) >= 45000;
+      if (context.coordinatorAlive === false && timeoutMet && context.formulaGovernanceEligible !== 1) {
+        return { status: 'PASS', decision: 'MORPHOGENESIS_BLOCKED', reason: 'FORMULA_G_CI_NOT_ELIGIBLE' };
+      }
+      if (
+        context.coordinatorAlive === false &&
+        timeoutMet &&
+        context.formulaGovernanceEligible === 1 &&
+        context.holographicSeedComplete === true
+      ) {
+        return {
+          status: 'PASS',
+          decision: 'REGENERATED_CASTE_COORDINATOR',
+          reason: 'SINGLE_SURVIVOR_QUEEN_MORPHOGENESIS_ADMITTED'
+        };
+      }
+      return { status: 'DENIED', decision: 'MORPHOGENESIS_PRECONDITIONS_UNMET' };
+    }
     default:
       return { status: 'DENIED', decision: 'UNKNOWN_SCENARIO' };
   }

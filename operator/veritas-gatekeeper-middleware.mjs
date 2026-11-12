@@ -3,17 +3,23 @@ LEEWAY HEADER — DO NOT REMOVE
 REGION: LEEWAY.PRODUCTION.VERITAS_GATEKEEPER
 TAG: LEEWAY.VERITAS.OUTPUT_GATEKEEPER.V1
 DISCOVERY_PIPELINE: Voice → Intent → Location → Vertical → Ranking → Render
+@LAW_ZERO_BRIEF = Veritas Output Gatekeeper Middleware, Sandwich Protocol, Tier 1 Prompt Diet Cap, Constitution Binding, and Durable SQLite WAL Leases.
 5WH:
-WHAT = Veritas Output Gatekeeper Middleware, Sandwich Protocol Prompt Envelope, and Turn-by-Turn Lease.
-WHY = Prevent outside LLM system prompt decay, reject sterile corporate filler, and bind every turn to Law Zero and Receipt-Authority.
+WHAT = Veritas Output Gatekeeper Middleware, Sandwich Protocol Prompt Envelope, and Durable SQLite WAL Turn-by-Turn Lease / Strike Ledger.
+WHY = Prevent outside LLM system prompt decay, reject sterile corporate filler, forbid volatile RAM governance state, and bind every turn to Law Zero and Receipt-Authority.
 WHO = Tier 0 Sovereign Sentinel & LEEWAY-VERITAS / LeeWay-Production-Final-Execution-Layer.
 WHERE = operator/veritas-gatekeeper-middleware.mjs.
 WHEN = 2026-11-12.
-HOW = Deterministic regex/structural classifier, recency-locked prompt wrapping, and strike ledger tracking.
+HOW = Deterministic regex/structural classifier, recency-locked prompt wrapping, Sovereign Constitution check, and SQLite WAL strike ledger tracking.
 LICENSE: MIT
 */
 
 import { createHash } from 'node:crypto';
+import { openSovereignWalStore } from './sqlite-wal-store.mjs';
+import { enforceSovereignConstitution } from '../scripts/enforce-sovereign-colony-constitution.mjs';
+import { wrapPromptWithTier1CompactAnchor } from '../scripts/phoenix-recovery-supervisor.mjs';
+
+export { wrapPromptWithTier1CompactAnchor };
 
 export const CORPORATE_BAN_PATTERNS = Object.freeze([
   /\bhere is a breakdown\b/i,
@@ -54,42 +60,79 @@ export function wrapPromptWithLawZeroAnchor(userPrompt, {
 /**
  * Veritas Output Gatekeeper:
  * Deterministic classifier intercepting model output before UI or ledger admission.
+ * Leases and strikes are durably stored in SQLite WAL (CONTRACT-CTZ-008 / CONTRACT-FF-010).
  */
-export function createVeritasGatekeeper({ strikeLedger = [] } = {}) {
-  const activeLeases = new Map();
+export function createVeritasGatekeeper({ dbPath, walStore, strikeLedger = null } = {}) {
+  const store = walStore || openSovereignWalStore(dbPath);
+
+  if (Array.isArray(strikeLedger) && strikeLedger.length > 0 && store.getStrikes().length === 0) {
+    for (const entry of strikeLedger) {
+      store.appendStrike(entry);
+    }
+  }
+
+  function recordStrike(entry) {
+    store.appendStrike(entry);
+    if (Array.isArray(strikeLedger)) {
+      strikeLedger.push(entry);
+    }
+  }
 
   function issueTurnLease({ workerId, workId }) {
     if (!workerId || !workId) {
       throw new Error('LEASE_CONTEXT_INCOMPLETE');
     }
     const leaseId = `LEASE-${createHash('sha256').update(`${workerId}:${workId}:${Date.now()}:${Math.random()}`).digest('hex').slice(0, 12).toUpperCase()}`;
-    const lease = {
+    return store.createTurnLease({
       leaseId,
       workerId,
       workId,
       status: 'ACTIVE',
       issuedAt: new Date().toISOString()
-    };
-    activeLeases.set(leaseId, lease);
-    return lease;
+    });
   }
 
   function evaluateOutput({
     outputText,
     workerId,
     leaseId,
-    requireEvidenceTag = false
+    requireEvidenceTag = false,
+    constitutionEnvelope = null
   }) {
     const text = String(outputText ?? '');
-    const lease = activeLeases.get(leaseId);
+    const lease = store.getTurnLease(leaseId);
 
     if (!lease || lease.status !== 'ACTIVE' || lease.workerId !== workerId) {
       return {
         status: 'REJECTED',
         code: 'SYSTEM_VIOLATION',
         reason: 'TURN_LEASE_INVALID_OR_REVOKED',
+        persistence: store.persistence,
         admitted: false
       };
+    }
+
+    if (constitutionEnvelope) {
+      const constResult = enforceSovereignConstitution(constitutionEnvelope);
+      if (!constResult.admitted) {
+        store.updateTurnLeaseStatus(leaseId, 'REVOKED');
+        recordStrike({
+          workerId,
+          leaseId,
+          reason: constResult.action,
+          matchedPatterns: constResult.violations,
+          timestamp: new Date().toISOString()
+        });
+        return {
+          status: 'REJECTED',
+          code: 'SYSTEM_VIOLATION',
+          reason: constResult.action,
+          violations: constResult.violations,
+          strikeCount: store.getStrikes(workerId).length,
+          persistence: store.persistence,
+          admitted: false
+        };
+      }
     }
 
     const matchedBans = CORPORATE_BAN_PATTERNS
@@ -97,21 +140,21 @@ export function createVeritasGatekeeper({ strikeLedger = [] } = {}) {
       .map((rx) => rx.source);
 
     if (matchedBans.length > 0) {
-      lease.status = 'REVOKED';
-      const strike = {
+      store.updateTurnLeaseStatus(leaseId, 'REVOKED');
+      recordStrike({
         workerId,
         leaseId,
         reason: 'CORPORATE_FILLER_BAN_TRIGGERED',
         matchedPatterns: matchedBans,
         timestamp: new Date().toISOString()
-      };
-      strikeLedger.push(strike);
+      });
       return {
         status: 'REJECTED',
         code: 'SYSTEM_VIOLATION',
         reason: 'CORPORATE_FILLER_BAN_TRIGGERED',
         matchedPatterns: matchedBans,
-        strikeCount: strikeLedger.filter((s) => s.workerId === workerId).length,
+        strikeCount: store.getStrikes(workerId).length,
+        persistence: store.persistence,
         admitted: false,
         rewritePrompt: 'SYSTEM_VIOLATION: Sterile corporate filler detected. Turn lease revoked. Rewrite with direct Law Zero cadence and verifiable evidence.'
       };
@@ -120,38 +163,42 @@ export function createVeritasGatekeeper({ strikeLedger = [] } = {}) {
     if (requireEvidenceTag) {
       const hasTag = EVIDENCE_TAGS.some((tag) => new RegExp(`\\b${tag}\\b`).test(text));
       if (!hasTag) {
-        lease.status = 'REVOKED';
-        const strike = {
+        store.updateTurnLeaseStatus(leaseId, 'REVOKED');
+        recordStrike({
           workerId,
           leaseId,
           reason: 'MISSING_EVIDENCE_GROUNDING_TAG',
           timestamp: new Date().toISOString()
-        };
-        strikeLedger.push(strike);
+        });
         return {
           status: 'REJECTED',
           code: 'SYSTEM_VIOLATION',
           reason: 'MISSING_EVIDENCE_GROUNDING_TAG',
-          strikeCount: strikeLedger.filter((s) => s.workerId === workerId).length,
+          strikeCount: store.getStrikes(workerId).length,
+          persistence: store.persistence,
           admitted: false
         };
       }
     }
 
-    lease.status = 'CONSUMED';
+    store.updateTurnLeaseStatus(leaseId, 'CONSUMED');
     return {
       status: 'ADMITTED',
       code: 'VERITAS_GATE_PASS',
       workerId,
       leaseId,
+      persistence: store.persistence,
       admitted: true,
       digest: createHash('sha256').update(text).digest('hex')
     };
   }
 
   return {
+    walStore: store,
+    persistence: store.persistence,
     issueTurnLease,
     evaluateOutput,
-    getStrikes: (workerId) => strikeLedger.filter((s) => !workerId || s.workerId === workerId)
+    getStrikes: (workerId) => store.getStrikes(workerId),
+    close: () => store.close()
   };
 }
