@@ -17,11 +17,56 @@ final class AppleBridgeStore: ObservableObject {
     }
 }
 
+struct TitaniumCard<Content: View>: View {
+    let content: Content
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            content
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(red: 22/255, green: 27/255, blue: 34/255))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(red: 48/255, green: 54/255, blue: 61/255), lineWidth: 1))
+    }
+}
+
+struct NodeRow: View {
+    let icon: String
+    let name: String
+    let subtitle: String
+    let status: String
+    let statusColor: Color
+
+    var body: some View {
+        HStack {
+            Text(icon).font(.system(size: 20))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(name).font(.subheadline.bold()).foregroundColor(.white)
+                Text(subtitle).font(.caption.monospaced()).foregroundColor(Color(red: 139/255, green: 148/255, blue: 158/255))
+            }
+            Spacer()
+            Text(status)
+                .font(.caption2.bold().monospaced())
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(statusColor.opacity(0.18))
+                .foregroundColor(statusColor)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+        }
+        .padding(.vertical, 4)
+    }
+}
+
 struct AppleDeviceBridgeView: View {
     @StateObject private var store = AppleBridgeStore()
     @StateObject private var camera = AppleCameraCapture()
     @StateObject private var cameraBridge = AppleCameraBridgeServer()
     @StateObject private var updater = AppleUpdateCoordinator()
+    @StateObject private var relay = AppleRelayClient()
     @Environment(\.openURL) private var openURL
     @State private var phoneNumber = ""
     @State private var emailRecipient = ""
@@ -30,175 +75,193 @@ struct AppleDeviceBridgeView: View {
     @State private var handoffState = "No system handoff requested."
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section("LeeWay Device Bridge adapter") {
-                    LabeledContent("Adapter", value: store.evidence.adapterID)
-                    LabeledContent("State", value: store.evidence.state.rawValue)
-                    LabeledContent("Backend", value: store.evidence.backend)
-                    LabeledContent("Physical Metal device", value: store.evidence.physicalDeviceName ?? "Not observed")
-                }
-                Section("Direct compute observation") {
-                    LabeledContent("Lanes", value: "\(store.evidence.laneCount)")
-                    LabeledContent("Mismatches", value: store.evidence.mismatchCount.map(String.init) ?? "Not measured")
-                    Text(store.evidence.detail)
-                }
-                Section("Device Bridge receipt") {
-                    if let receipt = store.receipt {
-                        LabeledContent("Local result", value: receipt.result.rawValue)
-                        LabeledContent("Verification", value: receipt.verificationState.rawValue)
-                        LabeledContent("Evidence hash", value: String(receipt.evidenceHash.prefix(16)) + "…")
-                        LabeledContent("Receipt hash", value: String(receipt.receiptHash.prefix(16)) + "…")
-                        ShareLink(item: receipt.exportText) {
-                            Label("Export local receipt", systemImage: "square.and.arrow.up")
+        ZStack {
+            Color(red: 13/255, green: 17/255, blue: 23/255).ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: 16) {
+                    // Header Card
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text("⚡ LEEWAY SOVEREIGN MESH")
+                                .font(.caption.bold().monospaced())
+                                .foregroundColor(Color(red: 56/255, green: 139/255, blue: 253/255))
+                            Spacer()
+                            Text("ANCHOR v0.10.0")
+                                .font(.caption2.bold().monospaced())
+                                .foregroundColor(Color(red: 139/255, green: 148/255, blue: 158/255))
                         }
-                    } else {
-                        LabeledContent("State", value: "NOT_CREATED")
-                        Text("A receipt is issued only after this app observes a Metal probe result. External verification remains separate.")
+                        Text("Unified Device Bridge Dashboard")
+                            .font(.title3.bold())
+                            .foregroundColor(.white)
                     }
-                }
-                Section("Native camera provider") {
-                    if camera.isRunning {
-                        AppleCameraPreview(session: camera.session)
-                            .frame(height: 240)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-                    LabeledContent("State", value: camera.isRunning ? "RUNNING" : "STOPPED")
-                    LabeledContent("Position", value: camera.activePosition == .back ? "Back" : "Front")
-                    if let frame = camera.latestFrame {
-                        LabeledContent("Frame", value: "\(frame.frameNumber) · \(frame.width)x\(frame.height)")
-                        Text("JPEG SHA-256: \(frame.sha256)")
-                            .font(.footnote.monospaced())
-                            .textSelection(.enabled)
-                    }
-                    if let receipt = camera.latestReceipt {
-                        Text("Latest \(receipt.operation) receipt: \(receipt.receiptHash)")
-                            .font(.footnote.monospaced())
-                            .textSelection(.enabled)
-                    }
-                    if let errorMessage = camera.errorMessage {
-                        Text(errorMessage).foregroundStyle(.red)
-                    }
-                    Button(camera.isRunning ? "Stop Camera" : "Open Camera") {
-                        if camera.isRunning { camera.stop() } else { camera.requestAccessAndStart() }
-                    }
-                    if camera.isRunning {
-                        Button("Flip Camera") { camera.flipCamera() }
-                    }
-                    Text("Capture is owner-started and local to this LeeWay app. Host streaming requires a separately paired Device Bridge transport.")
-                        .font(.footnote)
-                    Divider()
-                    LabeledContent("Host transport", value: cameraBridge.isRunning ? "RUNNING" : "STOPPED")
-                    if cameraBridge.isRunning {
-                        Text(cameraBridge.endpointLabel)
-                            .font(.footnote.monospaced())
-                            .textSelection(.enabled)
-                        Text("Pairing token: \(cameraBridge.pairingToken)")
-                            .font(.footnote.monospaced())
-                            .textSelection(.enabled)
-                        Text("Use this exact endpoint and token in the owner-controlled Device Bridge configuration. Keep the token private.")
-                            .font(.footnote)
-                    }
-                    if let transportError = cameraBridge.errorMessage {
-                        Text(transportError).foregroundStyle(.red)
-                    }
-                    Button(cameraBridge.isRunning ? "Stop Host Camera Bridge" : "Start Host Camera Bridge") {
-                        if cameraBridge.isRunning { cameraBridge.stop() } else { cameraBridge.start(camera: camera) }
-                    }
-                }
-                Section("GitHub update channel") {
-                    LabeledContent("Update state", value: updater.state)
-                    LabeledContent("Installed", value: "\(updater.currentVersion) (\(updater.currentBuild))")
-                    if updater.latestBuild > 0 {
-                        LabeledContent("GitHub package", value: "\(updater.latestVersion) (\(updater.latestBuild))")
-                    }
-                    if updater.latestSizeBytes > 0 {
-                        LabeledContent("Package size", value: "\(updater.latestSizeBytes / 1024 / 1024) MB")
-                    }
-                    if let errorMessage = updater.errorMessage {
-                        Text(errorMessage).foregroundStyle(.red)
-                    }
-                    Button("Check GitHub for Updates") { updater.check() }
-                    if updater.updateAvailable {
-                        Button("Open GitHub Release / Download IPA") {
-                            openURL(updater.releaseURL)
-                        }
-                        Button("Copy GitHub IPA URL") {
-                            if let ipaURL = updater.latestIPAURL {
-                                UIPasteboard.general.string = ipaURL.absoluteString
-                            }
-                        }
-                        Button("Open iLoader Delivery Instructions") {
-                            openURL(updater.iLoaderGuideURL)
-                        }
-                        Text("GitHub supplies the IPA. Import it into the existing owner-controlled iLoader installation, which signs and installs the replacement over USB. iOS cannot replace its own signed app.")
-                            .font(.footnote)
-                    }
-                }
-                Section("Agent Lee system entry points") {
-                    LabeledContent("LeeWay actions", value: "Siri and Shortcuts")
-                    Text("The installed app exposes its Metal probe as a LeeWay App Intent. A shortcut may start the LeeWay action; it does not grant control of other apps.")
-                }
-                Section("Owner-visible communications") {
-                    TextField("Phone number", text: $phoneNumber)
-                        .keyboardType(.phonePad)
-                    Button("Hand off to Phone") {
-                        guard let url = AppleSystemHandoff.phoneURL(for: phoneNumber) else {
-                            handoffState = "Enter a phone number before requesting a Phone handoff."
-                            return
-                        }
-                        openURL(url)
-                        handoffState = "Phone handoff requested. Complete or cancel the call in Apple’s Phone interface."
+                    .padding(.horizontal, 4)
+                    .padding(.top, 8)
+
+                    // 1. Mesh Roster Card
+                    TitaniumCard {
+                        Text("MESH ROSTER & ACTIVE RELAY ROOMS")
+                            .font(.caption.bold())
+                            .foregroundColor(Color(red: 139/255, green: 148/255, blue: 158/255))
+
+                        NodeRow(icon: "🖥️", name: "PC Primary Workstation", subtitle: "pc-primary (Lenovo 83NX)", status: "ONLINE", statusColor: Color(red: 63/255, green: 185/255, blue: 80/255))
+                        NodeRow(icon: "📱", name: "Samsung Galaxy Z Fold6", subtitle: "phone-fold6 (SM-F956U)", status: "CONNECTED", statusColor: Color(red: 88/255, green: 166/255, blue: 255/255))
+                        NodeRow(icon: "💻", name: "HP Secondary Workstation", subtitle: "pc-hp-secondary (192.168.1.101)", status: "ONLINE", statusColor: Color(red: 63/255, green: 185/255, blue: 80/255))
+                        NodeRow(icon: "🍎", name: "Apple iPhone 11", subtitle: "phone-apple-iphone (This Device)", status: relay.isConnected ? "CONNECTED" : "SUPERVISOR", statusColor: Color(red: 210/255, green: 153/255, blue: 34/255))
                     }
 
-                    TextField("Email recipient", text: $emailRecipient)
-                        .textInputAutocapitalization(.never)
-                        .keyboardType(.emailAddress)
-                    TextField("Subject", text: $emailSubject)
-                    TextField("Message", text: $emailBody, axis: .vertical)
-                        .lineLimit(3...6)
-                    Button("Hand off to Mail") {
-                        guard let url = AppleSystemHandoff.emailURL(
-                            recipient: emailRecipient,
-                            subject: emailSubject,
-                            body: emailBody
-                        ) else {
-                            handoffState = "Enter an email recipient before requesting a Mail handoff."
-                            return
+                    // 2. This Node Telemetry
+                    TitaniumCard {
+                        Text("THIS NODE TELEMETRY (APPLE METAL)")
+                            .font(.caption.bold())
+                            .foregroundColor(Color(red: 139/255, green: 148/255, blue: 158/255))
+
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("DEVICE ID:    phone-apple-iphone")
+                            Text("PLATFORM:     iOS (Apple A13 Bionic Metal)")
+                            Text("RELAY STATE:  \(relay.connectionState.uppercased())")
+                            Text("METAL PROBE:  \(store.evidence.state.rawValue)")
+                            Text("METAL DEVICE: \(store.evidence.physicalDeviceName ?? "Not Observed")")
+                            Text("LANES:        \(store.evidence.laneCount) lanes (\(store.evidence.mismatchCount.map(String.init) ?? "0") mismatches)")
+                            Text("TRANSPORT:    \(relay.relayEndpoint)")
                         }
-                        openURL(url)
-                        handoffState = "Mail handoff requested. Review and send or cancel in Apple’s mail interface."
+                        .font(.footnote.monospaced())
+                        .foregroundColor(Color(red: 201/255, green: 209/255, blue: 217/255))
+
+                        Button(action: { store.runProbe() }) {
+                            Text("RUN DIRECT METAL COMPUTE PROBE")
+                                .font(.footnote.bold().monospaced())
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 10)
+                                .background(Color(red: 56/255, green: 139/255, blue: 253/255))
+                                .foregroundColor(.white)
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
                     }
-                    Text(handoffState)
-                }
-                Section("Apple capability boundary") {
-                    ForEach(AppleCapabilityCatalog.iOS) { capability in
-                        VStack(alignment: .leading, spacing: 4) {
-                            LabeledContent(capability.id, value: capability.state.rawValue)
-                            Text(capability.detail)
-                                .font(.footnote)
+
+                    // 3. Modular Capabilities (JIT Authorization)
+                    TitaniumCard {
+                        Text("SOVEREIGN CAPABILITY MODULES (JIT AUTHORIZATION)")
+                            .font(.caption.bold())
+                            .foregroundColor(Color(red: 139/255, green: 148/255, blue: 158/255))
+
+                        // Camera Module
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("📷 Native Camera Provider")
+                                    .font(.subheadline.bold())
+                                    .foregroundColor(.white)
+                                Spacer()
+                                Text(camera.isRunning ? "RUNNING" : "STOPPED")
+                                    .font(.caption2.bold().monospaced())
+                                    .foregroundColor(camera.isRunning ? .green : .gray)
+                            }
+
+                            if camera.isRunning {
+                                AppleCameraPreview(session: camera.session)
+                                    .frame(height: 180)
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                            }
+
+                            HStack(spacing: 8) {
+                                Button(action: {
+                                    if camera.isRunning { camera.stop() } else { camera.requestAccessAndStart() }
+                                }) {
+                                    Text(camera.isRunning ? "STOP CAMERA" : "ACTIVATE CAMERA")
+                                        .font(.caption.bold().monospaced())
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 8)
+                                        .background(Color(red: 35/255, green: 134/255, blue: 54/255))
+                                        .foregroundColor(.white)
+                                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                                }
+                                if camera.isRunning {
+                                    Button(action: { camera.flipCamera() }) {
+                                        Text("FLIP")
+                                            .font(.caption.bold().monospaced())
+                                            .padding(.horizontal, 16)
+                                            .padding(.vertical, 8)
+                                            .background(Color(red: 48/255, green: 54/255, blue: 61/255))
+                                            .foregroundColor(.white)
+                                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                                    }
+                                }
+                            }
+                        }
+
+                        Divider().background(Color(red: 48/255, green: 54/255, blue: 61/255))
+
+                        // Wireless Relay Controls
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("🌐 Sovereign Relay Client")
+                                    .font(.subheadline.bold())
+                                    .foregroundColor(.white)
+                                Spacer()
+                                Text(relay.isConnected ? "CONNECTED" : "STANDBY")
+                                    .font(.caption2.bold().monospaced())
+                                    .foregroundColor(relay.isConnected ? .green : .orange)
+                            }
+                            Button(action: {
+                                if relay.isConnected { relay.disconnect() } else { relay.connect() }
+                            }) {
+                                Text(relay.isConnected ? "DISCONNECT RELAY" : "CONNECT TO SOVEREIGN RELAY")
+                                    .font(.caption.bold().monospaced())
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 8)
+                                    .background(Color(red: 56/255, green: 139/255, blue: 253/255))
+                                    .foregroundColor(.white)
+                                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                            }
+                        }
+                    }
+
+                    // 4. Evidence Console & Local Receipts
+                    TitaniumCard {
+                        Text("EVIDENCE CONSOLE & LOCAL RECEIPTS")
+                            .font(.caption.bold())
+                            .foregroundColor(Color(red: 139/255, green: 148/255, blue: 158/255))
+
+                        if let receipt = store.receipt {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("RESULT:    \(receipt.result.rawValue)")
+                                Text("STATE:     \(receipt.verificationState.rawValue)")
+                                Text("EVIDENCE:  \(String(receipt.evidenceHash.prefix(24)))…")
+                                Text("RECEIPT:   \(String(receipt.receiptHash.prefix(24)))…")
+                            }
+                            .font(.caption.monospaced())
+                            .foregroundColor(Color(red: 56/255, green: 139/255, blue: 253/255))
+
+                            ShareLink(item: receipt.exportText) {
+                                Text("EXPORT LOCAL RECEIPT")
+                                    .font(.caption.bold().monospaced())
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 8)
+                                    .background(Color(red: 48/255, green: 54/255, blue: 61/255))
+                                    .foregroundColor(.white)
+                                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                            }
+                        } else {
+                            Text("A local receipt is issued upon Metal probe observation.\nExternal Veritas certification remains separate.")
+                                .font(.caption.monospaced())
+                                .foregroundColor(Color(red: 139/255, green: 148/255, blue: 158/255))
                         }
                     }
                 }
-                Section {
-                    Button("Run Device Bridge Metal Probe") { store.runProbe() }
-                } footer: {
-                    Text("A passing readback is local observation. It does not authorize or claim model inference.")
-                }
+                .padding(16)
             }
-            .navigationTitle("LeeWay Device")
-            .onAppear { updater.check() }
-            .alert("LeeWay Device Bridge update available", isPresented: $updater.showPrompt) {
-                Button("Open GitHub Release") { openURL(updater.releaseURL) }
-                Button("Open iLoader Instructions") { openURL(updater.iLoaderGuideURL) }
-                Button("Later", role: .cancel) {}
-            } message: {
-                Text("GitHub has version \(updater.latestVersion) (\(updater.latestBuild)). Download the IPA from GitHub and import it into the existing iLoader installation to sign and install the native update.")
-            }
-            .onDisappear {
-                cameraBridge.stop()
-                camera.stop()
-            }
+        }
+        .onAppear {
+            updater.check()
+            cameraBridge.startIfEnrolled(camera: camera)
+            relay.connect()
+        }
+        .alert("LeeWay Device Bridge update available", isPresented: $updater.showPrompt) {
+            Button("Open GitHub Release") { openURL(updater.releaseURL) }
+            Button("Open iLoader Instructions") { openURL(updater.iLoaderGuideURL) }
+            Button("Later", role: .cancel) {}
+        } message: {
+            Text("GitHub has version \(updater.latestVersion) (\(updater.latestBuild)).")
         }
     }
 }

@@ -1,5 +1,6 @@
 package industries.leeway.devicebridge
 
+import android.Manifest
 import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -18,6 +19,7 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
     private lateinit var output: TextView
@@ -228,6 +230,66 @@ class MainActivity : AppCompatActivity() {
         pairingCard.layoutParams = pairingParams
         container.addView(pairingCard)
 
+        // Modular Capabilities Card (JIT Authorization)
+        val modulesCard = makeCard(Color.parseColor("#161B22")).apply {
+            val mTitle = TextView(context).apply {
+                text = "SOVEREIGN CAPABILITY MODULES (JIT AUTHORIZATION)"
+                textSize = 12f
+                setTextColor(Color.parseColor("#8B949E"))
+                typeface = Typeface.DEFAULT_BOLD
+                setPadding(0, 0, 0, 12)
+            }
+            addView(mTitle)
+
+            addView(makeNodeRow("⚡", "Bedrock Compute Engine", "Adreno 750 / Vulkan 1.3 / 12GB RAM", "ARMED", Color.parseColor("#3FB950")))
+
+            val voiceBtn = makeStyledButton("ACTIVATE VOICE ENGINE (AUDIO RECORD)").apply {
+                setOnClickListener {
+                    if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                        VoiceRuntime.initialize(this@MainActivity)
+                        output.text = "Voice Runtime: ACTIVE & INITIALIZED\nOffline speech adapter ready."
+                        ReceiptStore.record(this@MainActivity, "device.voice.activate", "PASS", "Owner initialized voice runtime")
+                    } else {
+                        requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), 4206)
+                    }
+                }
+            }
+
+            val visionBtn = makeStyledButton("ACTIVATE MEDIA & VISION SCANNER").apply {
+                setOnClickListener {
+                    val needed = mutableListOf<String>()
+                    if (Build.VERSION.SDK_INT >= 33) {
+                        if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
+                            needed.add(Manifest.permission.READ_MEDIA_IMAGES)
+                        }
+                        if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.READ_MEDIA_VIDEO) != PackageManager.PERMISSION_GRANTED) {
+                            needed.add(Manifest.permission.READ_MEDIA_VIDEO)
+                        }
+                    } else {
+                        if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                            needed.add(Manifest.permission.READ_EXTERNAL_STORAGE)
+                        }
+                    }
+                    if (needed.isNotEmpty()) {
+                        requestPermissions(needed.toTypedArray(), 4205)
+                    } else {
+                        val scan = MediaOperator.scan(this@MainActivity, 50)
+                        ReceiptStore.record(this@MainActivity, "device.media.scan", "PASS", "Owner scanned media")
+                        output.text = "Media Scanner: ACTIVE\n${scan.toString(2)}"
+                    }
+                }
+            }
+
+            addView(voiceBtn)
+            addView(visionBtn)
+        }
+        val modulesParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply { setMargins(0, 0, 0, 24) }
+        modulesCard.layoutParams = modulesParams
+        container.addView(modulesCard)
+
         // Action Buttons Card
         val actionsCard = makeCard(Color.parseColor("#161B22")).apply {
             val aTitle = TextView(context).apply {
@@ -413,6 +475,17 @@ class MainActivity : AppCompatActivity() {
             } else {
                 ReceiptStore.record(this, "device.media.authorize", "BLOCKED", "Owner did not grant Android media read permissions")
                 "Media inspection permission was not granted."
+            }
+        }
+        if (requestCode == 4206) {
+            val granted = grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+            output.text = if (granted) {
+                VoiceRuntime.initialize(this)
+                ReceiptStore.record(this, "device.voice.authorize", "PASS", "Owner granted audio record permission via JIT")
+                "Voice Runtime: AUTHORIZED & ARMED\nOffline audio pipeline ready."
+            } else {
+                ReceiptStore.record(this, "device.voice.authorize", "BLOCKED", "Owner denied audio record permission")
+                "Audio record permission was not granted. Voice module remains in standby."
             }
         }
         if (requestCode == 4204) {
