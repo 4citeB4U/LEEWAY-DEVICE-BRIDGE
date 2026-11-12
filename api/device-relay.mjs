@@ -11,6 +11,7 @@ import { createServer } from 'node:http';
 import { createHash, timingSafeEqual, randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { publicApkReleaseAuthorized } from '../operator/public-apk-release-policy.mjs';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer, WebSocket } from 'ws';
 
@@ -396,7 +397,7 @@ function createRelayServer({ rooms = new Map() } = {}) {
         // canonical public manifest marks it ineligible for distribution.
         // This is a source-side control; live Funnel deployment/readback
         // requires independent verification by the owning host.
-        if (filename === 'leeway-device-bridge-android-latest-release.apk') {
+        if (filename.toLowerCase().endsWith('.apk')) {
           let releaseMetadata;
           try {
             releaseMetadata = JSON.parse(fs.readFileSync(
@@ -406,8 +407,7 @@ function createRelayServer({ rooms = new Map() } = {}) {
             res.setHeader('cache-control', 'no-store');
             return json(res, 503, { ok: false, error: 'RELEASE_METADATA_UNAVAILABLE', releaseAuthorized: false });
           }
-          if (releaseMetadata.downloadEnabled !== true ||
-              releaseMetadata.releaseState === 'SECURITY_HOLD_SIGNING_IDENTITY_EXPOSED') {
+          if (!publicApkReleaseAuthorized(filename, releaseMetadata)) {
             res.setHeader('cache-control', 'no-store');
             return json(res, 503, { ok: false, error: 'RELEASE_SECURITY_HOLD', releaseAuthorized: false });
           }
