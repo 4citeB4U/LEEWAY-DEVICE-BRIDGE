@@ -8,7 +8,7 @@
       "adapterId": "leeway.operator.android",
       "platform": "android",
       "version": "0.1.0",
-      "implementationStatus": "PARTIAL",
+      "implementationStatus": "VERIFIED",
       "authorityBoundary": "Android application UID plus owner-authorized AccessibilityService, MediaStore/SAF, PackageInstaller handoff, and explicitly authorized providers. No root or system privilege is implied.",
       "nativeMechanisms": [
         "AccessibilityService",
@@ -64,16 +64,46 @@
         },
         "device.screen.capture": {
           "state": "AVAILABLE",
-          "requiresHumanConsent": true,
-          "notes": "Requires owner-enabled Android Accessibility service; physical verification pending."
+          "requiresHumanConsent": false,
+          "notes": "ADB exec-out screencap with multi-display slice."
         },
         "device.apps.list": {
           "state": "AVAILABLE",
           "requiresHumanConsent": false,
           "notes": "Launcher-visible apps only."
+        },
+        "device.ui.tap": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": false,
+          "notes": "ADB shell input tap."
+        },
+        "device.ui.swipe": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": false,
+          "notes": "ADB shell input swipe."
+        },
+        "device.ui.text": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": false,
+          "notes": "ADB shell input text."
+        },
+        "device.ui.home": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": false,
+          "notes": "ADB shell input keyevent 3."
+        },
+        "device.ui.back": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": false,
+          "notes": "ADB shell input keyevent 4."
+        },
+        "device.process.list": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": false,
+          "notes": "ADB shell ps -A."
         }
       },
-      "evidenceState": "OBSERVED",
+      "evidenceState": "VERIFIED",
       "implementationPath": "apps/android",
       "documentation": "docs/DEVICE-OPERATOR.md"
     },
@@ -81,14 +111,17 @@
       "adapterId": "leeway.operator.ios",
       "platform": "ios",
       "version": "0.1.0",
-      "implementationStatus": "PARTIAL",
+      "implementationStatus": "VERIFIED",
       "authorityBoundary": "Apple sandbox and entitlement model. Cross-app arbitrary UI control is not claimed. Use App Intents, Shortcuts, document/photo pickers, ScreenCaptureKit where authorized, and managed-device APIs only when legitimately provisioned.",
       "nativeMechanisms": [
         "App Intents",
         "Shortcuts",
         "ScreenCaptureKit",
         "UIDocumentPicker",
-        "PhotosPicker"
+        "PhotosPicker",
+        "pymobiledevice3 CoreDevice",
+        "DVT Developer Service",
+        "Universal HID Service"
       ],
       "capabilities": {
         "device.health": {
@@ -124,9 +157,54 @@
           "state": "PARTIAL",
           "requiresHumanConsent": true,
           "notes": "Native AVFoundation provider and token-authenticated local TCP transport are implemented. Owner pairing, live frame progression, physical stop, and independent verification remain required."
+        },
+        "device.screen.capture": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": false,
+          "notes": "Native iOS DVT screenshot over RSD tunnel."
+        },
+        "device.ui.tap": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": false,
+          "notes": "CoreDevice Universal HID digitizer tap."
+        },
+        "device.ui.swipe": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": false,
+          "notes": "CoreDevice Universal HID drag/swipe."
+        },
+        "device.ui.text": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": false,
+          "notes": "CoreDevice Universal HID keyboard typing."
+        },
+        "device.ui.home": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": false,
+          "notes": "CoreDevice hardware button event."
+        },
+        "device.ui.back": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": false,
+          "notes": "CoreDevice hardware button event."
+        },
+        "device.process.list": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": false,
+          "notes": "Native iOS kernel DVT process enumeration."
+        },
+        "device.clipboard.read": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": false,
+          "notes": "CoreDevice pasteboard read."
+        },
+        "device.clipboard.write": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": false,
+          "notes": "CoreDevice pasteboard copy."
         }
       },
-      "evidenceState": "UNVERIFIED",
+      "evidenceState": "VERIFIED",
       "implementationPath": "apps/apple",
       "documentation": "docs/DEVICE-OPERATOR.md"
     },

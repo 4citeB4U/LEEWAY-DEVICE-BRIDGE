@@ -1,0 +1,363 @@
+{
+  "schema": "LEEWAY_DEVICE_BRIDGE_LOCAL_QUALIFICATION_V2",
+  "startedAt": "2026-11-12T00:17:43.185Z",
+  "endedAt": "2026-11-12T00:17:44.319Z",
+  "authority": "LOCAL_CONTROLLER_OBSERVATION",
+  "relay": {
+    "status": 200,
+    "authority": "TRANSPORT_ONLY",
+    "activeRoomsCount": 4
+  },
+  "devices": {
+    "pc-primary": {
+      "presence": {
+        "executed": true,
+        "verified": true,
+        "detail": "LOCAL_HOST_Agent-Lee",
+        "error": null
+      },
+      "identity": {
+        "executed": true,
+        "verified": true,
+        "detail": "win32_x64",
+        "error": null
+      },
+      "fileRead": {
+        "executed": false,
+        "verified": false,
+        "detail": "NO_CURRENT_BRIDGE_FILE_READ",
+        "error": null
+      },
+      "fileWrite": {
+        "executed": false,
+        "verified": false,
+        "detail": "NO_CURRENT_BRIDGE_FILE_WRITE",
+        "error": null
+      },
+      "appLaunch": {
+        "executed": false,
+        "verified": false,
+        "detail": "NO_CURRENT_BRIDGE_APP_LAUNCH",
+        "error": null
+      },
+      "screen": {
+        "executed": false,
+        "verified": false,
+        "detail": "NO_CURRENT_BRIDGE_SCREEN_CAPTURE",
+        "error": null
+      }
+    },
+    "phone-fold6": {
+      "presence": {
+        "executed": true,
+        "verified": true,
+        "detail": "LDB-04ff1b33-8a70-434c-9aba-8752a30789ee",
+        "error": null
+      },
+      "identity": {
+        "executed": true,
+        "verified": false,
+        "detail": "identity",
+        "error": "Command failed: adb -s RFCX70LNT7X shell getprop ro.product.model\nadb.exe: device 'RFCX70LNT7X' not found\r\n"
+      },
+      "fileRead": {
+        "executed": true,
+        "verified": false,
+        "detail": "fileRead",
+        "error": "Command failed: adb -s RFCX70LNT7X shell getprop ro.product.model\nadb.exe: device 'RFCX70LNT7X' not found\r\n"
+      },
+      "fileWrite": {
+        "executed": true,
+        "verified": false,
+        "detail": "fileWrite",
+        "error": "Command failed: adb -s RFCX70LNT7X shell getprop ro.product.model\nadb.exe: device 'RFCX70LNT7X' not found\r\n"
+      },
+      "appLaunch": {
+        "executed": true,
+        "verified": false,
+        "detail": "appLaunch",
+        "error": "Command failed: adb -s RFCX70LNT7X shell getprop ro.product.model\nadb.exe: device 'RFCX70LNT7X' not found\r\n"
+      },
+      "screen": {
+        "executed": true,
+        "verified": false,
+        "detail": "screen",
+        "error": "Command failed: adb -s RFCX70LNT7X shell getprop ro.product.model\nadb.exe: device 'RFCX70LNT7X' not found\r\n"
+      }
+    },
+    "phone-apple-iphone": {
+      "presence": {
+        "executed": true,
+        "verified": true,
+        "detail": "RELAY_ROOM_ONLY",
+        "error": null
+      },
+      "identity": {
+        "executed": true,
+        "verified": false,
+        "detail": "SUPERVISOR_PROXY_NOT_PHYSICAL_APPLE_PROOF",
+        "error": "PHYSICAL_PROBE_ABSENT"
+      },
+      "fileRead": {
+        "executed": false,
+        "verified": false,
+        "detail": "PHYSICAL_APPLE_DEVICE_UNAVAILABLE",
+        "error": null
+      },
+      "fileWrite": {
+        "executed": false,
+        "verified": false,
+        "detail": "PHYSICAL_APPLE_DEVICE_UNAVAILABLE",
+        "error": null
+      },
+      "appLaunch": {
+        "executed": false,
+        "verified": false,
+        "detail": "PHYSICAL_APPLE_DEVICE_UNAVAILABLE",
+        "error": null
+      },
+      "screen": {
+        "executed": false,
+        "verified": false,
+        "detail": "PHYSICAL_APPLE_DEVICE_UNAVAILABLE",
+        "error": null
+      }
+    },
+    "pc-hp-secondary": {
+      "presence": {
+        "executed": true,
+        "verified": true,
+        "detail": "RELAY_ROOM_ONLY",
+        "error": null
+      },
+      "identity": {
+        "executed": true,
+        "verified": true,
+        "detail": "pc-hp-secondary",
+        "error": null
+      },
+      "fileRead": {
+        "executed": false,
+        "verified": false,
+        "detail": "OWNER_PAIRING_TOKEN_UNBOUND",
+        "error": null
+      },
+      "fileWrite": {
+        "executed": false,
+        "verified": false,
+        "detail": "OWNER_PAIRING_TOKEN_UNBOUND",
+        "error": null
+      },
+      "appLaunch": {
+        "executed": false,
+        "verified": false,
+        "detail": "OWNER_PAIRING_TOKEN_UNBOUND",
+        "error": null
+      },
+      "screen": {
+        "executed": false,
+        "verified": false,
+        "detail": "OWNER_PAIRING_TOKEN_UNBOUND",
+        "error": null
+      }
+    }
+  },
+  "matrix": [
+    {
+      "device": "pc-primary",
+      "presence": "VERIFIED (LOCAL_HOST_Agent-Lee)",
+      "identity": "VERIFIED (win32_x64)",
+      "fileRead": "UNPROBED (NO_CURRENT_BRIDGE_FILE_READ)",
+      "fileWrite": "UNPROBED (NO_CURRENT_BRIDGE_FILE_WRITE)",
+      "appLaunch": "UNPROBED (NO_CURRENT_BRIDGE_APP_LAUNCH)",
+      "screen": "UNPROBED (NO_CURRENT_BRIDGE_SCREEN_CAPTURE)"
+    },
+    {
+      "device": "phone-fold6",
+      "presence": "VERIFIED (LDB-04ff1b33-8a70-434c-9aba-8752a30789ee)",
+      "identity": "FAILED (Command failed: adb -s RFCX70LNT7X shell getprop ro.product.model\nadb.exe: device 'RFCX70LNT7X' not found\r\n)",
+      "fileRead": "FAILED (Command failed: adb -s RFCX70LNT7X shell getprop ro.product.model\nadb.exe: device 'RFCX70LNT7X' not found\r\n)",
+      "fileWrite": "FAILED (Command failed: adb -s RFCX70LNT7X shell getprop ro.product.model\nadb.exe: device 'RFCX70LNT7X' not found\r\n)",
+      "appLaunch": "FAILED (Command failed: adb -s RFCX70LNT7X shell getprop ro.product.model\nadb.exe: device 'RFCX70LNT7X' not found\r\n)",
+      "screen": "FAILED (Command failed: adb -s RFCX70LNT7X shell getprop ro.product.model\nadb.exe: device 'RFCX70LNT7X' not found\r\n)"
+    },
+    {
+      "device": "phone-apple-iphone",
+      "presence": "VERIFIED (RELAY_ROOM_ONLY)",
+      "identity": "FAILED (PHYSICAL_PROBE_ABSENT)",
+      "fileRead": "UNPROBED (PHYSICAL_APPLE_DEVICE_UNAVAILABLE)",
+      "fileWrite": "UNPROBED (PHYSICAL_APPLE_DEVICE_UNAVAILABLE)",
+      "appLaunch": "UNPROBED (PHYSICAL_APPLE_DEVICE_UNAVAILABLE)",
+      "screen": "UNPROBED (PHYSICAL_APPLE_DEVICE_UNAVAILABLE)"
+    },
+    {
+      "device": "pc-hp-secondary",
+      "presence": "VERIFIED (RELAY_ROOM_ONLY)",
+      "identity": "VERIFIED (pc-hp-secondary)",
+      "fileRead": "UNPROBED (OWNER_PAIRING_TOKEN_UNBOUND)",
+      "fileWrite": "UNPROBED (OWNER_PAIRING_TOKEN_UNBOUND)",
+      "appLaunch": "UNPROBED (OWNER_PAIRING_TOKEN_UNBOUND)",
+      "screen": "UNPROBED (OWNER_PAIRING_TOKEN_UNBOUND)"
+    }
+  ],
+  "formula": {
+    "executed": true,
+    "status": 200,
+    "inputSemantics": [
+      "presence",
+      "identity",
+      "fileRead",
+      "fileWrite",
+      "appLaunch",
+      "screen"
+    ],
+    "stateRows": [
+      [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        0.625,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        0.625,
+        0.125,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        0.625,
+        0.125,
+        0.125,
+        0.125,
+        0
+      ],
+      [
+        1,
+        0.625,
+        0.125,
+        0.125,
+        0.125,
+        0.125
+      ],
+      [
+        1,
+        0.5,
+        0.125,
+        0.125,
+        0.125,
+        0.125
+      ],
+      [
+        1,
+        0.5,
+        0.08333333333333333,
+        0.125,
+        0.125,
+        0.125
+      ],
+      [
+        1,
+        0.5,
+        0.08333333333333333,
+        0.08333333333333333,
+        0.08333333333333333,
+        0.125
+      ],
+      [
+        1,
+        0.5,
+        0.08333333333333333,
+        0.08333333333333333,
+        0.08333333333333333,
+        0.08333333333333333
+      ],
+      [
+        1,
+        0.625,
+        0.08333333333333333,
+        0.08333333333333333,
+        0.08333333333333333,
+        0.08333333333333333
+      ],
+      [
+        1,
+        0.625,
+        0.0625,
+        0.08333333333333333,
+        0.08333333333333333,
+        0.08333333333333333
+      ],
+      [
+        1,
+        0.625,
+        0.0625,
+        0.0625,
+        0.0625,
+        0.08333333333333333
+      ],
+      [
+        1,
+        0.625,
+        0.0625,
+        0.0625,
+        0.0625,
+        0.0625
+      ]
+    ],
+    "inputHash": "58910532b3c0dcdd20bb88b626b81da86aa691ab9650fc70e0dc166cf187a980",
+    "resultHash": "3a5df0d3f0150abac23378df6347352fd87a231efd618453da5933bfcd3c6d51",
+    "receiptPath": "C:\\Users\\Leona\\.codex\\leeway\\Leeway-formula-live\\runtime\\canonical\\receipts\\leeway-formula\\leeway-formula-run-20261112001744-163937a3.json",
+    "error": null,
+    "claimBoundary": "FORMULA_RUNTIME_EXECUTED_ON_MEASURED_CUMULATIVE_MATRIX; DOMAIN_POLICY_AND_OPERATIONAL_QUALIFICATION_NOT_ESTABLISHED"
+  },
+  "veritas": {
+    "state": "INDEPENDENT_PRODUCTION_ROOTS_UNAVAILABLE_HOLD",
+    "decisionIssued": false
+  },
+  "receipt": {
+    "state": "CANONICAL_RECEIPT_NOT_CREATED"
+  },
+  "learning": {
+    "state": "CANONICAL_LEARNING_NOT_ADMITTED"
+  },
+  "production": {
+    "state": "HOLD"
+  }
+}

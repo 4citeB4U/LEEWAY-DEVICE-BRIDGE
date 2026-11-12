@@ -1,0 +1,13 @@
+{
+  "test": "LEEWAY_4_DEVICE_DAISY_CHAIN_GAUNTLET_V1",
+  "nonce": "a73972573e44d290",
+  "hops": [
+    {
+      "hop": 1,
+      "node": "pc-primary",
+      "platform": "windows",
+      "action": "FILE_CREATE",
+      "timestamp": "2026-11-11T20:09:35.375Z"
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leeway.industries/contracts/update-contract.schema.json",
+  "title": "LeeWay Device Bridge Unified Update Contract",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "authority",
+    "packageId",
+    "version",
+    "compatibility",
+    "minAdapterVersion",
+    "integrity",
+    "permissions",
+    "rolloutPercentage",
+    "state",
+    "lastKnownGoodVersion"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "authority": { "const": "LEEWAY_UNIFIED_UPDATE_AUTHORITY_V1" },
+    "packageId": { "type": "string", "minLength": 1 },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "lastKnownGoodVersion": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "compatibility": {
+      "type": "object",
+      "required": ["platforms", "supportedModels", "minOsVersion"],
+      "properties": {
+        "platforms": {
+          "type": "array",
+          "items": { "enum": ["windows", "android", "ios", "macos", "linux"] },
+          "minItems": 1
+        },
+        "supportedModels": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "minOsVersion": { "type": "string" },
+        "maxOsVersion": { "type": "string" }
+      }
+    },
+    "minAdapterVersion": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "integrity": {
+      "type": "object",
+      "required": ["sha256", "signingIdentity"],
+      "properties": {
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "signature": { "type": "string" },
+        "signingIdentity": { "type": "string", "minLength": 1 }
+      }
+    },
+    "permissions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "rolloutPercentage": { "type": "number", "minimum": 0, "maximum": 100 },
+    "state": {
+      "type": "string",
+      "enum": [
+        "DISCOVERED",
+        "VERIFIED",
+        "STAGED",
+        "AWAITING_OWNER_ACTION",
+        "INSTALLING",
+        "HEALTH_GATED_ACTIVE",
+        "ROLLED_BACK"
+      ]
+    },
+    "handoff": {
+      "type": "object",
+      "properties": {
+        "authorityType": {
+          "type": "string",
+          "enum": ["PACKAGE_INSTALLER_PROMPT", "TESTFLIGHT", "APP_STORE", "MDM", "SIDESTORE_ILOADER"]
+        },
+        "deepLinkUrl": { "type": "string" },
+        "instructions": { "type": "string" }
+      }
+    },
+    "receipt": {
+      "type": "object",
+      "properties": {
+        "receiptId": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "fromVersion": { "type": "string" },
+        "toVersion": { "type": "string" },
+        "finalState": { "type": "string" },
+        "healthCheckPassed": { "type": "boolean" },
+        "rollbackExecuted": { "type": "boolean" },
+        "diagnostic": { "type": "string" }
+      }
+    }
+  }
+}
+

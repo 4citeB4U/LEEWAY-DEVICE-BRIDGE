@@ -8,9 +8,11 @@ final class AppleCameraBridgeServer: ObservableObject {
     @Published private(set) var isRunning = false
     @Published private(set) var endpointLabel = "Not started"
     @Published private(set) var pairingToken: String
+    @Published private(set) var autoStartEnabled: Bool
     @Published private(set) var errorMessage: String?
 
     private static let tokenKey = "leeway.device.bridge.apple.camera.pairing-token.v1"
+    private static let autoStartKey = "leeway.device.bridge.apple.camera.auto-start.v1"
     private static let serviceType = "_leeway-camera._tcp"
     private static let maximumRequestBytes = 64 * 1024
     private static let maximumResponseBytes = 16 * 1024 * 1024
@@ -28,11 +30,24 @@ final class AppleCameraBridgeServer: ObservableObject {
             defaults.set(generated, forKey: Self.tokenKey)
             pairingToken = generated
         }
+        autoStartEnabled = defaults.bool(forKey: Self.autoStartKey)
     }
 
-    func start(camera: AppleCameraCapture) {
+    /// Reconnects an already owner-enrolled bridge without generating a new token.
+    /// The iOS owner must still launch the app; iOS does not permit an ordinary app
+    /// to install itself or guarantee a background listener after reboot.
+    func startIfEnrolled(camera: AppleCameraCapture) {
+        guard autoStartEnabled else { return }
+        start(camera: camera, rememberEnrollment: false)
+    }
+
+    func start(camera: AppleCameraCapture, rememberEnrollment: Bool = true) {
         guard listener == nil else { return }
         self.camera = camera
+        if rememberEnrollment {
+            UserDefaults.standard.set(true, forKey: Self.autoStartKey)
+            autoStartEnabled = true
+        }
         errorMessage = nil
         do {
             let newListener = try NWListener(using: .tcp, on: .any)
@@ -73,6 +88,13 @@ final class AppleCameraBridgeServer: ObservableObject {
         listener = nil
         isRunning = false
         endpointLabel = "Not started"
+    }
+
+    /// Explicit owner stop revokes automatic reconnect for this adapter instance.
+    func disableAutoStart() {
+        UserDefaults.standard.set(false, forKey: Self.autoStartKey)
+        autoStartEnabled = false
+        stop()
     }
 
     private func accept(_ connection: NWConnection) {

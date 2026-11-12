@@ -1,0 +1,21 @@
+{
+  "canonicalId": "LEEWAY-CANONICAL-ACCEPTANCE-SPEC-20261112",
+  "mission": "Universal Sovereign Device Bridge North Star Acceptance",
+  "authority": "DEVICE_OWNED_FILE_UNIVERSE",
+  "originDeviceId": "pc-primary",
+  "timestamp": "2026-11-12T13:42:59.611Z",
+  "governanceLaw": "Book 67 Rigor Law & Law Zero Sovereign Authorization",
+  "fileSpec": {
+    "name": "leeway-sovereign-mission-spec.json",
+    "mimeType": "application/json",
+    "purpose": "Multi-hop cross-device byte-exact verification across 4 ecosystem nodes"
+  },
+  "meshHops": [
+    {
+      "hop": 1,
+      "node": "pc-primary",
+      "role": "ORIGIN_GPU_WORKSTATION",
+      "timestamp": "2026-11-12T13:42:59.611Z"
+    }
+  ]
+}

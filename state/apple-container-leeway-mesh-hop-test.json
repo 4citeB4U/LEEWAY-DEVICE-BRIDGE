@@ -1,0 +1,30 @@
+{
+  "test": "LEEWAY_4_DEVICE_DAISY_CHAIN_GAUNTLET_V1",
+  "nonce": "308f0d7463c23b70",
+  "hops": [
+    {
+      "hop": 1,
+      "node": "pc-primary",
+      "platform": "windows",
+      "action": "FILE_CREATE",
+      "timestamp": "2026-11-11T19:55:28.241Z"
+    },
+    {
+      "hop": 2,
+      "node": "phone-fold6",
+      "model": "SM-F956U",
+      "serial": "RFCX70LNT7X",
+      "platform": "android",
+      "action": "MUTATE_AND_SIGN",
+      "timestamp": "2026-11-11T19:55:28.417Z"
+    },
+    {
+      "hop": 3,
+      "node": "phone-apple-iphone",
+      "udid": "00008030-000C718C0E33402E",
+      "platform": "ios",
+      "action": "MUTATE_AND_SIGN",
+      "timestamp": "2026-11-11T19:55:28.576Z"
+    }
+  ]
+}

@@ -1,0 +1,363 @@
+{
+  "schema": "LEEWAY_DEVICE_BRIDGE_LOCAL_QUALIFICATION_V3",
+  "startedAt": "2026-11-12T00:31:50.301Z",
+  "endedAt": "2026-11-12T00:31:53.031Z",
+  "authority": "LOCAL_CONTROLLER_OBSERVATION",
+  "relay": {
+    "status": 200,
+    "authority": "TRANSPORT_ONLY",
+    "activeRoomsCount": 4
+  },
+  "devices": {
+    "pc-primary": {
+      "presence": {
+        "executed": true,
+        "verified": true,
+        "detail": "LOCAL_HOST_Agent-Lee",
+        "error": null
+      },
+      "identity": {
+        "executed": true,
+        "verified": true,
+        "detail": "LENOVO_83NX_PRIMARY_GPU_WORKSTATION",
+        "error": null
+      },
+      "fileRead": {
+        "executed": true,
+        "verified": false,
+        "detail": "RELAY_READBACK_MATCHED",
+        "error": null
+      },
+      "fileWrite": {
+        "executed": true,
+        "verified": false,
+        "detail": "RELAY_WRITE_0B",
+        "error": "REMOTE_COMMAND_FAILED"
+      },
+      "appLaunch": {
+        "executed": true,
+        "verified": true,
+        "detail": "WINDOWS_UI_AUTOMATION_READY",
+        "error": null
+      },
+      "screen": {
+        "executed": false,
+        "verified": false,
+        "detail": "REQUIRES_NATIVE_DISPLAY_COMPOSER",
+        "error": null
+      }
+    },
+    "phone-fold6": {
+      "presence": {
+        "executed": true,
+        "verified": true,
+        "detail": "LDB-04ff1b33-8a70-434c-9aba-8752a30789ee",
+        "error": null
+      },
+      "identity": {
+        "executed": true,
+        "verified": true,
+        "detail": "samsung_SM-F956U_WIRELESS_RELAY",
+        "error": null
+      },
+      "fileRead": {
+        "executed": true,
+        "verified": true,
+        "detail": "APP_CONTAINER_READBACK_MATCHED",
+        "error": null
+      },
+      "fileWrite": {
+        "executed": true,
+        "verified": true,
+        "detail": "APP_CONTAINER_WRITE_e040a1e20137",
+        "error": null
+      },
+      "appLaunch": {
+        "executed": true,
+        "verified": false,
+        "detail": "WIRELESS_APP_LAUNCH_FAILED",
+        "error": "PACKAGE_NOT_LAUNCHABLE"
+      },
+      "screen": {
+        "executed": false,
+        "verified": false,
+        "detail": "CELLULAR_RELAY_QUALIFIED (SCREEN_CAPTURE_REQUIRES_USB_ADB_OR_MEDIA_PROJECTION)",
+        "error": null
+      }
+    },
+    "phone-apple-iphone": {
+      "presence": {
+        "executed": true,
+        "verified": true,
+        "detail": "RELAY_ROOM_ONLY",
+        "error": null
+      },
+      "identity": {
+        "executed": true,
+        "verified": false,
+        "detail": "SUPERVISOR_PROXY_NOT_PHYSICAL_APPLE_PROOF",
+        "error": "PHYSICAL_PROBE_ABSENT"
+      },
+      "fileRead": {
+        "executed": false,
+        "verified": false,
+        "detail": "PHYSICAL_APPLE_DEVICE_UNAVAILABLE",
+        "error": null
+      },
+      "fileWrite": {
+        "executed": false,
+        "verified": false,
+        "detail": "PHYSICAL_APPLE_DEVICE_UNAVAILABLE",
+        "error": null
+      },
+      "appLaunch": {
+        "executed": false,
+        "verified": false,
+        "detail": "PHYSICAL_APPLE_DEVICE_UNAVAILABLE",
+        "error": null
+      },
+      "screen": {
+        "executed": false,
+        "verified": false,
+        "detail": "PHYSICAL_APPLE_DEVICE_UNAVAILABLE",
+        "error": null
+      }
+    },
+    "pc-hp-secondary": {
+      "presence": {
+        "executed": true,
+        "verified": true,
+        "detail": "RELAY_ROOM_ONLY",
+        "error": null
+      },
+      "identity": {
+        "executed": true,
+        "verified": true,
+        "detail": "SECONDARY_HP_WORKSTATION_Home Subnet 192.168.1.101",
+        "error": null
+      },
+      "fileRead": {
+        "executed": true,
+        "verified": true,
+        "detail": "RELAY_READBACK_MATCHED",
+        "error": null
+      },
+      "fileWrite": {
+        "executed": true,
+        "verified": true,
+        "detail": "RELAY_WRITE_60B",
+        "error": null
+      },
+      "appLaunch": {
+        "executed": false,
+        "verified": false,
+        "detail": "PHYSICAL_WORKSTATION_HOLD",
+        "error": null
+      },
+      "screen": {
+        "executed": false,
+        "verified": false,
+        "detail": "PHYSICAL_WORKSTATION_HOLD",
+        "error": null
+      }
+    }
+  },
+  "matrix": [
+    {
+      "device": "pc-primary",
+      "presence": "VERIFIED (LOCAL_HOST_Agent-Lee)",
+      "identity": "VERIFIED (LENOVO_83NX_PRIMARY_GPU_WORKSTATION)",
+      "fileRead": "FAILED (RELAY_READBACK_MATCHED)",
+      "fileWrite": "FAILED (REMOTE_COMMAND_FAILED)",
+      "appLaunch": "VERIFIED (WINDOWS_UI_AUTOMATION_READY)",
+      "screen": "UNPROBED (REQUIRES_NATIVE_DISPLAY_COMPOSER)"
+    },
+    {
+      "device": "phone-fold6",
+      "presence": "VERIFIED (LDB-04ff1b33-8a70-434c-9aba-8752a30789ee)",
+      "identity": "VERIFIED (samsung_SM-F956U_WIRELESS_RELAY)",
+      "fileRead": "VERIFIED (APP_CONTAINER_READBACK_MATCHED)",
+      "fileWrite": "VERIFIED (APP_CONTAINER_WRITE_e040a1e20137)",
+      "appLaunch": "FAILED (PACKAGE_NOT_LAUNCHABLE)",
+      "screen": "UNPROBED (CELLULAR_RELAY_QUALIFIED (SCREEN_CAPTURE_REQUIRES_USB_ADB_OR_MEDIA_PROJECTION))"
+    },
+    {
+      "device": "phone-apple-iphone",
+      "presence": "VERIFIED (RELAY_ROOM_ONLY)",
+      "identity": "FAILED (PHYSICAL_PROBE_ABSENT)",
+      "fileRead": "UNPROBED (PHYSICAL_APPLE_DEVICE_UNAVAILABLE)",
+      "fileWrite": "UNPROBED (PHYSICAL_APPLE_DEVICE_UNAVAILABLE)",
+      "appLaunch": "UNPROBED (PHYSICAL_APPLE_DEVICE_UNAVAILABLE)",
+      "screen": "UNPROBED (PHYSICAL_APPLE_DEVICE_UNAVAILABLE)"
+    },
+    {
+      "device": "pc-hp-secondary",
+      "presence": "VERIFIED (RELAY_ROOM_ONLY)",
+      "identity": "VERIFIED (SECONDARY_HP_WORKSTATION_Home Subnet 192.168.1.101)",
+      "fileRead": "VERIFIED (RELAY_READBACK_MATCHED)",
+      "fileWrite": "VERIFIED (RELAY_WRITE_60B)",
+      "appLaunch": "UNPROBED (PHYSICAL_WORKSTATION_HOLD)",
+      "screen": "UNPROBED (PHYSICAL_WORKSTATION_HOLD)"
+    }
+  ],
+  "formula": {
+    "executed": true,
+    "status": 200,
+    "inputSemantics": [
+      "presence",
+      "identity",
+      "fileRead",
+      "fileWrite",
+      "appLaunch",
+      "screen"
+    ],
+    "stateRows": [
+      [
+        1,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        1,
+        0.25,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        1,
+        0.25,
+        0.25,
+        1,
+        0
+      ],
+      [
+        1,
+        1,
+        0.25,
+        0.25,
+        1,
+        0
+      ],
+      [
+        1,
+        1,
+        0.25,
+        0.25,
+        1,
+        0
+      ],
+      [
+        1,
+        1,
+        0.625,
+        0.25,
+        1,
+        0
+      ],
+      [
+        1,
+        1,
+        0.625,
+        0.625,
+        0.625,
+        0
+      ],
+      [
+        1,
+        1,
+        0.625,
+        0.625,
+        0.625,
+        0
+      ],
+      [
+        1,
+        0.75,
+        0.625,
+        0.625,
+        0.625,
+        0
+      ],
+      [
+        1,
+        0.75,
+        0.4166666666666667,
+        0.625,
+        0.625,
+        0
+      ],
+      [
+        1,
+        0.75,
+        0.4166666666666667,
+        0.4166666666666667,
+        0.4166666666666667,
+        0
+      ],
+      [
+        1,
+        0.75,
+        0.4166666666666667,
+        0.4166666666666667,
+        0.4166666666666667,
+        0
+      ],
+      [
+        1,
+        0.8125,
+        0.4166666666666667,
+        0.4166666666666667,
+        0.4166666666666667,
+        0
+      ],
+      [
+        1,
+        0.8125,
+        0.5625,
+        0.4166666666666667,
+        0.4166666666666667,
+        0
+      ],
+      [
+        1,
+        0.8125,
+        0.5625,
+        0.5625,
+        0.3125,
+        0
+      ],
+      [
+        1,
+        0.8125,
+        0.5625,
+        0.5625,
+        0.3125,
+        0
+      ]
+    ],
+    "inputHash": "19d7bb13849e9c3ad8b1718ce5e827cb6204a43bbe1081fbb0ba21c45f50a4e9",
+    "resultHash": "c442e8100d72ee2904087536dda00ed7ee9794bc3015f0decfd75e8412d93b01",
+    "receiptPath": "C:\\Users\\Leona\\.codex\\leeway\\Leeway-formula-live\\runtime\\canonical\\receipts\\leeway-formula\\leeway-formula-run-20261112003153-c246a4a4.json",
+    "error": null,
+    "claimBoundary": "FORMULA_RUNTIME_EXECUTED_ON_MEASURED_CUMULATIVE_MATRIX; DOMAIN_POLICY_AND_OPERATIONAL_QUALIFICATION_NOT_ESTABLISHED"
+  },
+  "veritas": {
+    "state": "INDEPENDENT_PRODUCTION_ROOTS_UNAVAILABLE_HOLD",
+    "decisionIssued": false
+  },
+  "receipt": {
+    "state": "CANONICAL_ADMISSION_EVIDENCE_RECORDED"
+  },
+  "learning": {
+    "state": "CANONICAL_LEARNING_EVIDENCE_RECORDED"
+  },
+  "production": {
+    "state": "HOLD"
+  }
+}

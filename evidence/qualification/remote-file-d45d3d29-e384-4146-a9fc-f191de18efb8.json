@@ -1,0 +1,27 @@
+{
+  "schema": "LEEWAY_REMOTE_ANDROID_FILE_QUALIFICATION_V1",
+  "runId": "d45d3d29-e384-4146-a9fc-f191de18efb8",
+  "deviceId": "LDB-04ff1b33-8a70-434c-9aba-8752a30789ee",
+  "remotePath": "qualification/d45d3d29-e384-4146-a9fc-f191de18efb8.json",
+  "write1": {
+    "ok": false,
+    "error": "PAIRING_REQUIRED"
+  },
+  "read1": {
+    "ok": false,
+    "error": "PAIRING_REQUIRED"
+  },
+  "write2": {
+    "ok": false,
+    "error": "PAIRING_REQUIRED"
+  },
+  "read2": {
+    "ok": false,
+    "error": "PAIRING_REQUIRED"
+  },
+  "verified": false,
+  "authority": "REMOTE_ANDROID_APP_CONTAINER_OBSERVATION",
+  "veritas": "INDEPENDENT_DECISION_NOT_ISSUED",
+  "receipt": "CANONICAL_RECEIPT_NOT_CREATED",
+  "production": "HOLD"
+}

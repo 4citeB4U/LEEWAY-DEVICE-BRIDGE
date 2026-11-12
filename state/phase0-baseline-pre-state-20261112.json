@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0.0",
+  "auditType": "PHASE_0_BASELINE_PRE_STATE",
+  "timestamp": "2026-11-12T17:21:00.000Z",
+  "authority": "F4_ACTING_WORKFORCE_MANAGER",
+  "missionId": "LEEWAY-SELFHOST-CORE-FOUR-W00",
+  "workId": "W00-PHASE-0-EVIDENCE-AND-RUNTIME-RECOVERY",
+  "httpDiscoveryResolution": {
+    "status": "CURED",
+    "cause": "Tailscale Funnel previously had stale subpath route /mcp mapped to closed port 4271; persistent relay server lacked HTTP MCP JSON-RPC router.",
+    "resolution": "Reset Tailscale serve config to root proxy http://127.0.0.1:8008; implemented full MCP JSON-RPC router (initialize, tools/list, tools/call) and /api/devices discovery route in api/device-relay.mjs.",
+    "verifiedEndpoints": {
+      "discoveryDevices": "https://agent-lee.tailb186e7.ts.net/api/devices (HTTP 200, 5 devices)",
+      "oauthMetadata": "https://agent-lee.tailb186e7.ts.net/.well-known/oauth-protected-resource (HTTP 200)",
+      "mcpStreamable": "https://agent-lee.tailb186e7.ts.net/mcp (HTTP 200, 10 tools, bridge_devices callable)"
+    }
+  },
+  "canonicalManifest": {
+    "manifestPath": "state/canonical-manifest-20261112.json",
+    "reposCount": 17,
+    "deviceBridgeSha": "1e7584eb2e5bb0203f752945ea4b3040fa78fe62"
+  },
+  "receipt14Reconciliation": {
+    "status": "RECONCILED",
+    "receiptId": 14,
+    "eventId": "evt-cross-mesh-file-hop-master-acceptance-20261112-001",
+    "learningRef": "LRN-DEVICE-BRIDGE-MASTER-ACCEPTANCE-20261112",
+    "payloadSha256": "8ef7e5dabd5aff90967bd14bdf358dc5c0cc2ab22a85b9a3234713556dc7b7b5",
+    "outboxState": "DELIVERED",
+    "auditDocument": "docs/receipt-14-forensic-audit-reconciliation-20261112.md"
+  },
+  "physicalNodeStates": {
+    "pcPrimary": {
+      "status": "ONLINE",
+      "model": "Lenovo Legion 83NX",
+      "cpu": "Intel(R) Core(TM) Ultra 9 275HX",
+      "digitalBrainStore": "state/pc-primary-brain.sqlite",
+      "health": "HEALTHY"
+    },
+    "phoneFold6": {
+      "status": "ONLINE",
+      "model": "Samsung Galaxy Z Fold6 (SM-F956U)",
+      "board": "pineapple",
+      "keystoreFingerprint": "d04b3eb8177074491003729c051566be4a6fa908c8fbaccabbf177d5f67d597b",
+      "uiDesign": "TITANIUM_MODULAR_JIT_V2"
+    },
+    "phoneAppleIphone": {
+      "status": "ONLINE",
+      "model": "Apple iPhone 11 (A2111)",
+      "transport": "SUPERVISOR_PROXY",
+      "physicalHold": "PHYSICAL_APPLE_DEVICE_UNAVAILABLE_PENDING_PHASE_2"
+    },
+    "pcHpSecondary": {
+      "status": "ONLINE",
+      "model": "HP Laptop 15-dw0xxx (LEO)",
+      "transport": "OUTBOUND_WSS_RELAY",
+      "physicalHold": "PHYSICAL_WORKSTATION_HOLD_PENDING_PHASE_2_DYNAMIC_DISCOVERY"
+    }
+  },
+  "veritasState": "SYNTHETIC_TEST_ONLY_HOLD_PENDING_PHASE_6",
+  "productionState": "PREPARATION_ONLY"
+}

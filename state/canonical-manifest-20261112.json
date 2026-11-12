@@ -1,0 +1,29 @@
+{
+  "protocol": "LEEWAY-SPINE-COORDINATION-v1",
+  "workId": "LEEWAY-SELFHOST-SPINE-W00",
+  "acceptanceId": "CORE_SELF_HOSTING_VERTICAL_SLICE_V1",
+  "capturedAt": "2026-11-12T17:20:00.000Z",
+  "scope": "17 repository spine including LeeWay-Production-Final-Execution-Layer",
+  "source": "GitHub default-branch latest commit readback & local candidate verification",
+  "evidenceState": "SOURCE_PINNED_AND_LOCAL_OBSERVED",
+  "warning": "These SHAs prove source identity and commit integrity under Law Zero.",
+  "repos": {
+    "4citeB4U/LEEWAY-DEVICE-BRIDGE": "1e7584eb2e5bb0203f752945ea4b3040fa78fe62",
+    "4citeB4U/Receipt-Authority": "2d448db0be041680b4ec51853c95b30d5bdb85f1",
+    "4citeB4U/Leeway-Runtime-Fabric": "ad534042ce4858f921785ab1aa9461731ec27599",
+    "4citeB4U/LeeWay-Engineering": "64ffc3a42e96bae8acc0ed8558bd2d954692534f",
+    "4citeB4U/LeeWay-Learning-Ledger": "20dfad7b54201688280ea8f7d9f4be4a8b0a476f",
+    "4citeB4U/LeeWay-Edge-GPU": "61d8127d1a8b22a378e7c4a18399ec4e8a1a4c23",
+    "4citeB4U/LeeWay-Model-Hub": "c8545dbbf307cf8279beb4d1c9910e7c80ba2963",
+    "4citeB4U/Leeway-Tailscale": "d055f6813ac25ceb7ced339b086128ae414e7e3b",
+    "4citeB4U/LeeWay-Continuum": "701f96726366c91a9cbe63cc6e8eadfdcd633360",
+    "4citeB4U/Leeway-formula-live": "f4b9e4c315fe2a370c9bf7309b77de643cccaef1",
+    "4citeB4U/Leeway-Federate-Web": "a408759252e17baac100753b4679dd3858e0c51d",
+    "4citeB4U/LEEWAY-VERITAS": "64ab653a649408a014529fbbecbbf3cf30808579",
+    "4citeB4U/LeeWay-Edge-RTC": "ba28fb8e3c636f8edddec88bdd4fa7d2a6b45840",
+    "4citeB4U/LeeWay-VRAM-Database": "e77cb786bdbb07d84f72957ae9de70eae5112e8c",
+    "4citeB4U/Leeway-live": "fd0b310601dc2c82130ddd7b2150c27d8432748a",
+    "4citeB4U/Machine-Consciousness": "99755972263e9c672b020b70687c8642ebd1ddda",
+    "4citeB4U/LeeWay-Production-Final-Execution-Layer": "ef4f13749e615e5c43791dbdf84b4c2166620d9b"
+  }
+}

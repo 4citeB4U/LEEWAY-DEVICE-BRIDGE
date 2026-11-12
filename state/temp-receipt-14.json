@@ -1,0 +1,21 @@
+{
+  "event_id": "evt-cross-mesh-file-hop-master-acceptance-20261112-001",
+  "producer": "device-bridge-controller",
+  "category": "device-bridge",
+  "tenant": "leeway-production",
+  "work_id": "work-cross-mesh-master-acceptance-20261112",
+  "evidence": {
+    "northStarCriterion": "Examine diagnostics on Windows PC, find authorized project file, transfer copy to Samsung Fold6 and iPhone, open appropriate application, and report verified outcome",
+    "sha256": "b913575dcf9a8525ade5bbcc26e90ee9a6686a8decc0a847a957d9cb69ea2db5",
+    "nodesVerified": [
+      "pc-primary",
+      "phone-fold6",
+      "phone-apple-iphone",
+      "pc-hp-secondary"
+    ],
+    "fold6HashMatch": true,
+    "appLaunched": "industries.leeway.pocket",
+    "veritasCertification": "LAW_ZERO_AUTHENTICATED",
+    "timestamp": "2026-11-12T13:43:02.972Z"
+  }
+}

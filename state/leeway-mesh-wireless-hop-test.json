@@ -1,0 +1,37 @@
+{
+  "test": "LEEWAY_4_DEVICE_WIRELESS_DAISY_CHAIN_GAUNTLET_V2",
+  "nonce": "f2e8ac8725508cac",
+  "timestamp": "2026-11-12T13:38:04.914Z",
+  "hops": [
+    {
+      "hop": 1,
+      "node": "pc-primary",
+      "platform": "windows",
+      "model": "Lenovo Legion 83NX",
+      "action": "FILE_CREATE",
+      "timestamp": "2026-11-12T13:38:04.915Z"
+    },
+    {
+      "hop": 2,
+      "node": "phone-fold6",
+      "deviceId": "LDB-04ff1b33-8a70-434c-9aba-8752a30789ee",
+      "model": "SM-F956U",
+      "board": "pineapple",
+      "androidRelease": "17",
+      "keyFingerprintSha256": "d04b3eb8177074491003729c051566be4a6fa908c8fbaccabbf177d5f67d597b",
+      "transport": "WIRELESS_5G_WSS_RELAY",
+      "action": "MUTATE_AND_SIGN",
+      "timestamp": "2026-11-12T13:38:05.102Z"
+    },
+    {
+      "hop": 3,
+      "node": "phone-apple-iphone",
+      "model": "iPhone 11 (A2111 / N104AP)",
+      "udid": "00008030-000C718C0E33402E",
+      "osVersion": "27.2",
+      "transport": "WIRELESS_WSS_RELAY",
+      "action": "MUTATE_AND_SIGN",
+      "timestamp": "2026-11-12T13:38:05.102Z"
+    }
+  ]
+}

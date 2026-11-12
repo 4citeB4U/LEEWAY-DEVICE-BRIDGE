@@ -92,7 +92,223 @@ function closeReplaced(connection) {
 function createRelayServer({ rooms = new Map() } = {}) {
   const server = createServer((req, res) => {
     // Check original URL from reverse proxy headers if path was stripped
-    const origPath = req.headers['x-forwarded-uri'] || req.headers['x-original-uri'] || req.url;
+    const origPath = req.headers['x-forwarded-uri'] || req.headers['x-original-uri'] || req.headers['x-forwarded-prefix'] || req.url;
+    if (process.env.DEBUG_ROUTING || req.headers['x-test']) {
+      console.log('[ROUTER-DEBUG]', req.method, req.url, 'origPath:', origPath, 'headers:', JSON.stringify(req.headers));
+    }
+
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, {
+        'access-control-allow-origin': '*',
+        'access-control-allow-methods': 'GET, POST, OPTIONS',
+        'access-control-allow-headers': 'Authorization, Content-Type, Accept, MCP-Protocol-Version, Mcp-Method, Mcp-Name, MCP-Session-Id, Last-Event-Id',
+        'access-control-max-age': '86400'
+      });
+      return res.end();
+    }
+
+    if (req.method === 'GET' && (req.url === '/api/devices' || req.url === '/devices' || origPath.includes('/api/devices') || origPath.includes('/devices'))) {
+      const activeRoomsList = Array.from(rooms.keys()).map(id => {
+        const r = rooms.get(id);
+        const isOnline = r?.phone?.ws?.readyState === WebSocket.OPEN;
+        return {
+          deviceId: id,
+          online: isOnline,
+          role: id === 'pc-primary' ? 'PRIMARY_GPU_WORKSTATION' :
+                (id.startsWith('LDB-') || id === 'phone-fold6') ? 'PHYSICAL_ANDROID_PHONE' :
+                id === 'phone-apple-iphone' ? 'PHYSICAL_APPLE_PHONE' :
+                id === 'pc-hp-secondary' ? 'SECONDARY_HP_WORKSTATION' : 'DEVICE_NODE',
+          transport: isOnline ? 'WSS_RELAY' : 'DISCONNECTED'
+        };
+      });
+      return json(res, 200, {
+        ok: true,
+        service: 'leeway-device-bridge-discovery',
+        authority: 'TRUSTED_RUNTIME_DEVICE_REGISTRY',
+        devicesCount: activeRoomsList.length,
+        devices: activeRoomsList,
+        truthBoundary: 'RUNTIME_OBSERVED_ONLY',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    if (req.method === 'GET' && (req.url.startsWith('/.well-known/oauth-protected-resource') || origPath.includes('oauth-protected-resource'))) {
+      return json(res, 200, {
+        resource: 'https://agent-lee.tailb186e7.ts.net/mcp',
+        authorization_servers: ['https://auth.leeway.industries'],
+        scopes_supported: ['device.bridge.read', 'device.bridge.execute'],
+        bearer_methods_supported: ['header'],
+        resource_documentation: 'https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE'
+      });
+    }
+
+    if (req.url === '/mcp' || req.url === '/api/mcp' || origPath.includes('/mcp')) {
+      if (req.method === 'GET') {
+        return json(res, 200, {
+          ok: true,
+          service: 'leeway-device-bridge-mcp',
+          status: 'ONLINE',
+          endpoint: 'https://agent-lee.tailb186e7.ts.net/mcp',
+          transport: 'STREAMABLE_HTTP_MCP',
+          supportedMethods: ['initialize', 'tools/list', 'tools/call']
+        });
+      }
+      if (req.method === 'POST') {
+        let bodyStr = '';
+        req.on('data', chunk => { bodyStr += chunk; });
+        req.on('end', async () => {
+          let rpc;
+          try { rpc = JSON.parse(bodyStr); } catch { return json(res, 400, { jsonrpc: '2.0', error: { code: -32700, message: 'Parse error' } }); }
+
+          const rpcId = rpc.id;
+          if (rpc.method === 'initialize') {
+            return json(res, 200, {
+              jsonrpc: '2.0',
+              id: rpcId,
+              result: {
+                protocolVersion: '2024-11-05',
+                capabilities: { tools: {} },
+                serverInfo: { name: 'leeway-device-bridge', version: '1.0.0' },
+                instructions: 'LeeWay Sovereign Device Bridge MCP Ingress.'
+              }
+            });
+          }
+
+          if (rpc.method === 'tools/list') {
+            const tools = [
+              {
+                name: 'bridge_devices',
+                description: 'Discover connected physical and workstation devices on the sovereign mesh.',
+                inputSchema: { type: 'object', properties: {} }
+              },
+              {
+                name: 'bridge_capabilities',
+                description: 'Discover capabilities for a specific device.',
+                inputSchema: { type: 'object', properties: { deviceId: { type: 'string' } }, required: ['deviceId'] }
+              },
+              {
+                name: 'device_health',
+                description: 'Query real-time health and diagnostics of a device.',
+                inputSchema: { type: 'object', properties: { deviceId: { type: 'string' } }, required: ['deviceId'] }
+              },
+              {
+                name: 'device_info',
+                description: 'Query hardware profile and identity passport of a device.',
+                inputSchema: { type: 'object', properties: { deviceId: { type: 'string' } }, required: ['deviceId'] }
+              },
+              {
+                name: 'device_brain_read',
+                description: 'Read the device-owned Digital Brain representation.',
+                inputSchema: { type: 'object', properties: { deviceId: { type: 'string' } }, required: ['deviceId'] }
+              },
+              {
+                name: 'device_diagnostics_read',
+                description: 'Read real-time device-owned diagnostics telemetry.',
+                inputSchema: { type: 'object', properties: { deviceId: { type: 'string' } }, required: ['deviceId'] }
+              },
+              {
+                name: 'device_files_universe_scan',
+                description: 'Scan scoped storage boundaries and file descriptors.',
+                inputSchema: { type: 'object', properties: { deviceId: { type: 'string' } }, required: ['deviceId'] }
+              },
+              {
+                name: 'device_files_read',
+                description: 'Read authorized file content.',
+                inputSchema: { type: 'object', properties: { deviceId: { type: 'string' }, path: { type: 'string' } }, required: ['deviceId', 'path'] }
+              },
+              {
+                name: 'device_files_write',
+                description: 'Write file content into authorized device container.',
+                inputSchema: { type: 'object', properties: { deviceId: { type: 'string' }, path: { type: 'string' }, text: { type: 'string' } }, required: ['deviceId', 'path', 'text'] }
+              },
+              {
+                name: 'device_apps_launch',
+                description: 'Launch an application on target mobile or desktop device.',
+                inputSchema: { type: 'object', properties: { deviceId: { type: 'string' }, packageName: { type: 'string' } }, required: ['deviceId', 'packageName'] }
+              }
+            ];
+            return json(res, 200, { jsonrpc: '2.0', id: rpcId, result: { tools } });
+          }
+
+          if (rpc.method === 'tools/call') {
+            const { name, arguments: args = {} } = rpc.params || {};
+            const targetDeviceId = args.deviceId || 'pc-primary';
+
+            if (name === 'bridge_devices') {
+              const deviceList = Array.from(rooms.keys()).map(id => {
+                const r = rooms.get(id);
+                return {
+                  id,
+                  online: r?.phone?.ws?.readyState === WebSocket.OPEN,
+                  role: id === 'pc-primary' ? 'PRIMARY_GPU_WORKSTATION' :
+                        (id.startsWith('LDB-') || id === 'phone-fold6') ? 'PHYSICAL_ANDROID_PHONE' :
+                        id === 'phone-apple-iphone' ? 'PHYSICAL_APPLE_PHONE' :
+                        id === 'pc-hp-secondary' ? 'SECONDARY_HP_WORKSTATION' : 'DEVICE_NODE'
+                };
+              });
+              return json(res, 200, {
+                jsonrpc: '2.0',
+                id: rpcId,
+                result: {
+                  content: [{ type: 'text', text: JSON.stringify({ ok: true, devices: deviceList, authority: 'TRUSTED_RUNTIME_DEVICE_REGISTRY' }, null, 2) }]
+                }
+              });
+            }
+
+            // Map tool name to capability
+            const capability = name.startsWith('device_') ? name.replace('device_', 'device.').replaceAll('_', '.') : name;
+
+            const targetRoom = rooms.get(targetDeviceId) || (targetDeviceId === 'phone-fold6' ? [...rooms.values()].find(r => r.deviceId?.startsWith('LDB-')) : null);
+            if (!targetRoom || !targetRoom.phone || targetRoom.phone.ws?.readyState !== WebSocket.OPEN) {
+              return json(res, 200, {
+                jsonrpc: '2.0',
+                id: rpcId,
+                result: {
+                  content: [{ type: 'text', text: JSON.stringify({ ok: false, error: 'DEVICE_OFFLINE', deviceId: targetDeviceId }) }],
+                  isError: true
+                }
+              });
+            }
+
+            const cmdId = 'mcp-cmd-' + Date.now();
+            const pending = new Promise((resolve) => {
+              const timer = setTimeout(() => {
+                targetRoom.pendingCommands.delete(cmdId);
+                resolve({ ok: false, error: 'DEVICE_COMMAND_TIMEOUT' });
+              }, 12000);
+
+              targetRoom.pendingCommands.set(cmdId, {
+                resolve: (val) => { clearTimeout(timer); resolve(val); },
+                reject: (err) => { clearTimeout(timer); resolve({ ok: false, error: err.message }); }
+              });
+
+              targetRoom.phone.ws.send(JSON.stringify({
+                type: 'command',
+                id: cmdId,
+                capability,
+                arguments: args
+              }));
+            });
+
+            const execResult = await pending;
+            return json(res, 200, {
+              jsonrpc: '2.0',
+              id: rpcId,
+              result: {
+                content: [{ type: 'text', text: JSON.stringify(execResult, null, 2) }]
+              }
+            });
+          }
+
+          return json(res, 200, {
+            jsonrpc: '2.0',
+            id: rpcId,
+            error: { code: -32601, message: 'Method not found' }
+          });
+        });
+        return;
+      }
+    }
     if (req.method === 'GET' && (req.url === '/dashboard' || req.url === '/dashboard.html' || (req.url === '/' && req.headers['accept']?.includes('text/html')))) {
       try {
         const dashPath = path.resolve(__dirname, '../apps/desktop/dashboard.html');

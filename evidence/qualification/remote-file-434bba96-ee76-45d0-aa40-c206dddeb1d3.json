@@ -1,0 +1,57 @@
+{
+  "schema": "LEEWAY_REMOTE_ANDROID_FILE_QUALIFICATION_V1",
+  "runId": "434bba96-ee76-45d0-aa40-c206dddeb1d3",
+  "deviceId": "LDB-04ff1b33-8a70-434c-9aba-8752a30789ee",
+  "remotePath": "qualification/434bba96-ee76-45d0-aa40-c206dddeb1d3.json",
+  "write1": {
+    "ok": true,
+    "result": {
+      "ok": true,
+      "path": "qualification/434bba96-ee76-45d0-aa40-c206dddeb1d3.json",
+      "bytes": 110,
+      "sha256": "9c28ab30c0f23a1e7c2b38c9b8d3a90dcd83b134a1a16ac27aae91f457339e04",
+      "storageBoundary": "APP_PRIVATE_BRIDGE_FILES"
+    },
+    "error": null
+  },
+  "read1": {
+    "ok": true,
+    "result": {
+      "ok": true,
+      "path": "qualification/434bba96-ee76-45d0-aa40-c206dddeb1d3.json",
+      "text": "{\"protocol\":\"LEEWAY_REMOTE_FILE_QUALIFICATION_V1\",\"sequence\":1,\"runId\":\"434bba96-ee76-45d0-aa40-c206dddeb1d3\"}",
+      "bytes": 110,
+      "sha256": "9c28ab30c0f23a1e7c2b38c9b8d3a90dcd83b134a1a16ac27aae91f457339e04",
+      "storageBoundary": "APP_PRIVATE_BRIDGE_FILES"
+    },
+    "error": null
+  },
+  "write2": {
+    "ok": true,
+    "result": {
+      "ok": true,
+      "path": "qualification/434bba96-ee76-45d0-aa40-c206dddeb1d3.json",
+      "bytes": 110,
+      "sha256": "1a873756d02e8c4da843a4a8747c085fe519ba2d3878d60972d23a27fb544b3d",
+      "storageBoundary": "APP_PRIVATE_BRIDGE_FILES"
+    },
+    "error": null
+  },
+  "read2": {
+    "ok": true,
+    "result": {
+      "ok": true,
+      "path": "qualification/434bba96-ee76-45d0-aa40-c206dddeb1d3.json",
+      "text": "{\"protocol\":\"LEEWAY_REMOTE_FILE_QUALIFICATION_V1\",\"sequence\":2,\"runId\":\"434bba96-ee76-45d0-aa40-c206dddeb1d3\"}",
+      "bytes": 110,
+      "sha256": "1a873756d02e8c4da843a4a8747c085fe519ba2d3878d60972d23a27fb544b3d",
+      "storageBoundary": "APP_PRIVATE_BRIDGE_FILES"
+    },
+    "error": null
+  },
+  "verified": true,
+  "authority": "REMOTE_ANDROID_APP_CONTAINER_OBSERVATION",
+  "veritas": "INDEPENDENT_DECISION_NOT_ISSUED",
+  "receipt": "CANONICAL_RECEIPT_NOT_CREATED",
+  "production": "HOLD"
+}
