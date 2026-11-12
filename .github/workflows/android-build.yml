@@ -25,7 +25,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
@@ -97,81 +97,15 @@ jobs:
             apps/android/app/build/outputs/apk/debug/app-debug.apk
             apps/android/package-evidence.txt
 
-      - name: Publish latest verified Android APK to GitHub Pages
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      # No source CI may write installers into main or GitHub Pages.
+      # Android debug artifacts remain development evidence, not OS-approved
+      # production distribution. An independent owner-managed release pipeline
+      # must verify signing custody, platform policy, HIL and Veritas before
+      # any release manifest can become AUTHORIZED_RELEASED.
+      - name: Mark build as development-only (no Pages publication)
         shell: bash
         run: |
-          set -euo pipefail
-          mkdir -p docs/downloads
-          APK_SRC=apps/android/app/build/outputs/apk/debug/app-debug.apk
-          APK_DST=docs/downloads/leeway-device-bridge-android-latest-debug.apk
-          cp "$APK_SRC" "$APK_DST"
-          BYTES=$(stat -c%s "$APK_DST")
-          SHA=$(sha256sum "$APK_DST" | awk '{print $1}')
-          VERSION_NAME=$(sed -n 's/.*versionName = "\([^"]*\)".*/\1/p' apps/android/app/build.gradle.kts)
-          VERSION_CODE=$(sed -n 's/.*versionCode = \([0-9][0-9]*\).*/\1/p' apps/android/app/build.gradle.kts)
-          test -n "$VERSION_NAME"
-          test -n "$VERSION_CODE"
-          cat > docs/downloads/leeway-device-bridge-android-latest.json <<JSON
-          {
-            "versionName": "$VERSION_NAME",
-            "versionCode": $VERSION_CODE,
-            "sha256": "$SHA",
-            "sizeBytes": $BYTES,
-            "downloadUrl": "./leeway-device-bridge-android-latest-debug.apk",
-            "sourceRunId": "${{ github.run_id }}",
-            "sourceCommit": "${{ github.sha }}"
-          }
-          JSON
-          python3 - <<'PY'
-          import json
-          from datetime import datetime, timezone
-          from pathlib import Path
-
-          manifest_path = Path("docs/package-manifest.json")
-          metadata_path = Path("docs/downloads/leeway-device-bridge-android-latest.json")
-          manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-          metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
-          package = next(item for item in manifest["packages"] if item["platform"] == "android")
-          package.update({
-              "status": "QUALIFIED_ARTIFACT_OWNER_INSTALL_REQUIRED",
-              "source": "github-pages",
-              "downloadUrl": "./downloads/leeway-device-bridge-android-latest-debug.apk",
-              "sha256": metadata["sha256"],
-              "sizeBytes": metadata["sizeBytes"],
-              "versionName": metadata["versionName"],
-              "versionCode": metadata["versionCode"],
-              "githubActionsQualification": {
-                  "state": "VERIFIED",
-                  "runId": int(metadata["sourceRunId"]),
-                  "headSha": metadata["sourceCommit"],
-                  "apkSizeBytes": metadata["sizeBytes"],
-                  "apkSha256": metadata["sha256"],
-                  "note": "The Android app checks this manifest on foreground and reconnect, downloads the verified APK, and opens Android's owner-confirmed installer. It does not silently install or erase app data."
-              }
-          })
-          formula = package.setdefault("formulaQualification", {})
-          formula["measuredBytes"] = metadata["sizeBytes"]
-          formula["measuredSha256"] = metadata["sha256"]
-          manifest["updatedAtUtc"] = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
-          manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
-          PY
-          git config user.name "LeeWay Veritas"
-          git config user.email "actions@users.noreply.github.com"
-          git add docs/downloads/leeway-device-bridge-android-latest-debug.apk docs/downloads/leeway-device-bridge-android-latest.json docs/package-manifest.json
-          if git diff --cached --quiet; then
-            echo "Published APK unchanged."
-            exit 0
-          fi
-          git commit -m "Publish verified Device Bridge ${VERSION_NAME} APK"
-          for attempt in 1 2 3; do
-            if git push origin HEAD:main; then
-              exit 0
-            fi
-            if [ "$attempt" -eq 3 ]; then
-              echo "Could not publish the verified APK after three guarded push attempts." >&2
-              exit 1
-            fi
-            git fetch origin main
-            git rebase origin/main
-          done
+          test -f apps/android/app/build/outputs/apk/debug/app-debug.apk
+          echo "Development-only Android artifact. No release/publish authorization."
+          echo "sourceRunId=${{ github.run_id }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "sourceCommit=${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"
