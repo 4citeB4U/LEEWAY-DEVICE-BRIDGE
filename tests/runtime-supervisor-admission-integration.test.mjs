@@ -14,7 +14,7 @@ LICENSE: MIT
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { evaluateWorkerAdmission, operationDigest } from 'file:///E:/LeeWay-Work/Leeway-Runtime-Fabric-canonical-20261105/automation-runtime/worker-admission-gate.mjs';
+import { evaluateWorkerAdmission, operationDigest } from '../operator/worker-admission-gate.mjs';
 import { createHostAdmissionVerifier, computeOperationDigest } from '../operator/runtime-supervisor-admission-adapter.mjs';
 
 test('ALLOW: F4 Antigravity admitted for device.health on pc-primary', async () => {
