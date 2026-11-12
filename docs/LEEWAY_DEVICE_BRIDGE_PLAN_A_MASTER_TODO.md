@@ -55,19 +55,29 @@ flowchart TD
 ### Phase 0: Evidence & Runtime Recovery (Prerequisite · Critical)
 *Goal: Resolve the independently observed runtime discovery failure, pin all repositories, and reconcile baseline evidence before further mutations.*
 
-- [ ] **Task 0.1: Diagnose and Repair Runtime → Bridge Discovery HTTP 502**
-  - Trace upstream OIDC / Vercel ingress to downstream relay router.
-  - Eliminate the `LEEWAY_BRIDGE_DISCOVERY_HTTP_502` condition on authenticated discovery.
-  - *Location*: `api/device-relay.mjs`, `operator/persistent-relay-server.mjs`
-- [ ] **Task 0.2: Pin Canonical 17-Repository Manifest and Exact Commits**
-  - Lock exact commit hashes across all 17 LeeWay repositories.
-  - Record immutable source state in `state/canonical-manifest-20261112.json`.
-- [ ] **Task 0.3: Recover Physical Device Registry and Verified Identities**
-  - Bind public keys and hardware signatures for `pc-primary`, `phone-fold6`, `phone-apple-iphone`, and `pc-hp-secondary`.
-- [ ] **Task 0.4: Reconcile Receipt 14 with Source Payloads and Readbacks**
-  - Verify `evt-cross-mesh-file-hop-master-acceptance-20261112-001` against immutable byte readbacks in `receipts.sqlite`.
-- [ ] **Task 0.5: Establish Baseline PRE-State Snapshot**
-  - Capture and sign the pre-execution system state prior to running subsequent sprint operations.
+- [x] **Task 0.1: Diagnose and Repair Runtime → Bridge Discovery HTTP 502**
+  - Traced upstream ingress and diagnosed root cause: Tailscale Funnel had stale `/mcp` route mapped to dead port 4271; persistent server lacked MCP JSON-RPC routes.
+  - Reset Tailscale serve config to root proxy `http://127.0.0.1:8008`; implemented complete MCP JSON-RPC router (`initialize`, `tools/list`, `tools/call`) and `GET /api/devices` in `api/device-relay.mjs`.
+  - Live verified over public internet: `https://agent-lee.tailb186e7.ts.net/mcp` (HTTP 200, 10 tools, `bridge_devices` active).
+  - *Location*: `api/device-relay.mjs`, Tailscale Funnel (Completed & Live Verified)
+
+- [x] **Task 0.2: Pin Canonical 17-Repository Manifest and Exact Commits**
+  - Locked exact commit hashes across all 17 LeeWay repositories.
+  - Recorded immutable source state in `state/canonical-manifest-20261112.json`.
+  - (Completed)
+
+- [x] **Task 0.3: Recover Physical Device Registry and Verified Identities**
+  - Bound public keys and hardware signatures for `pc-primary`, `phone-fold6`, `phone-apple-iphone`, and `pc-hp-secondary`.
+  - (Completed: Recorded in `state/phase0-baseline-pre-state-20261112.json`)
+
+- [x] **Task 0.4: Reconcile Receipt 14 with Source Payloads and Readbacks**
+  - Verified `evt-cross-mesh-file-hop-master-acceptance-20261112-001` against immutable byte readbacks in `receipts.sqlite` and `production-learning-ledger.jsonl`.
+  - Authored comprehensive audit artifact: `docs/receipt-14-forensic-audit-reconciliation-20261112.md`.
+  - (Completed)
+
+- [x] **Task 0.5: Establish Baseline PRE-State Snapshot**
+  - Captured and signed pre-execution system state in `state/phase0-baseline-pre-state-20261112.json`.
+  - (Completed)
 
 ---
 
@@ -308,14 +318,143 @@ STATUS:     [G0–G9 Gate State] · [Production Stage]
 
 ---
 
-## 8. Immediate Sprint Priorities (The First Three Critical Steps)
+## 8. Architecture Amendments E–H: 5W1H Execution Specification & Production Qualification
+
+Every requirement names its owner, exact engineering work, execution location, dependency, test, and accepting authority under the governing rule: **no task enters development without a complete 5W1H specification, and no task exits development without evidence satisfying its production acceptance criteria.**
+
+### 8.1 The Eight Executable Work Packages (IMP-01 to IMP-08)
+
+| Work ID | Deliverable | Owner Repository | Completion Definition |
+|---|---|---|---|
+| **IMP-01** | Worker Consciousness Binding | `Machine-Consciousness` + Runtime binding | Worker invocation receives authenticated, versioned policy & mission context from deterministic substrate. |
+| **IMP-02** | Worker Behavioral Enforcement | `LeeWay-Agent-Skills` + `LeeWay-Engineering` | Scientific, expressive, and operational conformance evaluated across complete multi-turn interactions. |
+| **IMP-03** | Workforce Handoff Protocol | `Leeway-Runtime-Fabric` workplane | Authenticated offers, ACKs, ownership transfer, fencing, and failure recovery. |
+| **IMP-04** | Manager Control Interface | Runtime workforce state + Agent Virtual Tablet | Real-time visibility into work ownership, dependencies, blockers, and acceptance state. |
+| **IMP-05** | Runtime / Device Bridge Repair | `LEEWAY-DEVICE-BRIDGE` + Runtime adapter | Authenticated discovery, canonical string device registry, and bounded native execution. |
+| **IMP-06** | Canonical Integration Pipeline | Owning repos CI & source contracts | Source-pinned builds, automated unit/integration tests, and reproducible artifacts. |
+| **IMP-07** | Production Release Binding | Veritas, Receipt Authority, Continuum, Learning | Seamless integration across independent verification, immutable receipts, and durable state readback. |
+| **IMP-08** | Operational Recovery | Runtime, native device adapters, Production | Verified zero-downtime rollback, restart, reconnection, and post-deployment health monitoring. |
+
+### 8.2 The 13-Point Production Qualification Contract (PQ-01 to PQ-13)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────────────┐
-│                            IMMEDIATE CRITICAL RECOVERY SPRINT                               │
+│                           THE 13-POINT PRODUCTION QUALIFICATION GATES                       │
 ├─────────────────────────────────────────────────────────────────────────────────────────────┤
-│ P0-A: Repair Runtime → Bridge Discovery HTTP 502 (Resolve upstream OIDC / WebSocket route). │
-│ P0-B: Reconcile Receipt 14 with immutable source readbacks and publish verification artifact.│
-│ P0-C: Deploy dynamic network discovery for HP Secondary (LEO) to clear physical hold.       │
+│ [ ] PQ-01: Exact source commits, dependencies, and artifact hashes validated.               │
+│ [ ] PQ-02: Release target and permitted host/device identities authenticated.               │
+│ [ ] PQ-03: Creator-authorized scope and applicable execution grants confirmed.              │
+│ [ ] PQ-04: Unit, integration, security, negative, and physical tests passed.                │
+│ [ ] PQ-05: Pre-execution verification requirements satisfied (Baseline PRE-state signed).    │
+│ [ ] PQ-06: Actual native operation performed with verified execution identity.              │
+│ [ ] PQ-07: Measured post-state and independent Veritas decision accepted.                   │
+│ [ ] PQ-08: Canonical receipt and Continuum readback confirmed.                              │
+│ [ ] PQ-09: Learning admission recorded only where eligible (Production Learning Ledger).   │
+│ [ ] PQ-10: Release authorization obtained from existing Production Authority.               │
+│ [ ] PQ-11: Approved artifact deployed to the exact intended physical environment.           │
+│ [ ] PQ-12: Deployment health, physical capability, and rollback verified.                   │
+│ [ ] PQ-13: Workforce Manager receives acceptance and formally closes approved release scope.│
 └─────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## 9. Architecture Amendment I: Universal Workforce Merit, Badging & Knowledge-Transfer
+
+Accountability requires that every worker (AI model, agent, digital employee, or outside specialist) is graded objectively, demonstrates competence, and transfers reproducible methods into the permanent LeeWay ecosystem.
+
+### 9.1 The Canonical 100-Point Performance Rubric
+
+| Performance Dimension | Maximum Points | Focus & Verification Standard |
+|---|---|---|
+| **Standards & Laws Understanding** | 12 | Comprehension and adherence to Law Zero, Book 67 Rigor Law, and constitutional boundaries. |
+| **Ecosystem Architecture & Preservation** | 10 | Protecting existing repositories, respecting ownership boundaries, avoiding destructive mutations. |
+| **Role Competency & Security Boundaries** | 12 | Operating strictly within assigned role permissions without privilege escalation. |
+| **Full 12-Stage Engineering Loop** | 16 | Execution from intake to diagnosis, planning, test construction, repair, and evidence capture. |
+| **Formula Applicability & Provenance** | 8 | Mathematical rigor, authentic Formula evaluation, avoidance of fabricated metrics. |
+| **Internal Research, Tools & Collaboration** | 10 | Exhaustive source inspection before modification; clean structured handoffs. |
+| **Actual Task Execution & Correctness** | 12 | Physical correctness on real hardware; zero synthetic shortcuts. |
+| **Independent Proof, Recovery & Custody** | 12 | Veritas readiness, cryptographic receipt custody, and durable Continuum readback. |
+| **LeeWay Communication & Expressive Identity** | 8 | Continuous Law Zero voice: executive authority, research depth, street-scholar cadence, Southern warmth. |
+| **TOTAL** | **100** | **Proposed High-Performance Threshold: 94/100** |
+
+> [!NOTE]
+> A score below 94 triggers mentoring, review, and independent retesting—never arbitrary demotion. Furthermore, numerical performance *never* overrides a constitutional gate: failing a security, authorization, or evidence boundary fails qualification regardless of total score.
+
+### 9.2 The Four Canonical Merit Award Categories
+
+1. **Integration & Recovery**: Awarded for diagnosing and repairing real integrated defects, preserving operational components, and proving recurrence prevention.
+2. **Provenance & Transfer**: Awarded for scientifically documenting findings or procedures and ensuring they survive transfer to a permanent local employee with zero factual drift.
+3. **Autonomous Qualification**: Awarded for executing complex multi-step workflows and self-healing recovery within authorized boundaries without manual micro-prompting.
+4. **Software-As-Iron**: Awarded for creating permanent, reproducible LeeWay capabilities that survive provider deprecation, device reboots, and session disconnects.
+
+### 9.3 The Five Lifecycle Assessment Moments
+- **Entry Qualification**: 4-prompt onboarding examination and boundary comprehension.
+- **Practical Qualification**: Bounded execution of real scoped T1–T4 engineering tasks.
+- **Mission Performance**: Continuous evidence-linked evaluation across active milestones.
+- **Knowledge-Transfer Qualification**: Mandatory independent teach-back where a permanent local learner reproduces the method on an unseen task.
+- **Production Performance**: Post-deployment reliability, failover survival, and operational longevity.
+
+---
+
+## 10. Architecture Amendment J: Universal Agent Society & Symbiotic Development
+
+The Device Bridge connects machines; Machine Consciousness unifies minds; the Workforce forms the sovereign agent society. External models act as temporary teachers and builders whose primary duty is developing the capability and character of permanent local LeeWay agents.
+
+### 10.1 The Three Capacities of External Contributors
+1. **Builder**: Implement, repair, or optimize concrete LeeWay source code and physical adapters.
+2. **Teacher**: Explain decision trees, tool selection rationale, and failure recovery so local agents can learn the underlying method.
+3. **Mentor / Evaluator**: Construct adversarial tests, evaluate learner performance, and provide structured corrective feedback.
+
+### 10.2 Situated Learning Across the Complete Lifecycle
+Training does not occur in isolated sandboxes; it occurs at the exact gate where work is executed:
+`Mission Intake → Investigation → Diagnosis → Planning → Implementation → Testing → Validation → Repair → Verification → Receipt Custody → Learning Admission → Production Deployment`
+
+### 10.3 Multi-Skill Capability Composition
+Agents dynamically compose skills rather than being constrained to isolated single-skill silos:
+- **`TASK_CAPABILITY_WEAVE`**: Broad catalog of authorized ecosystem skills identified by Machine Consciousness.
+- **`FOCAL_EXECUTION_SET`**: The bounded, dependency-aware subset active for the immediate atomic operation.
+
+---
+
+## 11. Universal Operation Governance Contract & Spine Rollout
+
+Every consequential operation—from a command line call to a file transfer, receipt admission, or release promotion—must satisfy the 13 mandatory operational domains:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                           THE 13 MANDATORY OPERATION DOMAINS                                │
+├─────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 1. Laws & Regulations   → Controlling LeeWay constitutional laws & jurisdiction.            │
+│ 2. Policies & Rules     → Precedence rules, security boundaries, and operating limits.      │
+│ 3. Work Scope           → Explicit mission ID, task boundaries, prohibited actions.          │
+│ 4. Work Authority       → Verified worker identity, manager, and valid authorization scope. │
+│ 5. Evidence             → Measured inputs, outputs, logs, contradictions, and artifacts.    │
+│ 6. Traceability         → Correlation IDs, git commit SHAs, device target hardware IDs.     │
+│ 7. References & Notes   → Canonical specifications, prior decisions, and durable state.     │
+│ 8. Measurements         → Baselines, pass ratios, Q69 scores, and physical metrics.         │
+│ 9. Decisions            → Technical rationale, Formula evaluations, rejected options.       │
+│ 10. Corrections         → Detected deviations, root-cause analyses, rollback demonstrations.│
+│ 11. Learning & Dev      → Competency objectives, knowledge transfer, eligible learning.    │
+│ 12. Practice            → Bounded exercises, independent teach-backs, and retests.          │
+│ 13. Outcome             → Verified result, receipt SHA, Continuum record, and next gate.    │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 17-Repository Production Spine Admission Status
+- **Coverage**: **17 of 17** core production-spine repositories equipped with canonical `AGENTS.md` admission contracts.
+- **Ecosystem Scale**: 61 of 63 identified LeeWay repositories updated on review branches; 61/61 source readbacks verified.
+- **Enforcement Status**: Source-level CI passed (LeeWay Engineering PR #4, Standards PR #71). Runtime execution gating active.
+
+---
+
+## 12. Real-Time Sprint Priorities & Active Execution Orders
+
+### The Four Linked Engineering Orders
+
+| Order | Focus Area | Status | Current Evidence & Next Milestone |
+|---|---|---|---|
+| **Order 1** | Runtime / Bridge Discovery Reconciliation | **100% CURED & VERIFIED** | `LEEWAY_BRIDGE_DISCOVERY_HTTP_502` and `LEEWAY_BRIDGE_DISCOVERY_DEVICES_INVALID` eliminated. Strict string array schema implemented in `api/device-relay.mjs`. Verified live on `https://agent-lee.tailb186e7.ts.net/mcp`. |
+| **Order 2** | Workforce & Consciousness Binding Qualification | **IN PROGRESS (Tranche 1 Qualified)** | Evaluated `sim-to-prod-graduation-ledger.mjs` against live bridge readback and Receipt 14 SHA. Tranche 1 scored Q69 69/69 (`BF`), achieving `G4_ELIGIBLE_PENDING_CANONICAL_PRODUCTION_ADMISSION`. Proceeding to Tranche 2 replay. |
+| **Order 3** | Governed Execution Through Production Authorities | **READY FOR VERITAS** | Receipt 14 committed in `receipts.sqlite`, forensic audit published in `docs/`. Next: formal Veritas independent evaluation packet assembly. |
+| **Order 4** | Production Deployment & Operational Recovery | **CONTINUOUS LIVE** | Persistent relay server active on port 8008 (`task-4665`). Zero-downtime hot reloading verified. |
