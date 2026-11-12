@@ -1,52 +1,43 @@
-name: Verify Device Bridge Pages APK
-
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.DEVICE_BRIDGE.CI.RELEASE_HOLD
+# TAG: LEEWAY.DEVICE_BRIDGE.CI.HOLD_NO_PUBLIC_APK.V1
+# DISCOVERY_PIPELINE: Voice → Intent → Location → Vertical → Ranking → Render
+# 5WH:
+# WHAT = Enforce a deliberate public installer hold until original Release and Veritas owners authorize exact signed assets.
+# WHY = Prevent a debug APK from being published and misleadingly called verified because its SHA matches.
+# WHO = Original Device Bridge, Android packaging, release signing and security custodian.
+# WHERE = .github/workflows/verify-device-bridge-pages-apk.yml.
+# WHEN = 2026-11-12.
+# HOW = Read-only source manifest and negative install/publisher tests, not a live Pages or OS trust scan.
+# LICENSE: Existing repository terms remain unchanged.
+name: Verify Device Bridge Public Release Hold
 on:
+  pull_request:
   push:
     branches: [main]
     paths:
-      - "docs/downloads/leeway-device-bridge-android-latest.json"
-      - "docs/downloads/leeway-device-bridge-android-latest-debug.apk"
+      - "docs/downloads/**"
+      - "docs/package-manifest.json"
+      - "docs/index.html"
+      - "clients/remote-controller/**"
+      - "clients/phone-workstation/**"
+      - "apps/android/**"
+      - ".github/workflows/android-build.yml"
       - ".github/workflows/verify-device-bridge-pages-apk.yml"
+      - "scripts/check-public-distribution-hold.mjs"
+      - "tests/public-distribution-hold.test.mjs"
   workflow_dispatch:
-
+permissions:
+  contents: read
 jobs:
-  verify-pages-apk:
+  verify-release-hold:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Read expected Android version from source
-        id: expected
-        shell: bash
-        run: |
-          VERSION=$(grep -oP 'versionName = "\K[^"]+' apps/android/app/build.gradle.kts)
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-      - name: Wait for GitHub Pages latest package
-        shell: bash
-        env:
-          EXPECTED_VERSION: ${{ steps.expected.outputs.version }}
-        run: |
-          set -euo pipefail
-          META="https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/downloads/leeway-device-bridge-android-latest.json"
-          APK="https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/downloads/leeway-device-bridge-android-latest-debug.apk"
-          ok=0
-          for i in $(seq 1 30); do
-            if curl -fsSL --max-time 20 "$META" -o latest.json; then
-              VERSION=$(node -e 'const v=require("./latest.json");process.stdout.write(String(v.versionName||""))')
-              if [ "$VERSION" = "$EXPECTED_VERSION" ]; then ok=1; break; fi
-            fi
-            sleep 10
-          done
-          test "$ok" -eq 1
-          EXPECTED=$(node -e 'const v=require("./latest.json");process.stdout.write(String(v.sha256||""))')
-          curl -fL --max-time 240 "$APK" -o latest.apk
-          ACTUAL=$(sha256sum latest.apk | awk '{print $1}')
-          test "$ACTUAL" = "$EXPECTED"
-          BYTES=$(stat -c%s latest.apk)
-          echo "version=$EXPECTED_VERSION"
-          echo "sha256=$ACTUAL"
-          echo "bytes=$BYTES"
-          printf '%s\n' "{\"versionName\":\"$EXPECTED_VERSION\",\"sha256\":\"$ACTUAL\",\"sizeBytes\":$BYTES,\"pagesDownload\":\"PASS\"}" > pages-apk-verification.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/setup-node@v4
         with:
-          name: device-bridge-pages-apk-verification
-          path: pages-apk-verification.json
+          node-version: '22'
+      - name: Deny unqualified public Android or Apple installers
+        run: node scripts/check-public-distribution-hold.mjs
+      - name: Confirm held-update and device-owned data safeguards
+        run: node --test tests/public-distribution-hold.test.mjs
