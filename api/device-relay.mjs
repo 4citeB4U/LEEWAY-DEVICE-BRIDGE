@@ -392,6 +392,26 @@ function createRelayServer({ rooms = new Map() } = {}) {
         const parsedUrl = new URL(req.url, 'http://127.0.0.1');
         const filename = path.basename(parsedUrl.pathname);
         const filePath = path.resolve(__dirname, '../docs/downloads', filename);
+        // Critical release hold: do not stream the exact APK while its
+        // canonical public manifest marks it ineligible for distribution.
+        // This is a source-side control; live Funnel deployment/readback
+        // requires independent verification by the owning host.
+        if (filename === 'leeway-device-bridge-android-latest-release.apk') {
+          let releaseMetadata;
+          try {
+            releaseMetadata = JSON.parse(fs.readFileSync(
+              path.resolve(__dirname, '../docs/downloads/leeway-device-bridge-android-latest.json'), 'utf8'
+            ));
+          } catch {
+            res.setHeader('cache-control', 'no-store');
+            return json(res, 503, { ok: false, error: 'RELEASE_METADATA_UNAVAILABLE', releaseAuthorized: false });
+          }
+          if (releaseMetadata.downloadEnabled !== true ||
+              releaseMetadata.releaseState === 'SECURITY_HOLD_SIGNING_IDENTITY_EXPOSED') {
+            res.setHeader('cache-control', 'no-store');
+            return json(res, 503, { ok: false, error: 'RELEASE_SECURITY_HOLD', releaseAuthorized: false });
+          }
+        }
         if (!fs.existsSync(filePath)) {
           return json(res, 404, { ok: false, error: 'DOWNLOAD_NOT_FOUND', file: filename });
         }
