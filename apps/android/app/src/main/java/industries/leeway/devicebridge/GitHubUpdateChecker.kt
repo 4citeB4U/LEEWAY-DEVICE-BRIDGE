@@ -61,6 +61,22 @@ object GitHubUpdateChecker {
                     if (!response.isSuccessful) error("MANIFEST_HTTP_${response.code}")
                     val manifest = JSONObject(response.body?.string().orEmpty())
                     val packageEntry = findAndroidPackage(manifest)
+                    // Release admission is independent of build success and SHA parity.
+                    // Never convert a development or security-held Pages manifest
+                    // into an Android installation prompt.
+                    require(packageEntry.optString("status") == "AUTHORIZED_RELEASED" &&
+                        packageEntry.optString("releaseState") == "AUTHORIZED_RELEASED" &&
+                        packageEntry.optBoolean("downloadEnabled", false) &&
+                        packageEntry.optBoolean("publicReleaseAuthorized", false) &&
+                        packageEntry.optString("channel") == "production" &&
+                        packageEntry.optString("authorizedReleaseEvidenceRef").isNotBlank() &&
+                        packageEntry.optString("signingCertificateSha256")
+                            .matches(Regex("^[a-fA-F0-9]{64}$"))) { "ANDROID_RELEASE_NOT_AUTHORIZED" }
+                    val candidateUrl = packageEntry.optString("downloadUrl")
+                    require(candidateUrl.endsWith(".apk", ignoreCase = true) &&
+                        !candidateUrl.contains("debug", ignoreCase = true)) {
+                        "ANDROID_RELEASE_URL_NOT_QUALIFIED"
+                    }
                     val remoteCode = packageEntry.getLong("versionCode")
                     val currentCode = appContext.packageManager
                         .getPackageInfo(appContext.packageName, 0).longVersionCode
@@ -78,6 +94,7 @@ object GitHubUpdateChecker {
                             put("sha256", sha256)
                             put("sizeBytes", packageEntry.optLong("sizeBytes", -1L))
                             put("source", "GITHUB_PACKAGE_MANIFEST")
+                            put("releaseEligible", true)
                         }
                         prefs.edit().putString(PENDING_UPDATE, update.toString()).apply()
                         ReceiptStore.record(
@@ -90,6 +107,7 @@ object GitHubUpdateChecker {
                     }
                 }
             } catch (error: Throwable) {
+                prefs.edit().remove(PENDING_UPDATE).apply()
                 ReceiptStore.record(
                     appContext,
                     "device.apps.update.check",
@@ -106,6 +124,9 @@ object GitHubUpdateChecker {
         val value = prefs.getString(PENDING_UPDATE, null) ?: return null
         prefs.edit().remove(PENDING_UPDATE).apply()
         return runCatching { JSONObject(value) }.getOrNull()
+            ?.takeIf { it.optBoolean("releaseEligible", false) &&
+                it.optString("url").endsWith(".apk", ignoreCase = true) &&
+                !it.optString("url").contains("debug", ignoreCase = true) }
     }
 
     private fun findAndroidPackage(manifest: JSONObject): JSONObject {
