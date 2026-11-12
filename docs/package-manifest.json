@@ -27,18 +27,18 @@
       "source": "github-pages"
     },
     "android": {
-      "state": "AVAILABLE",
-      "updateMode": "CHECK_PROMPT_AND_ANDROID_INSTALLER",
+      "state": "SOURCE_ONLY",
+      "updateMode": "RELEASE_HOLD_NO_PUBLIC_INSTALL",
       "source": "github-pages"
     },
     "ios": {
-      "state": "AVAILABLE",
-      "updateMode": "CHECK_PROMPT_AND_ILOADER_GITHUB_IMPORT",
+      "state": "SOURCE_ONLY",
+      "updateMode": "UNSIGNED_IPA_SOURCE_ONLY_NATIVE_DEVICE_INSTALL_UNVERIFIED",
       "source": "github-release"
     },
     "ipados": {
-      "state": "AVAILABLE",
-      "updateMode": "CHECK_PROMPT_AND_ILOADER_GITHUB_IMPORT",
+      "state": "SOURCE_ONLY",
+      "updateMode": "UNSIGNED_IPA_SOURCE_ONLY_NATIVE_DEVICE_INSTALL_UNVERIFIED",
       "source": "github-release"
     },
     "windows": {
@@ -65,11 +65,11 @@
       "channel": "development",
       "label": "LeeWay Device Bridge Android Native Capability Extension",
       "source": "github-pages",
-      "status": "QUALIFIED_ARTIFACT_OWNER_INSTALL_REQUIRED",
-      "nativeVerification": true,
+      "status": "SECURITY_HOLD_NOT_QUALIFIED",
+      "nativeVerification": false,
       "runtimeLocation": "phone",
       "dockerRequired": false,
-      "downloadUrl": "./downloads/leeway-device-bridge-android-latest-debug.apk",
+      "downloadUrl": null,
       "sha256": "938fc3b765b3df61003c2fa6880a8abf3ae9a8c1427542be620a27f7de3ca85a",
       "sizeBytes": 66445858,
       "formulaQualification": {
@@ -87,13 +87,17 @@
         "instruction": "Attempt install as an update. If Android reports a signature/package conflict, do not uninstall automatically; preserve existing app data and use the controlled migration path."
       },
       "githubActionsQualification": {
-        "state": "VERIFIED",
+        "state": "SOURCE_CI_ONLY_RELEASE_NOT_QUALIFIED",
         "runId": 43308557689,
         "headSha": "07f76bef0b54025aed8c0d6c2df40abb91495bca",
         "apkSizeBytes": 66445858,
         "apkSha256": "938fc3b765b3df61003c2fa6880a8abf3ae9a8c1427542be620a27f7de3ca85a",
-        "note": "The Android app checks this manifest on foreground and reconnect, downloads the verified APK, and opens Android's owner-confirmed installer. It does not silently install or erase app data."
-      }
+        "note": "Build artifact and matching SHA do not confer OS trust, physical install, signing identity, production Veritas or permission to publish. No current public APK download authorized."
+      },
+      "downloadEnabled": false,
+      "publicReleaseAuthorized": false,
+      "releaseState": "SECURITY_HOLD_NOT_QUALIFIED",
+      "historicalSourceRunId": 43308557689
     },
     {
       "id": "apple-native",
@@ -102,12 +106,12 @@
       "channel": "stable-owner-channel",
       "label": "LeeWay Device Bridge for Apple",
       "source": "github-release",
-      "status": "QUALIFIED_ARTIFACT_OWNER_INSTALL_REQUIRED",
-      "nativeVerification": true,
+      "status": "UNSIGNED_IPA_SOURCE_ONLY_PHYSICAL_INSTALL_UNVERIFIED",
+      "nativeVerification": false,
       "runtimeLocation": "phone",
       "dockerRequired": false,
       "releaseUrl": "https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/tag/apple-latest",
-      "downloadUrl": "https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/download/apple-latest/LeeWayDeviceBridge-unsigned.ipa",
+      "downloadUrl": null,
       "metadataUrl": "https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/download/apple-latest/LEEWAY-APPLE-PACKAGE-MANIFEST.json",
       "sha256": "9508c0173af179a639607934eb6fd1dbf2cd39203c25467eb4852ba01fa0db10",
       "sizeBytes": 376212,
@@ -120,13 +124,16 @@
         "targetMaxBytes": 104857600
       },
       "githubActionsQualification": {
-        "state": "VERIFIED",
+        "state": "SOURCE_AND_UNSIGNED_BUILD_ONLY",
         "runId": 42572156968,
         "sourceRevision": "5ddce9aae9509386a9878c679b39dafbbe4de266",
         "ipaSizeBytes": 376212,
         "ipaSha256": "9508c0173af179a639607934eb6fd1dbf2cd39203c25467eb4852ba01fa0db10",
         "note": "GitHub publishes the unsigned IPA; the owner-controlled iLoader route signs and installs it over USB."
-      }
+      },
+      "releaseState": "OWNER_SIGNING_AND_DEVICE_INSTALL_REQUIRED",
+      "downloadEnabled": false,
+      "publicReleaseAuthorized": false
     }
   ],
   "updatedAtUtc": "2026-11-12T21:18:07Z"
