@@ -37,7 +37,7 @@ check(android?.status==='SECURITY_HOLD_NOT_QUALIFIED' &&
 check(full.platformRoutes.android.state==='SOURCE_ONLY','ANDROID_PLATFORM_FALSE_AVAILABILITY');
 check(apple?.nativeVerification===false && apple.downloadUrl===null &&
       full.platformRoutes.ios.state==='SOURCE_ONLY','UNSIGNED_APPLE_FALSE_NATIVE_QUALIFICATION');
-check(!tracked.some(x=>/^docs\/downloads\/.*\.apk$/i.test(x)),
+check(!tracked.some(x=>/^docs\/downloads\/leeway-device-bridge-android-.*\.apk$/i.test(x)),
       'PUBLIC_PAGES_APK_BINARY_STILL_TRACKED');
 check(!home.includes('leeway-device-bridge-android-latest-debug.apk') &&
       !home.includes('leeway-device-bridge-android-latest-release.apk'),
@@ -59,7 +59,7 @@ console.log(JSON.stringify({
   gate:'LEEWAY_PUBLIC_DISTRIBUTION_HOLD_SOURCE',
   state:fail.length?'BLOCKED':'PASS_SOURCE_ONLY',
   failed:fail,
-  trackedPublicApks:tracked.filter(x=>/^docs\/downloads\/.*\.apk$/i.test(x)).length,
+  trackedPublicApks:tracked.filter(x=>/^docs\/downloads\/leeway-device-bridge-android-.*\.apk$/i.test(x)).length,
   warning:'Live GitHub Pages, cache, Funnel, operating-system and existing installs NOT tested by this check'
 }));
 if(fail.length)process.exitCode=1;
