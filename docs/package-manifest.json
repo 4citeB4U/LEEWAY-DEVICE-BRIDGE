@@ -70,28 +70,28 @@
       "runtimeLocation": "phone",
       "dockerRequired": false,
       "downloadUrl": "./downloads/leeway-device-bridge-android-latest-debug.apk",
-      "sha256": "6d092813cd6a6fbd4dc3a2811aebeabf4a137cbe398bd09048d315232c7e2c71",
-      "sizeBytes": 66462262,
+      "sha256": "b6fdb4e46ced30ac81dfa83a3477bb1c88a4881386c94f6d3db16d3573840be1",
+      "sizeBytes": 66445858,
       "formulaQualification": {
         "required": true,
         "status": "MEASURED_SIZE_GATE_PASS_NO_COMPRESSION_REQUIRED",
         "targetMaxBytes": 104857600,
         "rule": "No compression ratio or reconstruction claim without measured evidence.",
-        "measuredBytes": 66462262,
-        "measuredSha256": "6d092813cd6a6fbd4dc3a2811aebeabf4a137cbe398bd09048d315232c7e2c71"
+        "measuredBytes": 66445858,
+        "measuredSha256": "b6fdb4e46ced30ac81dfa83a3477bb1c88a4881386c94f6d3db16d3573840be1"
       },
-      "versionName": "0.10.0-agent-update-rc1",
-      "versionCode": 25,
+      "versionName": "0.10.0-sovereign-rc2",
+      "versionCode": 26,
       "upgradeSafety": {
         "inPlaceSignatureCompatibility": "UNVERIFIED",
         "instruction": "Attempt install as an update. If Android reports a signature/package conflict, do not uninstall automatically; preserve existing app data and use the controlled migration path."
       },
       "githubActionsQualification": {
         "state": "VERIFIED",
-        "runId": 43086947439,
-        "headSha": "cb21135b680a344caf391f5352c7bcd80825318a",
-        "apkSizeBytes": 66462262,
-        "apkSha256": "6d092813cd6a6fbd4dc3a2811aebeabf4a137cbe398bd09048d315232c7e2c71",
+        "runId": 43298060422,
+        "headSha": "9f6a54988a7f44b07c8a8ee260990d21ca4388f9",
+        "apkSizeBytes": 66445858,
+        "apkSha256": "b6fdb4e46ced30ac81dfa83a3477bb1c88a4881386c94f6d3db16d3573840be1",
         "note": "The Android app checks this manifest on foreground and reconnect, downloads the verified APK, and opens Android's owner-confirmed installer. It does not silently install or erase app data."
       }
     },
@@ -129,5 +129,5 @@
       }
     }
   ],
-  "updatedAtUtc": "2026-11-11T19:26:33Z"
+  "updatedAtUtc": "2026-11-12T20:14:45Z"
 }
