@@ -11,6 +11,7 @@ import { createServer } from 'node:http';
 import { createHash, timingSafeEqual, randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { publicApkReleaseAuthorized } from '../operator/public-apk-release-policy.mjs';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer, WebSocket } from 'ws';
 
@@ -406,14 +407,7 @@ function createRelayServer({ rooms = new Map() } = {}) {
             res.setHeader('cache-control', 'no-store');
             return json(res, 503, { ok: false, error: 'RELEASE_METADATA_UNAVAILABLE', releaseAuthorized: false });
           }
-          if (releaseMetadata.downloadEnabled !== true ||
-              releaseMetadata.releaseState !== 'AUTHORIZED_RELEASED' ||
-              typeof releaseMetadata.downloadUrl !== 'string' ||
-              path.basename(new URL(releaseMetadata.downloadUrl, 'http://127.0.0.1').pathname) !== filename ||
-              !/^[a-f0-9]{64}$/i.test(releaseMetadata.sha256 || '') ||
-              !releaseMetadata.signingCertificateSha256 ||
-              !releaseMetadata.authorizedReleaseEvidenceRef ||
-              filename.toLowerCase().includes('debug')) {
+          if (!publicApkReleaseAuthorized(filename, releaseMetadata)) {
             res.setHeader('cache-control', 'no-store');
             return json(res, 503, { ok: false, error: 'RELEASE_SECURITY_HOLD', releaseAuthorized: false });
           }
