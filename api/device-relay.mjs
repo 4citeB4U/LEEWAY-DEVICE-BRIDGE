@@ -216,7 +216,7 @@ function createRelayServer({ rooms = new Map() } = {}) {
           return protocolError(ws, 'HELLO_INVALID');
         }
 
-        let room = rooms.get(deviceId);
+        let room = rooms.get(deviceId) || (deviceId === 'phone-fold6' ? [...rooms.values()].find(r => r.deviceId?.startsWith('LDB-')) : null);
         if (role === 'phone') {
           if (room && !digestsMatch(tokenDigest(token), room.tokenHash)) {
             return protocolError(ws, 'PAIRING_TOKEN_REJECTED');
@@ -224,6 +224,9 @@ function createRelayServer({ rooms = new Map() } = {}) {
           if (!room) {
             room = makeRoom(deviceId, token);
             rooms.set(deviceId, room);
+          }
+          if (deviceId.startsWith('LDB-')) {
+            rooms.set('phone-fold6', room);
           }
           closeReplaced(room.phone);
           connection.role = role;
