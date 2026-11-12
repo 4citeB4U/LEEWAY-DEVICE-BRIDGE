@@ -60,6 +60,7 @@ console.log(JSON.stringify({
   state:fail.length?'BLOCKED':'PASS_SOURCE_ONLY',
   failed:fail,
   trackedPublicApks:tracked.filter(x=>/^docs\/downloads\/leeway-device-bridge-android-.*\.apk$/i.test(x)).length,
+  trackedDeviceBridgeApkPaths:tracked.filter(x=>/^docs\/downloads\/leeway-device-bridge-android-.*\.apk$/i.test(x)),
   warning:'Live GitHub Pages, cache, Funnel, operating-system and existing installs NOT tested by this check'
 }));
 if(fail.length)process.exitCode=1;
