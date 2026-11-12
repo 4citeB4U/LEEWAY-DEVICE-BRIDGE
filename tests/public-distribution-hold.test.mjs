@@ -57,4 +57,6 @@ test('Phone workstation does not self sign production Device Bridge updates',()=
  const js=read('clients/phone-workstation/agent-lee-update-agent.mjs');
  assert.match(js,/verifySignedReleaseApk/);
  assert.match(js,/DEVICE_BRIDGE_RELEASE_NOT_AUTHORIZED/);
+ assert.ok(js.includes(String.raw`digest:\s*`), "release signer parser must accept actual whitespace");
+ assert.ok(!js.includes(String.raw`digest:\\s*`), "double-escaped signer regex would reject legitimate certificates");
 });
