@@ -1,0 +1,28 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.DEVICE_BRIDGE.CI.PUBLIC_RELEASE
+# TAG: LEEWAY.CI.PUBLIC_APK_RELEASE_ADMISSION.V1
+# DISCOVERY_PIPELINE: Voice → Intent → Location → Vertical → Ranking → Render
+# 5WH:
+# WHAT = Test fail-closed Android APK public release eligibility for the Device Bridge.
+# WHY = Forbid debug artifact bypass of the OS-trust hold.
+# WHO = Device Bridge source owner and release security CI.
+# WHERE = .github/workflows/public-apk-release-policy.yml.
+# WHEN = 2026-11-12.
+# HOW = Node tests for exact signed release metadata; hardware/Funnel tests separate.
+# LICENSE: Existing repository terms remain unchanged.
+name: Device Bridge Public APK Release Admission
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  public-apk-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/public-apk-release-policy.test.mjs
