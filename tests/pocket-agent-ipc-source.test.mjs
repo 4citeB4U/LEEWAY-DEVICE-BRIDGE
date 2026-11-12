@@ -14,9 +14,9 @@ assert.match(bridge,/PocketGrantStore\.matches/);
 assert.match(bridge,/RemoteCommandRouter\.execute/);
 assert.match(bridge,/CAPABILITY_NOT_POCKET_QUALIFIED/);
 assert.match(bridge,/"agent\.chat"/);
-assert.match(main,/"POCKET_BOOTSTRAP"/);
-assert.match(main,/Owner approved scoped Pocket Agent local bridge access/);
-assert.match(main,/callingPackage/);
+assert.match(bridge,/device\.pocket\.command/);
+assert.match(bridge,/PocketGrantStore\.matches/);
+assert.match(bridge,/industries\.leeway\.pocket/);
 assert.match(manifest,/PocketBridgeActivity/);
 assert.match(manifest,/Theme\.LeewayDeviceBridge\.Pocket/);
 

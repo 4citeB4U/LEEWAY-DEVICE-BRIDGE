@@ -23,8 +23,8 @@ test("maps Agent Skills device routes into existing canonical Android authoritie
 });
 
 test("fails closed on unsupported file and UI routes", () => {
-  assert.match(source, /CAPABILITY_NOT_IMPLEMENTED_BY_CURRENT_CANONICAL_ANDROID_ROUTER/);
-  assert.match(source, /UI_ACTION_NOT_YET_MAPPED_TO_EXISTING_ANDROID_ROUTER/);
+  assert.match(source, /AppContainerFileBroker\.read/);
+  assert.match(source, /UNKNOWN_TOOL_ROUTE/);
   assert.match(source, /postcondition_verified/);
   assert.match(source, /verifyPostcondition/);
 });

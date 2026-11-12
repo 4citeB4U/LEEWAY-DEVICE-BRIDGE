@@ -9,7 +9,7 @@ const main=fs.readFileSync(base+"/java/industries/leeway/devicebridge/MainActivi
 const bootstrap=fs.readFileSync("clients/phone-workstation/bootstrap-desktop-commander.sh","utf8");
 const gradle=fs.readFileSync("apps/android/app/build.gradle.kts","utf8");
 
-assert.match(manifest,/com\.termux\.permission\.RUN_COMMAND/);
+assert.doesNotMatch(manifest,/com\.termux\.permission\.RUN_COMMAND/);
 assert.match(keeper,/com\.termux\.RUN_COMMAND/);
 assert.match(keeper,/com\.termux\.app\.RunCommandService/);
 assert.match(keeper,/RUN_COMMAND_PATH/);
@@ -22,8 +22,8 @@ assert.match(relay,/WORKSTATION_KEEPER_INTERVAL_MS = 30_000L/);
 assert.match(relay,/WorkstationKeeper\.ensure/);
 assert.match(relay,/START_STICKY/);
 
-assert.match(main,/AUTHORIZE BACKGROUND WORKSTATION KEEPER/);
-assert.match(main,/WorkstationKeeper\.TERMUX_PERMISSION/);
+assert.match(main,/workstation\.background\.permission/);
+assert.match(main,/WorkstationKeeper\.hasPermission/);
 assert.match(main,/requestPermissions/);
 
 assert.match(bootstrap,/allow-external-apps=true/);
@@ -33,7 +33,7 @@ assert.match(bootstrap,/setsid nohup desktop-commander remote/);
 assert.match(bootstrap,/flock -n 9/);
 assert.match(bootstrap,/while true/);
 
-assert.match(gradle,/versionCode = 25/);
-assert.match(gradle,/versionName = "0\.10\.0-agent-update-rc1"/);
+assert.match(gradle,/versionCode = 26/);
+assert.match(gradle,/versionName = "0\.10\.0-sovereign-rc2"/);
 
 console.log("PASS android-workstation-keeper-source");

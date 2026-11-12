@@ -15,5 +15,5 @@ test("Apple receipt source binds a local Metal observation without claiming exte
   assert.match(receiptSource, /ios-install-sha256:/);
   assert.match(receiptSource, /maximumReceiptCount = 32/);
   assert.match(viewSource, /ShareLink\(item: receipt\.exportText\)/);
-  assert.match(viewSource, /NOT_CREATED/);
+  assert.match(viewSource, /External Veritas certification remains separate/);
 });

@@ -24,11 +24,10 @@ assert.match(secret,/ByteArray\(32\)/);
 assert.match(selfTest,/ownerTokenAcceptedInternally/);
 assert.match(selfTest,/secretExported/);
 assert.match(selfTest,/FormulaF8Gate\.evaluate/);
-assert.match(activity,/RUN BRIDGE SELF-TEST/);
-assert.match(activity,/STOP AGENT ACCESS/);
-assert.match(activity,/SHOW PAIRING TOKEN/);
-assert.match(activity,/LocalBridgeServer\.start/);
+assert.match(activity,/LocalAuthority\.setAgentAccess/);
+assert.match(activity,/COPY PAIRING TOKEN/);
+assert.match(activity,/RemoteRelayService\.start/);
 assert.match(manifest,/android\.permission\.INTERNET/);
-assert.match(gradle,/versionName = "0\.10\.0-agent-update-rc1"/);
+assert.match(gradle,/versionName = "0\.10\.0-sovereign-rc2"/);
 
 console.log("PASS android live runtime source contract");

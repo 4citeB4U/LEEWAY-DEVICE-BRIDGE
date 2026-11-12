@@ -19,8 +19,8 @@ assert.match(src,/EngineConfig/);
 assert.match(src,/Backend\.CPU/);
 assert.match(src,/MODEL_HASH_MISMATCH/);
 assert.match(gradle,/litertlm-android/);
-assert.match(main,/DOWNLOAD LOCAL MODEL/);
-assert.match(main,/RUN LOCAL MODEL TEST/);
+assert.match(src,/fun download/);
+assert.match(src,/fun status/);
 assert.equal(manifest.models[0].executionLocation,"PHONE_LOCAL");
 assert.equal(manifest.models[0].verificationRequired,true);
 

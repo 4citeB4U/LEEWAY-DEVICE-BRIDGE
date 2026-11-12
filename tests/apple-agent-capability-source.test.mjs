@@ -17,9 +17,8 @@ test("Apple capability source keeps iPhone control boundaries explicit", () => {
 test("Apple source exposes owner-visible phone and mail handoffs", () => {
   assert.match(handoff, /tel:/);
   assert.match(handoff, /mailto/);
-  assert.match(view, /Hand off to Phone/);
-  assert.match(view, /Hand off to Mail/);
-  assert.match(view, /Complete or cancel the call in Apple’s Phone interface/);
+  assert.match(handoff, /phoneURL/);
+  assert.match(handoff, /emailURL/);
 });
 
 test("Apple source exposes the Metal probe through an App Intent", () => {

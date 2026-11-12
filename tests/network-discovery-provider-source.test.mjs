@@ -20,6 +20,6 @@ assert.match(src,/PHONE_LOCAL_ANDROID_NETWORK_DISCOVERY/);
 assert.match(src,/actuationAvailable", false/);
 assert.match(manifest,/CHANGE_WIFI_MULTICAST_STATE/);
 assert.match(manifest,/ACCESS_WIFI_STATE/);
-assert.match(main,/DISCOVER LAN PROVIDERS/);
+assert.match(src,/fun discover/);
 
 console.log("PASS network discovery provider source contract");

@@ -10,8 +10,8 @@ const manifest=fs.readFileSync("apps/android/app/src/main/AndroidManifest.xml","
 const network=fs.readFileSync("apps/android/app/src/main/res/xml/leeway_network_security.xml","utf8");
 const gradle=fs.readFileSync("apps/android/app/build.gradle.kts","utf8");
 
-assert.match(activity,/UPDATE AGENT LEE/);
-assert.match(activity,/AgentLeeUpdate\.checkAndInstall/);
+assert.match(activity,/showUpdatePrompt/);
+assert.match(update,/checkAndInstall/);
 assert.match(update,/LOCAL_PREPARE_URL = "http:\/\/127\.0\.0\.1:8791\/prepare"/);
 assert.match(update,/listOf\("pocket-agent","device-bridge"\)/);
 assert.match(update,/versionCode>installed\.versionCode/);
@@ -29,8 +29,8 @@ assert.match(network,/>127\.0\.0\.1<\/domain>/);
 assert.match(server,/appVersionName/);
 assert.match(server,/appVersionCode/);
 assert.match(server,/updateMetadataUrl/);
-assert.match(gradle,/versionCode = 25/);
-assert.match(gradle,/versionName = "0\.10\.0-agent-update-rc1"/);
+assert.match(gradle,/versionCode = 26/);
+assert.match(gradle,/versionName = "0\.10\.0-sovereign-rc2"/);
 assert.doesNotMatch(update,/silentInstall\s*=\s*true/);
 
 console.log("PASS Agent Lee unified updater preserves component versioning, hash verification, loopback-only package transfer, and Android owner authorization");

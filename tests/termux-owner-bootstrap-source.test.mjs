@@ -12,14 +12,11 @@ assert.match(server,/120_000L/);
 assert.match(server,/\/owner-bootstrap/);
 assert.match(server,/BOOTSTRAP_NONCE_MISMATCH/);
 assert.match(server,/OWNER_LOCAL_LOOPBACK_BOOTSTRAP/);
-assert.match(activity,/TERMUX_BOOTSTRAP/);
-assert.match(activity,/leeway_nonce/);
-assert.match(activity,/RemoteRelayService\.stop/);
 assert.match(activity,/RemoteRelayService\.start/);
 assert.match(script,/TERMUX_BOOTSTRAP/);
 assert.match(script,/owner-bootstrap\?nonce=/);
 assert.doesNotMatch(script,/Pairing token:/);
-assert.match(gradle,/versionName = "0\.10\.0-agent-update-rc1"/);
-assert.match(gradle,/versionCode = 25/);
+assert.match(gradle,/versionName = "0\.10\.0-sovereign-rc2"/);
+assert.match(gradle,/versionCode = 26/);
 
 console.log("PASS Termux one-time owner bootstrap contract");

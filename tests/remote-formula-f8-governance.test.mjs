@@ -26,7 +26,7 @@ assert.doesNotMatch(router,/qA/);
 assert.match(service,/seenCommandIds/);
 assert.match(service,/seenCommandIds\.add\(id\)/);
 assert.match(service,/RemoteCommandRouter\.execute\(this, id, capability, args, firstSeen\)/);
-assert.match(main,/Owner enabled always-on remote bridge/);
-assert.match(main,/RemoteRelayService\.stop\(this@MainActivity\)/);
+assert.match(main,/Owner started RemoteRelayService/);
+assert.match(main,/RemoteRelayService\.start\(this@MainActivity\)/);
 
 console.log("PASS remote local-eligibility governance and Formula truth contract");
