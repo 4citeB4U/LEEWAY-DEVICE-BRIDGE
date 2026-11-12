@@ -95,7 +95,7 @@ function verifySignedReleaseApk(file, expectedFingerprint){
   const env={...process.env,LD_LIBRARY_PATH:SHIM};
   const r=spawnSync(APKSIGNER,['verify','--verbose','--print-certs',file],{env,encoding:'utf8'});
   if(r.status!==0)throw Error('ANDROID_RELEASE_SIGNATURE_INVALID');
-  const fp=(r.stdout+r.stderr).match(/Signer #1 certificate SHA-256 digest:\\s*([a-f0-9]+)/i)?.[1]?.toLowerCase();
+  const fp=(r.stdout+r.stderr).match(/Signer #1 certificate SHA-256 digest:\s*([a-f0-9]+)/i)?.[1]?.toLowerCase();
   if(!fp||fp!==String(expectedFingerprint).toLowerCase())
     throw Error('ANDROID_RELEASE_SIGNER_MISMATCH');
   return fp;
