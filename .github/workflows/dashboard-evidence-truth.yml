@@ -1,0 +1,28 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.DEVICE_BRIDGE.CI.DASHBOARD_TRUTH
+# TAG: LEEWAY.CI.DASHBOARD_EVIDENCE_TRUTH.V1
+# DISCOVERY_PIPELINE: Voice → Intent → Location → Vertical → Ranking → Render
+# 5WH:
+# WHAT = Enforce truth-state, published secret redaction and dashboard parity.
+# WHY = Disallow fabricated file/voice/vision evidence and public static pairing credentials.
+# WHO = Device Bridge original source/release owner.
+# WHERE = .github/workflows/dashboard-evidence-truth.yml.
+# WHEN = 2026-11-12.
+# HOW = Node static source tests; live production readback separate.
+# LICENSE: Existing repository terms remain unchanged.
+name: Device Bridge Dashboard Evidence Truth
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  truthful-dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/dashboard-evidence-truth.test.mjs
