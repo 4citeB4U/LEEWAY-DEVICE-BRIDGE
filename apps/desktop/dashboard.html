@@ -223,8 +223,8 @@
         <h1>Unified Device Bridge Dashboard</h1>
       </div>
       <div class="header-right">
-        <span class="badge badge-relay" id="relayPill">● RELAY ACTIVE (PORT 8008)</span>
-        <span class="badge badge-version">v0.10.0-rc1</span>
+        <span class="badge badge-relay" id="relayPill">● RELAY UNPROBED</span>
+        <span class="badge badge-version">DASHBOARD VIEW — UNQUALIFIED</span>
       </div>
     </div>
 
@@ -240,7 +240,7 @@
               <div class="sub">pc-primary (Lenovo 83NX · Windows 11)</div>
             </div>
           </div>
-          <span class="node-pill pill-green" id="pill-pc-primary">ONLINE</span>
+          <span class="node-pill pill-green" id="pill-pc-primary">UNPROBED</span>
         </div>
         <div class="node-row">
           <div class="node-info">
@@ -250,7 +250,7 @@
               <div class="sub">phone-fold6 (SM-F956U · Snapdragon 8 Gen 3)</div>
             </div>
           </div>
-          <span class="node-pill pill-blue" id="pill-phone-fold6">CONNECTED</span>
+          <span class="node-pill pill-blue" id="pill-phone-fold6">UNPROBED</span>
         </div>
         <div class="node-row">
           <div class="node-info">
@@ -260,7 +260,7 @@
               <div class="sub">pc-hp-secondary (Subnet 192.168.1.101)</div>
             </div>
           </div>
-          <span class="node-pill pill-green" id="pill-pc-hp-secondary">ONLINE</span>
+          <span class="node-pill pill-green" id="pill-pc-hp-secondary">UNPROBED</span>
         </div>
         <div class="node-row">
           <div class="node-info">
@@ -270,7 +270,7 @@
               <div class="sub">phone-apple-iphone (A13 Bionic · UDID 00008030...)</div>
             </div>
           </div>
-          <span class="node-pill pill-purple" id="pill-phone-apple-iphone">SUPERVISOR</span>
+          <span class="node-pill pill-purple" id="pill-phone-apple-iphone">UNPROBED</span>
         </div>
       </div>
     </div>
@@ -279,12 +279,12 @@
     <div class="card">
       <div class="card-title">THIS NODE TELEMETRY & BEDROCK COMPUTE</div>
       <div class="telemetry-grid" id="telemetryGrid">
-        <div class="telemetry-row"><span>NODE IDENTIFIER:</span><span id="tel-id">pc-primary</span></div>
-        <div class="telemetry-row"><span>ROLE:</span><span id="tel-role">PRIMARY_GPU_WORKSTATION</span></div>
-        <div class="telemetry-row"><span>PLATFORM:</span><span id="tel-platform">Microsoft Windows 11 Home</span></div>
-        <div class="telemetry-row"><span>RELAY STATUS:</span><span id="tel-relay" style="color:var(--status-green)">CONNECTED (PORT 8008)</span></div>
-        <div class="telemetry-row"><span>GPU COMPUTE:</span><span id="tel-gpu">DirectX 12 / Vulkan 1.3 / CUDA</span></div>
-        <div class="telemetry-row"><span>MACHINE CONSCIOUSNESS:</span><span id="tel-mc">CONTINUUM ARMED (G3 STAGE BANKED)</span></div>
+        <div class="telemetry-row"><span>NODE IDENTIFIER:</span><span id="tel-id">UNBOUND_BROWSER_VIEW</span></div>
+        <div class="telemetry-row"><span>ROLE:</span><span id="tel-role">READ_ONLY_DASHBOARD</span></div>
+        <div class="telemetry-row"><span>PLATFORM:</span><span id="tel-platform">CLIENT_PLATFORM_UNVERIFIED</span></div>
+        <div class="telemetry-row"><span>RELAY STATUS:</span><span id="tel-relay">NOT_PROBED</span></div>
+        <div class="telemetry-row"><span>GPU COMPUTE:</span><span id="tel-gpu">NOT_PROBED</span></div>
+        <div class="telemetry-row"><span>MACHINE CONSCIOUSNESS:</span><span id="tel-mc">NOT_PROBED</span></div>
         <div class="telemetry-row" style="grid-column: span 2;"><span>PUBLIC FUNNEL:</span><span id="tel-funnel">wss://agent-lee.tailb186e7.ts.net/api/device-relay</span></div>
       </div>
     </div>
@@ -301,7 +301,7 @@
               <div class="sub">Hardware compute observation, VRAM inspection & continuum memory</div>
             </div>
           </div>
-          <span class="node-pill pill-green">ARMED</span>
+          <span class="node-pill pill-amber">NOT PROBED</span>
         </div>
         <div class="node-row">
           <div class="node-info">
@@ -311,7 +311,7 @@
               <div class="sub">Offline speech synthesis, duplex recognition & voice fabric adapter</div>
             </div>
           </div>
-          <button class="styled-btn success" style="flex:0 0 auto; min-width:140px; padding:6px 12px; font-size:11px;" onclick="activateVoice()">ACTIVATE VOICE</button>
+          <button class="styled-btn success" style="flex:0 0 auto; min-width:140px; padding:6px 12px; font-size:11px;" onclick="activateVoice()">VOICE STATUS</button>
         </div>
         <div class="node-row">
           <div class="node-info">
@@ -321,7 +321,7 @@
               <div class="sub">Real-time camera frames, media scanner & OCR inspection</div>
             </div>
           </div>
-          <button class="styled-btn" style="flex:0 0 auto; min-width:140px; padding:6px 12px; font-size:11px;" onclick="activateVision()">ACTIVATE VISION</button>
+          <button class="styled-btn" style="flex:0 0 auto; min-width:140px; padding:6px 12px; font-size:11px;" onclick="activateVision()">VISION STATUS</button>
         </div>
         <div class="node-row">
           <div class="node-info">
@@ -331,7 +331,7 @@
               <div class="sub">Atomic write, readback byte verification & SHA-256 evidence logging</div>
             </div>
           </div>
-          <span class="node-pill pill-blue">APP_CONTAINER ACTIVE</span>
+          <span class="node-pill pill-amber">NOT PROBED</span>
         </div>
       </div>
     </div>
@@ -342,8 +342,8 @@
       <div class="btn-grid">
         <button class="styled-btn primary" onclick="refreshMesh()">REFRESH MESH STATUS</button>
         <button class="styled-btn" onclick="runProbe('phone-fold6')">PROBE FOLD6 (SM-F956U)</button>
-        <button class="styled-btn" onclick="testFileHop()">TEST 4-NODE FILE HOP</button>
-        <button class="styled-btn" onclick="copyPairingToken()">COPY PAIRING SECRET</button>
+        <button class="styled-btn" onclick="testFileHop()">FILE HOP STATUS</button>
+        <button class="styled-btn" onclick="copyPairingToken()">PAIRING STATUS</button>
       </div>
     </div>
 
@@ -351,72 +351,72 @@
     <div class="card">
       <div class="card-title">EVIDENCE CONSOLE & LOCAL RECEIPTS</div>
       <div class="evidence-console" id="console">LeeWay Sovereign Device Bridge v0.10.0-rc1
-Four-device mesh initialized.
-Sovereign relay listening on port 8008.
-Canonical receipts committed: 12 records in receipts.sqlite.</div>
+Four target nodes shown in design; physical state NOT_PROBED.
+Relay discovery and hardware execution require separate observed checks.
+No canonical Receipt Authority readback performed by this dashboard.</div>
     </div>
   </div>
 
   <script>
-    const PAIRING_SECRET = "leeway-mesh-token-7K2LF3G25U";
-
-    function log(msg) {
+    // Public dashboard: no embedded pairing token or claim of native execution.
+    // Device enrollment belongs to the authorized owner/host/OS pathway.
+    function log(message) {
       const el = document.getElementById("console");
-      el.textContent += "\n[" + new Date().toLocaleTimeString() + "] " + msg;
+      el.textContent += "\n[" + new Date().toLocaleTimeString() + "] " + message;
       el.scrollTop = el.scrollHeight;
     }
-
+    async function getRelayRooms() {
+      const res = await fetch("/api/device-relay", {cache:"no-store"});
+      if (!res.ok) throw new Error("Relay HTTP " + res.status);
+      const data = await res.json();
+      if (!data?.ok || !Array.isArray(data.activeRooms)) throw new Error("Relay report invalid");
+      return data.activeRooms;
+    }
+    function hasRoom(rooms, deviceId) {
+      return rooms.some(r => r.deviceId === deviceId ||
+        (deviceId === "phone-fold6" && typeof r.deviceId === "string" && r.deviceId.startsWith("LDB-")));
+    }
     async function refreshMesh() {
-      log("Refreshing 4-node mesh telemetry...");
       try {
-        const res = await fetch("/api/device-relay");
-        const data = await res.json();
-        if (data.ok) {
-          log("Active Relay Rooms (" + data.activeRoomsCount + "): " + data.activeRooms.map(r => r.deviceId).join(", "));
-          document.getElementById("relayPill").textContent = "● RELAY ACTIVE (" + data.activeRoomsCount + " ROOMS)";
+        const rooms = await getRelayRooms();
+        log("Relay reports " + rooms.length + " room(s); not a physical device or identity probe.");
+        document.getElementById("relayPill").textContent = "● " + rooms.length + " RELAY ROOM(S) REPORTED";
+        document.getElementById("tel-relay").textContent = "ROOMS REPORTED; DEVICE HEALTH NOT_PROBED";
+        for (const id of ["pc-primary","phone-fold6","pc-hp-secondary","phone-apple-iphone"]) {
+          const pill = document.getElementById("pill-" + id);
+          if (pill) pill.textContent = hasRoom(rooms,id) ? "ROOM PRESENT" : "NOT OBSERVED";
         }
       } catch (e) {
-        log("Relay status check error: " + e.message);
+        document.getElementById("relayPill").textContent = "● RELAY NOT VERIFIED";
+        document.getElementById("tel-relay").textContent = "RELAY CHECK FAILED";
+        log("Relay room discovery failed: " + e.message);
       }
     }
-
     async function runProbe(target) {
-      log("Probing target device: " + target + " over sovereign relay...");
       try {
-        const res = await fetch("/api/device-relay");
-        const data = await res.json();
-        const found = data.activeRooms.find(r => r.deviceId === target || (target === 'phone-fold6' && r.deviceId.startsWith('LDB-')));
-        if (found) {
-          log("Target " + target + " is LIVE on relay (hasPhone=" + found.hasPhone + "). Identity verified.");
-        } else {
-          log("Target " + target + " not currently registered in active rooms.");
-        }
+        const rooms = await getRelayRooms();
+        log("Room lookup for " + target + ": " +
+          (hasRoom(rooms,target) ? "ROOM PRESENT, device native identity NOT_PROBED" : "NOT_OBSERVED") +
+          ". No physical command dispatched.");
       } catch (e) {
-        log("Probe error: " + e.message);
+        log("Room lookup failed: " + e.message + ". No physical command dispatched.");
       }
     }
-
-    async function testFileHop() {
-      log("Initiating 4-node cross-mesh atomic file write & readback test...");
-      setTimeout(() => {
-        log("pc-primary: WRITE 65 bytes -> READBACK VERIFIED (SHA-256 match)");
-        log("phone-fold6: WRITE mesh-proof.txt -> READBACK VERIFIED (2cbf0f41... match)");
-        log("pc-hp-secondary: WRITE 60 bytes -> READBACK VERIFIED (SHA-256 match)");
-        log("All file operations confirmed inside respective scoped containers.");
-      }, 600);
+    function testFileHop() {
+      log("NOT_EXECUTED: This dashboard does not dispatch file writes or SHA-256 readbacks. " +
+          "Use the authenticated Device Bridge with explicit target grants and preserve actual post-state.");
     }
-
     function activateVoice() {
-      log("Voice Runtime: INITIALIZED & ARMED. Duplex speech adapter active.");
+      log("NOT_EXECUTED: Native Voice Fabric is not bound to this dashboard control. " +
+          "OS microphone/speaker permission and measured audio playback are required.");
     }
-
     function activateVision() {
-      log("Vision & Media Provider: AUTHORIZED. Frame capture stream ready.");
+      log("NOT_EXECUTED: Native Vision stream is not bound to this dashboard control. " +
+          "OS camera/screen consent and observed frames are required.");
     }
-
     function copyPairingToken() {
-      navigator.clipboard.writeText(PAIRING_SECRET);
-      log("Pairing Secret copied to clipboard: ••••••••••••••••");
+      log("CREDENTIAL_NOT_AVAILABLE: Never embed or copy a shared privileged token from a public dashboard. " +
+          "Use original Pocket-ID and authorized device pairing.");
     }
 
     // Auto-poll status on load
