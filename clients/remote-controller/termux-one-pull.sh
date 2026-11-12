@@ -20,9 +20,6 @@ EVIDENCE_DIR="${HOME}/leeway-evidence/device-bridge-${STAMP}"
 NODE_CLIENT="${WORK_ROOT}/controller.mjs"
 TARGET_VERSION="${LEEWAY_TARGET_VERSION:-}"
 LATEST_META_URL="https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/downloads/leeway-device-bridge-android-latest.json"
-LATEST_APK_URL="https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/downloads/leeway-device-bridge-android-latest-debug.apk"
-RAW_META_URL="https://raw.githubusercontent.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/main/docs/downloads/leeway-device-bridge-android-latest.json"
-RAW_APK_URL="https://raw.githubusercontent.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/main/docs/downloads/leeway-device-bridge-android-latest-debug.apk"
 APK_FILE="${WORK_ROOT}/leeway-device-bridge-latest.apk"
 
 say(){ printf '\n[LeeWay] %s\n' "$*"; }
@@ -117,88 +114,71 @@ probe_owner_bootstrap(){
 }
 
 install_latest_bridge(){
-  say "Checking verified Device Bridge package."
-  local meta sha version
+  say "Checking owner-authorized Device Bridge production release."
+  local meta sha version apk_url actual
   meta="$(curl -fsSL --max-time 20 "$LATEST_META_URL" 2>/dev/null || true)"
   if [ -z "$meta" ]; then
-    obs "GitHub Pages metadata not ready; falling back to raw GitHub."
-    meta="$(curl -fsSL --max-time 20 "$RAW_META_URL" 2>/dev/null || true)"
-  fi
-  if [ -z "$meta" ]; then
-    fail "Verified Device Bridge package metadata is unavailable from both Pages and raw GitHub."
+    blocked "Release metadata unavailable. Keeping installed package and device-owned Brain unchanged."
     return 1
   fi
   printf '%s\n' "$meta" > "$EVIDENCE_DIR/latest-package.json"
-  version="$(node -e 'const v=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));process.stdout.write(String(v.versionName||""))' "$EVIDENCE_DIR/latest-package.json")"
-  sha="$(node -e 'const v=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));process.stdout.write(String(v.sha256||""))' "$EVIDENCE_DIR/latest-package.json")"
-  if { [ -n "$TARGET_VERSION" ] && [ "$version" != "$TARGET_VERSION" ]; } || [ -z "$version" ] || [ -z "$sha" ]; then
-    obs "GitHub Pages manifest is stale or incomplete; retrying from raw GitHub."
-    meta="$(curl -fsSL --max-time 20 "$RAW_META_URL" 2>/dev/null || true)"
-    [ -n "$meta" ] || { fail "Raw GitHub package metadata is unavailable."; return 1; }
-    printf '%s\n' "$meta" > "$EVIDENCE_DIR/latest-package.json"
-    version="$(node -e 'const v=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));process.stdout.write(String(v.versionName||""))' "$EVIDENCE_DIR/latest-package.json")"
-    sha="$(node -e 'const v=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));process.stdout.write(String(v.sha256||""))' "$EVIDENCE_DIR/latest-package.json")"
-  fi
-  if { [ -n "$TARGET_VERSION" ] && [ "$version" != "$TARGET_VERSION" ]; } || [ -z "$version" ] || [ -z "$sha" ]; then
-    fail "Neither Pages nor raw GitHub exposes the qualified $TARGET_VERSION package."
+
+  # Metadata must explicitly authorize this exact signed production artifact.
+  # A published build, sha256, debug package or raw-GitHub file is NOT a release grant.
+  if ! node -e '
+    const fs=require("fs");
+    const m=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));
+    const sha=/^[a-f0-9]{64}$/i;
+    if(m.releaseState!=="AUTHORIZED_RELEASED"||
+      m.downloadEnabled!==true||m.publicReleaseAuthorized!==true||
+      !sha.test(m.sha256||"")||!sha.test(m.signingCertificateSha256||"")||
+      typeof m.authorizedReleaseEvidenceRef!=="string"||
+      !m.authorizedReleaseEvidenceRef.trim()||!m.downloadUrl)
+      process.exit(2);
+    const url=new URL(m.downloadUrl,process.argv[2]);
+    const origin=new URL(process.argv[2]).origin;
+    if(url.protocol!=="https:"||url.origin!==origin||
+      !url.pathname.endsWith(".apk")||url.pathname.toLowerCase().includes("debug"))
+      process.exit(3);
+  ' "$EVIDENCE_DIR/latest-package.json" "$LATEST_META_URL"; then
+    blocked "Android release not authorized; no install, fallback download or uninstall attempted."
     return 1
   fi
-  if [ -z "$TARGET_VERSION" ]; then TARGET_VERSION="$version"; fi
-  if ! curl -fL --max-time 240 "$LATEST_APK_URL" -o "$APK_FILE"; then
-    obs "GitHub Pages APK not ready; falling back to raw GitHub."
-    curl -fL --max-time 240 "$RAW_APK_URL" -o "$APK_FILE" || return 1
+
+  version="$(node -e 'const m=require(process.argv[1]);process.stdout.write(m.versionName||"")' "$EVIDENCE_DIR/latest-package.json")"
+  sha="$(node -e 'const m=require(process.argv[1]);process.stdout.write(m.sha256||"")' "$EVIDENCE_DIR/latest-package.json")"
+  apk_url="$(node -e 'const m=require(process.argv[1]);process.stdout.write(new URL(m.downloadUrl,process.argv[2]).href)' "$EVIDENCE_DIR/latest-package.json" "$LATEST_META_URL")"
+  if [ -n "$TARGET_VERSION" ] && [ "$version" != "$TARGET_VERSION" ]; then
+    blocked "Owner target version and approved version differ; not installing."
+    return 1
   fi
-  local actual
+  TARGET_VERSION="$version"
+  curl -fL --max-time 240 "$apk_url" -o "$APK_FILE" || {
+    blocked "Approved package unavailable; installed state preserved."
+    return 1
+  }
   actual="$(sha256sum "$APK_FILE" | awk '{print $1}')"
   if [ "$actual" != "$sha" ]; then
-    fail "Downloaded APK hash mismatch."
+    fail "Approved APK hash mismatch; no installer dispatched."
+    rm -f "$APK_FILE"
     return 1
   fi
-  pass "Verified Device Bridge $TARGET_VERSION APK downloaded."
-
+  pass "Source digest matched the approved manifest; final signer and install remain the OS owner's decision."
   if command -v termux-open >/dev/null 2>&1; then
     termux-open --view "$APK_FILE" >/dev/null 2>&1 || true
   else
     am start -a android.intent.action.VIEW -d "file://$APK_FILE" -t application/vnd.android.package-archive >/dev/null 2>&1 || true
   fi
-  say "Android installer opened. Approve the update/install; this script will detect completion automatically."
-
+  say "Android OS installer requested. Owner consent and real post-install readback still required."
   for i in $(seq 1 120); do
     if probe_owner_bootstrap >/dev/null 2>&1; then
-      pass "Device Bridge owner-bootstrap capability is live."
+      pass "Device Bridge owner bootstrap observed locally; signed package identity still requires verification."
       return 0
     fi
-    if [ $((i % 10)) -eq 0 ]; then say "Waiting for Android update confirmation... ${i}s"; fi
+    if [ $((i % 10)) -eq 0 ]; then say "Awaiting owner-approved install: ${i}s"; fi
     sleep 1
   done
-
-  blocked "In-place update did not complete. Opening Android uninstall confirmation for the old debug-signed app."
-  am start -a android.intent.action.DELETE -d "package:$PKG" >/dev/null 2>&1 || true
-  for i in $(seq 1 120); do
-    [ -z "$(cmd package path "$PKG" 2>/dev/null || true)" ] && break
-    if [ $((i % 10)) -eq 0 ]; then say "Waiting for Android uninstall confirmation... ${i}s"; fi
-    sleep 1
-  done
-  if [ -n "$(cmd package path "$PKG" 2>/dev/null || true)" ]; then
-    fail "Old Device Bridge package is still installed; Android did not approve removal."
-    return 1
-  fi
-
-  if command -v termux-open >/dev/null 2>&1; then
-    termux-open --view "$APK_FILE" >/dev/null 2>&1 || true
-  else
-    am start -a android.intent.action.VIEW -d "file://$APK_FILE" -t application/vnd.android.package-archive >/dev/null 2>&1 || true
-  fi
-  say "Approve Install. The script will continue as soon as Device Bridge $TARGET_VERSION is present."
-  for i in $(seq 1 180); do
-    if probe_owner_bootstrap >/dev/null 2>&1; then
-      pass "Device Bridge owner-bootstrap capability is live."
-      return 0
-    fi
-    if [ $((i % 10)) -eq 0 ]; then say "Waiting for Android install confirmation... ${i}s"; fi
-    sleep 1
-  done
-  fail "Device Bridge $TARGET_VERSION was not installed."
+  blocked "Install not verified. NO UNINSTALL performed; preserve device-owned Brain, Diagnostics and app data."
   return 1
 }
 
