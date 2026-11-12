@@ -23,7 +23,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SOVEREIGN_RELAY_URL = process.env.LEEWAY_RELAY_URL || "ws://127.0.0.1:8008/api/device-relay";
 const VERCEL_RELAY_URL = "wss://leeway-device-bridge.vercel.app/api/device-relay";
 const DEVICE_ID = process.env.LEEWAY_DEVICE_ID || "pc-primary";
-const TOKEN = process.env.LEEWAY_MESH_TOKEN || "leeway-mesh-token-7K2LF3G25U";
+const TOKEN = process.env.LEEWAY_MESH_TOKEN || null;
 const WORKSPACE_DIR = path.resolve(__dirname, "..");
 
 export class WorkstationRelayAgent {
