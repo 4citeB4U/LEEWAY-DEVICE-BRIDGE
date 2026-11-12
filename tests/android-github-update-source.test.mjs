@@ -21,7 +21,14 @@ assert.match(activity, /PackageInstallBroker\.installFromUrl/);
 assert.match(activity, /LeeWay Device Bridge update available/);
 assert.match(relay, /GitHubUpdateChecker\.check/);
 assert.match(broker, /silentInstall", false/);
-assert.match(workflow, /docs\/package-manifest\.json/);
+const manifest = JSON.parse(fs.readFileSync("docs/package-manifest.json", "utf8"));
+const androidPackage = manifest.packages.find(x => x.platform === "android");
+assert.equal(androidPackage?.downloadUrl, null, "Held release must not publish an APK URL");
+assert.equal(androidPackage?.downloadEnabled, false);
+assert.match(workflow, /contents: read/);
+assert.match(workflow, /upload-artifact@v4/);
+assert.doesNotMatch(workflow, /git push origin HEAD:main/);
+assert.doesNotMatch(workflow, /Publish latest verified Android APK to GitHub Pages/);
 assert.match(workflow, /sourceRunId/);
 
 console.log("PASS Android GitHub owner-confirmed update source contract");
