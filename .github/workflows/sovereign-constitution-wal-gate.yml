@@ -1,3 +1,15 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.BRIDGE.CI
+# TAG: LEEWAY.BRIDGE.CI.SOVEREIGN_CONSTITUTION_WAL.V1
+# DISCOVERY_PIPELINE: Voice → Intent → Location → Vertical → Ranking → Render
+# 5WH:
+# WHAT = Execute LEEWAY-DEVICE-BRIDGE Sovereign Constitution, SQLite WAL, Veritas, Citizen, WT-01..17, and Phoenix recovery tests.
+# WHY = Verify inline MCP constitutional admission, durable WAL state, and <10s Phoenix LKG rollback in Node 24 CI.
+# WHO = Creator (The Creator <leonardlee6@outlook.com>) / LEEWAY-DEVICE-BRIDGE.
+# WHERE = .github/workflows/sovereign-constitution-wal-gate.yml
+# WHEN = 2026-11-12
+# HOW = Install dependencies with npm ci under Node 24 and execute integration and unit test suites.
+# LICENSE: MIT
 name: Sovereign Constitution WAL and Phoenix Gate
 
 on:
@@ -34,6 +46,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - name: Install Dependencies
+        run: npm ci
       - name: Run Constitutional, SQLite WAL, Veritas, Citizen, WT-01..17 & Phoenix Tests
         run: |
           node --test \
