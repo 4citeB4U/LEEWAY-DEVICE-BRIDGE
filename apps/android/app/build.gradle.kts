@@ -24,30 +24,37 @@ android {
         versionCode = 26
         versionName = "0.10.0-sovereign-rc2"
     }
+    // Signing material must be injected by the authorized build host.
+    // A release may build unsigned for source qualification; publication
+    // requires a distinct, independently verified secure signing step.
+    val releaseStorePath = providers.environmentVariable("LEEWAY_ANDROID_RELEASE_KEYSTORE_PATH").orNull
+    val releaseStorePassword = providers.environmentVariable("LEEWAY_ANDROID_RELEASE_STORE_PASSWORD").orNull
+    val releaseKeyAlias = providers.environmentVariable("LEEWAY_ANDROID_RELEASE_KEY_ALIAS").orNull
+    val releaseKeyPassword = providers.environmentVariable("LEEWAY_ANDROID_RELEASE_KEY_PASSWORD").orNull
+    val releaseSigningReady = listOf(releaseStorePath, releaseStorePassword, releaseKeyAlias, releaseKeyPassword)
+        .all { !it.isNullOrBlank() } && releaseStorePath != null && file(releaseStorePath).isFile
     signingConfigs {
         create("release") {
-            val keystoreFile = file("../leeway-release-key.jks")
-            if (keystoreFile.exists()) {
-                storeFile = keystoreFile
-                storePassword = "LeeWaySovereign2026!"
-                keyAlias = "leeway-release"
-                keyPassword = "LeeWaySovereign2026!"
+            if (releaseSigningReady) {
+                storeFile = file(releaseStorePath!!)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
                 enableV1Signing = true
                 enableV2Signing = true
                 enableV3Signing = true
-                enableV4Signing = true
             }
         }
     }
     buildTypes {
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("release")
+            if (releaseSigningReady) signingConfig = signingConfigs.getByName("release")
         }
     }
     lint {
-        checkReleaseBuilds = false
-        abortOnError = false
+        checkReleaseBuilds = true
+        abortOnError = true
     }
 }
 dependencies {

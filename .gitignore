@@ -12,3 +12,11 @@ node_modules/
 *.sqlite-wal
 *.sqlite-shm
 tests/qualification-pc-*.json
+
+# Release signing private keys and credentials must never be version-controlled.
+**/*.jks
+**/*.keystore
+**/*.p12
+**/*.pfx
+**/*.mobileprovision
+**/signing-secrets.properties
