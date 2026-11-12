@@ -6,7 +6,7 @@ import org.json.JSONObject
 
 object RemoteCommandRouter {
     private val remoteQualified = setOf(
-        "device.health", "device.info", "device.capabilities",
+        "device.health", "device.info", "device.capabilities", "device.brain.read", "device.diagnostics.read",
         "device.bluetooth.list-bonded", "device.network.discover", "device.receipts",
         "device.screen.capture", "device.ui.snapshot", "device.ui.back", "device.ui.home", "device.ui.recents",
         "device.ui.tap", "device.ui.swipe", "device.ui.text",
@@ -51,9 +51,12 @@ object RemoteCommandRouter {
             put("ok", false); put("error", "LOCAL_ELIGIBILITY_HOLD"); put("capability", capability); put("gate", gate); put("formulaAuthority", FormulaF8Gate.FORMULA_AUTHORITY); put("canonicalFormulaState", "NOT_EXECUTED")
         }
         return try {
+            DigitalBrainStore.getInstance(context).recordEvent("COMMAND_DISPATCH", "INFO", "ROUTER", JSONObject().put("capability", capability).put("commandId", commandId))
             val value = when (capability) {
                 "device.health" -> health(context)
                 "device.info" -> DevicePassport.capture(context)
+                "device.brain.read" -> DigitalBrainStore.getDeviceBrainSnapshot(context)
+                "device.diagnostics.read" -> DigitalBrainStore.getDiagnosticsSnapshot(context)
                 "device.capabilities" -> capabilities(context)
                 "device.bluetooth.list-bonded" -> BluetoothProvider.snapshot(context)
                 "device.network.discover" -> NetworkDiscoveryProvider.discover(context)

@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leeway.local/contracts/device-universe.schema.json",
+  "title": "LeeWay Device-Owned Digital Brain & Device Universe Contract",
+  "description": "Represents the permanent, device-owned representation of physical hardware, accelerators, peripherals, environment, and diagnostics.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "authority",
+    "deviceId",
+    "deviceOwned",
+    "hardware",
+    "environment",
+    "diagnostics"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "string", "enum": ["1.0.0"] },
+    "authority": { "type": "string", "enum": ["DEVICE_OWNED_DIGITAL_BRAIN"] },
+    "deviceId": { "type": "string", "minLength": 1 },
+    "deviceOwned": { "type": "boolean", "const": true },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "hardware": {
+      "type": "object",
+      "required": ["cpu", "memory", "storage"],
+      "properties": {
+        "cpu": {
+          "type": "object",
+          "properties": {
+            "architecture": { "type": "string" },
+            "cores": { "type": "integer" },
+            "model": { "type": "string" }
+          }
+        },
+        "accelerators": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["type", "vendor", "model"],
+            "properties": {
+              "type": { "type": "string", "enum": ["GPU", "NPU", "METAL", "VULKAN", "CUDA", "DIRECTX"] },
+              "vendor": { "type": "string" },
+              "model": { "type": "string" },
+              "driverVersion": { "type": "string" },
+              "lanes": { "type": "integer" },
+              "apiLevel": { "type": "string" }
+            }
+          }
+        },
+        "memory": {
+          "type": "object",
+          "required": ["totalBytes"],
+          "properties": {
+            "totalBytes": { "type": "number" },
+            "availableBytes": { "type": "number" },
+            "vramBytes": { "type": "number" }
+          }
+        },
+        "storage": {
+          "type": "object",
+          "required": ["totalBytes", "availableBytes"],
+          "properties": {
+            "totalBytes": { "type": "number" },
+            "availableBytes": { "type": "number" },
+            "storageType": { "type": "string" }
+          }
+        },
+        "peripherals": {
+          "type": "object",
+          "properties": {
+            "camerasCount": { "type": "integer" },
+            "microphonesCount": { "type": "integer" },
+            "displays": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "widthPixels": { "type": "integer" },
+                  "heightPixels": { "type": "integer" },
+                  "densityDpi": { "type": "integer" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "required": ["os", "security"],
+      "properties": {
+        "os": {
+          "type": "object",
+          "required": ["platform", "version"],
+          "properties": {
+            "platform": { "type": "string", "enum": ["android", "windows", "ios", "linux", "macos"] },
+            "version": { "type": "string" },
+            "build": { "type": "string" },
+            "sdkInt": { "type": "integer" }
+          }
+        },
+        "firmware": {
+          "type": "object",
+          "properties": {
+            "manufacturer": { "type": "string" },
+            "model": { "type": "string" },
+            "board": { "type": "string" },
+            "biosSerialNumber": { "type": "string" },
+            "computerUuid": { "type": "string" }
+          }
+        },
+        "security": {
+          "type": "object",
+          "required": ["authority"],
+          "properties": {
+            "authority": { "type": "string", "enum": ["ANDROID_KEYSTORE", "APPLE_SECURE_ENCLAVE", "WINDOWS_TPM_DPAPI", "LOCAL_ECDSA"] },
+            "keyAlias": { "type": "string" },
+            "algorithm": { "type": "string" },
+            "publicKeyFingerprintSha256": { "type": "string" }
+          }
+        }
+      }
+    },
+    "diagnostics": {
+      "type": "object",
+      "properties": {
+        "health": { "type": "string", "enum": ["HEALTHY", "DEGRADED", "WARNING", "CRITICAL"] },
+        "batteryPercent": { "type": "number" },
+        "thermalState": { "type": "string" },
+        "uptimeSeconds": { "type": "number" },
+        "memoryPressure": { "type": "string", "enum": ["NORMAL", "MODERATE", "LOW_MEMORY", "CRITICAL"] }
+      }
+    },
+    "softwareCatalog": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "version": { "type": "string" },
+          "launchable": { "type": "boolean" },
+          "category": { "type": "string" }
+        }
+      }
+    }
+  }
+}

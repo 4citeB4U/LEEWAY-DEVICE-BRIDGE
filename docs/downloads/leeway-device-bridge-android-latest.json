@@ -1,8 +1,9 @@
 {
-  "versionName": "0.10.0-agent-update-rc1",
-  "versionCode": 25,
-  "sha256": "67b03c3b232a36665f6ed7599dd7bc03d077367ce29af9f5d6e877c459d7fa98",
-  "sizeBytes": 66672344,
-  "downloadUrl": "./leeway-device-bridge-android-latest-debug.apk",
-  "sourceCommit": "358beb2"
+  "version": "0.10.0-rc2",
+  "versionCode": 26,
+  "updatedAt": "2026-11-12T13:38:39Z",
+  "sizeBytes": 66683736,
+  "sha256": "320da4b374cca2f10d1a9051af3dae0f5db9f1aa5701bf6161b9610d6398fc7b",
+  "url": "https://agent-lee.tailb186e7.ts.net/downloads/leeway-device-bridge-android-latest-debug.apk",
+  "releaseNotes": "Phase 1: Added Device-Owned DigitalBrainStore SQLite database and remote read endpoints"
 }

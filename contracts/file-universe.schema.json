@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://leeway.local/contracts/file-universe.schema.json",
+  "title": "LeeWay Sovereign File Universe & Scoped Storage Contract",
+  "description": "Defines the canonical, device-owned representation of authorized storage scopes, directory topologies, file descriptors, and content hashes across the LeeWay mesh.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "authority",
+    "deviceId",
+    "deviceOwned",
+    "timestamp",
+    "storageScopes",
+    "fileDescriptors"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "enum": ["1.0.0"]
+    },
+    "authority": {
+      "type": "string",
+      "enum": ["DEVICE_OWNED_FILE_UNIVERSE"]
+    },
+    "deviceId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "deviceOwned": {
+      "type": "boolean",
+      "const": true
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "storageScopes": {
+      "type": "array",
+      "description": "Storage boundary scopes authorized on this physical device.",
+      "items": {
+        "type": "object",
+        "required": ["scopeId", "scopeType", "nativeRootPath", "accessMode"],
+        "properties": {
+          "scopeId": { "type": "string" },
+          "scopeType": {
+            "type": "string",
+            "enum": [
+              "APP_CONTAINER_PRIVATE",
+              "SYSTEM_USER_DOCUMENTS",
+              "SYSTEM_DOWNLOADS",
+              "SAF_SCOPED_TREE",
+              "EXTERNAL_SDCARD",
+              "PROJECT_WORKSPACE",
+              "MEDIA_IMAGES",
+              "MEDIA_AUDIO"
+            ]
+          },
+          "nativeRootPath": { "type": "string" },
+          "portableAlias": { "type": "string" },
+          "accessMode": {
+            "type": "string",
+            "enum": ["READ_ONLY", "READ_WRITE", "ISOLATED_SANDBOX"]
+          },
+          "totalCapacityBytes": { "type": "number" },
+          "freeCapacityBytes": { "type": "number" }
+        }
+      }
+    },
+    "fileDescriptors": {
+      "type": "array",
+      "description": "Observed files under authorized device scopes.",
+      "items": {
+        "type": "object",
+        "required": ["fileId", "scopeId", "relativePath", "sha256", "sizeBytes", "updatedAt"],
+        "properties": {
+          "fileId": { "type": "string" },
+          "scopeId": { "type": "string" },
+          "relativePath": { "type": "string" },
+          "nativePath": { "type": "string" },
+          "mimeType": { "type": "string" },
+          "sizeBytes": { "type": "integer", "minimum": 0 },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "verified": { "type": "boolean" },
+          "originDeviceId": { "type": "string" },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "inTransitSync": {
+      "type": "object",
+      "properties": {
+        "incomingTransfers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["transferId", "sourceDeviceId", "targetRelativePath", "expectedSha256", "bytesReceived", "totalBytes", "status"],
+            "properties": {
+              "transferId": { "type": "string" },
+              "sourceDeviceId": { "type": "string" },
+              "targetRelativePath": { "type": "string" },
+              "expectedSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+              "bytesReceived": { "type": "integer", "minimum": 0 },
+              "totalBytes": { "type": "integer", "minimum": 0 },
+              "status": { "type": "string", "enum": ["PENDING", "STREAMING", "VERIFYING", "COMMITTED", "FAILED"] }
+            }
+          }
+        }
+      }
+    }
+  }
+}
