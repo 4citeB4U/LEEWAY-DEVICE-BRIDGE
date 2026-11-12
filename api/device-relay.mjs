@@ -92,6 +92,20 @@ function createRelayServer({ rooms = new Map() } = {}) {
   const server = createServer((req, res) => {
     // Check original URL from reverse proxy headers if path was stripped
     const origPath = req.headers['x-forwarded-uri'] || req.headers['x-original-uri'] || req.url;
+    if (req.method === 'GET' && (req.url === '/dashboard' || req.url === '/dashboard.html' || (req.url === '/' && req.headers['accept']?.includes('text/html')))) {
+      try {
+        const dashPath = path.resolve(__dirname, '../apps/desktop/dashboard.html');
+        const content = fs.readFileSync(dashPath, 'utf8');
+        res.writeHead(200, {
+          'content-type': 'text/html; charset=utf-8',
+          'access-control-allow-origin': '*',
+          'cache-control': 'no-store',
+        });
+        return res.end(content);
+      } catch (err) {
+        return json(res, 500, { ok: false, error: err.message });
+      }
+    }
     if (req.method === 'GET' && (req.url === '/api/hp-agent.mjs' || req.url === '/hp-agent.mjs' || origPath.includes('hp-agent.mjs'))) {
       try {
         const hpAgentPath = path.resolve(__dirname, '../operator/hp-standalone-agent.mjs');
