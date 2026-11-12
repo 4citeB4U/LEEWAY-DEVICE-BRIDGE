@@ -3,7 +3,17 @@
   "versionCode": 26,
   "sha256": "938fc3b765b3df61003c2fa6880a8abf3ae9a8c1427542be620a27f7de3ca85a",
   "sizeBytes": 66445858,
-  "downloadUrl": "./leeway-device-bridge-android-latest-debug.apk",
+  "downloadUrl": null,
   "sourceRunId": "43308557689",
-  "sourceCommit": "07f76bef0b54025aed8c0d6c2df40abb91495bca"
+  "sourceCommit": "07f76bef0b54025aed8c0d6c2df40abb91495bca",
+  "releaseState": "SECURITY_HOLD_NOT_QUALIFIED",
+  "downloadEnabled": false,
+  "publicReleaseAuthorized": false,
+  "distributionClass": "HISTORICAL_DEBUG_BUILD_FOR_FORENSIC_REFERENCE_ONLY",
+  "historicalDownloadUrl": "./leeway-device-bridge-android-latest-debug.apk",
+  "signingCertificateSha256": null,
+  "authorizedReleaseEvidenceRef": null,
+  "actualLiveDistributionTest": "NOT_OBSERVED",
+  "securityIssue": "https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/issues/109",
+  "holdReason": "Development APK must not be published via Pages or promoted to native production without authorized signer, release proof, real OS classification and independent Veritas"
 }
