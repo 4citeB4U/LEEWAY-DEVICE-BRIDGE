@@ -1,8 +1,8 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "1.1.0",
   "authority": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
   "operatorId": "leeway.device.operator",
-  "law": "One Device Operator contract; replaceable platform adapters; capability state is never inferred from platform name.",
+  "law": "One Device Operator contract; replaceable native platform adapters; declarations are not grants, implementations, native execution, receipts, or VERIFIED evidence. Platform permissions and per-device C3 authorization remain mandatory.",
   "adapters": [
     {
       "adapterId": "leeway.operator.android",
@@ -19,16 +19,207 @@
         "Termux provider bridge"
       ],
       "capabilities": {
-        "device.health": {
+        "device.directories.list": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.directories.page": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.files.read": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": true
+        },
+        "device.files.info": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.files.hash": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.files.read_binary": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.files.read_multiple": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.search.files": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.search.content": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.process.list": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.windows.window.list": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "device.windows.window.observe": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "device.windows.window.read": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "voice.status": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.apps.list": {
           "state": "AVAILABLE",
           "requiresHumanConsent": false,
-          "notes": "Physical adapter executes an actual ADB or exact Windows USB PnP readback; discovery alone is not verification."
+          "notes": "Launcher-visible apps only."
         },
         "device.info": {
           "state": "VERIFIED",
           "requiresHumanConsent": false
         },
-        "device.files.read": {
+        "device.health": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": false,
+          "notes": "Physical adapter executes an actual ADB or exact Windows USB PnP readback; discovery alone is not verification."
+        },
+        "device.screen.observe": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": true
+        },
+        "device.screen.capture": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Requires owner-enabled Android Accessibility service; physical verification pending."
+        },
+        "device.audit.recent": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.audit.usage": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.camera": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.media.scan": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "MediaStore read permission required; candidate classification does not authorize deletion."
+        },
+        "device.notifications": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.apps.launch": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": false
+        },
+        "device.apps.close": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.ui.control": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": true
+        },
+        "device.ui.pointer": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.windows.window.invoke": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "device.windows.window.input": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "device.windows.window.submit": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "voice.speak": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.process.execute": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Application UID or explicitly authorized companion/provider scope only; no root/system shell privilege. Contract only."
+        },
+        "device.session.start": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Application UID or explicitly authorized companion/provider scope only; no root/system shell privilege. Contract only."
+        },
+        "device.session.input": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Application UID or explicitly authorized companion/provider scope only; no root/system shell privilege. Contract only."
+        },
+        "device.session.stop": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Application UID or explicitly authorized companion/provider scope only; no root/system shell privilege. Contract only."
+        },
+        "device.search.start": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.search.next": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.search.stop": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.job.start": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Application UID or explicitly authorized companion/provider scope only; no root/system shell privilege. Contract only."
+        },
+        "device.job.stop": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Application UID or explicitly authorized companion/provider scope only; no root/system shell privilege. Contract only."
+        },
+        "device.apps.install": {
           "state": "AVAILABLE",
           "requiresHumanConsent": true
         },
@@ -36,41 +227,55 @@
           "state": "AVAILABLE",
           "requiresHumanConsent": true
         },
-        "device.screen.observe": {
-          "state": "AVAILABLE",
-          "requiresHumanConsent": true
-        },
-        "device.ui.control": {
-          "state": "AVAILABLE",
-          "requiresHumanConsent": true
-        },
-        "device.apps.launch": {
-          "state": "AVAILABLE",
-          "requiresHumanConsent": false
-        },
-        "device.apps.install": {
-          "state": "AVAILABLE",
-          "requiresHumanConsent": true
-        },
-        "device.media.scan": {
-          "state": "AVAILABLE",
+        "device.files.write_binary": {
+          "state": "SUPPORTED",
           "requiresHumanConsent": true,
-          "notes": "MediaStore read permission required; candidate classification does not authorize deletion."
+          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.files.append_binary": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.files.edit": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.files.move": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.directories.create": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.documents.write_pdf": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.media.quarantine": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
         },
         "device.media.delete": {
           "state": "AVAILABLE",
           "requiresHumanConsent": true,
           "notes": "Uses Android owner-confirmed MediaStore delete request; deletion remains unverified until rescan."
         },
-        "device.screen.capture": {
-          "state": "AVAILABLE",
+        "device.apps.uninstall": {
+          "state": "SUPPORTED",
           "requiresHumanConsent": true,
-          "notes": "Requires owner-enabled Android Accessibility service; physical verification pending."
+          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
         },
-        "device.apps.list": {
-          "state": "AVAILABLE",
-          "requiresHumanConsent": false,
-          "notes": "Launcher-visible apps only."
+        "device.process.terminate": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Application UID or explicitly authorized companion/provider scope only; no root/system shell privilege. Contract only."
         }
       },
       "evidenceState": "OBSERVED",
@@ -91,39 +296,264 @@
         "PhotosPicker"
       ],
       "capabilities": {
-        "device.health": {
-          "state": "AVAILABLE",
-          "requiresHumanConsent": false,
-          "notes": "Physical adapter executes an actual ADB or exact Windows USB PnP readback; discovery alone is not verification."
-        },
-        "device.info": {
+        "device.directories.list": {
           "state": "SUPPORTED",
-          "requiresHumanConsent": false
+          "requiresHumanConsent": true,
+          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+        },
+        "device.directories.page": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
         },
         "device.files.read": {
           "state": "SUPPORTED",
           "requiresHumanConsent": true
         },
+        "device.files.info": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.files.hash": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+        },
+        "device.files.read_binary": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+        },
+        "device.files.read_multiple": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+        },
+        "device.search.files": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+        },
+        "device.search.content": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+        },
+        "device.process.list": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false,
+          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+        },
+        "device.windows.window.list": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "device.windows.window.observe": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "device.windows.window.read": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "voice.status": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.apps.list": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.info": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false
+        },
+        "device.health": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": false,
+          "notes": "Physical adapter executes an actual ADB or exact Windows USB PnP readback; discovery alone is not verification."
+        },
         "device.screen.observe": {
           "state": "SUPPORTED",
           "requiresHumanConsent": true
         },
-        "device.ui.control": {
-          "state": "UNAVAILABLE",
-          "requiresHumanConsent": true
-        },
-        "device.apps.launch": {
+        "device.screen.capture": {
           "state": "SUPPORTED",
-          "requiresHumanConsent": false
+          "requiresHumanConsent": true,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
         },
-        "device.apps.install": {
-          "state": "BLOCKED",
-          "requiresHumanConsent": true
+        "device.audit.recent": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.audit.usage": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
         },
         "device.camera": {
           "state": "PARTIAL",
           "requiresHumanConsent": true,
           "notes": "Native AVFoundation provider and token-authenticated local TCP transport are implemented. Owner pairing, live frame progression, physical stop, and independent verification remain required."
+        },
+        "device.media.scan": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.notifications": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.apps.launch": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false
+        },
+        "device.apps.close": {
+          "state": "BLOCKED",
+          "requiresHumanConsent": true,
+          "notes": "Apple sandbox/entitlement restriction; no arbitrary cross-app control, silent installation, or general shell process privilege."
+        },
+        "device.ui.control": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true
+        },
+        "device.ui.pointer": {
+          "state": "BLOCKED",
+          "requiresHumanConsent": true,
+          "notes": "Apple sandbox/entitlement restriction; no arbitrary cross-app control, silent installation, or general shell process privilege."
+        },
+        "device.windows.window.invoke": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "device.windows.window.input": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "device.windows.window.submit": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "voice.speak": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.process.execute": {
+          "state": "BLOCKED",
+          "requiresHumanConsent": true,
+          "notes": "Apple sandbox/entitlement restriction; no arbitrary cross-app control, silent installation, or general shell process privilege."
+        },
+        "device.session.start": {
+          "state": "BLOCKED",
+          "requiresHumanConsent": true,
+          "notes": "Apple sandbox/entitlement restriction; no arbitrary cross-app control, silent installation, or general shell process privilege."
+        },
+        "device.session.input": {
+          "state": "BLOCKED",
+          "requiresHumanConsent": true,
+          "notes": "Apple sandbox/entitlement restriction; no arbitrary cross-app control, silent installation, or general shell process privilege."
+        },
+        "device.session.stop": {
+          "state": "BLOCKED",
+          "requiresHumanConsent": true,
+          "notes": "Apple sandbox/entitlement restriction; no arbitrary cross-app control, silent installation, or general shell process privilege."
+        },
+        "device.search.start": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.search.next": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.search.stop": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.job.start": {
+          "state": "BLOCKED",
+          "requiresHumanConsent": true,
+          "notes": "No general-purpose process or shell authority within standard iOS/iPadOS app sandbox."
+        },
+        "device.job.stop": {
+          "state": "BLOCKED",
+          "requiresHumanConsent": true,
+          "notes": "No general-purpose process or shell authority within standard iOS/iPadOS app sandbox."
+        },
+        "device.apps.install": {
+          "state": "BLOCKED",
+          "requiresHumanConsent": true
+        },
+        "device.files.write": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.files.write_binary": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+        },
+        "device.files.append_binary": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+        },
+        "device.files.edit": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+        },
+        "device.files.move": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+        },
+        "device.directories.create": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+        },
+        "device.documents.write_pdf": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.media.quarantine": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.media.delete": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.apps.uninstall": {
+          "state": "BLOCKED",
+          "requiresHumanConsent": true,
+          "notes": "Apple sandbox/entitlement restriction; no arbitrary cross-app control, silent installation, or general shell process privilege."
+        },
+        "device.process.terminate": {
+          "state": "BLOCKED",
+          "requiresHumanConsent": true,
+          "notes": "Apple sandbox/entitlement restriction; no arbitrary cross-app control, silent installation, or general shell process privilege."
         }
       },
       "evidenceState": "UNVERIFIED",
@@ -144,29 +574,264 @@
         "PhotosPicker"
       ],
       "capabilities": {
-        "device.info": {
+        "device.directories.list": {
           "state": "SUPPORTED",
-          "requiresHumanConsent": false
+          "requiresHumanConsent": true,
+          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+        },
+        "device.directories.page": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
         },
         "device.files.read": {
           "state": "SUPPORTED",
           "requiresHumanConsent": true
         },
+        "device.files.info": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.files.hash": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+        },
+        "device.files.read_binary": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+        },
+        "device.files.read_multiple": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+        },
+        "device.search.files": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+        },
+        "device.search.content": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+        },
+        "device.process.list": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false,
+          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+        },
+        "device.windows.window.list": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "device.windows.window.observe": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "device.windows.window.read": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "voice.status": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.apps.list": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.info": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false
+        },
+        "device.health": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
         "device.screen.observe": {
           "state": "SUPPORTED",
           "requiresHumanConsent": true
         },
-        "device.ui.control": {
-          "state": "UNAVAILABLE",
-          "requiresHumanConsent": true
+        "device.screen.capture": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.audit.recent": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.audit.usage": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.camera": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.media.scan": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.notifications": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "READ contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
         },
         "device.apps.launch": {
           "state": "SUPPORTED",
           "requiresHumanConsent": false
         },
+        "device.apps.close": {
+          "state": "BLOCKED",
+          "requiresHumanConsent": true,
+          "notes": "Apple sandbox/entitlement restriction; no arbitrary cross-app control, silent installation, or general shell process privilege."
+        },
+        "device.ui.control": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true
+        },
+        "device.ui.pointer": {
+          "state": "BLOCKED",
+          "requiresHumanConsent": true,
+          "notes": "Apple sandbox/entitlement restriction; no arbitrary cross-app control, silent installation, or general shell process privilege."
+        },
+        "device.windows.window.invoke": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "device.windows.window.input": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "device.windows.window.submit": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "voice.speak": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.process.execute": {
+          "state": "BLOCKED",
+          "requiresHumanConsent": true,
+          "notes": "Apple sandbox/entitlement restriction; no arbitrary cross-app control, silent installation, or general shell process privilege."
+        },
+        "device.session.start": {
+          "state": "BLOCKED",
+          "requiresHumanConsent": true,
+          "notes": "Apple sandbox/entitlement restriction; no arbitrary cross-app control, silent installation, or general shell process privilege."
+        },
+        "device.session.input": {
+          "state": "BLOCKED",
+          "requiresHumanConsent": true,
+          "notes": "Apple sandbox/entitlement restriction; no arbitrary cross-app control, silent installation, or general shell process privilege."
+        },
+        "device.session.stop": {
+          "state": "BLOCKED",
+          "requiresHumanConsent": true,
+          "notes": "Apple sandbox/entitlement restriction; no arbitrary cross-app control, silent installation, or general shell process privilege."
+        },
+        "device.search.start": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.search.next": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.search.stop": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.job.start": {
+          "state": "BLOCKED",
+          "requiresHumanConsent": true,
+          "notes": "No general-purpose process or shell authority within standard iOS/iPadOS app sandbox."
+        },
+        "device.job.stop": {
+          "state": "BLOCKED",
+          "requiresHumanConsent": true,
+          "notes": "No general-purpose process or shell authority within standard iOS/iPadOS app sandbox."
+        },
         "device.apps.install": {
           "state": "BLOCKED",
           "requiresHumanConsent": true
+        },
+        "device.files.write": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.files.write_binary": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+        },
+        "device.files.append_binary": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+        },
+        "device.files.edit": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+        },
+        "device.files.move": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+        },
+        "device.directories.create": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+        },
+        "device.documents.write_pdf": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.media.quarantine": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.media.delete": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.apps.uninstall": {
+          "state": "BLOCKED",
+          "requiresHumanConsent": true,
+          "notes": "Apple sandbox/entitlement restriction; no arbitrary cross-app control, silent installation, or general shell process privilege."
+        },
+        "device.process.terminate": {
+          "state": "BLOCKED",
+          "requiresHumanConsent": true,
+          "notes": "Apple sandbox/entitlement restriction; no arbitrary cross-app control, silent installation, or general shell process privilege."
         }
       },
       "evidenceState": "PROPOSED",
@@ -187,15 +852,270 @@
         "Win32_OperatingSystem"
       ],
       "capabilities": {
-        "device.health": {
+        "device.directories.list": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Desktop command surface may expose this capability; passport identity adapter alone does not execute it. Fresh target-host proof required."
+        },
+        "device.directories.page": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Desktop command surface may expose this capability; passport identity adapter alone does not execute it. Fresh target-host proof required."
+        },
+        "device.files.read": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Desktop command surface may expose this capability; passport identity adapter alone does not execute it. Fresh target-host proof required."
+        },
+        "device.files.info": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Desktop command surface may expose this capability; passport identity adapter alone does not execute it. Fresh target-host proof required."
+        },
+        "device.files.hash": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Desktop command surface may expose this capability; passport identity adapter alone does not execute it. Fresh target-host proof required."
+        },
+        "device.files.read_binary": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Desktop command surface may expose this capability; passport identity adapter alone does not execute it. Fresh target-host proof required."
+        },
+        "device.files.read_multiple": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Desktop command surface may expose this capability; passport identity adapter alone does not execute it. Fresh target-host proof required."
+        },
+        "device.search.files": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Desktop command surface may expose this capability; passport identity adapter alone does not execute it. Fresh target-host proof required."
+        },
+        "device.search.content": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Desktop command surface may expose this capability; passport identity adapter alone does not execute it. Fresh target-host proof required."
+        },
+        "device.process.list": {
           "state": "SUPPORTED",
           "requiresHumanConsent": false,
-          "notes": "Requires fresh Windows CIM/BIOS identity evidence and an owner-signed pc-primary passport; discovery alone is not verification."
+          "notes": "Desktop command surface may expose this capability; passport identity adapter alone does not execute it. Fresh target-host proof required."
+        },
+        "device.windows.window.list": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Desktop command surface may expose this capability; passport identity adapter alone does not execute it. Fresh target-host proof required."
+        },
+        "device.windows.window.observe": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Desktop command surface may expose this capability; passport identity adapter alone does not execute it. Fresh target-host proof required."
+        },
+        "device.windows.window.read": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Desktop command surface may expose this capability; passport identity adapter alone does not execute it. Fresh target-host proof required."
+        },
+        "voice.status": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false,
+          "notes": "Desktop command surface may expose this capability; passport identity adapter alone does not execute it. Fresh target-host proof required."
+        },
+        "device.apps.list": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false,
+          "notes": "Desktop command surface may expose this capability; passport identity adapter alone does not execute it. Fresh target-host proof required."
         },
         "device.info": {
           "state": "SUPPORTED",
           "requiresHumanConsent": false,
           "notes": "Read-only host identity observation; no configured desktop name or registry row can promote identityVerified."
+        },
+        "device.health": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false,
+          "notes": "Requires fresh Windows CIM/BIOS identity evidence and an owner-signed pc-primary passport; discovery alone is not verification."
+        },
+        "device.screen.observe": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Desktop command surface may expose this capability; passport identity adapter alone does not execute it. Fresh target-host proof required."
+        },
+        "device.screen.capture": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Desktop command surface may expose this capability; passport identity adapter alone does not execute it. Fresh target-host proof required."
+        },
+        "device.audit.recent": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Desktop command surface may expose this capability; passport identity adapter alone does not execute it. Fresh target-host proof required."
+        },
+        "device.audit.usage": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Desktop command surface may expose this capability; passport identity adapter alone does not execute it. Fresh target-host proof required."
+        },
+        "device.camera": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Desktop command surface may expose this capability; passport identity adapter alone does not execute it. Fresh target-host proof required."
+        },
+        "device.media.scan": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Desktop command surface may expose this capability; passport identity adapter alone does not execute it. Fresh target-host proof required."
+        },
+        "device.notifications": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Desktop command surface may expose this capability; passport identity adapter alone does not execute it. Fresh target-host proof required."
+        },
+        "device.apps.launch": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.apps.close": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.ui.control": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.ui.pointer": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.windows.window.invoke": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.windows.window.input": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.windows.window.submit": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "voice.speak": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.process.execute": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.session.start": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.session.input": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.session.stop": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.search.start": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.search.next": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.search.stop": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.job.start": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.job.stop": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.apps.install": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "OPERATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.files.write": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.files.write_binary": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.files.append_binary": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.files.edit": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.files.move": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.directories.create": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.documents.write_pdf": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.media.quarantine": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.media.delete": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.apps.uninstall": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+        },
+        "device.process.terminate": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
         }
       },
       "evidenceState": "OBSERVED",
@@ -215,7 +1135,208 @@
         "Security-Scoped Bookmarks"
       ],
       "capabilities": {
+        "device.directories.list": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.directories.page": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
         "device.files.read": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true
+        },
+        "device.files.info": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.files.hash": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.files.read_binary": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.files.read_multiple": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.search.files": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.search.content": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.process.list": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.windows.window.list": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "device.windows.window.observe": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "device.windows.window.read": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "voice.status": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.apps.list": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.info": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.health": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.screen.observe": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true
+        },
+        "device.screen.capture": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.audit.recent": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.audit.usage": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.camera": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.media.scan": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.notifications": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.apps.launch": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false
+        },
+        "device.apps.close": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.ui.control": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true
+        },
+        "device.ui.pointer": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.windows.window.invoke": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "device.windows.window.input": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "device.windows.window.submit": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "voice.speak": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.process.execute": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.session.start": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.session.input": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.session.stop": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.search.start": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.search.next": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.search.stop": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.job.start": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.job.stop": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.apps.install": {
           "state": "SUPPORTED",
           "requiresHumanConsent": true
         },
@@ -223,21 +1344,55 @@
           "state": "SUPPORTED",
           "requiresHumanConsent": true
         },
-        "device.screen.observe": {
+        "device.files.write_binary": {
           "state": "SUPPORTED",
-          "requiresHumanConsent": true
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
         },
-        "device.ui.control": {
+        "device.files.append_binary": {
           "state": "SUPPORTED",
-          "requiresHumanConsent": true
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
         },
-        "device.apps.launch": {
+        "device.files.edit": {
           "state": "SUPPORTED",
-          "requiresHumanConsent": false
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
         },
-        "device.apps.install": {
+        "device.files.move": {
           "state": "SUPPORTED",
-          "requiresHumanConsent": true
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.directories.create": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.documents.write_pdf": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.media.quarantine": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.media.delete": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.apps.uninstall": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
+        },
+        "device.process.terminate": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native macOS/TCC/Accessibility provider; permissions and entitlements apply."
         }
       },
       "evidenceState": "PROPOSED",
@@ -257,29 +1412,264 @@
         "systemd user services"
       ],
       "capabilities": {
+        "device.directories.list": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.directories.page": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
         "device.files.read": {
           "state": "SUPPORTED",
           "requiresHumanConsent": false
         },
-        "device.files.write": {
+        "device.files.info": {
           "state": "SUPPORTED",
-          "requiresHumanConsent": false
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.files.hash": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.files.read_binary": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.files.read_multiple": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.search.files": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.search.content": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.process.list": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.windows.window.list": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "device.windows.window.observe": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "device.windows.window.read": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "voice.status": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.apps.list": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.info": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.health": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
         },
         "device.screen.observe": {
           "state": "SUPPORTED",
           "requiresHumanConsent": true
         },
-        "device.ui.control": {
+        "device.screen.capture": {
           "state": "SUPPORTED",
-          "requiresHumanConsent": true
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.audit.recent": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.audit.usage": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.camera": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.media.scan": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.notifications": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
         },
         "device.apps.launch": {
           "state": "SUPPORTED",
           "requiresHumanConsent": false
         },
+        "device.apps.close": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.ui.control": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true
+        },
+        "device.ui.pointer": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.windows.window.invoke": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "device.windows.window.input": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "device.windows.window.submit": {
+          "state": "UNAVAILABLE",
+          "requiresHumanConsent": true,
+          "notes": "Windows-namespaced API; use native platform-specific UI provider where supported."
+        },
+        "voice.speak": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.process.execute": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.session.start": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.session.input": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.session.stop": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.search.start": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.search.next": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.search.stop": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.job.start": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.job.stop": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
         "device.apps.install": {
           "state": "SUPPORTED",
           "requiresHumanConsent": true
+        },
+        "device.files.write": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false
+        },
+        "device.files.write_binary": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.files.append_binary": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.files.edit": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.files.move": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.directories.create": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.documents.write_pdf": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.media.quarantine": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.media.delete": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.apps.uninstall": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
+        },
+        "device.process.terminate": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Proposed native Unix/portal/desktop provider; desktop session and OS permission boundaries apply."
         }
       },
       "evidenceState": "PROPOSED",
