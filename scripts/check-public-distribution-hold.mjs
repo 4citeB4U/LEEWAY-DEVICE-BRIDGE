@@ -6,7 +6,7 @@ DISCOVERY_PIPELINE: Voice → Intent → Location → Vertical → Ranking → R
 5WH:
 WHAT = Prove source release hold blocks CI debug publication, public Pages assets and native-client update discovery.
 WHY = Prevent an unqualified APK or unsigned Apple package from being promoted to production outside canonical release authority.
-WHO = Device Bridge original release custodian, Runtime, Pocket-ID, Veritas and OS package owners.
+WHO = Device Bridge original release custodian, Runtime, ZITADEL, Veritas and OS package owners.
 WHERE = scripts/check-public-distribution-hold.mjs.
 WHEN = 2026-11-12.
 HOW = Read-only Git and source metadata assertions. NOT a live Pages/Funnel/OS verification.

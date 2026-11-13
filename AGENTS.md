@@ -71,7 +71,7 @@ Release source is **on hold**: [public installer distribution custody](docs/secu
 
 ## Product integrity and current source/release holds
 
-A valid dashboard, signed package, passing CI or relay room **does not** establish a real native hardware operation. Public download admission for all APK names is governed by `operator/public-apk-release-policy.mjs`; source CI cannot certify Google Play Protect, SmartScreen, Apple signing, or the actual running Funnel revision. A fallback shared mesh token or source-defined worker wildcard is **not** a genuine Pocket-ID/ZITADEL/Runtime grant. Refer to the owning [security incident #109](https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/issues/109); unfinished credential-rotation review must not be bypassed.
+A valid dashboard, signed package, passing CI or relay room **does not** establish a real native hardware operation. Public download admission for all APK names is governed by `operator/public-apk-release-policy.mjs`; source CI cannot certify Google Play Protect, SmartScreen, Apple signing, or the actual running Funnel revision. A fallback shared mesh token or source-defined worker wildcard is **not** a genuine ZITADEL/Runtime grant. Refer to the owning [security incident #109](https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/issues/109); unfinished credential-rotation review must not be bypassed.
 
 Per Creator's sovereign-hardware exception, the Digital Brain and Diagnostics are entirely and exclusively **device-owned**, with native device-specific paths. All other modules and skills remain hardware/OS/path agnostic. Never consolidate these protected stores into a global agent's property, silently purge them during app cleanup, or misrepresent a proxy/room as an installed native iPhone or HP daemon.
 

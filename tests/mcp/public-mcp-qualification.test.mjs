@@ -15,7 +15,7 @@ import test from "node:test";
 import { qualifyPublicMcpEndpoint } from "../../operator/identity/qualify-public-mcp-endpoint.mjs";
 
 const endpoint = "https://bridge.example/mcp";
-const issuer = "https://pocket-id.example:10000";
+const issuer = "https://zitadel.example:10000";
 const metadataUrl = "https://bridge.example/.well-known/oauth-protected-resource/mcp";
 const discoveryUrl = `${issuer}/.well-known/openid-configuration`;
 const jwksUrl = `${issuer}/.well-known/jwks.json`;
@@ -63,13 +63,19 @@ test("public qualification accepts exact OAuth resource metadata and never sends
   const result = await qualifyPublicMcpEndpoint({ endpoint, expectedIssuer: issuer, fetchImpl: fixture.fetchImpl });
 
   assert.equal(result.status, "PASS");
-  assert.equal(result.checks.pocketIdDiscovery, "PASS");
-  assert.equal(result.checks.pocketIdJwks, "PASS");
+  assert.equal(result.checks.zitadelDiscovery, "PASS");
+  assert.equal(result.checks.zitadelJwks, "PASS");
   assert.equal(result.checks.authenticatedMcpCall, "NOT_RUN");
   assert.equal(result.checks.deviceExecution, "NOT_PROBED");
   assert.equal(fixture.calls.length, 4);
   assert.equal(fixture.calls.every(({ init }) => !new Headers(init.headers).has("authorization")), true);
   assert.equal(fixture.calls.every(({ init }) => init.redirect === "manual"), true);
+
+  const retiredIssuer = `https://${["auth", "leeway", "industries"].join(".")}`;
+  await assert.rejects(
+    qualifyPublicMcpEndpoint({ endpoint, expectedIssuer: retiredIssuer, fetchImpl: fixture.fetchImpl }),
+    /RETIRED_IDENTITY_ISSUER_REJECTED/
+  );
 });
 
 test("qualification verifies live OIDC discovery and issuer-origin JWKS", async () => {

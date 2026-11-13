@@ -188,3 +188,141 @@ test('owner-scoped read policy admits bounded discovery while metadata stays lea
   assert.equal(relayStatus.status, 200);
   assert.equal((await relayStatus.json()).authority, 'TRANSPORT_ONLY');
 });
+
+test('Gate 1 hardening: x-test never logs authorization headers, public /mcp enforces read-only scope, bounded body, and session lifecycle', async t => {
+  const f = await fixture(policy(async req => req.headers.authorization === acceptedToken));
+  t.after(() => f.close());
+
+  const originalLog = console.log;
+  const logged = [];
+  console.log = (...args) => { logged.push(args.map(String).join(' ')); };
+  try {
+    const init = await fetch(`${f.base}/mcp`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: acceptedToken,
+        'x-test': 'probe-header-leak',
+      },
+      body: rpc('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'gate1', version: '1' } }),
+    });
+    assert.equal(init.status, 200);
+    const sessionId = init.headers.get('mcp-session-id');
+    assert.ok(sessionId && sessionId.length >= 8);
+    assert.equal(logged.some(line => line.includes(acceptedToken) || line.includes('probe-header-leak')), false);
+
+    const listing = await fetch(`${f.base}/mcp`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: acceptedToken,
+        'mcp-session-id': sessionId,
+      },
+      body: rpc('tools/list'),
+    });
+    assert.equal(listing.status, 200);
+    assert.equal(listing.headers.get('mcp-session-id'), sessionId);
+    const listedNames = (await listing.json()).result.tools.map(tool => tool.name);
+    assert.ok(!listedNames.includes('device_files_write'));
+    assert.ok(!listedNames.includes('device_apps_launch'));
+
+    for (const blockedTool of ['device_files_write', 'device_apps_launch']) {
+      const blocked = await fetch(`${f.base}/mcp`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: acceptedToken,
+          'mcp-session-id': sessionId,
+        },
+        body: rpc('tools/call', { name: blockedTool, arguments: { deviceId: 'pc-primary', path: 'x', text: 'y', packageName: 'z' } }),
+      });
+      assert.equal(blocked.status, 200);
+      const payload = await blocked.json();
+      assert.equal(payload.result.isError, true);
+      assert.equal(JSON.parse(payload.result.content[0].text).error, 'READ_ONLY_SCOPE_REQUIRED');
+    }
+
+    const oversized = await fetch(`${f.base}/mcp`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: acceptedToken },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list', params: { padding: 'a'.repeat(70000) } }),
+    });
+    assert.equal(oversized.status, 413);
+
+    const badSession = await fetch(`${f.base}/mcp`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: acceptedToken,
+        'mcp-session-id': 'nonexistent-session-1234',
+      },
+      body: rpc('tools/list'),
+    });
+    assert.equal(badSession.status, 404);
+
+    const unauthDelete = await fetch(`${f.base}/mcp`, {
+      method: 'DELETE',
+      headers: { 'mcp-session-id': sessionId },
+    });
+    assert.equal(unauthDelete.status, 401);
+
+    const del = await fetch(`${f.base}/mcp`, {
+      method: 'DELETE',
+      headers: { authorization: acceptedToken, 'mcp-session-id': sessionId },
+    });
+    assert.equal(del.status, 200);
+    assert.equal((await del.json()).sessionTerminated, true);
+
+    const afterDelete = await fetch(`${f.base}/mcp`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: acceptedToken,
+        'mcp-session-id': sessionId,
+      },
+      body: rpc('tools/list'),
+    });
+    assert.equal(afterDelete.status, 404);
+  } finally {
+    console.log = originalLog;
+  }
+});
+
+test('relay policy reconciles workstation ZITADEL env vars and refuses conflicts or retired identity keys', () => {
+  const ok = createRelayMcpAccessPolicy({
+    env: {
+      LEEWAY_OIDC_ISSUER: issuer,
+      LEEWAY_MCP_RESOURCE: resource,
+      LEEWAY_MCP_PROJECT_ID: '397622361785898800',
+      LEEWAY_OIDC_OWNER_SUB: 'owner-123',
+    },
+  });
+  assert.equal(ok.configured, true);
+  assert.equal(ok.provider, 'ZITADEL');
+  assert.equal(ok.projectId, '397622361785898800');
+
+  assert.deepEqual(createRelayMcpAccessPolicy({
+    env: {
+      LEEWAY_MCP_AUTH_ISSUER: issuer,
+      LEEWAY_MCP_AUDIENCE: resource,
+      LEEWAY_MCP_OWNER_SUB: 'owner-a',
+      LEEWAY_OIDC_OWNER_SUB: 'owner-b',
+    },
+  }), {
+    configured: false,
+    reason: 'MCP_OWNER_SUBJECT_CONFLICT',
+  });
+
+  const retiredKey = ['LEEWAY', 'POCKET', 'ID', 'ISSUER'].join('_');
+  assert.deepEqual(createRelayMcpAccessPolicy({
+    env: {
+      [retiredKey]: issuer,
+      LEEWAY_OIDC_ISSUER: issuer,
+      LEEWAY_MCP_RESOURCE: resource,
+      LEEWAY_OIDC_OWNER_SUB: 'owner-123',
+    },
+  }), {
+    configured: false,
+    reason: 'MCP_OAUTH_RETIRED_FALLBACK_FORBIDDEN',
+  });
+});

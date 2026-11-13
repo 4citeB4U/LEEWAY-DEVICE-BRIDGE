@@ -12,6 +12,7 @@ LICENSE: MIT
 */
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isRetiredIssuerUrl } from "./zitadel-access.mjs";
 
 const MCP_METADATA_PATH = "/.well-known/oauth-protected-resource/mcp";
 const OIDC_DISCOVERY_PATH = "/.well-known/openid-configuration";
@@ -95,6 +96,7 @@ async function fetchJson(fetchImpl, url, label) {
 
 export async function qualifyPublicMcpEndpoint({ endpoint, expectedIssuer, fetchImpl = globalThis.fetch } = {}) {
   const resource = parseHttpsUrl(endpoint, "MCP_ENDPOINT", "/mcp");
+  if (isRetiredIssuerUrl(expectedIssuer)) throw new Error("RETIRED_IDENTITY_ISSUER_REJECTED");
   const issuer = parseHttpsUrl(expectedIssuer, "EXPECTED_ISSUER");
   if (issuer.url.pathname !== "/") throw new Error("EXPECTED_ISSUER_MUST_BE_ORIGIN_ROOT");
   if (typeof fetchImpl !== "function") throw new Error("FETCH_UNAVAILABLE");
@@ -162,8 +164,8 @@ export async function qualifyPublicMcpEndpoint({ endpoint, expectedIssuer, fetch
       publicMcpUnauthenticatedRefusal: "PASS",
       bearerChallenge: "PASS",
       protectedResourceMetadata: "PASS",
-      pocketIdDiscovery: "PASS",
-      pocketIdJwks: "PASS",
+      zitadelDiscovery: "PASS",
+      zitadelJwks: "PASS",
       authenticatedMcpCall: "NOT_RUN",
       deviceExecution: "NOT_PROBED"
     },

@@ -9,7 +9,7 @@ WHO = LeeWay Industries; owner-authorized deployment operators.
 WHERE = operator/hosting/start-public-mcp-ingress.mjs
 WHEN = 2026-10-28
 HOW = Reuse canonical existing API handlers, route exact paths, validate Railway PORT and fail closed on unbound upstream.
-AUTHORITY: Transport only; not a Pocket ID issuer, Runtime Fabric, Device Bridge command provider, Continuum DB, or Veritas qualification.
+AUTHORITY: Transport only; not a ZITADEL issuer, Runtime Fabric, Device Bridge command provider, Continuum DB, or Veritas qualification.
 LICENSE: MIT
 */
 import { createServer } from 'node:http';

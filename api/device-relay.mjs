@@ -20,6 +20,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const MAX_PAYLOAD_BYTES = 64 * 1024;
+const MAX_HTTP_BODY_BYTES = 64 * 1024;
+const MAX_MCP_SESSIONS = 1024;
 const HELLO_TIMEOUT_MS = 10_000;
 const MAX_ID_LENGTH = 128;
 const MAX_CAPABILITY_LENGTH = 128;
@@ -27,13 +29,69 @@ const MAX_DEVICE_ID_LENGTH = 128;
 const MAX_TOKEN_LENGTH = 512;
 const SOVEREIGN_MESH_TOKEN = process.env.LEEWAY_MESH_TOKEN || null;
 const DELIVERY_MODE = 'VERCEL_FUNCTION_WEBSOCKET_V1';
+const READ_ONLY_MCP_TOOLS = new Set([
+  'bridge_devices',
+  'bridge_capabilities',
+  'device_health',
+  'device_info',
+  'device_brain_read',
+  'device_diagnostics_read',
+  'device_directories_list',
+  'device_files_universe_scan',
+  'device_files_read',
+]);
 
-function json(res, status, value) {
+function json(res, status, value, extraHeaders = {}) {
   res.writeHead(status, {
     'content-type': 'application/json; charset=utf-8',
     'cache-control': 'no-store',
+    ...extraHeaders,
   });
   res.end(JSON.stringify(value));
+}
+
+function parseMcpSessionHeader(req) {
+  const raw = req.headers['mcp-session-id'];
+  if (raw === undefined) return { present: false, valid: false, value: '' };
+  if (typeof raw !== 'string' || !/^[A-Za-z0-9._-]{8,128}$/.test(raw)) {
+    return { present: true, valid: false, value: '' };
+  }
+  return { present: true, valid: true, value: raw };
+}
+
+function readBoundedHttpBody(req, limitBytes = MAX_HTTP_BODY_BYTES) {
+  return new Promise((resolve, reject) => {
+    const declared = Number(req.headers['content-length'] || 0);
+    if (Number.isFinite(declared) && declared > limitBytes) {
+      req.resume();
+      return reject(Object.assign(new Error('REQUEST_BODY_TOO_LARGE'), { status: 413 }));
+    }
+    const chunks = [];
+    let total = 0;
+    let settled = false;
+    const fail = (code, status) => {
+      if (settled) return;
+      settled = true;
+      reject(Object.assign(new Error(code), { status }));
+    };
+    req.on('data', chunk => {
+      if (settled) return;
+      const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      total += buf.byteLength;
+      if (total > limitBytes) {
+        req.destroy();
+        fail('REQUEST_BODY_TOO_LARGE', 413);
+        return;
+      }
+      chunks.push(buf);
+    });
+    req.on('end', () => {
+      if (settled) return;
+      settled = true;
+      resolve(Buffer.concat(chunks).toString('utf8'));
+    });
+    req.on('error', () => fail('REQUEST_BODY_READ_ERROR', 400));
+  });
 }
 
 function text(value, max) {
@@ -91,7 +149,7 @@ function closeReplaced(connection) {
   }
 }
 
-function createRelayServer({ rooms = new Map(), mcpAccessPolicy = null } = {}) {
+function createRelayServer({ rooms = new Map(), mcpAccessPolicy = null, mcpSessions = new Set() } = {}) {
   async function requireMcpRead(req, res) {
     if (mcpAccessPolicy?.configured !== true || typeof mcpAccessPolicy.authenticate !== 'function') {
       json(res, 503, { ok: false, error: mcpAccessPolicy?.reason || 'MCP_READ_AUTHORITY_UNBOUND' });
@@ -110,16 +168,18 @@ function createRelayServer({ rooms = new Map(), mcpAccessPolicy = null } = {}) {
 
   const server = createServer(async (req, res) => {
     // Check original URL from reverse proxy headers if path was stripped
-    const origPath = req.headers['x-forwarded-uri'] || req.headers['x-original-uri'] || req.headers['x-forwarded-prefix'] || req.url;
-    if (process.env.DEBUG_ROUTING || req.headers['x-test']) {
-      console.log('[ROUTER-DEBUG]', req.method, req.url, 'origPath:', origPath, 'headers:', JSON.stringify(req.headers));
+    const origPath = String(req.headers['x-forwarded-uri'] || req.headers['x-original-uri'] || req.headers['x-forwarded-prefix'] || req.url || '/');
+    if (process.env.DEBUG_ROUTING === '1') {
+      const safeOrig = origPath.split('?')[0];
+      console.log('[ROUTER-DEBUG]', req.method, String(req.url || '/').split('?')[0], 'origPath:', safeOrig);
     }
 
     if (req.method === 'OPTIONS') {
       res.writeHead(204, {
         'access-control-allow-origin': '*',
-        'access-control-allow-methods': 'GET, POST, OPTIONS',
+        'access-control-allow-methods': 'GET, POST, DELETE, OPTIONS',
         'access-control-allow-headers': 'Authorization, Content-Type, Accept, MCP-Protocol-Version, Mcp-Method, Mcp-Name, MCP-Session-Id, Last-Event-Id',
+        'access-control-expose-headers': 'WWW-Authenticate, MCP-Protocol-Version, MCP-Session-Id, Last-Event-Id',
         'access-control-max-age': '86400'
       });
       return res.end();
@@ -166,197 +226,260 @@ function createRelayServer({ rooms = new Map(), mcpAccessPolicy = null } = {}) {
 
     if (req.url === '/mcp' || req.url === '/api/mcp' || origPath.includes('/mcp')) {
       if (!(await requireMcpRead(req, res))) return;
+      const sessionHeader = parseMcpSessionHeader(req);
+
+      if (req.method === 'DELETE') {
+        if (!sessionHeader.present || !sessionHeader.valid) {
+          return json(res, 400, { ok: false, error: 'MCP_SESSION_ID_INVALID' });
+        }
+        if (!mcpSessions.has(sessionHeader.value)) {
+          return json(res, 404, { ok: false, error: 'MCP_SESSION_NOT_FOUND' });
+        }
+        mcpSessions.delete(sessionHeader.value);
+        return json(res, 200, { ok: true, sessionTerminated: true, sessionId: sessionHeader.value });
+      }
+
       if (req.method === 'GET') {
+        if (sessionHeader.present) {
+          if (!sessionHeader.valid) return json(res, 400, { ok: false, error: 'MCP_SESSION_ID_INVALID' });
+          if (!mcpSessions.has(sessionHeader.value)) return json(res, 404, { ok: false, error: 'MCP_SESSION_NOT_FOUND' });
+        }
         return json(res, 200, {
           ok: true,
           service: 'leeway-device-bridge-mcp',
           status: 'ONLINE',
           endpoint: 'https://agent-lee.tailb186e7.ts.net/mcp',
           transport: 'STREAMABLE_HTTP_MCP',
+          readOnlyPublicScope: true,
           supportedMethods: ['initialize', 'tools/list', 'tools/call']
-        });
+        }, sessionHeader.valid ? { 'mcp-session-id': sessionHeader.value } : {});
       }
-      if (req.method === 'POST') {
-        let bodyStr = '';
-        req.on('data', chunk => { bodyStr += chunk; });
-        req.on('end', async () => {
-          let rpc;
-          try { rpc = JSON.parse(bodyStr); } catch { return json(res, 400, { jsonrpc: '2.0', error: { code: -32700, message: 'Parse error' } }); }
 
-          const rpcId = rpc.id;
-          if (rpc.method === 'initialize') {
+      if (req.method === 'POST') {
+        let bodyStr;
+        try {
+          bodyStr = await readBoundedHttpBody(req, MAX_HTTP_BODY_BYTES);
+        } catch (err) {
+          const status = err?.status === 413 ? 413 : 400;
+          return json(res, status, {
+            jsonrpc: '2.0',
+            error: { code: status === 413 ? -32000 : -32700, message: err?.message || 'INVALID_REQUEST_BODY' }
+          });
+        }
+
+        let rpc;
+        try { rpc = JSON.parse(bodyStr); } catch { return json(res, 400, { jsonrpc: '2.0', error: { code: -32700, message: 'Parse error' } }); }
+        if (!rpc || typeof rpc !== 'object' || Array.isArray(rpc)) {
+          return json(res, 400, { jsonrpc: '2.0', error: { code: -32600, message: 'Invalid Request' } });
+        }
+
+        const rpcId = rpc.id;
+        if (rpc.method === 'initialize') {
+          const sessionId = randomUUID();
+          if (mcpSessions.size >= MAX_MCP_SESSIONS) {
+            mcpSessions.delete(mcpSessions.values().next().value);
+          }
+          mcpSessions.add(sessionId);
+          return json(res, 200, {
+            jsonrpc: '2.0',
+            id: rpcId,
+            result: {
+              protocolVersion: '2025-03-26',
+              capabilities: { tools: {} },
+              serverInfo: { name: 'leeway-device-bridge', version: '1.0.0' },
+              instructions: 'LeeWay Sovereign Device Bridge MCP Ingress.'
+            }
+          }, { 'mcp-session-id': sessionId });
+        }
+
+        if (sessionHeader.present) {
+          if (!sessionHeader.valid) {
+            return json(res, 400, { jsonrpc: '2.0', id: rpcId, error: { code: -32600, message: 'MCP_SESSION_ID_INVALID' } });
+          }
+          if (!mcpSessions.has(sessionHeader.value)) {
+            return json(res, 404, { jsonrpc: '2.0', id: rpcId, error: { code: -32001, message: 'MCP_SESSION_NOT_FOUND' } });
+          }
+        }
+        const sessionResponseHeaders = sessionHeader.valid ? { 'mcp-session-id': sessionHeader.value } : {};
+
+        if (rpc.method === 'notifications/initialized') {
+          return json(res, 200, {
+            jsonrpc: '2.0',
+            result: {}
+          }, sessionResponseHeaders);
+        }
+
+        if (rpc.method === 'tools/list') {
+          const tools = [
+            {
+              name: 'bridge_devices',
+              description: 'Discover connected physical and workstation devices on the sovereign mesh.',
+              annotations: { readOnlyHint: true },
+              inputSchema: { type: 'object', properties: {} }
+            },
+            {
+              name: 'bridge_capabilities',
+              description: 'Discover capabilities for a specific device.',
+              annotations: { readOnlyHint: true },
+              inputSchema: { type: 'object', properties: { deviceId: { type: 'string' } }, required: ['deviceId'] }
+            },
+            {
+              name: 'device_health',
+              description: 'Query real-time health and diagnostics of a device.',
+              annotations: { readOnlyHint: true },
+              inputSchema: { type: 'object', properties: { deviceId: { type: 'string' } }, required: ['deviceId'] }
+            },
+            {
+              name: 'device_info',
+              description: 'Query hardware profile and identity passport of a device.',
+              annotations: { readOnlyHint: true },
+              inputSchema: { type: 'object', properties: { deviceId: { type: 'string' } }, required: ['deviceId'] }
+            },
+            {
+              name: 'device_brain_read',
+              description: 'Read the device-owned Digital Brain representation.',
+              annotations: { readOnlyHint: true },
+              inputSchema: { type: 'object', properties: { deviceId: { type: 'string' } }, required: ['deviceId'] }
+            },
+            {
+              name: 'device_diagnostics_read',
+              description: 'Read real-time device-owned diagnostics telemetry.',
+              annotations: { readOnlyHint: true },
+              inputSchema: { type: 'object', properties: { deviceId: { type: 'string' } }, required: ['deviceId'] }
+            },
+            {
+              name: 'device_directories_list',
+              description: 'List directories and files in authorized device workspace.',
+              annotations: { readOnlyHint: true },
+              inputSchema: { type: 'object', properties: { deviceId: { type: 'string' }, path: { type: 'string' }, limit: { type: 'integer' } }, required: ['deviceId'] }
+            },
+            {
+              name: 'device_files_universe_scan',
+              description: 'Scan scoped storage boundaries and file descriptors.',
+              annotations: { readOnlyHint: true },
+              inputSchema: { type: 'object', properties: { deviceId: { type: 'string' } }, required: ['deviceId'] }
+            },
+            {
+              name: 'device_files_read',
+              description: 'Read authorized file content.',
+              annotations: { readOnlyHint: true },
+              inputSchema: { type: 'object', properties: { deviceId: { type: 'string' }, path: { type: 'string' } }, required: ['deviceId', 'path'] }
+            }
+          ];
+          return json(res, 200, { jsonrpc: '2.0', id: rpcId, result: { tools } }, sessionResponseHeaders);
+        }
+
+        if (rpc.method === 'tools/call') {
+          const { name, arguments: args = {} } = rpc.params || {};
+          const targetDeviceId = args.deviceId || 'pc-primary';
+          const mutatingTool = !READ_ONLY_MCP_TOOLS.has(name);
+          if (args.constitutionEnvelope || (mutatingTool && process.env.LEEWAY_ENFORCE_CONSTITUTION === '1')) {
+            const constDecision = enforceSovereignConstitution(args.constitutionEnvelope);
+            if (!constDecision.admitted) {
+              return json(res, 200, {
+                jsonrpc: '2.0',
+                id: rpcId,
+                result: {
+                  content: [{
+                    type: 'text',
+                    text: JSON.stringify({
+                      ok: false,
+                      error: constDecision.action,
+                      violations: constDecision.violations,
+                      standardsSource: constDecision.standardsSource
+                    })
+                  }],
+                  isError: true
+                }
+              }, sessionResponseHeaders);
+            }
+          }
+
+          if (!READ_ONLY_MCP_TOOLS.has(name)) {
             return json(res, 200, {
               jsonrpc: '2.0',
               id: rpcId,
               result: {
-                protocolVersion: '2025-03-26',
-                capabilities: { tools: {} },
-                serverInfo: { name: 'leeway-device-bridge', version: '1.0.0' },
-                instructions: 'LeeWay Sovereign Device Bridge MCP Ingress.'
+                content: [{
+                  type: 'text',
+                  text: JSON.stringify({
+                    ok: false,
+                    error: 'READ_ONLY_SCOPE_REQUIRED',
+                    tool: name || null,
+                    deviceId: targetDeviceId
+                  })
+                }],
+                isError: true
               }
-            });
+            }, sessionResponseHeaders);
           }
 
-          if (rpc.method === 'notifications/initialized') {
+          if (name === 'bridge_devices') {
+            // Canonical string IDs only to satisfy Runtime Fabric upstream validator:
+            // Array.isArray(source.devices) && source.devices.every(nameOk) && unique
+            const canonicalSet = new Set();
+            for (const id of rooms.keys()) {
+              if (id.startsWith('LDB-')) {
+                canonicalSet.add('phone-fold6');
+              } else {
+                canonicalSet.add(id);
+              }
+            }
+            const stringDevices = Array.from(canonicalSet);
+            const deviceDetails = stringDevices.map(id => ({
+              id,
+              online: true,
+              role: id === 'pc-primary' ? 'PRIMARY_GPU_WORKSTATION' :
+                    id === 'phone-fold6' ? 'PHYSICAL_ANDROID_PHONE' :
+                    id === 'phone-apple-iphone' ? 'PHYSICAL_APPLE_PHONE' :
+                    id === 'pc-hp-secondary' ? 'SECONDARY_HP_WORKSTATION' : 'DEVICE_NODE'
+            }));
+
             return json(res, 200, {
               jsonrpc: '2.0',
-              result: {}
-            });
+              id: rpcId,
+              result: {
+                content: [{
+                  type: 'text',
+                  text: JSON.stringify({
+                    ok: true,
+                    devices: stringDevices,
+                    deviceDetails,
+                    authority: 'TRUSTED_RUNTIME_DEVICE_REGISTRY'
+                  }, null, 2)
+                }]
+              }
+            }, sessionResponseHeaders);
           }
 
-          if (rpc.method === 'tools/list') {
-            const tools = [
-              {
-                name: 'bridge_devices',
-                description: 'Discover connected physical and workstation devices on the sovereign mesh.',
-                inputSchema: { type: 'object', properties: {} }
-              },
-              {
-                name: 'bridge_capabilities',
-                description: 'Discover capabilities for a specific device.',
-                inputSchema: { type: 'object', properties: { deviceId: { type: 'string' } }, required: ['deviceId'] }
-              },
-              {
-                name: 'device_health',
-                description: 'Query real-time health and diagnostics of a device.',
-                inputSchema: { type: 'object', properties: { deviceId: { type: 'string' } }, required: ['deviceId'] }
-              },
-              {
-                name: 'device_info',
-                description: 'Query hardware profile and identity passport of a device.',
-                inputSchema: { type: 'object', properties: { deviceId: { type: 'string' } }, required: ['deviceId'] }
-              },
-              {
-                name: 'device_brain_read',
-                description: 'Read the device-owned Digital Brain representation.',
-                inputSchema: { type: 'object', properties: { deviceId: { type: 'string' } }, required: ['deviceId'] }
-              },
-              {
-                name: 'device_diagnostics_read',
-                description: 'Read real-time device-owned diagnostics telemetry.',
-                inputSchema: { type: 'object', properties: { deviceId: { type: 'string' } }, required: ['deviceId'] }
-              },
-              {
-                name: 'device_directories_list',
-                description: 'List directories and files in authorized device workspace.',
-                inputSchema: { type: 'object', properties: { deviceId: { type: 'string' }, path: { type: 'string' }, limit: { type: 'integer' } }, required: ['deviceId'] }
-              },
-              {
-                name: 'device_files_universe_scan',
-                description: 'Scan scoped storage boundaries and file descriptors.',
-                inputSchema: { type: 'object', properties: { deviceId: { type: 'string' } }, required: ['deviceId'] }
-              },
-              {
-                name: 'device_files_read',
-                description: 'Read authorized file content.',
-                inputSchema: { type: 'object', properties: { deviceId: { type: 'string' }, path: { type: 'string' } }, required: ['deviceId', 'path'] }
-              },
-              {
-                name: 'device_files_write',
-                description: 'Write file content into authorized device container.',
-                inputSchema: { type: 'object', properties: { deviceId: { type: 'string' }, path: { type: 'string' }, text: { type: 'string' } }, required: ['deviceId', 'path', 'text'] }
-              },
-              {
-                name: 'device_apps_launch',
-                description: 'Launch an application on target mobile or desktop device.',
-                inputSchema: { type: 'object', properties: { deviceId: { type: 'string' }, packageName: { type: 'string' } }, required: ['deviceId', 'packageName'] }
-              }
+          if (name === 'bridge_capabilities') {
+            // Normalize capabilities to satisfy Runtime Fabric upstream:
+            // Read-only relay keeps write/launch ungranted on the public MCP surface.
+            const baseCapabilities = [
+              { name: 'device.health', supported: true, granted: true, verified: true },
+              { name: 'device.info', supported: true, granted: true, verified: true },
+              { name: 'device.brain.read', supported: true, granted: true, verified: true },
+              { name: 'device.diagnostics.read', supported: true, granted: true, verified: true },
+              { name: 'device.files.read', supported: true, granted: true, verified: true },
+              { name: 'device.files.write', supported: true, granted: false, verified: false },
+              { name: 'device.apps.launch', supported: true, granted: false, verified: false }
             ];
-            return json(res, 200, { jsonrpc: '2.0', id: rpcId, result: { tools } });
+            return json(res, 200, {
+              jsonrpc: '2.0',
+              id: rpcId,
+              result: {
+                content: [{
+                  type: 'text',
+                  text: JSON.stringify({
+                    ok: true,
+                    deviceId: targetDeviceId,
+                    capabilities: baseCapabilities,
+                    authority: 'TRUSTED_RUNTIME_DEVICE_REGISTRY'
+                  }, null, 2)
+                }]
+              }
+            }, sessionResponseHeaders);
           }
-
-          if (rpc.method === 'tools/call') {
-            const { name, arguments: args = {} } = rpc.params || {};
-            const targetDeviceId = args.deviceId || 'pc-primary';
-            const mutatingTool = name === 'device_files_write' || name === 'device_apps_launch';
-            if (args.constitutionEnvelope || (mutatingTool && process.env.LEEWAY_ENFORCE_CONSTITUTION === '1')) {
-              const constDecision = enforceSovereignConstitution(args.constitutionEnvelope);
-              if (!constDecision.admitted) {
-                return json(res, 200, {
-                  jsonrpc: '2.0',
-                  id: rpcId,
-                  result: {
-                    content: [{
-                      type: 'text',
-                      text: JSON.stringify({
-                        ok: false,
-                        error: constDecision.action,
-                        violations: constDecision.violations,
-                        standardsSource: constDecision.standardsSource
-                      })
-                    }],
-                    isError: true
-                  }
-                });
-              }
-            }
-
-            if (name === 'bridge_devices') {
-              // Canonical string IDs only to satisfy Runtime Fabric upstream validator:
-              // Array.isArray(source.devices) && source.devices.every(nameOk) && unique
-              const canonicalSet = new Set();
-              for (const id of rooms.keys()) {
-                if (id.startsWith('LDB-')) {
-                  canonicalSet.add('phone-fold6');
-                } else {
-                  canonicalSet.add(id);
-                }
-              }
-              const stringDevices = Array.from(canonicalSet);
-              const deviceDetails = stringDevices.map(id => ({
-                id,
-                online: true,
-                role: id === 'pc-primary' ? 'PRIMARY_GPU_WORKSTATION' :
-                      id === 'phone-fold6' ? 'PHYSICAL_ANDROID_PHONE' :
-                      id === 'phone-apple-iphone' ? 'PHYSICAL_APPLE_PHONE' :
-                      id === 'pc-hp-secondary' ? 'SECONDARY_HP_WORKSTATION' : 'DEVICE_NODE'
-              }));
-
-              return json(res, 200, {
-                jsonrpc: '2.0',
-                id: rpcId,
-                result: {
-                  content: [{
-                    type: 'text',
-                    text: JSON.stringify({
-                      ok: true,
-                      devices: stringDevices,
-                      deviceDetails,
-                      authority: 'TRUSTED_RUNTIME_DEVICE_REGISTRY'
-                    }, null, 2)
-                  }]
-                }
-              });
-            }
-
-            if (name === 'bridge_capabilities') {
-              // Normalize capabilities to satisfy Runtime Fabric upstream:
-              // source.deviceId === target && source.capabilities.every(x => nameOk(x.name) && typeof x.supported === 'boolean' && typeof x.granted === 'boolean' && typeof x.verified === 'boolean')
-              const baseCapabilities = [
-                { name: 'device.health', supported: true, granted: true, verified: true },
-                { name: 'device.info', supported: true, granted: true, verified: true },
-                { name: 'device.brain.read', supported: true, granted: true, verified: true },
-                { name: 'device.diagnostics.read', supported: true, granted: true, verified: true },
-                { name: 'device.files.read', supported: true, granted: true, verified: true },
-                { name: 'device.files.write', supported: true, granted: true, verified: true },
-                { name: 'device.apps.launch', supported: true, granted: true, verified: true }
-              ];
-              return json(res, 200, {
-                jsonrpc: '2.0',
-                id: rpcId,
-                result: {
-                  content: [{
-                    type: 'text',
-                    text: JSON.stringify({
-                      ok: true,
-                      deviceId: targetDeviceId,
-                      capabilities: baseCapabilities,
-                      authority: 'TRUSTED_RUNTIME_DEVICE_REGISTRY'
-                    }, null, 2)
-                  }]
-                }
-              });
-            }
 
             // Map tool name to capability
             const capability = name.startsWith('device_') ? name.replace('device_', 'device.').replaceAll('_', '.') : name;
@@ -420,17 +543,17 @@ function createRelayServer({ rooms = new Map(), mcpAccessPolicy = null } = {}) {
               result: {
                 content: [{ type: 'text', text: JSON.stringify(formattedResponse, null, 2) }]
               }
-            });
+            }, sessionResponseHeaders);
           }
 
           return json(res, 200, {
             jsonrpc: '2.0',
             id: rpcId,
             error: { code: -32601, message: 'Method not found' }
-          });
-        });
-        return;
+          }, sessionResponseHeaders);
       }
+
+      return json(res, 405, { ok: false, error: 'METHOD_NOT_ALLOWED' });
     }
     if ((req.method === 'GET' || req.method === 'HEAD') && (req.url.startsWith('/downloads/') || origPath.includes('/downloads/'))) {
       try {

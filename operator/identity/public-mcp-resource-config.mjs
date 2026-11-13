@@ -1,19 +1,22 @@
 /* LEEWAY HEADER — DO NOT REMOVE
 REGION: LEEWAY.DEVICE.BRIDGE.IDENTITY.RESOURCE
-TAG: LEEWAY.OIDC.PUBLIC_MCP_RESOURCE_CONFIG.V2
+TAG: LEEWAY.ZITADEL.PUBLIC_MCP_RESOURCE_CONFIG.V3
 WHO: LeeWay Industries
-WHAT: Resolve the client-facing OIDC resource metadata for the Vercel MCP ingress
-WHEN: 2026-10-26
+WHAT: Resolve the client-facing ZITADEL OIDC resource metadata for the public Device Bridge MCP ingress
+WHEN: 2026-11-12
 WHERE: operator/identity/public-mcp-resource-config.mjs
-WHY: Keep OAuth resource identity exact across the public Device Bridge and Runtime Fabric
-HOW: Validate configured HTTPS issuer and canonical /mcp audience; never provide defaults
+WHY: Keep OAuth resource identity exact across Device Bridge and Runtime Fabric with fail-closed ZITADEL-only rules
+HOW: Reconcile canonical LEEWAY_MCP_* with explicit workstation LEEWAY_OIDC_ISSUER/LEEWAY_MCP_RESOURCE/LEEWAY_MCP_PROJECT_ID without defaults
 AUTHORITY: Configuration validation only; no token issuance or execution authority
 LICENSE: MIT
 */
+import { isRetiredIssuerUrl } from "./zitadel-access.mjs";
 
 export const RUNTIME_READ_SCOPE = "read:runtime";
 export const BRIDGE_READ_SCOPE = "device.bridge.read";
 export const PUBLIC_MCP_METADATA_PATH = "/.well-known/oauth-protected-resource/mcp";
+
+const RETIRED_ENV_PREFIX = `${["LEEWAY", "POCKET", "ID"].join("_")}_`;
 
 function secureHttpsUrl(value) {
   let url;
@@ -34,11 +37,44 @@ function secureHttpsUrl(value) {
   return url;
 }
 
+function hasRetiredIdentityEnv(env) {
+  return Object.entries(env || {}).some(
+    ([key, value]) => key.startsWith(RETIRED_ENV_PREFIX) && String(value || "").trim() !== ""
+  );
+}
+
+function reconcilePair(env, primaryKey, aliasKey, { normalize = value => value } = {}) {
+  const primary = String(env?.[primaryKey] || "").trim();
+  const alias = String(env?.[aliasKey] || "").trim();
+  if (primary && alias && normalize(primary) !== normalize(alias)) {
+    return { conflict: true, value: "" };
+  }
+  return { conflict: false, value: primary || alias };
+}
+
 export function resolvePublicMcpResourceConfig(env = process.env) {
-  const issuer = String(env.LEEWAY_MCP_AUTH_ISSUER || "").trim();
-  const audienceValue = String(env.LEEWAY_MCP_AUDIENCE || "").trim();
+  if (hasRetiredIdentityEnv(env)) {
+    return { configured: false, reason: "MCP_OAUTH_RETIRED_FALLBACK_FORBIDDEN" };
+  }
+
+  const issuerPair = reconcilePair(env, "LEEWAY_MCP_AUTH_ISSUER", "LEEWAY_OIDC_ISSUER", {
+    normalize: value => value.replace(/\/+$/, "")
+  });
+  const audiencePair = reconcilePair(env, "LEEWAY_MCP_AUDIENCE", "LEEWAY_MCP_RESOURCE", {
+    normalize: value => value.replace(/\/+$/, "")
+  });
+  if (issuerPair.conflict || audiencePair.conflict) {
+    return { configured: false, reason: "MCP_OAUTH_ENVIRONMENT_CONFLICT" };
+  }
+
+  const issuer = issuerPair.value;
+  const audienceValue = audiencePair.value;
   if (!issuer || !audienceValue) {
     return { configured: false, reason: "MCP_OAUTH_ENVIRONMENT_INCOMPLETE" };
+  }
+
+  if (isRetiredIssuerUrl(issuer)) {
+    return { configured: false, reason: "MCP_OAUTH_RETIRED_ISSUER_REJECTED" };
   }
 
   const issuerUrl = secureHttpsUrl(issuer);
@@ -47,13 +83,20 @@ export function resolvePublicMcpResourceConfig(env = process.env) {
     return { configured: false, reason: "MCP_OAUTH_ENVIRONMENT_INVALID" };
   }
 
+  const projectId = String(env?.LEEWAY_MCP_PROJECT_ID || "").trim();
+  if (projectId && !/^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$/.test(projectId)) {
+    return { configured: false, reason: "MCP_OAUTH_PROJECT_ID_INVALID" };
+  }
+
   const audience = audienceUrl.toString().replace(/\/$/, "");
   const metadataUrl = new URL(PUBLIC_MCP_METADATA_PATH, audienceUrl.origin).toString();
   return Object.freeze({
     configured: true,
+    provider: "ZITADEL",
     issuer,
     audience,
     metadataUrl,
+    ...(projectId ? { projectId } : {}),
     // This is permission *advertisement* only. ZITADEL must separately grant
     // actual owner-delegated scopes, Runtime Fabric must verify the token, and
     // native device availability remains unproven until independently measured.

@@ -2,7 +2,7 @@
 REGION: LEEWAY.CONTINUUM.IDENTITY.BINDING
 TAG: LEEWAY.CONTINUUM.CANONICAL.PROVIDER.BINDING.V1
 WHO: LeeWay Industries
-WHAT: Resolve existing owner-admitted Continuum provider for Pocket ID archives
+WHAT: Resolve existing owner-admitted Continuum provider for archived legacy identity custody
 WHEN: 2026-10-26
 WHERE: operator/identity/bind-canonical-continuum.mjs
 WHY: Reuse canonical provider and prevent the read-only Brain projection from being misidentified as durable intake

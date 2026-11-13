@@ -6,7 +6,7 @@ DISCOVERY_PIPELINE: Voice → Intent → Location → Vertical → Ranking → R
 5WH:
 WHAT = Reject source-embedded shared mesh pairing credential material in active tracked code.
 WHY = Avoid a publicly inspectable relay credential granting cross-device access.
-WHO = Original Device Bridge / Pocket-ID / Runtime owner under Creator security approval.
+WHO = Original Device Bridge / ZITADEL / Runtime owner under Creator security approval.
 WHERE = scripts/check-mesh-token-custody.mjs.
 WHEN = 2026-11-12.
 HOW = Read-only tracked source scan; no token contents printed; live rotation is separate.

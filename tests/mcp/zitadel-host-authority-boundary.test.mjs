@@ -1,17 +1,18 @@
 /*
-LEEWAY HEADER - DO NOT REMOVE
+LEEWAY HEADER — DO NOT REMOVE
 REGION: LEEWAY.DEVICE.BRIDGE.IDENTITY.HOST.TEST
-TAG: LEEWAY.POCKET_ID.MCP.HOST.AUTHORITY_BOUNDARY.TEST.V1
-WHAT: Prove the Pocket ID host consumes existing passport and authority providers without self-assertion.
-WHY: Owner, identity, Formula, Veritas and receipt custody must remain externally governed.
-HOW: Test-only Ed25519 passports and injected callbacks; no listener, device action, receipt append or deployment.
+TAG: LEEWAY.ZITADEL.MCP.HOST.AUTHORITY_BOUNDARY.TEST.V2
+WHAT: Prove the ZITADEL host consumes existing passport, env reconciliation, and authority providers without self-assertion.
+WHY: Owner, identity, Formula, Veritas and receipt custody must remain externally governed under single ZITADEL authority.
+HOW: Test-only Ed25519 passports, workstation env reconciliation fixtures, and injected callbacks; no live device or deploy mutation.
 AUTHORITY: TEST_ONLY; source evidence, not independent Veritas or production qualification.
 LICENSE: MIT
 */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { generateKeyPairSync, randomUUID } from 'node:crypto';
-import { buildHostInjectedC3Composition } from '../../operator/identity/start-pocket-id-mcp.mjs';
+import { buildHostInjectedC3Composition } from '../../operator/identity/start-zitadel-mcp.mjs';
+import { resolveZitadelHostEnvironment } from '../../operator/identity/zitadel-host-composition-template.mjs';
 import {
   createSignedWindowsPassport,
   registerVerifiedWindowsDevice,
@@ -146,4 +147,40 @@ test('qualified read-only host composition preserves injected authorities', () =
   assert.equal(record.ownerSubject, OWNER_SUBJECT);
   assert.equal(result.mode, 'c3');
   assert.equal(Object.isFrozen(result), true);
+});
+
+test('host wrapper template reconciles workstation ZITADEL env vars and fails closed on conflicts or retired envs', () => {
+  const reconciled = resolveZitadelHostEnvironment({
+    LEEWAY_OIDC_ISSUER: 'https://leeway-mcp-d3xoxh.us1.zitadel.cloud',
+    LEEWAY_MCP_RESOURCE: 'https://leeway-device-bridge.vercel.app/mcp',
+    LEEWAY_MCP_PROJECT_ID: '397622361785898800',
+    LEEWAY_OIDC_OWNER_SUB: OWNER_SUBJECT,
+  });
+  assert.equal(reconciled.provider, 'ZITADEL');
+  assert.equal(reconciled.issuer, 'https://leeway-mcp-d3xoxh.us1.zitadel.cloud');
+  assert.equal(reconciled.resource, 'https://leeway-device-bridge.vercel.app/mcp');
+  assert.equal(reconciled.ownerSubject, OWNER_SUBJECT);
+  assert.deepEqual(reconciled.tokenAudiences, ['397622361785898800']);
+
+  assert.throws(() => resolveZitadelHostEnvironment({
+    LEEWAY_MCP_AUTH_ISSUER: 'https://a.example.test',
+    LEEWAY_OIDC_ISSUER: 'https://b.example.test',
+    LEEWAY_MCP_RESOURCE: 'https://leeway-device-bridge.vercel.app/mcp',
+    LEEWAY_OIDC_OWNER_SUB: OWNER_SUBJECT,
+  }), /MCP_OAUTH_ENVIRONMENT_CONFLICT/);
+
+  assert.throws(() => resolveZitadelHostEnvironment({
+    LEEWAY_OIDC_ISSUER: 'https://leeway-mcp-d3xoxh.us1.zitadel.cloud',
+    LEEWAY_MCP_RESOURCE: 'https://leeway-device-bridge.vercel.app/mcp',
+    LEEWAY_MCP_OWNER_SUB: 'owner-a',
+    LEEWAY_OIDC_OWNER_SUB: 'owner-b',
+  }), /MCP_OWNER_SUBJECT_CONFLICT/);
+
+  const retiredEnvKey = ['LEEWAY', 'POCKET', 'ID', 'ISSUER'].join('_');
+  assert.throws(() => resolveZitadelHostEnvironment({
+    [retiredEnvKey]: 'https://retired.example.test',
+    LEEWAY_OIDC_ISSUER: 'https://leeway-mcp-d3xoxh.us1.zitadel.cloud',
+    LEEWAY_MCP_RESOURCE: 'https://leeway-device-bridge.vercel.app/mcp',
+    LEEWAY_OIDC_OWNER_SUB: OWNER_SUBJECT,
+  }), /RETIRED_IDENTITY_ENV_FORBIDDEN/);
 });

@@ -2,8 +2,8 @@
 # REGION: LEEWAY.DEVICE.BRIDGE.DEPLOYMENT.QUALIFICATION
 # TAG: LEEWAY.MCP.VERCEL.PUBLIC_OAUTH_DISCOVERY.V2
 # WHO: LeeWay Industries
-# WHAT: Qualify an explicitly supplied Vercel public MCP /mcp endpoint and its Pocket ID metadata
-# WHEN: 2026-10-26
+# WHAT: Qualify an explicitly supplied Vercel public MCP /mcp endpoint and its ZITADEL OIDC metadata
+# WHEN: 2026-11-12
 # WHERE: .github/workflows/mcp-upstream-qualification.yml
 # WHY: Remove the retired Fly target and prevent warnings/SSO pages from becoming green qualification
 # HOW: Manual, credential-free initialize refusal plus exact path-scoped OAuth metadata checks
@@ -19,7 +19,7 @@ on:
         required: true
         type: string
       expected_issuer:
-        description: "Exact HTTPS issuer advertised by Pocket ID discovery"
+        description: "Exact HTTPS issuer advertised by ZITADEL OIDC discovery"
         required: true
         type: string
 

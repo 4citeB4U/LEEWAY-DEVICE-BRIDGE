@@ -24,7 +24,7 @@ import {
   resolvePublicMcpResourceConfig
 } from "../../operator/identity/public-mcp-resource-config.mjs";
 
-const ISSUER = "https://pocket-id.example:10000";
+const ISSUER = "https://zitadel.example:10000";
 const RESOURCE = "https://bridge.example/mcp";
 const UPSTREAM = "https://runtime-fabric.example/mcp";
 const env = {
@@ -51,7 +51,7 @@ function combinedHandler({ mcpHandler, metadataHandler }) {
   };
 }
 
-test("public resource configuration fails closed and accepts only HTTPS /mcp resources", () => {
+test("public resource configuration fails closed, reconciles workstation OIDC vars, and accepts only HTTPS /mcp resources", () => {
   assert.equal(resolvePublicMcpResourceConfig({}).configured, false);
   assert.equal(resolvePublicMcpResourceConfig({
     LEEWAY_MCP_AUTH_ISSUER: ISSUER,
@@ -62,6 +62,27 @@ test("public resource configuration fails closed and accepts only HTTPS /mcp res
     LEEWAY_MCP_AUDIENCE: "https://bridge.example/api/mcp"
   }).configured, false);
   assert.deepEqual(resolvePublicMcpResourceConfig(env).scopes, [RUNTIME_READ_SCOPE]);
+
+  const workstationCfg = resolvePublicMcpResourceConfig({
+    LEEWAY_OIDC_ISSUER: ISSUER,
+    LEEWAY_MCP_RESOURCE: RESOURCE,
+    LEEWAY_MCP_PROJECT_ID: "397622361785898800"
+  });
+  assert.equal(workstationCfg.configured, true);
+  assert.equal(workstationCfg.provider, "ZITADEL");
+  assert.equal(workstationCfg.projectId, "397622361785898800");
+
+  assert.equal(resolvePublicMcpResourceConfig({
+    LEEWAY_MCP_AUTH_ISSUER: ISSUER,
+    LEEWAY_OIDC_ISSUER: "https://other.example.test",
+    LEEWAY_MCP_AUDIENCE: RESOURCE
+  }).reason, "MCP_OAUTH_ENVIRONMENT_CONFLICT");
+
+  const retiredKey = ["LEEWAY", "POCKET", "ID", "ISSUER"].join("_");
+  assert.equal(resolvePublicMcpResourceConfig({
+    ...env,
+    [retiredKey]: "https://retired.example.test"
+  }).reason, "MCP_OAUTH_RETIRED_FALLBACK_FORBIDDEN");
 });
 
 test("Vercel maps /mcp and path-scoped protected-resource metadata to Node Functions", async () => {

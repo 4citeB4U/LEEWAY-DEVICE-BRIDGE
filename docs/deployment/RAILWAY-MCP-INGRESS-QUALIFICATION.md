@@ -8,7 +8,7 @@ LICENSE: MIT
 -->
 # Railway public MCP ingress: deployment and evidence contract
 
-**STATUS: SOURCE CANDIDATE ONLY.** No Railway project, deployment, owner Pocket ID enrollment, real Continuum readback or device execution is certified by this source.
+**STATUS: SOURCE CANDIDATE ONLY.** No Railway project, deployment, owner ZITADEL enrollment, real Continuum readback or device execution is certified by this source.
 
 ## Deployment boundary
 - Canonical source remains GitHub repository 4citeB4U/LEEWAY-DEVICE-BRIDGE. Do not transfer repos or use the owner's PC as an always-on service.
@@ -26,9 +26,9 @@ The originally Railway-oriented adapter was also deployed **unchanged to Render*
 - Render service: leeway-device-bridge-mcp-qual; ID srv-dbh4vv6k1f9s73efipv0; published staging origin https://leeway-device-bridge-mcp-qual.onrender.com .
 - Original deployment dep-dbh4vvmk1f9s73efir50 marked LIVE; Node listener BOUND and 9/9 gateway tests passed. External GitHub Actions source workflow #40757747029 subsequently passed a real, read-only HTTPS /healthz and fail-closed /mcp test from a GitHub runner. This **does not** qualify user OAuth or native device tools.
 - Exact public audience is explicitly bound in Render as LEEWAY_MCP_AUDIENCE = https://leeway-device-bridge-mcp-qual.onrender.com/mcp . The managed service triggers a restart on environment update; compare the new deployment status before making claims about the latest binary.
-- LEEWAY_MCP_AUTH_ISSUER and LEEWAY_MCP_UPSTREAM remain **UNBOUND** until the original Pocket ID service and original Runtime Fabric MCP resource pass owner-approved live verification. Never substitute an example issuer or a different trust root.
+- LEEWAY_MCP_AUTH_ISSUER and LEEWAY_MCP_UPSTREAM remain **UNBOUND** until the single ZITADEL OIDC authority and original Runtime Fabric MCP resource pass owner-approved live verification. Never substitute an example issuer or a different trust root.
 - Runtime Fabric managed MCP source is proposed in PR #118 and CI PASS; it could not be cloned by Render while private GitHub repository access remained unapproved. Owner approval to Render's GitHub integration or authorized reuse of original Vercel project is required.
-- Runtime Fabric read-only native-device discovery from PR #117 requires owner-delegated `device.bridge.read` in addition to `read:runtime`. The public gateway **defaults to advertising only** read:runtime. Only after real issuer, Runtime Fabric/native read-only upstream and owner subject grant qualify, set LEEWAY_MCP_DISCOVERY_AUTHORIZED exactly to **owner-read-only** to advertise both. This variable only updates OAuth metadata; it cannot issue permission, bypass JWT auth, or enable tools in Runtime Fabric. An unsupported value must leave scope unadvertised.
+- Runtime Fabric read-only native-device discovery from PR #117 requires owner-delegated `device.bridge.read` in addition to `read:runtime`. The public gateway **defaults to advertising only** read:runtime. Only after real ZITADEL issuer, Runtime Fabric/native read-only upstream and owner subject grant qualify, set LEEWAY_MCP_DISCOVERY_AUTHORIZED exactly to **owner-read-only** to advertise both. This variable only updates OAuth metadata; it cannot issue permission, bypass JWT auth, or enable tools in Runtime Fabric. An unsupported value must leave scope unadvertised.
 - Do not attempt to publish device mutation tools or client-facing ChatGPT connector until actual owner authorization, provider pairing, Formula/Veritas/Receipt/Learning and original Continuum readback are complete.
 
 ### Staging external network test
@@ -39,14 +39,14 @@ Run `node scripts/qualify-public-mcp-staging.mjs` from a network-capable approve
 | Variable | Binding |
 | --- | --- |
 | PORT | Injected listener port |
-| LEEWAY_MCP_AUTH_ISSUER | Exact HTTPS issuer of a single independently deployed and enrolled Pocket ID authority |
+| LEEWAY_MCP_AUTH_ISSUER | Exact HTTPS issuer of the single enrolled ZITADEL OIDC authority |
 | LEEWAY_MCP_AUDIENCE | Exact public Railway HTTPS domain with path /mcp |
 | LEEWAY_MCP_UPSTREAM | Exact independent Runtime Fabric HTTPS /mcp resource |
 
-The ingress is stateless transport, **not a token verifier**. Runtime Fabric validates the Pocket ID JWT signature, issuer, owner, resource, expiry and scope. Do not store OAuth identity signing keys or database credentials in this gateway.
+The ingress is stateless transport, **not a token verifier**. Runtime Fabric validates the ZITADEL JWT signature, issuer, owner, resource, expiry and scope. Do not store OAuth identity signing keys or database credentials in this gateway.
 
 ## Mandatory provider boundaries
-1. Pocket ID must run once on qualified persistent hosting with durable, backed-up database and separate signing-key custody. It must not be instantiated by each device. Its identity DB is distinct from the canonical Continuum databases.
+1. ZITADEL is the sole supported LeeWay OIDC identity authority. It must never be bypassed by device-local issuers or retired Pocket ID fallbacks. Its identity boundary is distinct from the canonical Continuum databases.
 2. Runtime Fabric must expose a separately qualified authenticated MCP endpoint and bind native Device Bridge read-only tools. Runtime Fabric PR #117 adds a candidate adapter but is not live evidence.
 3. Continuum keeps canonical owner-scoped data via its original service: SQLite, optional DuckDB/PouchDB/Electric+PostgreSQL, VRAM checkpoint handoff, encrypted storage compartments and exact readback. Continuum PR #6 is source-contract candidate only. Never create substitute empty databases or put owner data in ephemeral service files.
 4. Device Bridge PR #79 adds MCP discovery and actual owner-scoped record qualification checks, not authorization to execute commands on Windows.
@@ -59,7 +59,7 @@ The ingress is stateless transport, **not a token verifier**. Runtime Fabric val
 3. Plan: exact domains, scopes, key custody, persistent volumes, rollback and failure paths.
 4. Implement: connect existing GitHub source, deploy stateless gateway and independently approved runtime and identity services.
 5. Test: source CI, bounded transport and negative-token tests, health and OAuth metadata.
-6. Validate: live Pocket ID login, owner token, protected resource, authenticated tools/list, Device Bridge discovery, original Continuum readback.
+6. Validate: live ZITADEL login, owner token, protected resource, authenticated tools/list, Device Bridge discovery, original Continuum readback.
 7. Repair: correct failures without bypassing Veritas, token checks or consent.
 8. Retest: replay negative paths, restart recovery, and physical device disconnect/reconnect.
 9. Verify: independent Formula/Veritas gates, real receipts, Learning Ledger and rollback.

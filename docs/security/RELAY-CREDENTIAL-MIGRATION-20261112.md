@@ -6,7 +6,7 @@ DISCOVERY_PIPELINE: Voice → Intent → Location → Vertical → Ranking → R
 5WH:
 WHAT = Stage safe migration from source-exposed global relay token to original owner-issued device-scoped pairing credentials.
 WHY = Prevent public dashboard or source checkout from authorizing remote device commands.
-WHO = Creator/Human and original Pocket-ID/ZITADEL, Runtime Fabric, Device Bridge and security incident owner.
+WHO = Creator/Human and original ZITADEL, Runtime Fabric, Device Bridge and security incident owner.
 WHERE = docs/security/RELAY-CREDENTIAL-MIGRATION-20261112.md.
 WHEN = 2026-11-12.
 HOW = Contain/rotate, prepare hosts, migrate clients, prove fail-closed and owner recovery, then remove legacy bypass.
@@ -14,7 +14,7 @@ LICENSE: Existing repository terms remain unchanged.
 -->
 # Security Hold: Source-Exposed Relay Token and Fleet Migration
 
-**P0 security issue:** [Device Bridge #109](https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/issues/109). Do not print current/old secrets in issues, receipts, logs, dashboards or release manifests. **Review stage only; actual host, Pocket-ID credentials, live client environment and production poststate were not inspected in this source change.**
+**P0 security issue:** [Device Bridge #109](https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/issues/109). Do not print current/old secrets in issues, receipts, logs, dashboards or release manifests. **Review stage only; actual host, ZITADEL credentials, live client environment and production poststate were not inspected in this source change.**
 
 ## Actual source finding
 
@@ -24,7 +24,7 @@ The old shared mesh token literal was present in the relay, multiple native/prox
 
 1. **Inventory and bound the blast radius:** exact production and local relay deployments, authentication path, exposed public dashboard revisions, current active WebSocket sessions, device pairs, tenant namespace, fallback usage, source Git history and original mission. Preserve access-gapped records. Do not assume the host has `LEEWAY_MESH_TOKEN` provisioned merely because a deployment is green.
 2. **Human-approved containment:** original security/identity owner revokes or rotates all compromised public/shared tokens under protected custody, assesses existing sessions and cross-room scope, and prepares a tested rollback and device reconnect. Do not delete device-local Brain/Diagnostics or disrupt lawful receipts.
-3. **Host composition:** rely on existing Pocket-ID/ZITADEL and Runtime verified issuer/audience/owner/tenant/device grants, with exact target, capability, nonce/operation digest, expiry and revocation. No new identity issuer or parallel control plane. Intermediate host environment secrets are temporary pairing material, **not** full production authorization.
+3. **Host composition:** rely on existing ZITADEL and Runtime verified issuer/audience/owner/tenant/device grants, with exact target, capability, nonce/operation digest, expiry and revocation. No new identity issuer or parallel control plane. Intermediate host environment secrets are temporary pairing material, **not** full production authorization.
 4. **Client migration:** provision affected workstation, HP, Android, Apple supervisor and test operators with properly scoped, non-source secrets via authorized host/device-native storage. The old public dashboard may never ship tokens or print unexecuted work as PASS.
 5. **Source repair:** this PR removes literal defaults. If no host pairing token is configured, the mesh override is disabled and client requests must fail through the existing per-room pairing rules; do not auto-reenable a public fallback. A missing credential should be distinguishable from runtime outage and visible as an owner-actionable block.
 6. **Negative verification:** unknown/stale shared token cannot access other rooms, tenants or devices; missing host token cannot trigger a command; replay, user consent withdrawal, wrong device and expired grant are denied before a physical operation; prove on a clean real host.

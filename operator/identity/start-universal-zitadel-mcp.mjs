@@ -1,10 +1,10 @@
 /* LEEWAY HEADER — DO NOT REMOVE
 REGION: LEEWAY.DEVICE.BRIDGE.IDENTITY.HOST
-TAG: LEEWAY.POCKET_ID.UNIVERSAL.MCP.START.V2
+TAG: LEEWAY.ZITADEL.UNIVERSAL.MCP.START.V3
 WHO: LeeWay Industries
-WHAT: Start discovery MCP or explicitly enrolled owner-command MCP with the canonical Bridge
-WHEN: 2026-10-27
-WHERE: operator/identity/start-universal-pocket-id-mcp.mjs
+WHAT: Start ZITADEL discovery MCP or explicitly enrolled owner-command MCP with the canonical Bridge
+WHEN: 2026-11-12
+WHERE: operator/identity/start-universal-zitadel-mcp.mjs
 WHY: Make qualified execution possible without silently promoting discovery credentials or bypassing C3
 HOW: Require trusted Runtime composition before command exposure; retain loopback-only binding
 AUTHORITY: Host-injected canonical Runtime Fabric gates; no public listener or permission bypass
@@ -13,12 +13,23 @@ LICENSE: MIT
 import http from 'node:http';
 import { createConfiguredBridge, createHostInjectedConfiguredBridge } from '../../apps/desktop/mcp-server.mjs';
 import { requireTrustedRuntimeComposition } from '../../apps/desktop/runtime-composition.mjs';
-import { createPocketIdUniversalHandler } from './create-pocket-id-universal-handler.mjs';
+import { createZitadelUniversalHandler } from './create-zitadel-universal-handler.mjs';
 
-export async function startUniversalPocketIdMcp({
-  configPath, issuer, resource, ownerSubject,
-  port = 4272, host = '127.0.0.1', fetchImpl,
-  enableExecution = false, runtimeInput = null
+export async function startUniversalZitadelMcp({
+  configPath,
+  issuer,
+  resource,
+  ownerSubject,
+  tokenAudiences = [],
+  projectId = '',
+  roleClaim = '',
+  revokedJtis = [],
+  isTokenRevoked = null,
+  port = 4272,
+  host = '127.0.0.1',
+  fetchImpl,
+  enableExecution = false,
+  runtimeInput = null,
 } = {}) {
   if (host !== '127.0.0.1' && host !== '::1') throw Error('PUBLIC_HTTP_BIND_DENIED');
   if (!Number.isInteger(port) || port < 1024 || port > 65535) throw Error('MCP_PORT_INVALID');
@@ -30,20 +41,25 @@ export async function startUniversalPocketIdMcp({
   if (enableExecution && (!trusted?.complianceCardGate || !trusted?.complianceCardProvider)) {
     throw Error('TRUSTED_COMPLIANCE_CARD_COMPOSITION_REQUIRED');
   }
-  // Execution startup uses the bounded host-injected C3 seam. Discovery-only
-  // startup keeps the existing read-only path and cannot expose command tools.
   const bridge = enableExecution
     ? await createHostInjectedConfiguredBridge(configPath, runtimeInput)
     : await createConfiguredBridge(configPath, trusted);
-  const handler = createPocketIdUniversalHandler({
-    issuer, resource, ownerSubject, fetchImpl,
+  const handler = createZitadelUniversalHandler({
+    issuer,
+    resource,
+    ownerSubject,
+    tokenAudiences,
+    projectId,
+    roleClaim,
+    revokedJtis,
+    isTokenRevoked,
+    fetchImpl,
     executionEnabled: enableExecution,
-    resolveBridge: async principal => principal?.subject === ownerSubject ? bridge : null,
-    resolveComplianceCardProvider: async principal => principal?.subject === ownerSubject
-      ? trusted?.complianceCardProvider ?? null
-      : null,
+    resolveBridge: async principal => (principal?.subject === ownerSubject ? bridge : null),
+    resolveComplianceCardProvider: async principal =>
+      principal?.subject === ownerSubject ? trusted?.complianceCardProvider ?? null : null,
     allowedHosts: [host + ':' + port],
-    allowedOrigins: []
+    allowedOrigins: [],
   });
   const server = http.createServer(handler);
   try {
