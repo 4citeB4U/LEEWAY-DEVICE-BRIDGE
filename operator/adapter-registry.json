@@ -501,59 +501,59 @@
           "requiresHumanConsent": true
         },
         "device.files.write": {
-          "state": "SUPPORTED",
+          "state": "BLOCKED",
           "requiresHumanConsent": true,
-          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+          "notes": "Not admitted by the current Apple app adapter; requires separately implemented sandbox-scoped native workflow, fresh owner consent, and C3 review."
         },
         "device.files.write_binary": {
-          "state": "SUPPORTED",
+          "state": "BLOCKED",
           "requiresHumanConsent": true,
-          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+          "notes": "Not admitted by the current Apple app adapter; requires separately implemented sandbox-scoped native workflow, fresh owner consent, and C3 review."
         },
         "device.files.append_binary": {
-          "state": "SUPPORTED",
+          "state": "BLOCKED",
           "requiresHumanConsent": true,
-          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+          "notes": "Not admitted by the current Apple app adapter; requires separately implemented sandbox-scoped native workflow, fresh owner consent, and C3 review."
         },
         "device.files.edit": {
-          "state": "SUPPORTED",
+          "state": "BLOCKED",
           "requiresHumanConsent": true,
-          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+          "notes": "Not admitted by the current Apple app adapter; requires separately implemented sandbox-scoped native workflow, fresh owner consent, and C3 review."
         },
         "device.files.move": {
-          "state": "SUPPORTED",
+          "state": "BLOCKED",
           "requiresHumanConsent": true,
-          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+          "notes": "Not admitted by the current Apple app adapter; requires separately implemented sandbox-scoped native workflow, fresh owner consent, and C3 review."
         },
         "device.directories.create": {
-          "state": "SUPPORTED",
+          "state": "BLOCKED",
           "requiresHumanConsent": true,
-          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+          "notes": "Not admitted by the current Apple app adapter; requires separately implemented sandbox-scoped native workflow, fresh owner consent, and C3 review."
         },
         "device.documents.write_pdf": {
-          "state": "SUPPORTED",
+          "state": "BLOCKED",
           "requiresHumanConsent": true,
-          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+          "notes": "Not admitted by the current Apple app adapter; requires separately implemented sandbox-scoped native workflow, fresh owner consent, and C3 review."
         },
         "device.media.quarantine": {
-          "state": "SUPPORTED",
+          "state": "BLOCKED",
           "requiresHumanConsent": true,
-          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+          "notes": "Not admitted by the current Apple app adapter; requires separately implemented sandbox-scoped native workflow, fresh owner consent, and C3 review."
         },
         "device.media.delete": {
-          "state": "SUPPORTED",
+          "state": "BLOCKED",
           "requiresHumanConsent": true,
-          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+          "notes": "Not admitted by the current Apple app adapter; requires separately implemented sandbox-scoped native workflow, fresh owner consent, and C3 review."
         },
         "device.apps.uninstall": {
           "state": "BLOCKED",
           "requiresHumanConsent": true,
-          "notes": "Apple sandbox/entitlement restriction; no arbitrary cross-app control, silent installation, or general shell process privilege."
+          "notes": "Not admitted by the current Apple app adapter; requires separately implemented sandbox-scoped native workflow, fresh owner consent, and C3 review."
         },
         "device.process.terminate": {
           "state": "BLOCKED",
           "requiresHumanConsent": true,
-          "notes": "Apple sandbox/entitlement restriction; no arbitrary cross-app control, silent installation, or general shell process privilege."
+          "notes": "Not admitted by the current Apple app adapter; requires separately implemented sandbox-scoped native workflow, fresh owner consent, and C3 review."
         }
       },
       "evidenceState": "UNVERIFIED",
@@ -779,59 +779,59 @@
           "requiresHumanConsent": true
         },
         "device.files.write": {
-          "state": "SUPPORTED",
+          "state": "BLOCKED",
           "requiresHumanConsent": true,
-          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+          "notes": "Not admitted by the current Apple app adapter; requires separately implemented sandbox-scoped native workflow, fresh owner consent, and C3 review."
         },
         "device.files.write_binary": {
-          "state": "SUPPORTED",
+          "state": "BLOCKED",
           "requiresHumanConsent": true,
-          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+          "notes": "Not admitted by the current Apple app adapter; requires separately implemented sandbox-scoped native workflow, fresh owner consent, and C3 review."
         },
         "device.files.append_binary": {
-          "state": "SUPPORTED",
+          "state": "BLOCKED",
           "requiresHumanConsent": true,
-          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+          "notes": "Not admitted by the current Apple app adapter; requires separately implemented sandbox-scoped native workflow, fresh owner consent, and C3 review."
         },
         "device.files.edit": {
-          "state": "SUPPORTED",
+          "state": "BLOCKED",
           "requiresHumanConsent": true,
-          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+          "notes": "Not admitted by the current Apple app adapter; requires separately implemented sandbox-scoped native workflow, fresh owner consent, and C3 review."
         },
         "device.files.move": {
-          "state": "SUPPORTED",
+          "state": "BLOCKED",
           "requiresHumanConsent": true,
-          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+          "notes": "Not admitted by the current Apple app adapter; requires separately implemented sandbox-scoped native workflow, fresh owner consent, and C3 review."
         },
         "device.directories.create": {
-          "state": "SUPPORTED",
+          "state": "BLOCKED",
           "requiresHumanConsent": true,
-          "notes": "App-container or explicitly user-selected security-scoped resources only; no global filesystem access. Contract only."
+          "notes": "Not admitted by the current Apple app adapter; requires separately implemented sandbox-scoped native workflow, fresh owner consent, and C3 review."
         },
         "device.documents.write_pdf": {
-          "state": "SUPPORTED",
+          "state": "BLOCKED",
           "requiresHumanConsent": true,
-          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+          "notes": "Not admitted by the current Apple app adapter; requires separately implemented sandbox-scoped native workflow, fresh owner consent, and C3 review."
         },
         "device.media.quarantine": {
-          "state": "SUPPORTED",
+          "state": "BLOCKED",
           "requiresHumanConsent": true,
-          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+          "notes": "Not admitted by the current Apple app adapter; requires separately implemented sandbox-scoped native workflow, fresh owner consent, and C3 review."
         },
         "device.media.delete": {
-          "state": "SUPPORTED",
+          "state": "BLOCKED",
           "requiresHumanConsent": true,
-          "notes": "MUTATE contract declaration only; target-native implementation, owner grant, fresh post-state and independent verification remain required."
+          "notes": "Not admitted by the current Apple app adapter; requires separately implemented sandbox-scoped native workflow, fresh owner consent, and C3 review."
         },
         "device.apps.uninstall": {
           "state": "BLOCKED",
           "requiresHumanConsent": true,
-          "notes": "Apple sandbox/entitlement restriction; no arbitrary cross-app control, silent installation, or general shell process privilege."
+          "notes": "Not admitted by the current Apple app adapter; requires separately implemented sandbox-scoped native workflow, fresh owner consent, and C3 review."
         },
         "device.process.terminate": {
           "state": "BLOCKED",
           "requiresHumanConsent": true,
-          "notes": "Apple sandbox/entitlement restriction; no arbitrary cross-app control, silent installation, or general shell process privilege."
+          "notes": "Not admitted by the current Apple app adapter; requires separately implemented sandbox-scoped native workflow, fresh owner consent, and C3 review."
         }
       },
       "evidenceState": "PROPOSED",
