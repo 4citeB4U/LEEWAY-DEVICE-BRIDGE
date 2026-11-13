@@ -138,13 +138,22 @@ test('enforceSovereignConstitution blocks volatile state, usurpation, unqualifie
 });
 
 test('Live device-relay /mcp handler blocks mutating tool call failing Sovereign Constitution', async () => {
-  const { server } = createDeviceRelayServer();
+  const { server } = createDeviceRelayServer({
+    mcpAccessPolicy: {
+      configured: true,
+      resource: 'https://bridge.example.test/mcp',
+      metadataUrl: 'https://bridge.example.test/.well-known/oauth-protected-resource/mcp',
+      issuer: 'https://identity.example.test',
+      scopes: ['device.bridge.read'],
+      authenticate: async req => req.headers.authorization === 'Bearer owner-read-fixture',
+    },
+  });
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   try {
     const port = server.address().port;
     const response = await fetch(`http://127.0.0.1:${port}/mcp`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', authorization: 'Bearer owner-read-fixture' },
       body: JSON.stringify({
         jsonrpc: '2.0',
         id: 77,

@@ -10,6 +10,7 @@ WHAT: Persistent WebSocket relay server running on port 8008 wrapped with Phoeni
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createDeviceRelayServer } from "./../api/device-relay.mjs";
+import { createRelayMcpAccessPolicy } from "./identity/relay-mcp-access-policy.mjs";
 import { openSovereignWalStore } from "./sqlite-wal-store.mjs";
 import { createLkgSnapshot, createPhoenixWatchdog } from "../scripts/phoenix-recovery-supervisor.mjs";
 
@@ -42,7 +43,8 @@ export const phoenixWatchdog = createPhoenixWatchdog({
   walStore
 });
 
-const { server } = createDeviceRelayServer();
+const mcpAccessPolicy = createRelayMcpAccessPolicy();
+const { server } = createDeviceRelayServer({ mcpAccessPolicy });
 
 server.on("error", (err) => {
   console.error("[PERSISTENT-RELAY] Error:", err.message);

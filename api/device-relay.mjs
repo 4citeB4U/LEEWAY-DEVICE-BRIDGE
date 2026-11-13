@@ -91,8 +91,24 @@ function closeReplaced(connection) {
   }
 }
 
-function createRelayServer({ rooms = new Map() } = {}) {
-  const server = createServer((req, res) => {
+function createRelayServer({ rooms = new Map(), mcpAccessPolicy = null } = {}) {
+  async function requireMcpRead(req, res) {
+    if (mcpAccessPolicy?.configured !== true || typeof mcpAccessPolicy.authenticate !== 'function') {
+      json(res, 503, { ok: false, error: mcpAccessPolicy?.reason || 'MCP_READ_AUTHORITY_UNBOUND' });
+      return false;
+    }
+    let approved = false;
+    try { approved = (await mcpAccessPolicy.authenticate(req)) === true; }
+    catch { approved = false; }
+    if (!approved) {
+      res.setHeader('www-authenticate', `Bearer resource_metadata="${mcpAccessPolicy.metadataUrl}"`);
+      json(res, 401, { ok: false, error: 'MCP_READ_AUTHORIZATION_REQUIRED' });
+      return false;
+    }
+    return true;
+  }
+
+  const server = createServer(async (req, res) => {
     // Check original URL from reverse proxy headers if path was stripped
     const origPath = req.headers['x-forwarded-uri'] || req.headers['x-original-uri'] || req.headers['x-forwarded-prefix'] || req.url;
     if (process.env.DEBUG_ROUTING || req.headers['x-test']) {
@@ -110,6 +126,7 @@ function createRelayServer({ rooms = new Map() } = {}) {
     }
 
     if (req.method === 'GET' && (req.url === '/api/devices' || req.url === '/devices' || origPath.includes('/api/devices') || origPath.includes('/devices'))) {
+      if (!(await requireMcpRead(req, res))) return;
       const activeRoomsList = Array.from(rooms.keys()).map(id => {
         const r = rooms.get(id);
         const isOnline = r?.phone?.ws?.readyState === WebSocket.OPEN;
@@ -135,16 +152,20 @@ function createRelayServer({ rooms = new Map() } = {}) {
     }
 
     if (req.method === 'GET' && (req.url.startsWith('/.well-known/oauth-protected-resource') || origPath.includes('oauth-protected-resource'))) {
+      if (mcpAccessPolicy?.configured !== true) {
+        return json(res, 503, { error: mcpAccessPolicy?.reason || 'MCP_READ_AUTHORITY_UNBOUND' });
+      }
       return json(res, 200, {
-        resource: 'https://agent-lee.tailb186e7.ts.net/mcp',
-        authorization_servers: ['https://auth.leeway.industries'],
-        scopes_supported: ['device.bridge.read', 'device.bridge.execute'],
+        resource: mcpAccessPolicy.resource,
+        authorization_servers: [mcpAccessPolicy.issuer],
+        scopes_supported: mcpAccessPolicy.scopes,
         bearer_methods_supported: ['header'],
         resource_documentation: 'https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE'
       });
     }
 
     if (req.url === '/mcp' || req.url === '/api/mcp' || origPath.includes('/mcp')) {
+      if (!(await requireMcpRead(req, res))) return;
       if (req.method === 'GET') {
         return json(res, 200, {
           ok: true,
