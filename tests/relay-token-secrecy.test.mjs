@@ -2,12 +2,23 @@ import assert from 'node:assert/strict';
 import { once } from 'node:events';
 import { createDeviceRelayServer } from '../api/device-relay.mjs';
 
-const { server } = createDeviceRelayServer();
+const { server } = createDeviceRelayServer({
+  mcpAccessPolicy: {
+    configured: true,
+    resource: 'https://bridge.example.test/mcp',
+    metadataUrl: 'https://bridge.example.test/.well-known/oauth-protected-resource/mcp',
+    issuer: 'https://identity.example.test',
+    scopes: ['device.bridge.read'],
+    authenticate: async req => req.headers.authorization === 'Bearer owner-read-fixture',
+  },
+});
 server.listen(0, '127.0.0.1');
 await once(server, 'listening');
 try {
   const address = server.address();
-  const response = await fetch(`http://127.0.0.1:${address.port}/api/device-relay`);
+  const response = await fetch(`http://127.0.0.1:${address.port}/api/device-relay`, {
+    headers: { authorization: 'Bearer owner-read-fixture' },
+  });
   const body = await response.json();
   assert.equal(response.status, 200);
   assert.equal(JSON.stringify(body).includes('token'), false);

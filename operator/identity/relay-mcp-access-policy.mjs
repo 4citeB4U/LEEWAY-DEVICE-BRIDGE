@@ -18,7 +18,9 @@ import {
 } from './public-mcp-resource-config.mjs';
 
 function tokenAudiences(env) {
-  return String(env.LEEWAY_POCKET_ID_TOKEN_AUDIENCES || '')
+  return [env.LEEWAY_MCP_TOKEN_AUDIENCES, env.LEEWAY_POCKET_ID_TOKEN_AUDIENCES]
+    .map(value => String(value || ''))
+    .join(',')
     .split(/[\n,]/)
     .map(value => value.trim())
     .filter(Boolean);

@@ -79,6 +79,7 @@ test('relay policy reuses the configured canonical resource and fails closed whe
     LEEWAY_MCP_AUTH_ISSUER: issuer,
     LEEWAY_MCP_AUDIENCE: resource,
     LEEWAY_MCP_OWNER_SUB: 'owner-123',
+    LEEWAY_MCP_TOKEN_AUDIENCES: 'explicit-runtime-audience',
   } });
   assert.equal(configured.configured, true);
   assert.equal(configured.resource, resource);
@@ -95,6 +96,10 @@ test('unbound relay read authority fails closed without stopping relay HTTP', as
   assert.equal((await mcp.json()).error, 'MCP_READ_AUTHORITY_UNBOUND');
   const devices = await fetch(`${f.base}/api/devices`);
   assert.equal(devices.status, 503);
+  const relayStatus = await fetch(`${f.base}/api/device-relay`);
+  assert.equal(relayStatus.status, 503);
+  const rootStatus = await fetch(`${f.base}/`);
+  assert.equal(rootStatus.status, 503);
 });
 
 test('unauthenticated and rejected credentials cannot list or dispatch relay tools', async t => {
@@ -116,6 +121,44 @@ test('unauthenticated and rejected credentials cannot list or dispatch relay too
     assert.equal((await response.json()).error, 'MCP_READ_AUTHORIZATION_REQUIRED');
   }
   assert.equal(calls, 3);
+});
+
+test('alternate MCP, device metadata and forwarded paths cannot bypass read authentication', async t => {
+  const f = await fixture(policy(async () => false));
+  t.after(() => f.close());
+  const cases = [
+    { path: '/api/mcp', method: 'POST', body: rpc('tools/call', { name: 'device_files_write', arguments: { deviceId: 'pc-primary', path: 'denied', text: 'denied' } }) },
+    { path: '/mcp?transport=streamable', method: 'POST', body: rpc('tools/list') },
+    { path: '/forwarded', method: 'POST', headers: { 'x-forwarded-uri': '/mcp' }, body: rpc('tools/list') },
+    { path: '/forwarded', method: 'POST', headers: { 'x-original-uri': '/api/mcp' }, body: rpc('tools/list') },
+    { path: '/forwarded', method: 'POST', headers: { 'x-forwarded-prefix': '/mcp' }, body: rpc('tools/list') },
+    { path: '/api/devices?view=full', method: 'GET' },
+    { path: '/forwarded', method: 'GET', headers: { 'x-forwarded-uri': '/api/devices' } },
+    { path: '/api/device-relay', method: 'GET' },
+    { path: '/', method: 'GET' },
+  ];
+  for (const item of cases) {
+    const response = await fetch(f.base + item.path, {
+      method: item.method,
+      headers: {
+        ...(item.body ? { 'content-type': 'application/json' } : {}),
+        ...item.headers,
+      },
+      ...(item.body ? { body: item.body } : {}),
+    });
+    assert.equal(response.status, 401, `${item.method} ${item.path}`);
+    assert.equal((await response.json()).error, 'MCP_READ_AUTHORIZATION_REQUIRED');
+  }
+});
+
+test('relay agent source distribution remains held independently of read authorization', async t => {
+  const f = await fixture(policy(async () => true));
+  t.after(() => f.close());
+  for (const path of ['/api/hp-agent.mjs', '/hp-agent.mjs']) {
+    const response = await fetch(f.base + path, { headers: { authorization: acceptedToken } });
+    assert.equal(response.status, 503);
+    assert.equal((await response.json()).error, 'RELAY_AGENT_SOURCE_SECURITY_HOLD');
+  }
 });
 
 test('owner-scoped read policy admits bounded discovery while metadata stays least privilege', async t => {
@@ -140,4 +183,8 @@ test('owner-scoped read policy admits bounded discovery while metadata stays lea
   const devices = await fetch(`${f.base}/api/devices`, { headers: { authorization: acceptedToken } });
   assert.equal(devices.status, 200);
   assert.equal((await devices.json()).ok, true);
+
+  const relayStatus = await fetch(`${f.base}/api/device-relay`, { headers: { authorization: acceptedToken } });
+  assert.equal(relayStatus.status, 200);
+  assert.equal((await relayStatus.json()).authority, 'TRANSPORT_ONLY');
 });

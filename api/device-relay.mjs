@@ -496,20 +496,10 @@ function createRelayServer({ rooms = new Map(), mcpAccessPolicy = null } = {}) {
       }
     }
     if (req.method === 'GET' && (req.url === '/api/hp-agent.mjs' || req.url === '/hp-agent.mjs' || origPath.includes('hp-agent.mjs'))) {
-      try {
-        const hpAgentPath = path.resolve(__dirname, '../operator/hp-standalone-agent.mjs');
-        const content = fs.readFileSync(hpAgentPath, 'utf8');
-        res.writeHead(200, {
-          'content-type': 'application/javascript; charset=utf-8',
-          'access-control-allow-origin': '*',
-          'cache-control': 'no-store',
-        });
-        return res.end(content);
-      } catch (err) {
-        return json(res, 500, { ok: false, error: err.message });
-      }
+      return json(res, 503, { ok: false, error: 'RELAY_AGENT_SOURCE_SECURITY_HOLD' });
     }
     if (req.method === 'GET' && (req.url === '/api/device-relay' || req.url === '/api/device-relay/' || req.url === '/' || req.url === '')) {
+      if (!(await requireMcpRead(req, res))) return;
       return json(res, 200, {
         ok: true,
         service: 'leeway-device-bridge-relay',
