@@ -1,0 +1,40 @@
+{
+  "WorkId": "LEEWAY-SELFHOST-CORE-FIVE-W01",
+  "EvidenceType": "LOCAL_SOURCE_SECURITY_TEST",
+  "SourceRevision": "1827a2ca494751d55886f2df12fceaa49e098090",
+  "DeviceClaim": "pc-hp-secondary",
+  "TestsPassed": 12,
+  "TestsFailed": 0,
+  "TestExitCode": 0,
+  "TestOutput": "Γ£ö remote filesystem write cannot invoke handler (2.4302ms)\r\nΓ£ö remote read cannot bypass enrollment hold (0.5131ms)\r\nΓ£ö unknown commands deny without effects (0.3933ms)\r\nΓ£ö malformed commands fail closed (2.3286ms)\r\nΓ£ö actual wire command reaches denial dispatcher (9.7756ms)\r\nΓ£ö read command also denies before handler (0.7981ms)\r\nΓ£ö malformed and unrelated frames do not dispatch (7.7973ms)\r\nΓ£ö socket interface is required (2.2192ms)\r\nΓ£ö HP identity claim is scoped (2.7813ms)\r\nΓ£ö all declared remote capabilities deny (0.726ms)\r\nΓ£ö malformed commands deny (0.4095ms)\r\nΓ£ö claimed authorization cannot bypass hold (0.3247ms)\r\nΓä╣ tests 12\r\nΓä╣ suites 0\r\nΓä╣ pass 12\r\nΓä╣ fail 0\r\nΓä╣ cancelled 0\r\nΓä╣ skipped 0\r\nΓä╣ todo 0\r\nΓä╣ duration_ms 293.2004\r\n",
+  "SourceHashes": [
+    {
+      "File": "hp-command-dispatch.mjs",
+      "SHA256": "63A8625BC71FE65984EC0D49D85E2B2A2A03A38CBE66C6842B48EC770B6C4531"
+    },
+    {
+      "File": "hp-command-dispatch.test.mjs",
+      "SHA256": "9417D7B74D62E256B5C8319E8C08C905208218C0083565E75D3CC561EEE4073B"
+    },
+    {
+      "File": "hp-native-command-receiver.mjs",
+      "SHA256": "E9A2A0D70ED6397CB4E4E4FDBFF4C802E0A818657AB62A163E8DCFF25B9AB559"
+    },
+    {
+      "File": "hp-native-command-receiver.test.mjs",
+      "SHA256": "B363772A12C6722605274825F8C1055CFE62C68E0080A07C2243FD8BE9673C86"
+    },
+    {
+      "File": "hp-security-policy.mjs",
+      "SHA256": "8ED200EE1D8BA342002F1483F33EBBCAB3A1F7F1FC2A6F27F6EAC279E114D261"
+    },
+    {
+      "File": "hp-security-policy.test.mjs",
+      "SHA256": "4F4D661F703109415C0980B44A85B381E82BD6424140A58ED053D9FD085DD50D"
+    }
+  ],
+  "NetworkExecution": "NOT_EXECUTED",
+  "DeviceEnrollment": "NOT_VERIFIED",
+  "ProductionAdmission": "NOT_GRANTED",
+  "IndependentVeritas": "PENDING"
+}
