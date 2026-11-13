@@ -25,10 +25,10 @@ const relayWs = process.env.LEEWAY_RELAY_WS || 'ws://127.0.0.1:8008/api/device-r
 const formulaUrl = process.env.LEEWAY_FORMULA_URL || 'http://127.0.0.1:4001/runtime/formula/v1/evaluate';
 const androidSerial = process.env.LEEWAY_ANDROID_SERIAL || 'RFCX70LNT7X';
 
-const pcToken = process.env.LEEWAY_MESH_TOKEN || 'leeway-mesh-token-7K2LF3G25U';
+const pcToken = process.env.LEEWAY_MESH_TOKEN || null;
 const foldToken = process.env.LEEWAY_PAIRING_TOKEN || 'j2R7QB1E6wWHhv0Q5HnHs0FJ-RoJD6PuCFwgXlYzMCA';
-const hpToken = process.env.LEEWAY_HP_PAIRING_TOKEN || process.env.LEEWAY_MESH_TOKEN || 'leeway-mesh-token-7K2LF3G25U';
-const appleToken = process.env.LEEWAY_APPLE_PAIRING_TOKEN || process.env.LEEWAY_MESH_TOKEN || 'leeway-mesh-token-7K2LF3G25U';
+const hpToken = process.env.LEEWAY_HP_PAIRING_TOKEN || process.env.LEEWAY_MESH_TOKEN || null;
+const appleToken = process.env.LEEWAY_APPLE_PAIRING_TOKEN || process.env.LEEWAY_MESH_TOKEN || null;
 
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const outcome = (executed, verified, detail, error = null) => Object.freeze({ executed, verified, detail, error });

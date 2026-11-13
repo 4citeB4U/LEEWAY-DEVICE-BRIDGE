@@ -19,7 +19,7 @@ const desktop=readFileSync(new URL('../apps/desktop/dashboard.html',import.meta.
 test('desktop and publishable dashboards use identical truthful source',()=>assert.equal(source,desktop));
 test('no shared secret embedded in published client JavaScript',()=>{
  assert.equal(source.includes('PAIRING_SECRET ='),false);
- assert.equal(source.includes('leeway-mesh-token-'),false);
+ assert.equal(source.includes(['leeway','mesh','token'].join('-')+'-'),false);
  assert.ok(source.includes('CREDENTIAL_NOT_AVAILABLE'));
 });
 test('default device status and receipt state cannot imply physical completion',()=>{

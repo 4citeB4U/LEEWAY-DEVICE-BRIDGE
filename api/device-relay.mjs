@@ -25,7 +25,7 @@ const MAX_ID_LENGTH = 128;
 const MAX_CAPABILITY_LENGTH = 128;
 const MAX_DEVICE_ID_LENGTH = 128;
 const MAX_TOKEN_LENGTH = 512;
-const SOVEREIGN_MESH_TOKEN = process.env.LEEWAY_MESH_TOKEN || 'leeway-mesh-token-7K2LF3G25U';
+const SOVEREIGN_MESH_TOKEN = process.env.LEEWAY_MESH_TOKEN || null;
 const DELIVERY_MODE = 'VERCEL_FUNCTION_WEBSOCKET_V1';
 
 function json(res, status, value) {
@@ -620,7 +620,7 @@ function createRelayServer({ rooms = new Map() } = {}) {
           connection.authenticated = true;
           room.phone = connection;
         } else {
-          const isMeshAuth = digestsMatch(tokenDigest(token), tokenDigest(SOVEREIGN_MESH_TOKEN));
+          const isMeshAuth = !!SOVEREIGN_MESH_TOKEN && digestsMatch(tokenDigest(token), tokenDigest(SOVEREIGN_MESH_TOKEN));
           if (!room || !room.phone || room.phone.ws.readyState !== WebSocket.OPEN
             || (!digestsMatch(tokenDigest(token), room.tokenHash) && !isMeshAuth)) {
             return protocolError(ws, 'PAIRING_REQUIRED');

@@ -25,7 +25,7 @@ const MISSION_LEDGER_FILE = "E:/LeeWay-Work/AGENT-LEE-FLOATING-WIDGET-TEST/work/
 
 const RELAY_HTTP = process.env.LEEWAY_RELAY_HTTP || "http://127.0.0.1:8008/api/device-relay";
 const RELAY_WS = process.env.LEEWAY_RELAY_WS || "ws://127.0.0.1:8008/api/device-relay";
-const DEFAULT_TOKEN = "leeway-mesh-token-7K2LF3G25U";
+const DEFAULT_TOKEN = (process.env.LEEWAY_MESH_TOKEN || null);
 
 // Dynamically import canonical receipt producer from the authoritative protocol package
 const { receipt, canonical, digest } = await import(PROTOCOL_PATH);

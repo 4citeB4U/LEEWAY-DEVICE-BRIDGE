@@ -18,7 +18,7 @@ import { fileURLToPath } from "node:url";
 
 const RELAY_URL = process.env.LEEWAY_RELAY_URL || "ws://127.0.0.1:8008/api/device-relay";
 const DEVICE_ID = "pc-hp-secondary";
-const TOKEN = process.env.LEEWAY_MESH_TOKEN || "leeway-mesh-token-7K2LF3G25U";
+const TOKEN = process.env.LEEWAY_MESH_TOKEN || null;
 
 export class HpSecondaryRelayAgent {
   constructor({ url = RELAY_URL, deviceId = DEVICE_ID, token = TOKEN } = {}) {

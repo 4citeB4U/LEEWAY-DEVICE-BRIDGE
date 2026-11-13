@@ -13,7 +13,7 @@ import http from "node:http";
 
 const RELAY_URL = process.env.LEEWAY_RELAY_URL || "wss://agent-lee.tailb186e7.ts.net/api/device-relay";
 const DEVICE_ID = "pc-hp-secondary";
-const TOKEN = process.env.LEEWAY_MESH_TOKEN || "leeway-mesh-token-7K2LF3G25U";
+const TOKEN = process.env.LEEWAY_MESH_TOKEN || null;
 const HTTP_PORT = Number(process.env.HP_AGENT_HTTP_PORT || 8009);
 
 console.log("==================================================================");
