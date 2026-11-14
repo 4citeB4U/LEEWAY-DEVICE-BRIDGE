@@ -33,14 +33,15 @@ function validDate(value) {
 }
 
 function validAccount(account) {
-  return account && typeof account === 'object' && SUBJECT.test(String(account.subject || '')) &&
+  return account && typeof account === 'object' && account.identityVerified === true && SUBJECT.test(String(account.subject || '')) &&
     typeof account.issuer === 'string' && /^https:\/\//.test(account.issuer);
 }
 
 /**
  * Evaluate a narrow service entitlement supplied by the authenticated account
  * authority. `account.subject` is a durable identity key; a login email stays
- * with the identity provider and is intentionally not accepted here.
+ * with the identity provider and is intentionally not accepted here. The
+ * upstream OIDC verifier must mark the identity as verified before this gate.
  */
 export function evaluateBridgeEntitlement({ account, entitlement, deviceId, registeredDeviceCount = 0, enrolledDeviceIds = [], now = new Date() } = {}) {
   if (!validAccount(account)) return invalid('ACCOUNT_SUBJECT_REQUIRED');

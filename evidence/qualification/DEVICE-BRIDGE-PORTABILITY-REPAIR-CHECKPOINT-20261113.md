@@ -73,3 +73,12 @@ Deploy this committed artifact through the canonical host installer with an enro
 - A suspension preserves local customer custody: Digital Brain, Continuum, Diagnostics, local read, and export remain available; remote Bridge service is disabled. The Device Bridge does not process or retain payment credentials.
 - Focused enrollment/entitlement/relay tests: 13 passed, 0 failed. Full serial suite: 463 passed, 0 failed, 1 declared skip.
 - This is source evidence, not a live billing integration. A signed entitlement authority, authoritative account device count, payment-provider webhook integration, customer device-management UI, production deployment, Formula, Veritas, Receipt Authority, and real-device acceptance remain unverified.
+
+## Cross-repository Continuum identity alignment
+
+- Time: 2026-11-13T22:55:30-06:00
+- Continuum canonical `main` commit `78a17b5` adds `src/identity/continuum-account-binding.mjs`. The same verified OIDC issuer-plus-subject maps to one opaque owner scope across authorized replacement devices while each device preserves an independent body scope.
+- Device Bridge entitlement evaluation now also requires `identityVerified=true`; both sides reject an issuer/subject-shaped object that has not been verified by the upstream identity authority.
+- The Continuum reconnect plan requires authenticated account verification, device enrollment, canonical owner-index readback, approved replica negotiation, and integrity readback before private data is exposed. It does not claim a data read merely because a plan exists.
+- Payment lapse contract remains custody-preserving on both repositories: local Continuum read/export stays available while remote replication/hosted Bridge service can be suspended.
+- Evidence: Continuum `npm test` 102 passed, 0 failed; Continuum syntax check passed. Device Bridge focused identity tests 10 passed, 0 failed; full serial suite 463 passed, 0 failed, 1 declared skip. No canonical Continuum provider, production account login, replica sync, Formula evaluation, independent Veritas decision, or canonical Receipt Authority readback was executed.

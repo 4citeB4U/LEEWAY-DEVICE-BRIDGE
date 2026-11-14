@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { evaluateBridgeEntitlement, PRODUCT_ID } from '../operator/entitlement-gate.mjs';
 
-const account = { issuer: 'https://identity.example.test', subject: 'user-stable-oidc-subject-01' };
+const account = { identityVerified: true, issuer: 'https://identity.example.test', subject: 'user-stable-oidc-subject-01' };
 const entitlement = {
   issuer: account.issuer, subject: account.subject, productId: PRODUCT_ID, status: 'ACTIVE',
   deviceLimit: 100, validUntil: '2027-01-01T00:00:00.000Z', licenseMode: 'SUBSCRIPTION',
@@ -34,6 +34,8 @@ test('suspending service disables remote Bridge access without taking customer d
 });
 
 test('the gate refuses raw email as a substitute for the account subject', () => {
-  const invalid = evaluateBridgeEntitlement({ account: { issuer: account.issuer, subject: 'person@example.test' }, entitlement, deviceId, now: at });
+  const unverified = evaluateBridgeEntitlement({ account: { issuer: account.issuer, subject: account.subject }, entitlement, deviceId, now: at });
+  assert.equal(unverified.reason, 'ACCOUNT_SUBJECT_REQUIRED');
+  const invalid = evaluateBridgeEntitlement({ account: { identityVerified: true, issuer: account.issuer, subject: 'person@example.test' }, entitlement, deviceId, now: at });
   assert.equal(invalid.reason, 'ENTITLEMENT_ACCOUNT_OR_PRODUCT_MISMATCH');
 });
