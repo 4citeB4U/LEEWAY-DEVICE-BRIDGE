@@ -10,7 +10,7 @@ The authorized owner/runtime must supply these values out of band. Do not commit
 | --- | --- |
 | `DeviceId` | Enrollment-issued device identifier, unique to this physical workstation. |
 | `MeshToken` | Owner-protected relay pairing secret. |
-| `RelayUrl` | Canonical authenticated relay endpoint. |
+| verified relay binding | Enrollment-issued, signed, owner/device-scoped WSS endpoint. The runtime obtains and verifies it after login; users do not configure a relay URL. |
 | `Workspace` | Owner-approved local folder for bounded file operations. |
 | signed Windows passport and trusted registry record | Required by the canonical ZITADEL/C3 host composition; relay connection alone is not identity admission. |
 | Formula, independent Veritas, and Receipt Authority bindings | Required before a live command can be called production-governed. |
@@ -21,21 +21,31 @@ The authorized owner/runtime must supply these values out of band. Do not commit
 2. Clone the approved Device Bridge revision. Verify its commit and the source pins before execution.
 3. Create or choose a dedicated workspace folder. The relay refuses absolute and traversal file paths.
 4. Obtain a signed passport and registry admission through the canonical enrollment authority. Never fabricate one from a machine name or config file.
-5. Confirm the target relay uses the matching pairing authority and is reachable over WSS.
+5. The runtime verifies the enrollment-issued relay binding, then confirms the matching pairing authority and WSS reachability. Do not substitute a historical endpoint or an operator-supplied URL.
 
-## Start command
+## Internal post-enrollment carrier
 
-From the repository checkout, run the portable launcher with values supplied by the authorized enrollment flow:
+`scripts/start-enrolled-workstation-relay.ps1` remains an internal carrier for
+the runtime after enrollment has verified its relay binding. It is not the
+customer onboarding surface and must not ask a customer to choose or paste a
+relay endpoint. The native/runtime enrollment implementation supplies the
+verified endpoint, device ID, and pairing material from local custody.
+
+The legacy carrier’s input boundary is deliberately narrow:
 
 ```powershell
 .\scripts\start-enrolled-workstation-relay.ps1 `
   -DeviceId '<enrollment-issued-id>' `
   -MeshToken '<owner-protected-token>' `
-  -RelayUrl 'wss://<canonical-relay>/api/device-relay' `
+  -RelayUrl '<verified-runtime-handoff-only>' `
   -Workspace 'D:\LeeWay\workspace'
 ```
 
-The local status listener is diagnostic only. A successful listener or relay socket does not qualify identity, Formula, Veritas, receipts, file access, or UI control.
+The runtime receives the verified relay binding as part of completed enrollment;
+it must not source `RelayUrl` from a user setting, static manifest, hostname,
+or historical fallback. The local status listener is diagnostic only. A
+successful listener or relay socket does not qualify identity, Formula,
+Veritas, receipts, file access, or UI control.
 
 ## Retired hardware-specific entry point
 

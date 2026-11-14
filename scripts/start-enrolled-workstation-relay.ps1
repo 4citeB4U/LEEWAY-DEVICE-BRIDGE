@@ -5,13 +5,17 @@ TAG: LEEWAY.PORTABLE.ENROLLED.WORKSTATION.LAUNCHER.V1
 WHAT: Start an already-enrolled Windows workstation relay from any checkout location.
 WHY: Device identity and credentials are deployment bindings, never source defaults.
 HOW: Require caller-supplied enrollment values, validate the local workspace, then launch the bounded relay agent.
-AUTHORITY: Local operator bootstrap only; this script does not enroll, sign, grant, or verify a device.
+AUTHORITY: Local post-enrollment carrier only; this script does not enroll,
+           sign, grant, or verify a device or relay binding.
 #>
 [CmdletBinding()]
 param(
   [Parameter(Mandatory)] [ValidatePattern('^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$')] [string] $DeviceId,
   [Parameter(Mandatory)] [ValidateLength(16, 512)] [string] $MeshToken,
-  [Parameter(Mandatory)] [ValidatePattern('^wss?://')] [string] $RelayUrl,
+  # Internal-only handoff from the enrolled runtime after its relay-binding
+  # verifier succeeds. This legacy carrier must never be presented as a
+  # user-entered endpoint configuration surface.
+  [Parameter(Mandatory)] [ValidatePattern('^wss://')] [string] $RelayUrl,
   [Parameter(Mandatory)] [string] $Workspace,
   [ValidatePattern('^[A-Z][A-Z0-9_]{1,127}$')] [string] $DeviceRole = 'WORKSTATION_NODE',
   [ValidateRange(1024, 65535)] [int] $StatusPort = 8009

@@ -14,6 +14,7 @@ AUTHORITY: This coordinator never acts as an issuer, attestation authority,
 const PLATFORMS = new Set(['windows', 'macos', 'linux', 'android', 'ios', 'ipados']);
 const DEVICE_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{2,127}$/;
 const THUMBPRINT = /^[A-Za-z0-9_-]{16,256}$/;
+const RELAY_BINDING_ARTIFACT = /^[A-Za-z0-9_-]{16,2048}\.[A-Za-z0-9_-]{16,4096}\.[A-Za-z0-9_-]{16,1024}$/;
 
 function requiredProvider(value, method, code) {
   if (!value || typeof value[method] !== 'function') throw new Error(code);
@@ -59,10 +60,40 @@ function validateCompletedEnrollment(value, { platform, keyThumbprint }) {
   if (typeof value.accessToken !== 'string' || value.accessToken.length < 16) {
     throw new Error('ENROLLMENT_ACCESS_TOKEN_MISSING');
   }
+  if (!RELAY_BINDING_ARTIFACT.test(String(value.relayBindingArtifact || ''))) {
+    throw new Error('ENROLLMENT_RELAY_BINDING_MISSING');
+  }
   return Object.freeze({
     deviceRecord: Object.freeze({ ...record }),
     accessToken: value.accessToken,
     enrollmentReceiptSha256: value.enrollmentReceiptSha256.toLowerCase(),
+    relayBindingArtifact: value.relayBindingArtifact,
+  });
+}
+
+function validateVerifiedRelayBinding(value, { deviceRecord }) {
+  const binding = value?.binding;
+  if (value?.verified !== true || value?.signatureVerified !== true || !binding || typeof binding !== 'object' ||
+      binding.schema !== 'leeway.device-bridge.relay-binding.v1' || binding.deviceId !== deviceRecord.deviceId ||
+      binding.ownerSubject !== deviceRecord.ownerSubject || typeof binding.issuer !== 'string' ||
+      !/^https:\/\/[A-Za-z0-9.-]+(?::\d+)?(?:\/|$)/.test(binding.issuer) ||
+      typeof binding.endpoint !== 'string' || typeof binding.expiresAt !== 'string') {
+    throw new Error('ENROLLMENT_RELAY_BINDING_INVALID');
+  }
+  let endpoint;
+  const expiry = Date.parse(binding.expiresAt);
+  try { endpoint = new URL(binding.endpoint); } catch { throw new Error('ENROLLMENT_RELAY_BINDING_INVALID'); }
+  if (endpoint.protocol !== 'wss:' || endpoint.username || endpoint.password || endpoint.search || endpoint.hash ||
+      endpoint.pathname !== '/api/device-relay' || !Number.isFinite(expiry) || expiry <= Date.now()) {
+    throw new Error('ENROLLMENT_RELAY_BINDING_INVALID');
+  }
+  return Object.freeze({
+    schema: binding.schema,
+    issuer: binding.issuer,
+    deviceId: binding.deviceId,
+    ownerSubject: binding.ownerSubject,
+    endpoint: endpoint.toString(),
+    expiresAt: new Date(expiry).toISOString(),
   });
 }
 
@@ -70,7 +101,7 @@ function validateCompletedEnrollment(value, { platform, keyThumbprint }) {
  * Compose real platform and Runtime providers into one portable onboarding
  * lifecycle. Every consequential provider is injected by the owning runtime.
  */
-export function createDynamicEnrollment({ keyProvider, enrollmentAuthority, serviceEntitlement, ownerApproval, localCustody, runtimeStarter, capabilityProbe } = {}) {
+export function createDynamicEnrollment({ keyProvider, enrollmentAuthority, serviceEntitlement, ownerApproval, localCustody, runtimeStarter, capabilityProbe, relayBindingVerifier } = {}) {
   requiredProvider(keyProvider, 'loadOrCreate', 'DEVICE_KEY_PROVIDER_REQUIRED');
   requiredProvider(keyProvider, 'signChallenge', 'DEVICE_KEY_SIGNER_REQUIRED');
   requiredProvider(enrollmentAuthority, 'beginEnrollment', 'ENROLLMENT_AUTHORITY_REQUIRED');
@@ -80,6 +111,7 @@ export function createDynamicEnrollment({ keyProvider, enrollmentAuthority, serv
   requiredProvider(localCustody, 'saveEnrollment', 'LOCAL_ENROLLMENT_CUSTODY_REQUIRED');
   requiredProvider(runtimeStarter, 'startEnrolledRuntime', 'ENROLLED_RUNTIME_STARTER_REQUIRED');
   requiredProvider(capabilityProbe, 'probeCapabilities', 'CAPABILITY_PROBE_REQUIRED');
+  requiredProvider(relayBindingVerifier, 'verifyRelayBinding', 'RELAY_BINDING_VERIFIER_REQUIRED');
 
   return Object.freeze({
     async enroll({ account, platform, packageIdentity, requestedCapabilities }) {
@@ -139,6 +171,11 @@ export function createDynamicEnrollment({ keyProvider, enrollmentAuthority, serv
         ownerProof: approval.ownerProof,
       }), { platform: normalizedPlatform, keyThumbprint: key.thumbprint });
 
+      const relayBinding = validateVerifiedRelayBinding(await relayBindingVerifier.verifyRelayBinding({
+        artifact: completed.relayBindingArtifact,
+        deviceRecord: completed.deviceRecord,
+      }), { deviceRecord: completed.deviceRecord });
+
       const measuredCapabilities = await capabilityProbe.probeCapabilities({
         platform: normalizedPlatform,
         deviceRecord: completed.deviceRecord,
@@ -150,11 +187,13 @@ export function createDynamicEnrollment({ keyProvider, enrollmentAuthority, serv
         deviceRecord: completed.deviceRecord,
         enrollmentReceiptSha256: completed.enrollmentReceiptSha256,
         keyReference: key.reference ?? null,
+        relayBinding,
       });
       const runtime = await runtimeStarter.startEnrolledRuntime({
         deviceRecord: completed.deviceRecord,
         accessToken: completed.accessToken,
         measuredCapabilities,
+        relayBinding,
       });
       if (!runtime || runtime.started !== true) throw new Error('ENROLLED_RUNTIME_START_FAILED');
 
@@ -164,6 +203,7 @@ export function createDynamicEnrollment({ keyProvider, enrollmentAuthority, serv
         deviceRecord: completed.deviceRecord,
         enrollmentReceiptSha256: completed.enrollmentReceiptSha256,
         measuredCapabilities,
+        relayBinding,
         runtime,
       });
     },
