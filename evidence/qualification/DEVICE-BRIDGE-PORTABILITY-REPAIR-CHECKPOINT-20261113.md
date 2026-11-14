@@ -40,3 +40,11 @@ Deploy this committed artifact through the canonical host installer with an enro
 - The HP relay now accepts its workspace root and no longer emits an unverified hardcoded HP hardware model.
 - Syntax checks passed for the Node agent and PowerShell launcher; focused regression: 14 passed, 0 failed.
 - Fresh live observation: `bridge_capabilities(pc-hp-secondary)` returned `DISCOVERY_FAILED`; `device.health` returned `ADAPTER_OR_VALIDATION_FAILURE`, `operationMayHaveExecuted=false`, receipt `d8d2975f-7da7-4a11-b389-0faa8772a69a`. No live HP mutation or restart was performed from this host.
+
+## Dynamic enrollment and execution-path repair
+
+- Time: 2026-11-13T21:18:00-06:00
+- Added `operator/dynamic-enrollment.mjs`: provider-bound portable lifecycle requiring a device-held key, Runtime challenge, explicit owner approval, key proof, exact completed device record, local custody, measured capabilities, and runtime start.
+- Changed `operator/installation-adapter.mjs`: package planning remains fail-closed, while a `DRY_RUN_READY` plan can now execute only through an injected native execution provider; success remains pending independent verification.
+- Added `tests/dynamic-enrollment.test.mjs`; targeted enrollment/install/C3 tests: 5 passed, 0 failed. Full serial suite: 454 passed, 0 failed, 1 declared skip.
+- Live product boundary remains open: the currently connected Device Bridge exposes no deployed Runtime enrollment authority or authenticated execution interface. The dynamic coordinator cannot manufacture those external authority decisions.

@@ -44,7 +44,7 @@ try {
   };
   assert.equal(planInstallation({ target: synthetic, package: ipa, ownerApproved: true }).state, "DRY_RUN_READY");
   assert.equal(planInstallation({ target: synthetic, package: ipa, ownerApproved: true }).executable, false);
-  assert.equal(executeInstallation().executed, false);
+  assert.equal((await executeInstallation()).executed, false);
 } finally {
   fs.rmSync(root, { recursive: true, force: true });
 }

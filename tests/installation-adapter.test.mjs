@@ -54,7 +54,20 @@ for (const [platform, packageType, route] of [
 
 assert.equal(planInstallation({ target: { platform: "unknown" }, package: ipa }).state, "UNSUPPORTED_TARGET");
 assert.equal(probeInstallationTarget(appleTarget).state, "INSTALLER_PROVIDER_OBSERVED");
-assert.equal(executeInstallation().state, "EXECUTION_NOT_IMPLEMENTED");
+assert.equal((await executeInstallation()).state, "INSTALLATION_PLAN_NOT_EXECUTABLE");
+const windowsTarget = {
+  platform: "windows", transport: { ready: true },
+  installerProviders: [{ id: "windows-native-installer", health: "HEALTHY", authorized: true }]
+};
+const windowsPackage = { type: "msix-or-exe", expectedSha256: digest, actualSha256: digest };
+const windowsPlan = planInstallation({ target: windowsTarget, package: windowsPackage, ownerApproved: true });
+const executed = await executeInstallation({
+  plan: windowsPlan,
+  executor: { async execute(input) { return { executed: input.route === "WINDOWS_NATIVE_INSTALLER", evidence: { provider: "fixture" } }; } }
+});
+assert.equal(executed.state, "INSTALLATION_EXECUTED_PENDING_VERIFICATION");
+assert.equal(executed.executed, true);
+assert.equal((await executeInstallation({ plan: windowsPlan })).state, "INSTALLATION_EXECUTION_PROVIDER_REQUIRED");
 assert.equal(verifyInstallation().verified, false);
 assert.equal(rollbackInstallation().rolledBack, false);
 console.log("PASS installation adapter dry-run contract");

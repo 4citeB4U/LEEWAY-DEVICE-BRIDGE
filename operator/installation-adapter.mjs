@@ -157,11 +157,29 @@ export function probeInstallationTarget(target = {}, registry = loadAdapterRegis
   }
 }
 
-export function executeInstallation() {
+export async function executeInstallation({ plan, executor } = {}) {
+  if (!plan || plan.state !== "DRY_RUN_READY") {
+    return { state: "INSTALLATION_PLAN_NOT_EXECUTABLE", executed: false };
+  }
+  if (!executor || typeof executor.execute !== "function") {
+    return { state: "INSTALLATION_EXECUTION_PROVIDER_REQUIRED", executed: false };
+  }
+  const result = await executor.execute({
+    route: plan.route,
+    providerId: plan.providerId,
+    packageType: plan.packageType,
+    sha256: plan.sha256
+  });
+  if (!result || result.executed !== true) {
+    return { state: "INSTALLATION_EXECUTION_FAILED", executed: false, error: result?.error ?? "EXECUTOR_DID_NOT_CONFIRM_EXECUTION" };
+  }
   return {
-    state: "EXECUTION_NOT_IMPLEMENTED",
-    executed: false,
-    reason: "The installation adapter is currently a read-only probe, classifier, and dry-run planner."
+    state: "INSTALLATION_EXECUTED_PENDING_VERIFICATION",
+    executed: true,
+    route: plan.route,
+    providerId: plan.providerId,
+    sha256: plan.sha256,
+    evidence: result.evidence ?? null
   };
 }
 
