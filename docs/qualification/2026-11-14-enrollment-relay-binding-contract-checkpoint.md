@@ -65,27 +65,31 @@ devices. Read back the relay binding through each platform’s local custody,
 call the Bridge peer-transport attestation, and only then execute the bounded
 Continuum transfer contract.
 
-## Runtime issuance investigation — 2026-11-14T00:39:00-06:00
+## Runtime issuance investigation — 2026-11-14T00:56:00-06:00
 
-The exact deployed Runtime Fabric source reference was inspected at
-`794801494bcf250b26243a6b2daf58fc0fdea373`
-(`fix/sentinel-retired-source-fallback-20261113`), the commit Vercel reported
-as serving the Runtime deployment during this investigation.
+**Authoritative deployment boundary:** Railway production service
+`leeway-runtime-fabric` in project `heroic-tenderness`, deployment
+`a3b10aa8-52a4-4b7f-b2ef-6afab30b2c85`, source
+`4citeB4U/Leeway-Runtime-Fabric` branch `main`, commit
+`73e1e64c83619e29ced1136de360acb5c5ac9ba8`.
+
+The earlier historical endpoint observation is superseded by this Railway
+evidence. It must not be treated as a LeeWay Runtime deployment target.
 
 Observed facts:
 
-- Its `vercel.json` exposes only `/mcp`, OAuth protected-resource metadata,
-  and `/agent-lee/public-question`; no enrollment route is declared.
-- The deployed Runtime returned HTTP `404` to unauthenticated bounded POST
-  probes for both `/v1/device-enrollments` and
-  `/v1/device-enrollments/example/complete`.
-- The deployed source contains a read-only Device Bridge discovery proxy in
-  `src/server/device-bridge-discovery-upstream.mjs`. It explicitly denies
-  command and enrollment authority.
-- The Runtime’s configured environment inventory contains OIDC and read-only
-  discovery bindings but no relay-binding signer, relay-binding verifier-key
-  set, or enrollment-authority configuration. Secret values were not read or
-  recorded.
+- Railway deployment logs show `node server/railway-mcp-container.mjs` listening
+  on port `8080` after the service woke from sleep.
+- `GET /healthz` returned HTTP `200`, with `liveness: PASS` and both
+  authentication and Device Bridge bindings configured.
+- `POST /mcp` returned the expected HTTP `401` for an unauthenticated request.
+- `POST /v1/device-enrollments` returned HTTP `404 {"error":"NOT_FOUND"}`.
+- The deployed source entrypoint
+  `server/railway-mcp-container.mjs` routes only `/healthz`, `/readyz`,
+  `/mcp`, and protected-resource metadata. It has no enrollment route.
+- Railway lists only the OIDC/read-only discovery variable names for this
+  service; it lists no relay-binding signer, verifier-key set, or enrollment
+  authority configuration. No variable values were read or recorded.
 - A repository search across accessible LeeWay workspaces found no existing
   implementation of `relayBindingArtifact`,
   `leeway.device-bridge.relay-binding.v1`, or an enrollment endpoint beyond
