@@ -31,4 +31,6 @@ Result: 8 passed, 0 failed.
 
 No persistent pending store, proof verifier, owner approval verifier, registry, signer, receipt authority, or HTTPS primary-host handler has yet been bound to this coordinator. No device was enrolled, no relay binding was issued by a real signer, and no physical device transfer is proven by these tests.
 
+The source now also contains `operator/identity/primary-enrollment-authority-http.mjs`, a narrow HTTP boundary. It independently requires an injected request authenticator to confirm the bearer and forwarded owner subject before reaching the coordinator. It is not a running primary-host service until the protected providers above are explicitly bound.
+
 Next source gate: bind this coordinator to independently protected primary-host providers, then point the Runtime adapter at that authenticated HTTPS authority only after an end-to-end staging test.
