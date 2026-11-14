@@ -32,6 +32,7 @@ const DELIVERY_MODE = 'VERCEL_FUNCTION_WEBSOCKET_V1';
 const READ_ONLY_MCP_TOOLS = new Set([
   'bridge_devices',
   'bridge_capabilities',
+  'bridge_peer_transport',
   'device_health',
   'device_info',
   'device_brain_read',
@@ -137,6 +138,49 @@ function deviceRole(deviceRegistry, deviceId) {
   if (record?.platform === 'ios' || record?.platform === 'ipados') return 'APPLE_MOBILE_NODE';
   if (record?.platform === 'windows' || record?.platform === 'macos' || record?.platform === 'linux') return 'WORKSTATION_NODE';
   return 'UNCLASSIFIED_TRANSPORT_PEER';
+}
+
+// This reports only facts the relay can bind: trusted enrollment, shared owner
+// identity, and active relay rooms. Continuum owns transfer-route selection;
+// this transport relay must never infer a direct/LAN peer path from USB, Wi-Fi,
+// a device label, or a matching account alone.
+function peerTransportAttestation(deviceRegistry, rooms, sourceDeviceId, targetDeviceId) {
+  if (!validDeviceId(sourceDeviceId) || !validDeviceId(targetDeviceId) || sourceDeviceId === targetDeviceId) {
+    return { ok: false, error: 'PEER_DEVICE_PAIR_INVALID' };
+  }
+  if (!isTrustedEnrollment(deviceRegistry, sourceDeviceId) || !isTrustedEnrollment(deviceRegistry, targetDeviceId)) {
+    return { ok: false, error: 'PEER_TRUSTED_ENROLLMENT_REQUIRED' };
+  }
+  const sourceRecord = registryRecord(deviceRegistry, sourceDeviceId);
+  const targetRecord = registryRecord(deviceRegistry, targetDeviceId);
+  const sourceOwner = typeof sourceRecord?.ownerSubject === 'string' ? sourceRecord.ownerSubject : '';
+  const targetOwner = typeof targetRecord?.ownerSubject === 'string' ? targetRecord.ownerSubject : '';
+  if (!sourceOwner || !targetOwner || sourceOwner !== targetOwner) {
+    return { ok: false, error: 'PEER_SHARED_OWNER_REQUIRED' };
+  }
+  const relayRoomOpen = deviceId => rooms.get(deviceId)?.phone?.ws?.readyState === WebSocket.OPEN;
+  const sourceRelayOnline = relayRoomOpen(sourceDeviceId);
+  const targetRelayOnline = relayRoomOpen(targetDeviceId);
+  return {
+    ok: true,
+    schema: 'leeway.device-bridge.peer-transport-attestation.v1',
+    authority: 'TRUSTED_RUNTIME_DEVICE_REGISTRY_AND_RELAY_OBSERVATION',
+    ownerBinding: 'SHARED_VERIFIED_OWNER',
+    source: { deviceId: sourceDeviceId, role: deviceRole(deviceRegistry, sourceDeviceId), trustedEnrollment: true },
+    target: { deviceId: targetDeviceId, role: deviceRole(deviceRegistry, targetDeviceId), trustedEnrollment: true },
+    directPeer: { state: 'NOT_OBSERVED', reason: 'DIRECT_PEER_SESSION_NOT_QUALIFIED_BY_RELAY' },
+    lanPeer: { state: 'NOT_OBSERVED', reason: 'LAN_PEER_SESSION_NOT_QUALIFIED_BY_RELAY' },
+    relay: {
+      state: sourceRelayOnline && targetRelayOnline ? 'AVAILABLE_OWNER_BOUND_WSS' : 'UNAVAILABLE_DEVICE_ROOM_OFFLINE',
+      sourceOnline: sourceRelayOnline,
+      targetOnline: targetRelayOnline,
+    },
+    continuum: {
+      routeSelection: 'EXTERNAL_CONTINUUM_AUTHORITY',
+      fileTransferExecution: 'NOT_EXECUTED',
+      journalReadback: 'NOT_EXECUTED',
+    },
+  };
 }
 
 function protocolError(ws, error) {
@@ -352,6 +396,16 @@ function createRelayServer({
               inputSchema: { type: 'object', properties: { deviceId: { type: 'string' } }, required: ['deviceId'] }
             },
             {
+              name: 'bridge_peer_transport',
+              description: 'Attest shared-owner enrollment and observed peer transport state without initiating a transfer.',
+              annotations: { readOnlyHint: true },
+              inputSchema: {
+                type: 'object',
+                properties: { sourceDeviceId: { type: 'string' }, targetDeviceId: { type: 'string' } },
+                required: ['sourceDeviceId', 'targetDeviceId']
+              }
+            },
+            {
               name: 'device_health',
               description: 'Query real-time health and diagnostics of a device.',
               annotations: { readOnlyHint: true },
@@ -400,7 +454,13 @@ function createRelayServer({
         if (rpc.method === 'tools/call') {
           const { name, arguments: args = {} } = rpc.params || {};
             const targetDeviceId = args.deviceId;
-            if (name !== 'bridge_devices' && !validDeviceId(targetDeviceId)) {
+            if (name === 'bridge_peer_transport' && (!validDeviceId(args.sourceDeviceId) || !validDeviceId(args.targetDeviceId))) {
+              return json(res, 200, {
+                jsonrpc: '2.0', id: rpcId,
+                result: { content: [{ type: 'text', text: JSON.stringify({ ok: false, error: 'PEER_DEVICE_PAIR_INVALID' }) }], isError: true }
+              }, sessionResponseHeaders);
+            }
+            if (name !== 'bridge_devices' && name !== 'bridge_peer_transport' && !validDeviceId(targetDeviceId)) {
               return json(res, 200, {
                 jsonrpc: '2.0',
                 id: rpcId,
@@ -470,6 +530,17 @@ function createRelayServer({
                     authority: 'TRANSPORT_ROOM_OBSERVATION'
                   }, null, 2)
                 }]
+              }
+            }, sessionResponseHeaders);
+          }
+
+          if (name === 'bridge_peer_transport') {
+            const attestation = peerTransportAttestation(deviceRegistry, rooms, args.sourceDeviceId, args.targetDeviceId);
+            return json(res, 200, {
+              jsonrpc: '2.0', id: rpcId,
+              result: {
+                content: [{ type: 'text', text: JSON.stringify(attestation, null, 2) }],
+                ...(attestation.ok === true ? {} : { isError: true })
               }
             }, sessionResponseHeaders);
           }
