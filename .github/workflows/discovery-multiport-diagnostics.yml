@@ -1,0 +1,55 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.DEVICE.BRIDGE.DIAGNOSTIC.QUALIFICATION
+# TAG: LEEWAY.DEVICE.BRIDGE.FUNNEL.MULTIPORT.SOURCE_CI.V1
+# WHO: LeeWay Device Bridge contributors under Creator-approved issue #109
+# WHAT: Test syntax, diagnostic candidate coverage and fail-closed interpretation on a Windows CI runner
+# WHEN: 2026-11-13
+# WHERE: .github/workflows/discovery-multiport-diagnostics.yml
+# WHY: Prevent the historical 4271-only check from misreporting an active 8008 native MCP service as down
+# HOW: Windows PowerShell parse and source-execution assertions; no network configuration or device mutation
+# AUTHORITY: SOURCE_CI_ONLY; not real Tailscale Funnel, native owner device, Veritas or production admission
+# LICENSE: MIT
+name: Device Bridge multiport discovery diagnostics
+on:
+  pull_request:
+    paths:
+      - 'operator/diagnose-discovery-502.ps1'
+      - '.github/workflows/discovery-multiport-diagnostics.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-diagnostics:
+    runs-on: windows-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Verify PowerShell syntax, candidate coverage and denial
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $scriptPath = 'operator/diagnose-discovery-502.ps1'
+          $tokens = $null
+          $parseErrors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $scriptPath).Path, [ref]$tokens, [ref]$parseErrors) | Out-Null
+          if (@($parseErrors).Count -ne 0) { throw "DIAGNOSTIC_POWERSHELL_PARSE_FAILED" }
+
+          $auto = & $scriptPath | ConvertFrom-Json
+          if ($auto.authority -ne 'READ_ONLY_LOCAL_OBSERVATION') { throw 'DIAGNOSTIC_AUTHORITY_CHANGED' }
+          if ($auto.portSelection -ne 'HISTORICAL_CANDIDATES_NOT_AUTHORITY') { throw 'DIAGNOSTIC_DEFAULT_NOT_CANDIDATES' }
+          if (@($auto.portCandidates).Count -ne 2) { throw 'DIAGNOSTIC_CANDIDATE_COUNT' }
+          if (@($auto.portCandidates | Where-Object { $_.port -eq 8008 }).Count -ne 1) { throw 'DIAGNOSTIC_8008_MISSING' }
+          if (@($auto.portCandidates | Where-Object { $_.port -eq 4271 }).Count -ne 1) { throw 'DIAGNOSTIC_4271_MISSING' }
+          if ($auto.interpretation -eq 'BLOCKED_NATIVE_MCP_NOT_LISTENING') { throw 'DIAGNOSTIC_FALSE_OUTAGE' }
+
+          $explicit = & $scriptPath -LocalMcpPort 4271 | ConvertFrom-Json
+          if ($explicit.portSelection -ne 'EXPLICIT_OPERATOR_PORT') { throw 'DIAGNOSTIC_OVERRIDE_NOT_RECORDED' }
+          if (@($explicit.portCandidates).Count -ne 1 -or $explicit.portCandidates[0].port -ne 4271) { throw 'DIAGNOSTIC_OVERRIDE_FAILED' }
+
+          $denied = $false
+          try { & $scriptPath -LocalMcpPort 80 | Out-Null } catch { $denied = $true }
+          if (-not $denied) { throw 'DIAGNOSTIC_PRIVILEGED_PORT_ACCEPTED' }
+          Write-Output 'SOURCE_CI_PASS: candidate ports, explicit override, invalid port denial, read-only classification'
