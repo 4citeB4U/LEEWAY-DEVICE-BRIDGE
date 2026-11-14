@@ -11,7 +11,7 @@
     "operator/identity/start-zitadel-mcp.mjs": "115117deea6d12b65fa6706d70052aed01ae47ba6150d719cbb72d23947b18b0",
     "operator/identity/start-universal-zitadel-mcp.mjs": "23ebdb792fbb627e857f418a643e320922d1eda2a8b373ab2f9c2744d560f526",
     "operator/identity/zitadel-host-composition-template.mjs": "306bd468e34b4d370b2d162e5cb43bed2e45b471aa478548dd63a37779babdcf",
-    "api/device-relay.mjs": "9f9f742e4d39addbbc3d80e8e8b608f865154db52ca0e5635fbd5af30435bb78",
+    "api/device-relay.mjs": "a431ecd37d6bc21dbdf8e657d708ad519f166513afdd49e46d5044739c506b8a",
     "operator/persistent-relay-server.mjs": "9da29758fbb4f7acf0cab93ce9258682cdd3d9c1a0acd1269a9f1b93a410a00c"
   }
 }

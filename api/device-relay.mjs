@@ -121,6 +121,13 @@ function registryRecord(deviceRegistry, deviceId) {
   return null;
 }
 
+function isTrustedEnrollment(deviceRegistry, deviceId) {
+  const record = registryRecord(deviceRegistry, deviceId);
+  return record?.identityVerified === true &&
+    record?.registrationState === 'TRUSTED_REGISTRY_READ' &&
+    record?.registrationAuthority === 'TRUSTED_RUNTIME_DEVICE_REGISTRY';
+}
+
 // Roles are descriptive metadata from a verified enrollment record, never a
 // conclusion drawn from a historical fixture name or a model/provider name.
 function deviceRole(deviceRegistry, deviceId) {
@@ -170,7 +177,10 @@ function closeReplaced(connection) {
   }
 }
 
-function createRelayServer({ rooms = new Map(), deviceRegistry = new Map(), mcpAccessPolicy = null, mcpSessions = new Set() } = {}) {
+function createRelayServer({
+  rooms = new Map(), deviceRegistry = new Map(), mcpAccessPolicy = null, mcpSessions = new Set(),
+  requireTrustedEnrollment = false,
+} = {}) {
   async function requireMcpRead(req, res) {
     if (mcpAccessPolicy?.configured !== true || typeof mcpAccessPolicy.authenticate !== 'function') {
       json(res, 503, { ok: false, error: mcpAccessPolicy?.reason || 'MCP_READ_AUTHORITY_UNBOUND' });
@@ -746,6 +756,9 @@ function createRelayServer({ rooms = new Map(), deviceRegistry = new Map(), mcpA
         const token = text(message.token, MAX_TOKEN_LENGTH);
         if (!['phone', 'client', 'workstation'].includes(role) || !deviceId || !token) {
           return protocolError(ws, 'HELLO_INVALID');
+        }
+        if (requireTrustedEnrollment && !isTrustedEnrollment(deviceRegistry, deviceId)) {
+          return protocolError(ws, 'DEVICE_ENROLLMENT_REQUIRED');
         }
 
         let room = rooms.get(deviceId);

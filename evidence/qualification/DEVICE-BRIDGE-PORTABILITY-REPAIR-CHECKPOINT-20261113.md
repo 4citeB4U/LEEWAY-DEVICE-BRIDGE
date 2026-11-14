@@ -48,3 +48,17 @@ Deploy this committed artifact through the canonical host installer with an enro
 - Changed `operator/installation-adapter.mjs`: package planning remains fail-closed, while a `DRY_RUN_READY` plan can now execute only through an injected native execution provider; success remains pending independent verification.
 - Added `tests/dynamic-enrollment.test.mjs`; targeted enrollment/install/C3 tests: 5 passed, 0 failed. Full serial suite: 454 passed, 0 failed, 1 declared skip.
 - Live product boundary remains open: the currently connected Device Bridge exposes no deployed Runtime enrollment authority or authenticated execution interface. The dynamic coordinator cannot manufacture those external authority decisions.
+
+## Relay enrollment boundary and Runtime authority client
+
+- Time: 2026-11-13T22:36:26-06:00
+- Added `operator/identity/runtime-enrollment-authority-client.mjs`: an exact-origin Runtime API adapter for `POST /v1/device-enrollments` and completion. It requires an injected access-token provider, supports an injected DPoP proof provider, bounds response parsing, and cannot mint a challenge, approve an owner, or write a registry record.
+- Added trusted-enrollment enforcement to `api/device-relay.mjs`. When a host enables `requireTrustedEnrollment`, the relay rejects a HELLO with `DEVICE_ENROLLMENT_REQUIRED` before creating a room unless its injected registry record carries `identityVerified=true`, `registrationState=TRUSTED_REGISTRY_READ`, and `registrationAuthority=TRUSTED_RUNTIME_DEVICE_REGISTRY`.
+- Added direct tests proving that an unregistered identity cannot create a relay room, a matching trusted record can connect, Runtime requests retain the approved exact origin and injected bearer/DPoP credentials, and malformed IDs or failed Runtime responses fail closed.
+- Regenerated `config/zitadel-host-pins.v1.json` with the canonical pin writer after the relay source changed. Pin verification: 10/10, 0 failures.
+- Full serial suite: 458 passed, 0 failed, 1 declared skip. This is source/integration evidence only; it does not prove that the externally hosted Runtime route is deployed, that the HP is enrolled, or that a live device command executed.
+
+## Current live deployment boundary
+
+- The external Runtime-to-Bridge discovery 502 remains outside this repository's proven deployment binding. The stale local staging boot script and local host composition contain obsolete checkout paths and invalid source pins; neither is authorized as a production deployment target.
+- The next executable deployment gate is to bind the deployed Runtime's authenticated enrollment endpoints, inject its verified registry reader into the persistent relay with `requireTrustedEnrollment=true`, deploy the pinned artifact, then obtain independent Formula, Veritas, canonical Receipt Authority, and physical-device acceptance evidence.
