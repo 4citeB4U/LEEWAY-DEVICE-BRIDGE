@@ -29,8 +29,11 @@ test('published dashboard includes no static privileged pairing secret',()=>{
 });
 test('native proxies require external configuration rather than a source default',()=>{
  for(const path of ['operator/hp-standalone-agent.mjs','operator/workstation-relay-agent.mjs',
- 'operator/hp-secondary-relay-agent.mjs','operator/apple-device-supervisor.mjs']){
+ 'operator/apple-device-supervisor.mjs']){
   const src=file(path);
   assert.ok(src.includes('process.env.LEEWAY_MESH_TOKEN || null'),path);
  }
+ const retired=file('operator/hp-secondary-relay-agent.mjs');
+ assert.ok(retired.includes('HP_SECONDARY_LEGACY_ENTRYPOINT_RETIRED'));
+ assert.ok(retired.includes('WorkstationRelayAgent'));
 });

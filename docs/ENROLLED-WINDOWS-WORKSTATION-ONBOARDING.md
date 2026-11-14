@@ -37,6 +37,10 @@ From the repository checkout, run the portable launcher with values supplied by 
 
 The local status listener is diagnostic only. A successful listener or relay socket does not qualify identity, Formula, Veritas, receipts, file access, or UI control.
 
+## Retired hardware-specific entry point
+
+`operator/hp-secondary-relay-agent.mjs` is retained only as an import compatibility alias and refuses direct execution. It formerly embedded a specific HP identity and static hardware/capability claims, which is incompatible with portable enrollment. Use the launcher above for every Windows workstation, regardless of brand or role.
+
 ## Required acceptance sequence
 
 1. Read-only bridge `device.health` and `device.info` both return a real result for the enrolled ID.
