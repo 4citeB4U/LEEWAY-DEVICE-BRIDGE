@@ -3,13 +3,13 @@
   "$id": "https://leeway.local/contracts/device-passport.schema.json",
   "title": "LeeWay Verified Device Passport Candidate",
   "type": "object",
-  "additionalProperties": true,
   "oneOf": [
     {
       "required": [
         "schemaVersion", "authority", "manufacturer", "model", "device",
         "product", "androidRelease", "sdkInt", "supportedAbis"
       ],
+      "additionalProperties": true,
       "properties": {
         "schemaVersion": { "type": "string" },
         "authority": {
@@ -28,23 +28,39 @@
     },
     {
       "required": [
-        "schemaVersion", "authority", "platform", "deviceId", "ownerSubject",
-        "issuedAt", "expiresAt", "keyId", "computerUuid", "biosSerialNumber",
-        "manufacturer", "model", "signature"
+        "schemaVersion", "authority", "platform", "deviceId", "manufacturer", "model",
+        "device", "product", "architecture", "osVersion", "hostname", "hardwareUid",
+        "owner", "sessionNonce", "tokenNonce", "issuedAt", "expiresAt", "issuer", "keyId", "signature"
       ],
+      "additionalProperties": false,
       "properties": {
         "schemaVersion": { "const": "1.0.0" },
-        "authority": { "const": "OWNER_SIGNED_WINDOWS_PASSPORT" },
+        "authority": { "enum": ["NATIVE_WINDOWS_OBSERVED", "VERIFIED_DEVICE_PASSPORT"] },
         "platform": { "const": "windows" },
-        "deviceId": { "const": "pc-primary" },
-        "ownerSubject": { "type": "string", "minLength": 1 },
-        "issuedAt": { "type": "string", "format": "date-time" },
-        "expiresAt": { "type": "string", "format": "date-time" },
-        "keyId": { "type": "string", "minLength": 1 },
-        "computerUuid": { "type": "string", "minLength": 1 },
-        "biosSerialNumber": { "type": "string", "minLength": 1 },
+        "deviceId": { "type": "string", "minLength": 1, "maxLength": 256 },
         "manufacturer": { "type": "string", "minLength": 1 },
         "model": { "type": "string", "minLength": 1 },
+        "device": { "type": "string", "minLength": 1 },
+        "product": { "type": "string", "minLength": 1 },
+        "architecture": { "type": "string", "minLength": 1 },
+        "osVersion": { "type": "string", "minLength": 1 },
+        "hostname": { "type": "string", "minLength": 1 },
+        "hardwareUid": { "type": "string", "minLength": 1 },
+        "owner": {
+          "type": "object",
+          "required": ["ownerId"],
+          "additionalProperties": false,
+          "properties": {
+            "ownerId": { "type": "string", "minLength": 1 },
+            "ownerName": { "type": "string" }
+          }
+        },
+        "sessionNonce": { "type": "string", "minLength": 1 },
+        "tokenNonce": { "type": "string", "minLength": 1 },
+        "issuedAt": { "type": "string", "format": "date-time" },
+        "expiresAt": { "type": "string", "format": "date-time" },
+        "issuer": { "type": "string", "minLength": 1 },
+        "keyId": { "type": "string", "minLength": 1 },
         "signature": { "type": "string", "minLength": 1 }
       }
     }

@@ -149,6 +149,36 @@ test('qualified read-only host composition preserves injected authorities', () =
   assert.equal(Object.isFrozen(result), true);
 });
 
+test('host composition supports an explicitly selected verified Windows host and denies ambiguity', () => {
+  const { runtimeInput } = qualifiedInput();
+  const replacement = createSignedWindowsPassport({
+    privateKeyPem: privateKey.export({ type: 'pkcs8', format: 'pem' }),
+    deviceId: 'pc-secondary',
+    device: 'pc-secondary',
+    platform: 'windows',
+    hardwareUid: '4c434255-0000-2000-8000-002590ddeeff',
+    ownerId: OWNER_SUBJECT,
+    ownerName: 'Test-only owner',
+    sessionNonce: 'secondary-host-device-session',
+    tokenNonce: 'secondary-host-device-token',
+    issuer: ISSUER_ID,
+    keyId: KEY_ID,
+    ttlMs: 120000,
+  });
+  registerVerifiedWindowsDevice(runtimeInput.deviceRegistry, replacement, {
+    expectedDeviceId: 'pc-secondary',
+    expectedOwnerId: OWNER_SUBJECT,
+    trustedIssuerRegistry: issuerRegistry,
+    replayGuard: runtimeInput.replayGuard,
+  });
+  assert.throws(() => buildHostInjectedC3Composition({ ownerSubject: OWNER_SUBJECT, runtimeInput }), /TRUSTED_RUNTIME_WINDOWS_PASSPORT_REQUIRED/);
+  assert.doesNotThrow(() => buildHostInjectedC3Composition({
+    ownerSubject: OWNER_SUBJECT,
+    hostDeviceId: 'pc-secondary',
+    runtimeInput,
+  }));
+});
+
 test('host wrapper template reconciles workstation ZITADEL env vars and fails closed on conflicts or retired envs', () => {
   const reconciled = resolveZitadelHostEnvironment({
     LEEWAY_OIDC_ISSUER: 'https://leeway-mcp-d3xoxh.us1.zitadel.cloud',

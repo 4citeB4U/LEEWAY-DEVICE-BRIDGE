@@ -52,7 +52,8 @@ function resolveCapabilityMetadata(platform, capability, registry) {
 
 function hasSourceBoundWindowsIdentity(deviceId, device) {
   if (device?.platform !== 'windows') return true;
-  return deviceId === 'pc-primary' &&
+  return typeof deviceId === 'string' && deviceId.length > 0 &&
+    (device.id === deviceId || device.deviceId === deviceId) &&
     device.identityVerified === true &&
     device.registrationState === 'TRUSTED_REGISTRY_READ' &&
     device.identitySource === 'WINDOWS_CIM_READONLY' &&

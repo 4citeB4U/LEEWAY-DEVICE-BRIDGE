@@ -19,29 +19,33 @@ import { createZitadelMcpServer } from './create-zitadel-mcp-server.mjs';
 import { assertNoRetiredIdentityEnv } from './zitadel-access.mjs';
 import { resolvePublicMcpResourceConfig } from './public-mcp-resource-config.mjs';
 
-function registryRecord(deviceRegistry, deviceId) {
-  if (deviceRegistry instanceof Map) return deviceRegistry.get(deviceId) ?? null;
-  if (Array.isArray(deviceRegistry)) {
-    return deviceRegistry.find(record => (record?.id ?? record?.deviceId) === deviceId) ?? null;
-  }
-  return null;
-}
-
 /**
  * Accept only an existing owner-controlled Runtime composition.
  *
- * The trusted host must derive pc-primary through the canonical Windows
- * passport verifier before injection. This launcher never manufactures an
- * owner subject, identity decision, Formula/Veritas result or receipt sink.
+ * The trusted host must derive one selected Windows host device through the
+ * canonical passport verifier before injection. This launcher never
+ * manufactures an owner subject, identity decision, Formula/Veritas result
+ * or receipt sink.
  */
-export function buildHostInjectedC3Composition({ ownerSubject, runtimeInput } = {}) {
+export function buildHostInjectedC3Composition({ ownerSubject, runtimeInput, hostDeviceId = null } = {}) {
   if (typeof ownerSubject !== 'string' || !ownerSubject.trim()
       || ownerSubject !== ownerSubject.trim() || ownerSubject.length > 256) {
     throw new Error('OWNER_SUBJECT_REQUIRED');
   }
   const trusted = requireHostInjectedC3Composition(runtimeInput);
-  const record = registryRecord(trusted.deviceRegistry, 'pc-primary');
-  if (!record || record.platform !== 'windows' || record.identityVerified !== true
+  const records = trusted.deviceRegistry instanceof Map
+    ? [...trusted.deviceRegistry.entries()]
+    : Array.isArray(trusted.deviceRegistry)
+      ? trusted.deviceRegistry.map(record => [record?.id ?? record?.deviceId, record])
+      : [];
+  const requestedId = typeof hostDeviceId === 'string' ? hostDeviceId.trim() : '';
+  if (hostDeviceId !== null && !requestedId) throw new Error('HOST_DEVICE_ID_INVALID');
+  const candidates = records.filter(([id, record]) =>
+    record?.platform === 'windows' && (!requestedId || id === requestedId));
+  if (candidates.length !== 1) throw new Error('TRUSTED_RUNTIME_WINDOWS_PASSPORT_REQUIRED');
+  const [recordId, record] = candidates[0];
+  if ((record.id !== recordId && record.deviceId !== recordId)
+      || record.identityVerified !== true
       || record.registrationState !== 'TRUSTED_REGISTRY_READ'
       || record.identitySource !== 'WINDOWS_CIM_READONLY'
       || record.passportAuthority !== 'OWNER_SIGNED_WINDOWS_PASSPORT'
@@ -65,9 +69,10 @@ export async function startZitadelMcp({
   isTokenRevoked = null,
   port = 4271,
   runtimeInput = null,
+  hostDeviceId = null,
 } = {}) {
   if (!Number.isInteger(port) || port < 1024 || port > 65535) throw Error('LOCAL_PORT_INVALID');
-  const trusted = buildHostInjectedC3Composition({ ownerSubject, runtimeInput });
+  const trusted = buildHostInjectedC3Composition({ ownerSubject, runtimeInput, hostDeviceId });
   const bridge = await createHostInjectedConfiguredBridge(configPath, trusted);
   const server = createZitadelMcpServer({
     bridge,
@@ -119,6 +124,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
       roleClaim: process.env.LEEWAY_MCP_ROLE_CLAIM || '',
       port: Number(process.env.LEEWAY_MCP_LOCAL_PORT || 4271),
       runtimeInput: null,
+      hostDeviceId: process.env.LEEWAY_HOST_DEVICE_ID || null,
     });
     console.error('LeeWay authenticated ZITADEL read-only MCP listening on loopback');
   })().catch(() => {

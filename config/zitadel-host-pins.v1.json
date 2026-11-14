@@ -8,9 +8,9 @@
     "operator/identity/relay-mcp-access-policy.mjs": "4944fd264c88eb1af26db7e5477dbb028fc388b6ef55eb2e489911e66cd6f848",
     "operator/identity/create-zitadel-mcp-server.mjs": "ebec0cb2fbc0664f01cd692ab8a3cd15cbfea92767f3658b89efee3ae1e40b8c",
     "operator/identity/create-zitadel-universal-handler.mjs": "6e9c01d13e17630ff75e11eee4f25f3d318656b7abfb12add399e2d0e7ebc03f",
-    "operator/identity/start-zitadel-mcp.mjs": "ed596297a52ffd1de40f71e46e29bb6242a7aeb51c6ced93fad1010ff396955c",
+    "operator/identity/start-zitadel-mcp.mjs": "115117deea6d12b65fa6706d70052aed01ae47ba6150d719cbb72d23947b18b0",
     "operator/identity/start-universal-zitadel-mcp.mjs": "23ebdb792fbb627e857f418a643e320922d1eda2a8b373ab2f9c2744d560f526",
-    "operator/identity/zitadel-host-composition-template.mjs": "cc3a3ff3ba9b044c50da7a18fb5e8f3c669e3ba8bb02c355dfcf8736babb3ddf",
+    "operator/identity/zitadel-host-composition-template.mjs": "9ba87312c9f3470dd43bd79db27988d29b3bf1195335af77e45201147db79651",
     "api/device-relay.mjs": "291003ba434994dfb57ed003755bdead19b645052b8771ff75dcbc462a667d9a",
     "operator/persistent-relay-server.mjs": "9da29758fbb4f7acf0cab93ce9258682cdd3d9c1a0acd1269a9f1b93a410a00c"
   }

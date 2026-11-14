@@ -62,6 +62,7 @@ export function resolveZitadelHostEnvironment(env = process.env) {
     ownerSubject,
     projectId: resource.projectId || '',
     roleClaim: String(env?.LEEWAY_MCP_ROLE_CLAIM || '').trim(),
+    hostDeviceId: String(env?.LEEWAY_HOST_DEVICE_ID || '').trim() || null,
     tokenAudiences: Object.freeze(tokenAudiences),
     configPath: String(env?.LEEWAY_DEVICE_BRIDGE_CONFIG || '').trim() || undefined,
     localPort: Number(env?.LEEWAY_MCP_LOCAL_PORT || 4271),
@@ -96,6 +97,7 @@ export function composeZitadelHost({ env = process.env, runtimeInput = null, fet
         isTokenRevoked,
         port: resolved.localPort,
         runtimeInput,
+        hostDeviceId: resolved.hostDeviceId,
       }),
   });
 }

@@ -175,7 +175,9 @@ export function verifyWindowsPassport(passport, {
     return { valid: false, error: "PASSPORT_NOT_YET_VALID" };
   }
 
-  // 6. Anti-replay
+  // 6. Check anti-replay state before crypto work, but do not consume the
+  // nonce until the passport has passed signature verification. An attacker
+  // must not be able to burn a valid passport's nonce with a forged signature.
   const nonce = passport.tokenNonce;
   if (!nonce || typeof nonce !== "string" || nonce.trim().length === 0) {
     return { valid: false, error: "TOKEN_NONCE_REQUIRED" };
@@ -183,16 +185,6 @@ export function verifyWindowsPassport(passport, {
   if (replayGuard) {
     if (typeof replayGuard.has === "function" && replayGuard.has(nonce)) {
       return { valid: false, error: "NONCE_REPLAYED" };
-    }
-    if (typeof replayGuard.consume === "function") {
-      try {
-        const consumed = replayGuard.consume(nonce, expiresAt);
-        if (!consumed) return { valid: false, error: "NONCE_REPLAYED" };
-      } catch (err) {
-        return { valid: false, error: `REPLAY_CHECK_FAILED: ${err.message}` };
-      }
-    } else if (typeof replayGuard.add === "function") {
-      replayGuard.add(nonce);
     }
   }
 
@@ -225,7 +217,21 @@ export function verifyWindowsPassport(passport, {
     return { valid: false, error: "SIGNATURE_INVALID" };
   }
 
-  // 8. Derive trusted registration record
+  // 8. Commit nonce consumption only after all cryptographic checks passed.
+  if (replayGuard) {
+    if (typeof replayGuard.consume === "function") {
+      try {
+        const consumed = replayGuard.consume(nonce, expiresAt);
+        if (!consumed) return { valid: false, error: "NONCE_REPLAYED" };
+      } catch (err) {
+        return { valid: false, error: `REPLAY_CHECK_FAILED: ${err.message}` };
+      }
+    } else if (typeof replayGuard.add === "function") {
+      replayGuard.add(nonce);
+    }
+  }
+
+  // 9. Derive trusted registration record
   const passportSha256 = createHash("sha256")
     .update(canonicalWindowsPassportPayload(passport))
     .digest("hex");

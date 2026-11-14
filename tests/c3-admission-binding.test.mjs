@@ -256,4 +256,44 @@ const bridge = new Bridge(devices, {
   assert.equal(portableAdmission.lastAdmissionEvidence.records[0].platform, platform);
 }
 
+// A separately enrolled Windows workstation is admitted on its own verified
+// registry identity; C3 must not reserve Windows admission for pc-primary.
+{
+  const platform = "windows";
+  const secondary = {
+    id: "pc-secondary",
+    deviceId: "pc-secondary",
+    platform,
+    identityVerified: true,
+    registrationState: "TRUSTED_REGISTRY_READ",
+    identitySource: "WINDOWS_CIM_READONLY",
+    passportAuthority: "OWNER_SIGNED_WINDOWS_PASSPORT",
+    ownerSubject: "4citeB4U",
+    passportSha256: "a".repeat(64),
+  };
+  const portableRegistry = {
+    operatorId: "leeway.device.operator",
+    adapters: [{
+      adapterId: "leeway.operator.windows",
+      platform,
+      capabilities: { "device.info": { state: "AVAILABLE", requiresHumanConsent: false } },
+    }],
+  };
+  const portableAdmission = createC3AdmissionBinding({
+    deviceRegistry: [secondary],
+    registry: portableRegistry,
+    formulaPreGate: async () => ({ passed: true }),
+    veritasPreGate: async () => true,
+  });
+  assert.equal(await portableAdmission({ deviceId: "pc-secondary", capability: "device.info", args: {} }), true);
+
+  const mismatched = createC3AdmissionBinding({
+    deviceRegistry: [{ ...secondary, id: "pc-primary", deviceId: "pc-primary" }],
+    registry: portableRegistry,
+    formulaPreGate: async () => ({ passed: true }),
+    veritasPreGate: async () => true,
+  });
+  assert.equal(await mismatched({ deviceId: "pc-secondary", capability: "device.info", args: {} }), false);
+}
+
 console.log("\nPASS canonical C3 admission binding — registered platform adapters, signed consent and mandatory Formula/Veritas gates enforced");

@@ -8,6 +8,8 @@ LICENSE: Internal LeeWay governance.
 */
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 import { generateKeyPairSync } from "node:crypto";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
@@ -146,6 +148,35 @@ test("tamper denial: altered hardware UID or signature fails with SIGNATURE_INVA
   });
   assert.equal(res.valid, false);
   assert.equal(res.error, "SIGNATURE_INVALID");
+});
+
+test("invalid signature does not consume a nonce needed by a valid passport", () => {
+  const replayGuard = new ConsentReplayGuard({ inMemoryOnly: true });
+  const valid = createValidPassport();
+  const forged = { ...valid, signature: "not-a-valid-signature" };
+  const rejected = verifyWindowsPassport(forged, {
+    trustedIssuerRegistry: TEST_ISSUERS,
+    replayGuard,
+  });
+  assert.equal(rejected.valid, false);
+  assert.equal(rejected.error, "SIGNATURE_INVALID");
+
+  const admitted = verifyWindowsPassport(valid, {
+    trustedIssuerRegistry: TEST_ISSUERS,
+    replayGuard,
+  });
+  assert.equal(admitted.valid, true);
+});
+
+test("passport schema is portable and matches the signed Windows passport fields", () => {
+  const schemaPath = path.resolve("contracts/device-passport.schema.json");
+  const schema = JSON.parse(fs.readFileSync(schemaPath, "utf8"));
+  const windows = schema.oneOf.find(branch => branch?.properties?.platform?.const === "windows");
+  assert.ok(windows);
+  assert.equal(windows.properties.deviceId.const, undefined);
+  for (const field of ["device", "product", "architecture", "osVersion", "hostname", "hardwareUid", "owner", "sessionNonce", "tokenNonce", "issuer"]) {
+    assert.ok(windows.required.includes(field), `missing signed field ${field}`);
+  }
 });
 
 test("forgery denial: passport signed by untrusted attacker key fails verification", () => {
