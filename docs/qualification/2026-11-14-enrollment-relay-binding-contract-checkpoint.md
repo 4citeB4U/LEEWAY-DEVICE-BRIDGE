@@ -64,3 +64,36 @@ verifier adapter under its owning repository, then run a real sign-in on two
 devices. Read back the relay binding through each platform’s local custody,
 call the Bridge peer-transport attestation, and only then execute the bounded
 Continuum transfer contract.
+
+## Runtime issuance investigation — 2026-11-14T00:39:00-06:00
+
+The exact deployed Runtime Fabric source reference was inspected at
+`794801494bcf250b26243a6b2daf58fc0fdea373`
+(`fix/sentinel-retired-source-fallback-20261113`), the commit Vercel reported
+as serving the Runtime deployment during this investigation.
+
+Observed facts:
+
+- Its `vercel.json` exposes only `/mcp`, OAuth protected-resource metadata,
+  and `/agent-lee/public-question`; no enrollment route is declared.
+- The deployed Runtime returned HTTP `404` to unauthenticated bounded POST
+  probes for both `/v1/device-enrollments` and
+  `/v1/device-enrollments/example/complete`.
+- The deployed source contains a read-only Device Bridge discovery proxy in
+  `src/server/device-bridge-discovery-upstream.mjs`. It explicitly denies
+  command and enrollment authority.
+- The Runtime’s configured environment inventory contains OIDC and read-only
+  discovery bindings but no relay-binding signer, relay-binding verifier-key
+  set, or enrollment-authority configuration. Secret values were not read or
+  recorded.
+- A repository search across accessible LeeWay workspaces found no existing
+  implementation of `relayBindingArtifact`,
+  `leeway.device-bridge.relay-binding.v1`, or an enrollment endpoint beyond
+  this Device Bridge client contract and its tests.
+
+**Conclusion:** the next gate is a genuinely missing Runtime-owned enrollment
+issuer and native verifier integration, not a discoverable existing service or
+a Device Bridge configuration mistake. It requires a separately governed
+signing-key lifecycle, owner/device enrollment registry, issuance/revocation,
+receipt custody, and an authenticated Runtime route. Do not generate an
+ad-hoc key or substitute a static relay manifest merely to make a test pass.
