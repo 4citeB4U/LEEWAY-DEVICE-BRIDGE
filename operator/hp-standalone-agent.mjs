@@ -28,6 +28,7 @@ function requireEnrollmentConfiguration() {
 function resolveWorkspacePath(candidate = '.') {
   if (typeof candidate !== 'string' || candidate.length < 1 || candidate.length > 240) throw new Error('DEVICE_PATH_INVALID');
   const normalized = candidate.replaceAll('\\', '/');
+  if (normalized === '.') return WORKSPACE_ROOT;
   if (normalized.startsWith('/') || /^[A-Za-z]:/.test(normalized) || normalized.split('/').some(part => !part || part === '.' || part === '..')) {
     throw new Error('DEVICE_PATH_OUTSIDE_WORKSPACE');
   }
@@ -39,7 +40,7 @@ function resolveWorkspacePath(candidate = '.') {
 requireEnrollmentConfiguration();
 
 console.log("==================================================================");
-console.log("  LEEWAY SOVEREIGN MESH AGENT — HP SECONDARY WORKSTATION (LEO)");
+console.log("  LEEWAY SOVEREIGN MESH AGENT — ENROLLED WINDOWS WORKSTATION");
 console.log("==================================================================");
 console.log(`Connecting outbound to: ${RELAY_URL}`);
 console.log(`Device ID:              ${DEVICE_ID}`);
@@ -86,8 +87,9 @@ function connect() {
           deviceId: DEVICE_ID,
           role: DEVICE_ROLE,
           hostname: os.hostname(),
-          model: "HP Laptop 15-dw0xxx",
-          manufacturer: "HP",
+          model: null,
+          manufacturer: null,
+          hardwareObservation: "RUNTIME_OS_ONLY",
           platform_os: os.type(),
           release: os.release(),
           totalMemoryBytes: os.totalmem(),

@@ -30,3 +30,13 @@
 ## Next executable action
 
 Deploy this committed artifact through the canonical host installer with an enrollment-issued device ID, token, workspace root, signed passport/registry record, Formula evaluator, Veritas pre-gate, and Receipt Authority binding. Then run real device-specific health/info and owner-authorized read/write/UI acceptance tests on each enrolled device.
+
+## HP onboarding follow-up
+
+- Time: 2026-11-13T20:46:35-06:00
+- New portable launcher: `scripts/start-enrolled-workstation-relay.ps1`.
+- New handoff: `docs/ENROLLED-WINDOWS-WORKSTATION-ONBOARDING.md`.
+- The launcher requires the enrollment-issued ID, protected token, relay URL, and owner-approved workspace at invocation. It persists none of them.
+- The HP relay now accepts its workspace root and no longer emits an unverified hardcoded HP hardware model.
+- Syntax checks passed for the Node agent and PowerShell launcher; focused regression: 14 passed, 0 failed.
+- Fresh live observation: `bridge_capabilities(pc-hp-secondary)` returned `DISCOVERY_FAILED`; `device.health` returned `ADAPTER_OR_VALIDATION_FAILURE`, `operationMayHaveExecuted=false`, receipt `d8d2975f-7da7-4a11-b389-0faa8772a69a`. No live HP mutation or restart was performed from this host.
