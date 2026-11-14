@@ -20,6 +20,7 @@ function providers(overrides = {}) {
         } };
       },
     },
+    serviceEntitlement: { async authorizeEnrollment() { return { serviceEnabled: true, enrollmentAllowed: true }; } },
     ownerApproval: { async approveEnrollment() { return { approved: true, ownerProof: 'owner-approved-enrollment-proof' }; } },
     localCustody: { async saveEnrollment() {} },
     runtimeStarter: { async startEnrolledRuntime() { return { started: true, transport: 'fixture-runtime' }; } },
@@ -31,6 +32,7 @@ function providers(overrides = {}) {
 test('dynamic enrollment activates an arbitrary Windows device without hostname or mesh-token identity', async () => {
   const enrollment = createDynamicEnrollment(providers());
   const result = await enrollment.enroll({
+    account: { issuer: 'https://identity.example.test', subject: 'user-stable-oidc-subject-01' },
     platform: 'windows',
     packageIdentity: { packageId: 'com.leeway.devicebridge', version: '1.0.0', artifactSha256: 'c'.repeat(64) },
     requestedCapabilities: ['device.info', 'device.health'],
@@ -43,6 +45,7 @@ test('dynamic enrollment activates an arbitrary Windows device without hostname 
 test('dynamic enrollment refuses missing owner approval and a mismatched completed key', async () => {
   const noApproval = createDynamicEnrollment(providers({ ownerApproval: { async approveEnrollment() { return { approved: false }; } } }));
   await assert.rejects(() => noApproval.enroll({
+    account: { issuer: 'https://identity.example.test', subject: 'user-stable-oidc-subject-01' },
     platform: 'windows', packageIdentity: { packageId: 'com.leeway.devicebridge', version: '1.0.0', artifactSha256: 'c'.repeat(64) }, requestedCapabilities: ['device.health'],
   }), /OWNER_ENROLLMENT_APPROVAL_REQUIRED/);
 
@@ -53,6 +56,19 @@ test('dynamic enrollment refuses missing owner approval and a mismatched complet
     } }; },
   } }));
   await assert.rejects(() => wrongKey.enroll({
+    account: { issuer: 'https://identity.example.test', subject: 'user-stable-oidc-subject-01' },
     platform: 'windows', packageIdentity: { packageId: 'com.leeway.devicebridge', version: '1.0.0', artifactSha256: 'c'.repeat(64) }, requestedCapabilities: ['device.health'],
   }), /ENROLLMENT_COMPLETION_INVALID/);
+});
+
+test('dynamic enrollment blocks before device-key creation when service entitlement is absent', async () => {
+  const enrollment = createDynamicEnrollment(providers({
+    serviceEntitlement: { async authorizeEnrollment() { return { serviceEnabled: false, enrollmentAllowed: false }; } },
+  }));
+  await assert.rejects(() => enrollment.enroll({
+    account: { issuer: 'https://identity.example.test', subject: 'user-stable-oidc-subject-01' },
+    platform: 'windows',
+    packageIdentity: { packageId: 'com.leeway.devicebridge', version: '1.0.0', artifactSha256: 'c'.repeat(64) },
+    requestedCapabilities: ['device.health'],
+  }), /SERVICE_ENTITLEMENT_REQUIRED/);
 });

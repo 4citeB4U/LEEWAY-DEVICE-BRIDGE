@@ -70,22 +70,32 @@ function validateCompletedEnrollment(value, { platform, keyThumbprint }) {
  * Compose real platform and Runtime providers into one portable onboarding
  * lifecycle. Every consequential provider is injected by the owning runtime.
  */
-export function createDynamicEnrollment({ keyProvider, enrollmentAuthority, ownerApproval, localCustody, runtimeStarter, capabilityProbe } = {}) {
+export function createDynamicEnrollment({ keyProvider, enrollmentAuthority, serviceEntitlement, ownerApproval, localCustody, runtimeStarter, capabilityProbe } = {}) {
   requiredProvider(keyProvider, 'loadOrCreate', 'DEVICE_KEY_PROVIDER_REQUIRED');
   requiredProvider(keyProvider, 'signChallenge', 'DEVICE_KEY_SIGNER_REQUIRED');
   requiredProvider(enrollmentAuthority, 'beginEnrollment', 'ENROLLMENT_AUTHORITY_REQUIRED');
   requiredProvider(enrollmentAuthority, 'completeEnrollment', 'ENROLLMENT_AUTHORITY_REQUIRED');
+  requiredProvider(serviceEntitlement, 'authorizeEnrollment', 'SERVICE_ENTITLEMENT_PROVIDER_REQUIRED');
   requiredProvider(ownerApproval, 'approveEnrollment', 'OWNER_APPROVAL_PROVIDER_REQUIRED');
   requiredProvider(localCustody, 'saveEnrollment', 'LOCAL_ENROLLMENT_CUSTODY_REQUIRED');
   requiredProvider(runtimeStarter, 'startEnrolledRuntime', 'ENROLLED_RUNTIME_STARTER_REQUIRED');
   requiredProvider(capabilityProbe, 'probeCapabilities', 'CAPABILITY_PROBE_REQUIRED');
 
   return Object.freeze({
-    async enroll({ platform, packageIdentity, requestedCapabilities }) {
+    async enroll({ account, platform, packageIdentity, requestedCapabilities }) {
       const normalizedPlatform = requiredText(platform, 'ENROLLMENT_PLATFORM_REQUIRED').toLowerCase();
       if (!PLATFORMS.has(normalizedPlatform)) throw new Error('ENROLLMENT_PLATFORM_UNSUPPORTED');
       const packageIdentityValue = normalizePackageIdentity(packageIdentity);
       const capabilities = normalizeCapabilities(requestedCapabilities);
+      const service = await serviceEntitlement.authorizeEnrollment({
+        account,
+        platform: normalizedPlatform,
+        packageIdentity: packageIdentityValue,
+        requestedCapabilities: capabilities,
+      });
+      if (!service || service.enrollmentAllowed !== true || service.serviceEnabled !== true) {
+        throw new Error('SERVICE_ENTITLEMENT_REQUIRED');
+      }
 
       const key = await keyProvider.loadOrCreate({ platform: normalizedPlatform });
       if (!key || typeof key.publicJwk !== 'object' || !THUMBPRINT.test(String(key.thumbprint || ''))) {

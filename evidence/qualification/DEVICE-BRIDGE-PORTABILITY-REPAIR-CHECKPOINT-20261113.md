@@ -63,3 +63,13 @@ Deploy this committed artifact through the canonical host installer with an enro
 - The external Runtime-to-Bridge discovery 502 remains outside this repository's proven deployment binding. The stale local staging boot script and local host composition contain obsolete checkout paths and invalid source pins; neither is authorized as a production deployment target.
 - The next executable deployment gate is to bind the deployed Runtime's authenticated enrollment endpoints, inject its verified registry reader into the persistent relay with `requireTrustedEnrollment=true`, deploy the pinned artifact, then obtain independent Formula, Veritas, canonical Receipt Authority, and physical-device acceptance evidence.
 - Fresh Device Bridge readback at 2026-11-14T04:37:23.791Z: `bridge_devices` still lists `pc-hp-secondary` and does not list `hp-node-secondary-01`; `device.health(pc-hp-secondary)` returned `ADAPTER_OR_VALIDATION_FAILURE`, `operationMayHaveExecuted=false`, receipt `1e2d07ac-0016-4a11-99f8-d91c2df800c7`. This confirms the live adapter boundary remains blocked and that this source commit has not been deployed into the bridge currently serving the tool.
+
+## Portable customer enrollment and service entitlement
+
+- Time: 2026-11-13T22:47:04-06:00
+- Added `operator/entitlement-gate.mjs` and `docs/PORTABLE-ENROLLMENT-AND-ENTITLEMENT-CONTRACT.md`. The contract uses a stable OIDC issuer-plus-subject account identity; email remains a login handle and is not accepted as a permanent account key.
+- The entitlement gate supports active, grace, suspended, expired, revoked, subscription, and perpetual-license states plus an account-wide device limit. It makes no device, drive, operating-system, model-provider, payment-provider, or hostname assumption.
+- Dynamic enrollment now requires an injected `serviceEntitlement.authorizeEnrollment` decision before it creates a device key or starts a runtime. A denied subscription therefore cannot silently enroll a new device.
+- A suspension preserves local customer custody: Digital Brain, Continuum, Diagnostics, local read, and export remain available; remote Bridge service is disabled. The Device Bridge does not process or retain payment credentials.
+- Focused enrollment/entitlement/relay tests: 13 passed, 0 failed. Full serial suite: 463 passed, 0 failed, 1 declared skip.
+- This is source evidence, not a live billing integration. A signed entitlement authority, authoritative account device count, payment-provider webhook integration, customer device-management UI, production deployment, Formula, Veritas, Receipt Authority, and real-device acceptance remain unverified.
