@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import {
   executeWindowsPackageInstallation,
-  inspectWindowsPackage
+  inspectWindowsPackage,
+  verifyWindowsPackageInstallation
 } from "../operator/windows-native-installer.mjs";
 
 const bytes = Buffer.from("signed-release-bytes");
@@ -34,4 +35,14 @@ assert.equal(installed.executed, true);
 assert.equal(received.at(-2), "-EncodedCommand");
 assert.equal(Buffer.from(received.at(-1), "base64").toString("utf16le"), "Add-AppxPackage -LiteralPath 'C:\\release\\LeeWayDeviceBridge.msix' -ErrorAction Stop");
 assert.equal((await executeWindowsPackageInstallation({ inspection: { ready: false }, ownerApproved: true })).state, "WINDOWS_PACKAGE_NOT_READY");
+
+const packageIdentity = { packageFamilyName: "industries.leeway.devicebridge_12345", expectedVersion: "1.2.3.4", expectedPublisherId: "12345ABCDE" };
+const observed = await verifyWindowsPackageInstallation(packageIdentity, {
+  async powershellRunner() { return { stdout: JSON.stringify({ packageFamilyName: packageIdentity.packageFamilyName, version: packageIdentity.expectedVersion, publisherId: packageIdentity.expectedPublisherId, packageFullName: "LeeWay_1.2.3.4_x64__12345ABCDE" }) }; }
+});
+assert.equal(observed.state, "WINDOWS_PACKAGE_INSTALLED_OBSERVED");
+assert.equal(observed.verified, true);
+assert.equal((await verifyWindowsPackageInstallation({ ...packageIdentity, expectedVersion: "1.2.3.5" }, { async powershellRunner() { return { stdout: JSON.stringify(observed.observed) }; } })).state, "WINDOWS_PACKAGE_VERSION_MISMATCH");
+assert.equal((await verifyWindowsPackageInstallation(packageIdentity, { async powershellRunner() { return { stdout: "" }; } })).state, "WINDOWS_PACKAGE_NOT_INSTALLED");
+assert.equal((await verifyWindowsPackageInstallation({ packageFamilyName: "bad family", expectedVersion: packageIdentity.expectedVersion, expectedPublisherId: packageIdentity.expectedPublisherId })).state, "WINDOWS_PACKAGE_FAMILY_INVALID");
 console.log("PASS Windows native installer gate");

@@ -34,7 +34,7 @@ The desktop provider routes remain dry-run only until their native adapters are 
 
 ## Windows package handoff
 
-`operator/windows-native-installer.mjs` supplies the narrow Windows execution primitive for a **locally staged MSIX/AppX package only**. It verifies an absolute package path, SHA-256, Authenticode `Valid` state, and the exact expected signer thumbprint before an explicit owner-approved `Add-AppxPackage` handoff. It does not download a package, install EXE/MSI files, elevate, uninstall, bypass SmartScreen/Defender, or call a release qualified. The result remains `WINDOWS_INSTALL_EXECUTED_PENDING_VERIFICATION` until a separately observed post-install check is implemented and run against the target device.
+`operator/windows-native-installer.mjs` supplies the narrow Windows execution primitive for a **locally staged MSIX/AppX package only**. It verifies an absolute package path, SHA-256, Authenticode `Valid` state, and the exact expected signer thumbprint before an explicit owner-approved `Add-AppxPackage` handoff. It then supports a separate readback of Windows-reported package family, version, and publisher ID. It does not download a package, install EXE/MSI files, elevate, uninstall, bypass SmartScreen/Defender, or call a release qualified. `WINDOWS_PACKAGE_INSTALLED_OBSERVED` proves only package-manager readback; Bridge connectivity and production qualification remain separate gates.
 
 ## Apple preflight states
 

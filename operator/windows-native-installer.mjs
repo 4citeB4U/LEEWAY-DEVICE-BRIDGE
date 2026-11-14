@@ -133,3 +133,48 @@ export async function executeWindowsPackageInstallation({ inspection, ownerAppro
     return { state: "WINDOWS_INSTALL_EXECUTION_FAILED", executed: false, error: String(error?.message ?? error) };
   }
 }
+
+/**
+ * Observes the package identity Windows reports after an install handoff. This
+ * does not establish Bridge connectivity, grants, or production qualification.
+ */
+export async function verifyWindowsPackageInstallation({ packageFamilyName, expectedVersion, expectedPublisherId } = {}, {
+  powershellRunner = async (args) => execFile("powershell.exe", args, { windowsHide: true, timeout: 30_000 })
+} = {}) {
+  if (typeof packageFamilyName !== "string" || !/^[A-Za-z0-9._-]{3,256}$/.test(packageFamilyName)) {
+    return { state: "WINDOWS_PACKAGE_FAMILY_INVALID", verified: false };
+  }
+  if (typeof expectedVersion !== "string" || !/^[0-9]+(?:\.[0-9]+){1,3}$/.test(expectedVersion) ||
+      typeof expectedPublisherId !== "string" || !/^[A-Za-z0-9]{8,64}$/.test(expectedPublisherId)) {
+    return { state: "WINDOWS_PACKAGE_IDENTITY_INCOMPLETE", verified: false };
+  }
+  const script = [
+    `$package = Get-AppxPackage -PackageFamilyName ${quotedPowerShellLiteral(packageFamilyName)} -ErrorAction SilentlyContinue`,
+    "if ($null -ne $package) { [pscustomobject]@{ packageFamilyName = [string]$package.PackageFamilyName; version = [string]$package.Version; publisherId = [string]$package.PublisherId; packageFullName = [string]$package.PackageFullName } | ConvertTo-Json -Compress }"
+  ].join("; ");
+  let stdout;
+  try {
+    ({ stdout } = await powershellRunner([
+      "-NoProfile", "-NonInteractive", "-EncodedCommand", encodedPowerShellCommand(script)
+    ]));
+  } catch {
+    return { state: "WINDOWS_POSTINSTALL_OBSERVATION_FAILED", verified: false };
+  }
+  if (!stdout?.trim()) return { state: "WINDOWS_PACKAGE_NOT_INSTALLED", verified: false };
+  let observed;
+  try {
+    observed = JSON.parse(stdout);
+  } catch {
+    return { state: "WINDOWS_POSTINSTALL_OBSERVATION_INVALID", verified: false };
+  }
+  if (observed.packageFamilyName !== packageFamilyName) {
+    return { state: "WINDOWS_PACKAGE_FAMILY_MISMATCH", verified: false, observed };
+  }
+  if (observed.version !== expectedVersion) {
+    return { state: "WINDOWS_PACKAGE_VERSION_MISMATCH", verified: false, observed };
+  }
+  if (observed.publisherId !== expectedPublisherId) {
+    return { state: "WINDOWS_PACKAGE_PUBLISHER_MISMATCH", verified: false, observed };
+  }
+  return { state: "WINDOWS_PACKAGE_INSTALLED_OBSERVED", verified: true, observed };
+}
