@@ -2,7 +2,7 @@
 REGION: 🟢 CORE / OPERATOR
 TAG: LEEWAY-HP-STANDALONE-AGENT
 WHO: Agent Lee / Device Bridge
-WHAT: Zero-dependency outbound mesh daemon for HP Laptop (LEO / pc-hp-secondary).
+WHAT: Zero-dependency outbound mesh daemon for an enrolled Windows workstation.
       Uses Node 24 native built-in global WebSocket. No npm dependencies needed.
       Connects to: wss://agent-lee.tailb186e7.ts.net/api/device-relay
 */
@@ -12,9 +12,31 @@ import path from "node:path";
 import http from "node:http";
 
 const RELAY_URL = process.env.LEEWAY_RELAY_URL || "wss://agent-lee.tailb186e7.ts.net/api/device-relay";
-const DEVICE_ID = "pc-hp-secondary";
+const DEVICE_ID = process.env.LEEWAY_DEVICE_ID || null;
 const TOKEN = process.env.LEEWAY_MESH_TOKEN || null;
 const HTTP_PORT = Number(process.env.HP_AGENT_HTTP_PORT || 8009);
+const DEVICE_ROLE = process.env.LEEWAY_DEVICE_ROLE || "WORKSTATION_NODE";
+const WORKSPACE_ROOT = path.resolve(process.env.LEEWAY_DEVICE_WORKSPACE || process.cwd());
+
+function requireEnrollmentConfiguration() {
+  if (typeof DEVICE_ID !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(DEVICE_ID)) {
+    throw new Error('LEEWAY_DEVICE_ID_REQUIRED');
+  }
+  if (typeof TOKEN !== 'string' || TOKEN.length < 16) throw new Error('LEEWAY_MESH_TOKEN_REQUIRED');
+}
+
+function resolveWorkspacePath(candidate = '.') {
+  if (typeof candidate !== 'string' || candidate.length < 1 || candidate.length > 240) throw new Error('DEVICE_PATH_INVALID');
+  const normalized = candidate.replaceAll('\\', '/');
+  if (normalized.startsWith('/') || /^[A-Za-z]:/.test(normalized) || normalized.split('/').some(part => !part || part === '.' || part === '..')) {
+    throw new Error('DEVICE_PATH_OUTSIDE_WORKSPACE');
+  }
+  const resolved = path.resolve(WORKSPACE_ROOT, normalized);
+  if (!resolved.startsWith(WORKSPACE_ROOT + path.sep) && resolved !== WORKSPACE_ROOT) throw new Error('DEVICE_PATH_OUTSIDE_WORKSPACE');
+  return resolved;
+}
+
+requireEnrollmentConfiguration();
 
 console.log("==================================================================");
 console.log("  LEEWAY SOVEREIGN MESH AGENT — HP SECONDARY WORKSTATION (LEO)");
@@ -62,7 +84,7 @@ function connect() {
           ok: true,
           platform: "windows",
           deviceId: DEVICE_ID,
-          role: "SECONDARY_HP_WORKSTATION",
+          role: DEVICE_ROLE,
           hostname: os.hostname(),
           model: "HP Laptop 15-dw0xxx",
           manufacturer: "HP",
@@ -83,7 +105,7 @@ function connect() {
           timestamp: new Date().toISOString()
         };
       } else if (capability === "device.directories.list") {
-        const targetDir = args.path || "C:\\";
+        const targetDir = resolveWorkspacePath(args.path || '.');
         try {
           const entries = await fs.readdir(targetDir);
           result = { ok: true, deviceId: DEVICE_ID, path: targetDir, entries: entries.slice(0, 20), count: entries.length };
@@ -91,7 +113,7 @@ function connect() {
           result = { ok: false, error: e.message };
         }
       } else if (capability === "device.files.write") {
-        const targetPath = args.path || path.join(os.tmpdir(), path.basename(args.name || "leeway-mesh-hop-test.json"));
+        const targetPath = resolveWorkspacePath(args.path || args.name || "leeway-mesh-hop-test.json");
         try {
           await fs.mkdir(path.dirname(targetPath), { recursive: true });
           await fs.writeFile(targetPath, typeof args.content === "string" ? args.content : JSON.stringify(args.content, null, 2), "utf8");
@@ -100,7 +122,7 @@ function connect() {
           result = { ok: false, error: e.message };
         }
       } else if (capability === "device.files.read") {
-        const targetPath = args.path || path.join(os.tmpdir(), path.basename(args.name || "leeway-mesh-hop-test.json"));
+        const targetPath = resolveWorkspacePath(args.path || args.name || "leeway-mesh-hop-test.json");
         try {
           const content = await fs.readFile(targetPath, "utf8");
           result = { ok: true, deviceId: DEVICE_ID, path: targetPath, content, timestamp: new Date().toISOString() };

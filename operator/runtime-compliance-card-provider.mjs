@@ -123,7 +123,7 @@ function buildCard({ manifest, agentId, deviceId, capability, args, id }) {
 }
 
 export function createRuntimeComplianceCardIntegration({
-  baseUrl, approvedRuntimeOrigin, manifest, controlToken, agentId = 'Codex', fetchImpl = globalThis.fetch, timeoutMs = 5000,
+  baseUrl, approvedRuntimeOrigin, manifest, controlToken, agentId = 'host-runtime-client', fetchImpl = globalThis.fetch, timeoutMs = 5000,
   idFactory = randomUUID,
 } = {}) {
   // The host supplies this allowlisted origin explicitly; operation input cannot select it.

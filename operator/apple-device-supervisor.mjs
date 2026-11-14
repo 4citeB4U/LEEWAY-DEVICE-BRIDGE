@@ -24,12 +24,18 @@ const STATE_DIR = path.resolve(__dirname, "../state");
 const STATUS_FILE = path.join(STATE_DIR, "apple-device-status.json");
 const POLL_INTERVAL_MS = 5000;
 const RELAY_URL = process.env.LEEWAY_RELAY_URL || "ws://127.0.0.1:8008/api/device-relay";
-const DEVICE_ID = "phone-apple-iphone";
+const DEVICE_ID = process.env.LEEWAY_DEVICE_ID || null;
 const TOKEN = process.env.LEEWAY_MESH_TOKEN || null;
 
 export class AppleDeviceSupervisor {
-  constructor({ pollIntervalMs = POLL_INTERVAL_MS } = {}) {
+  constructor({ pollIntervalMs = POLL_INTERVAL_MS, deviceId = DEVICE_ID, token = TOKEN } = {}) {
+    if (typeof deviceId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(deviceId)) {
+      throw new Error('LEEWAY_DEVICE_ID_REQUIRED');
+    }
+    if (typeof token !== 'string' || token.length < 16) throw new Error('LEEWAY_MESH_TOKEN_REQUIRED');
     this.pollIntervalMs = pollIntervalMs;
+    this.deviceId = deviceId;
+    this.token = token;
     this.running = false;
     this.timer = null;
     this.currentDevices = new Map();
@@ -49,8 +55,8 @@ export class AppleDeviceSupervisor {
       this.ws.send(JSON.stringify({
         type: "hello",
         role: "phone",
-        deviceId: DEVICE_ID,
-        token: TOKEN
+        deviceId: this.deviceId,
+        token: this.token
       }));
     });
 
@@ -58,7 +64,7 @@ export class AppleDeviceSupervisor {
       let msg;
       try { msg = JSON.parse(raw.toString("utf8")); } catch { return; }
       if (msg.type === "hello-ack") {
-        console.log(`[APPLE-RELAY] Joined room as target: ${DEVICE_ID}`);
+        console.log(`[APPLE-RELAY] Joined room as target: ${this.deviceId}`);
         return;
       }
       if (msg.type === "command") {
@@ -88,7 +94,7 @@ export class AppleDeviceSupervisor {
         ok: true,
         schemaVersion: "1.0.0",
         authority: "DEVICE_OWNED_DIGITAL_BRAIN",
-        deviceId: DEVICE_ID,
+        deviceId: this.deviceId,
         deviceOwned: true,
         timestamp: new Date().toISOString(),
         hardware: {
@@ -161,7 +167,7 @@ export class AppleDeviceSupervisor {
       return {
         ok: true,
         authority: "DEVICE_OWNED_DIAGNOSTICS",
-        deviceId: DEVICE_ID,
+        deviceId: this.deviceId,
         deviceOwned: true,
         timestamp: new Date().toISOString(),
         health: "HEALTHY",
@@ -185,7 +191,7 @@ export class AppleDeviceSupervisor {
       return {
         ok: true,
         platform: "ios",
-        deviceId: DEVICE_ID,
+        deviceId: this.deviceId,
         model: "iPhone 11 (A2111 / N104AP)",
         productType: "iPhone12,1",
         udid: "00008030-000C718C0E33402E",
@@ -202,7 +208,7 @@ export class AppleDeviceSupervisor {
       return {
         ok: true,
         platform: "ios",
-        deviceId: DEVICE_ID,
+        deviceId: this.deviceId,
         connected: true,
         status: "ONLINE",
         transport: devices.length > 0 ? "USB_MUX" : "WIRELESS_SOVEREIGN_RELAY",
@@ -230,7 +236,7 @@ export class AppleDeviceSupervisor {
         await fs.writeFile(targetPath, typeof args.content === "string" ? args.content : JSON.stringify(args.content, null, 2), "utf8");
         return {
           ok: true,
-          deviceId: DEVICE_ID,
+          deviceId: this.deviceId,
           platform: "ios",
           path: targetPath,
           bytes: Buffer.byteLength(typeof args.content === "string" ? args.content : JSON.stringify(args.content), "utf8"),
@@ -247,7 +253,7 @@ export class AppleDeviceSupervisor {
         const content = await fs.readFile(targetPath, "utf8");
         return {
           ok: true,
-          deviceId: DEVICE_ID,
+          deviceId: this.deviceId,
           platform: "ios",
           path: targetPath,
           content,

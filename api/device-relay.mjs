@@ -111,6 +111,27 @@ function validArguments(value) {
   return value && typeof value === 'object' && !Array.isArray(value);
 }
 
+function validDeviceId(value) {
+  return typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(value);
+}
+
+function registryRecord(deviceRegistry, deviceId) {
+  if (deviceRegistry instanceof Map) return deviceRegistry.get(deviceId) ?? null;
+  if (deviceRegistry && typeof deviceRegistry === 'object') return deviceRegistry[deviceId] ?? null;
+  return null;
+}
+
+// Roles are descriptive metadata from a verified enrollment record, never a
+// conclusion drawn from a historical fixture name or a model/provider name.
+function deviceRole(deviceRegistry, deviceId) {
+  const record = registryRecord(deviceRegistry, deviceId);
+  if (typeof record?.role === 'string' && /^[A-Z][A-Z0-9_]{1,127}$/.test(record.role)) return record.role;
+  if (record?.platform === 'android') return 'MOBILE_NODE';
+  if (record?.platform === 'ios' || record?.platform === 'ipados') return 'APPLE_MOBILE_NODE';
+  if (record?.platform === 'windows' || record?.platform === 'macos' || record?.platform === 'linux') return 'WORKSTATION_NODE';
+  return 'UNCLASSIFIED_TRANSPORT_PEER';
+}
+
 function protocolError(ws, error) {
   if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'error', error }));
   ws.close(1008, error);
@@ -149,7 +170,7 @@ function closeReplaced(connection) {
   }
 }
 
-function createRelayServer({ rooms = new Map(), mcpAccessPolicy = null, mcpSessions = new Set() } = {}) {
+function createRelayServer({ rooms = new Map(), deviceRegistry = new Map(), mcpAccessPolicy = null, mcpSessions = new Set() } = {}) {
   async function requireMcpRead(req, res) {
     if (mcpAccessPolicy?.configured !== true || typeof mcpAccessPolicy.authenticate !== 'function') {
       json(res, 503, { ok: false, error: mcpAccessPolicy?.reason || 'MCP_READ_AUTHORITY_UNBOUND' });
@@ -193,10 +214,7 @@ function createRelayServer({ rooms = new Map(), mcpAccessPolicy = null, mcpSessi
         return {
           deviceId: id,
           online: isOnline,
-          role: id === 'pc-primary' ? 'PRIMARY_GPU_WORKSTATION' :
-                (id.startsWith('LDB-') || id === 'phone-fold6') ? 'PHYSICAL_ANDROID_PHONE' :
-                id === 'phone-apple-iphone' ? 'PHYSICAL_APPLE_PHONE' :
-                id === 'pc-hp-secondary' ? 'SECONDARY_HP_WORKSTATION' : 'DEVICE_NODE',
+          role: deviceRole(deviceRegistry, id),
           transport: isOnline ? 'WSS_RELAY' : 'DISCONNECTED'
         };
       });
@@ -371,7 +389,14 @@ function createRelayServer({ rooms = new Map(), mcpAccessPolicy = null, mcpSessi
 
         if (rpc.method === 'tools/call') {
           const { name, arguments: args = {} } = rpc.params || {};
-          const targetDeviceId = args.deviceId || 'pc-primary';
+            const targetDeviceId = args.deviceId;
+            if (name !== 'bridge_devices' && !validDeviceId(targetDeviceId)) {
+              return json(res, 200, {
+                jsonrpc: '2.0',
+                id: rpcId,
+                result: { content: [{ type: 'text', text: JSON.stringify({ ok: false, error: 'DEVICE_ID_REQUIRED' }) }], isError: true }
+              }, sessionResponseHeaders);
+            }
           const mutatingTool = !READ_ONLY_MCP_TOOLS.has(name);
           if (args.constitutionEnvelope || (mutatingTool && process.env.LEEWAY_ENFORCE_CONSTITUTION === '1')) {
             const constDecision = enforceSovereignConstitution(args.constitutionEnvelope);
@@ -415,24 +440,11 @@ function createRelayServer({ rooms = new Map(), mcpAccessPolicy = null, mcpSessi
           }
 
           if (name === 'bridge_devices') {
-            // Canonical string IDs only to satisfy Runtime Fabric upstream validator:
-            // Array.isArray(source.devices) && source.devices.every(nameOk) && unique
-            const canonicalSet = new Set();
-            for (const id of rooms.keys()) {
-              if (id.startsWith('LDB-')) {
-                canonicalSet.add('phone-fold6');
-              } else {
-                canonicalSet.add(id);
-              }
-            }
-            const stringDevices = Array.from(canonicalSet);
+            const stringDevices = Array.from(rooms.keys()).filter(validDeviceId);
             const deviceDetails = stringDevices.map(id => ({
               id,
               online: true,
-              role: id === 'pc-primary' ? 'PRIMARY_GPU_WORKSTATION' :
-                    id === 'phone-fold6' ? 'PHYSICAL_ANDROID_PHONE' :
-                    id === 'phone-apple-iphone' ? 'PHYSICAL_APPLE_PHONE' :
-                    id === 'pc-hp-secondary' ? 'SECONDARY_HP_WORKSTATION' : 'DEVICE_NODE'
+              role: deviceRole(deviceRegistry, id)
             }));
 
             return json(res, 200, {
@@ -445,7 +457,7 @@ function createRelayServer({ rooms = new Map(), mcpAccessPolicy = null, mcpSessi
                     ok: true,
                     devices: stringDevices,
                     deviceDetails,
-                    authority: 'TRUSTED_RUNTIME_DEVICE_REGISTRY'
+                    authority: 'TRANSPORT_ROOM_OBSERVATION'
                   }, null, 2)
                 }]
               }
@@ -484,7 +496,7 @@ function createRelayServer({ rooms = new Map(), mcpAccessPolicy = null, mcpSessi
             // Map tool name to capability
             const capability = name.startsWith('device_') ? name.replace('device_', 'device.').replaceAll('_', '.') : name;
 
-            const targetRoom = rooms.get(targetDeviceId) || (targetDeviceId === 'phone-fold6' ? [...rooms.values()].find(r => r.deviceId?.startsWith('LDB-')) : null);
+            const targetRoom = rooms.get(targetDeviceId);
             if (!targetRoom || !targetRoom.phone || targetRoom.phone.ws?.readyState !== WebSocket.OPEN) {
               return json(res, 200, {
                 jsonrpc: '2.0',
@@ -736,7 +748,7 @@ function createRelayServer({ rooms = new Map(), mcpAccessPolicy = null, mcpSessi
           return protocolError(ws, 'HELLO_INVALID');
         }
 
-        let room = rooms.get(deviceId) || (deviceId === 'phone-fold6' ? [...rooms.values()].find(r => r.deviceId?.startsWith('LDB-')) : null);
+        let room = rooms.get(deviceId);
         if (role === 'phone') {
           if (room && !digestsMatch(tokenDigest(token), room.tokenHash)) {
             return protocolError(ws, 'PAIRING_TOKEN_REJECTED');
@@ -744,9 +756,6 @@ function createRelayServer({ rooms = new Map(), mcpAccessPolicy = null, mcpSessi
           if (!room) {
             room = makeRoom(deviceId, token);
             rooms.set(deviceId, room);
-          }
-          if (deviceId.startsWith('LDB-')) {
-            rooms.set('phone-fold6', room);
           }
           closeReplaced(room.phone);
           connection.role = role;

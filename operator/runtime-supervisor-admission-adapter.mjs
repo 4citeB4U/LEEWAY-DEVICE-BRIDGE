@@ -20,14 +20,9 @@ export const CANONICAL_STANDARDS_REF = '4citeB4U/LeeWay-Standards@159a6420b2b290
 export const CANONICAL_GRANT_REF = 'GRANT-CREATOR-20261112-SOVEREIGN-BRIDGE-EXEC';
 export const COGNITION_BINDING_ID = 'MC-SUBSTRATE-LWS-V1';
 
-export const AUTHORIZED_WORKFORCE = Object.freeze({
-  'F1-Codex': { role: 'INTEGRATION_LEAD', permittedScopes: ['device.health', 'device.info', 'device.directories.list', 'device.files.read', 'device.files.write', 'device.apps.launch'] },
-  'F2-ChatGPT': { role: 'ARCHITECTURE_REVIEWER', permittedScopes: ['device.health', 'device.info', 'device.directories.list', 'device.files.read'] },
-  'F3-Gemini': { role: 'DEFECT_ANALYST', permittedScopes: ['device.health', 'device.info', 'device.directories.list', 'device.files.read'] },
-  'F4-Antigravity': { role: 'ACTING_WORKFORCE_MANAGER', permittedScopes: ['*'] },
-  'F5-Copilot': { role: 'IMPLEMENTATION_ENGINEER', permittedScopes: ['device.health', 'device.info', 'device.directories.list', 'device.files.read', 'device.files.write'] },
-  'agent-lee-local': { role: 'PERMANENT_HARDWARE_SPECIALIST', permittedScopes: ['device.health', 'device.info', 'device.directories.list', 'device.files.read', 'device.files.write', 'device.apps.launch'] }
-});
+// Provider/model names are never an authority roster.  The enrolled runtime
+// must inject its own verified principal-to-scope map for each deployment.
+export const AUTHORIZED_WORKFORCE = Object.freeze({});
 
 export function computeOperationDigest(task, handlerId) {
   const bounded = {
@@ -47,12 +42,15 @@ export function computeOperationDigest(task, handlerId) {
  * Validates worker identity, standards revision, role permissions, and binds the operation digest.
  */
 export async function createHostAdmissionVerifier({
-  authorizedWorkforce = AUTHORIZED_WORKFORCE,
+  authorizedWorkforce,
   standardsRef = CANONICAL_STANDARDS_REF,
   grantRef = CANONICAL_GRANT_REF,
   dbPath,
   walStore
 } = {}) {
+  if (!authorizedWorkforce || typeof authorizedWorkforce !== 'object' || Array.isArray(authorizedWorkforce)) {
+    throw new Error('VERIFIED_WORKFORCE_REGISTRY_REQUIRED');
+  }
   const store = walStore || openSovereignWalStore(dbPath);
 
   async function hostAdmissionVerifier({

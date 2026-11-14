@@ -28,6 +28,7 @@ import {
 
 const NOW = Date.parse('2026-11-08T20:00:00.000Z');
 const OWNER = 'owner-subject-test-only';
+const DEVICE_ID = 'windows-fixture-a';
 const rawHost = {
   computerSystemProduct: { UUID: '6F9619FF-8B86-D011-B42D-00C04FC964FF', Vendor: 'LeeWay Test Vendor', Name: 'LeeWay pc-primary' },
   bios: { SerialNumber: 'BIOS-TEST-PRIMARY-001' },
@@ -56,7 +57,7 @@ function signedPassport(overrides = {}) {
     schemaVersion: '1.0.0',
     authority: WINDOWS_PC_PRIMARY_CONSTANTS.passportAuthority,
     platform: WINDOWS_PC_PRIMARY_CONSTANTS.platform,
-    deviceId: WINDOWS_PC_PRIMARY_CONSTANTS.deviceId,
+    deviceId: DEVICE_ID,
     ownerSubject: OWNER,
     issuedAt: '2026-11-08T19:00:00.000Z',
     expiresAt: '2026-11-09T19:00:00.000Z',
@@ -139,26 +140,26 @@ test('owner, host binding, expiry and signature mismatches fail closed', async (
 test('pc-primary registration requires verified identity, not a configured name', async () => {
   const adapter = verifiedAdapter();
   const bridge = new Bridge([{
-    id: 'pc-primary',
+    id: DEVICE_ID,
     grants: ['device.info'],
     adapter,
   }], {
     admission: async () => false,
     receiptSink: async () => {},
-    deviceRegistry: new Map([['pc-primary', { platform: 'windows', identityVerified: false }]]),
+    deviceRegistry: new Map([[DEVICE_ID, { platform: 'windows', identityVerified: false }]]),
   });
   const server = createServer(bridge);
   const listed = JSON.parse((await server._registeredTools.bridge_devices.handler({})).content[0].text);
   assert.deepEqual(listed.devices, []);
-  const capabilities = JSON.parse((await server._registeredTools.bridge_capabilities.handler({ deviceId: 'pc-primary' })).content[0].text);
+  const capabilities = JSON.parse((await server._registeredTools.bridge_capabilities.handler({ deviceId: DEVICE_ID })).content[0].text);
   assert.equal(capabilities.identityVerified, false);
   assert.equal(capabilities.executionAdmission, 'IDENTITY_UNVERIFIED');
 
   const verified = await adapter.execute('device.info');
-  bridge.deviceRegistry = new Map([['pc-primary', createTrustedWindowsRegistryRecord(verified)]]);
+  bridge.deviceRegistry = new Map([[DEVICE_ID, createTrustedWindowsRegistryRecord(verified)]]);
   const trustedServer = createServer(bridge);
   const trusted = JSON.parse((await trustedServer._registeredTools.bridge_devices.handler({})).content[0].text);
-  assert.deepEqual(trusted.devices, ['pc-primary']);
+  assert.deepEqual(trusted.devices, [DEVICE_ID]);
   assert.equal(trusted.registrationState, 'TRUSTED_REGISTRY_READ');
 });
 
@@ -189,7 +190,7 @@ test('C3 requires trusted Windows identity and preserves replay/expiry denial', 
   let activeToken = null;
   const replayGuard = new ConsentReplayGuard({ inMemoryOnly: true });
   const admission = createC3AdmissionBinding({
-    deviceRegistry: new Map([['pc-primary', registered]]),
+    deviceRegistry: new Map([[DEVICE_ID, registered]]),
     registry: adapterRegistry,
     trustedIssuerRegistry: { [consentIssuer.issuerId]: consentIssuer },
     replayGuard,
@@ -197,29 +198,29 @@ test('C3 requires trusted Windows identity and preserves replay/expiry denial', 
     veritasPreGate: async () => true,
     consentProvider: async () => activeToken,
   });
-  assert.equal(await admission({ deviceId: 'pc-primary', capability: 'device.info', args: {} }), true);
+  assert.equal(await admission({ deviceId: DEVICE_ID, capability: 'device.info', args: {} }), true);
 
   activeToken = createConsentEvidenceToken({
     issuer: consentIssuer.issuerId,
     keyId: consentIssuer.keyId,
     privateKeyPem: consentPrivatePkcs8,
     requestId: 'WINDOWS-TEST-READ-001',
-    deviceId: 'pc-primary',
+    deviceId: DEVICE_ID,
     platform: 'windows',
     capability: 'device.files.read',
     args: { path: 'read-only.txt' },
     sessionNonce: 'windows-test-session-001',
     tokenNonce: 'windows-test-token-001',
   });
-  assert.equal(await admission({ deviceId: 'pc-primary', capability: 'device.files.read', args: { path: 'read-only.txt' } }), true);
-  assert.equal(await admission({ deviceId: 'pc-primary', capability: 'device.files.read', args: { path: 'read-only.txt' } }), false);
+  assert.equal(await admission({ deviceId: DEVICE_ID, capability: 'device.files.read', args: { path: 'read-only.txt' } }), true);
+  assert.equal(await admission({ deviceId: DEVICE_ID, capability: 'device.files.read', args: { path: 'read-only.txt' } }), false);
 
   activeToken = createConsentEvidenceToken({
     issuer: consentIssuer.issuerId,
     keyId: consentIssuer.keyId,
     privateKeyPem: consentPrivatePkcs8,
     requestId: 'WINDOWS-TEST-READ-002',
-    deviceId: 'pc-primary',
+    deviceId: DEVICE_ID,
     platform: 'windows',
     capability: 'device.files.read',
     args: { path: 'read-only.txt' },
@@ -228,15 +229,15 @@ test('C3 requires trusted Windows identity and preserves replay/expiry denial', 
     issuedAt: new Date(NOW - 120000).toISOString(),
     ttlMs: 60000,
   });
-  assert.equal(await admission({ deviceId: 'pc-primary', capability: 'device.files.read', args: { path: 'read-only.txt' } }), false);
+  assert.equal(await admission({ deviceId: DEVICE_ID, capability: 'device.files.read', args: { path: 'read-only.txt' } }), false);
 
   const unverified = createC3AdmissionBinding({
-    deviceRegistry: new Map([['pc-primary', { platform: 'windows' }]]),
+    deviceRegistry: new Map([[DEVICE_ID, { platform: 'windows' }]]),
     registry: adapterRegistry,
     formulaPreGate: async () => true,
     veritasPreGate: async () => true,
   });
-  assert.equal(await unverified({ deviceId: 'pc-primary', capability: 'device.info', args: {} }), false);
+  assert.equal(await unverified({ deviceId: DEVICE_ID, capability: 'device.info', args: {} }), false);
 });
 
 test('Windows adapter refuses mutation, missing passport, wrong host and bad issuer', async () => {

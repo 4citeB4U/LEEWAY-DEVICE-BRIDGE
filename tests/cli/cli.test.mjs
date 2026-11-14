@@ -44,7 +44,10 @@ test('CLI catalog reads existing publication evidence without claiming install',
   assert.equal(result.status, 0);
   const doc = JSON.parse(result.stdout);
   assert.ok(doc.packages.some(p => p.platform === 'android'));
-  assert.ok(doc.packages.some(p => p.platform === 'ios' && p.manifestHasDownloadAndSha256 === true));
+  // The Apple package is intentionally held until owner signing and device
+  // installation. Catalog discovery must report that truth, not pretend an
+  // unsigned IPA has a public download.
+  assert.ok(doc.packages.some(p => p.platform === 'ios' && p.manifestHasDownloadAndSha256 === false));
   assert.ok(doc.packages.every(p => p.installationVerified === false));
 });
 test('CLI reveals configured device IDs but never secrets or claims connected', async t => {

@@ -2,7 +2,7 @@
 REGION: 🟢 CORE / OPERATOR
 TAG: LEEWAY-WORKSTATION-RELAY-AGENT
 WHO: Agent Lee / Runtime Fabric / Device Bridge
-WHAT: Outbound persistent relay daemon for pc-primary and desktop nodes.
+WHAT: Outbound persistent relay daemon for an enrolled desktop node.
       Connects outbound to wss://leeway-device-bridge.vercel.app/api/device-relay
       so phones on 5G cellular, public Wi-Fi, or interstate routes can command
       the primary GPU workstation without inbound firewall or LAN dependencies.
@@ -22,12 +22,16 @@ import { DigitalBrainEngine } from "../apps/desktop/digital-brain.mjs";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SOVEREIGN_RELAY_URL = process.env.LEEWAY_RELAY_URL || "ws://127.0.0.1:8008/api/device-relay";
 const VERCEL_RELAY_URL = "wss://leeway-device-bridge.vercel.app/api/device-relay";
-const DEVICE_ID = process.env.LEEWAY_DEVICE_ID || "pc-primary";
+const DEVICE_ID = process.env.LEEWAY_DEVICE_ID || null;
 const TOKEN = process.env.LEEWAY_MESH_TOKEN || null;
 const WORKSPACE_DIR = path.resolve(__dirname, "..");
 
 export class WorkstationRelayAgent {
   constructor({ url = SOVEREIGN_RELAY_URL, deviceId = DEVICE_ID, token = TOKEN, workspace = WORKSPACE_DIR } = {}) {
+    if (typeof deviceId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(deviceId)) {
+      throw new Error('LEEWAY_DEVICE_ID_REQUIRED');
+    }
+    if (typeof token !== 'string' || token.length < 16) throw new Error('LEEWAY_MESH_TOKEN_REQUIRED');
     this.primaryUrl = url;
     this.fallbackUrl = VERCEL_RELAY_URL;
     this.deviceId = deviceId;
@@ -48,7 +52,7 @@ export class WorkstationRelayAgent {
           ok: true,
           platform: "windows",
           deviceId: this.deviceId,
-          role: "PRIMARY_GPU_WORKSTATION",
+          role: "WORKSTATION_NODE",
           model: hostIdentity.model,
           manufacturer: hostIdentity.manufacturer,
           osCaption: hostIdentity.osCaption,
@@ -64,7 +68,7 @@ export class WorkstationRelayAgent {
           ok: true,
           platform: "windows",
           deviceId: this.deviceId,
-          role: "PRIMARY_GPU_WORKSTATION",
+          role: "WORKSTATION_NODE",
           uiControl: true,
           error: e.message
         };
@@ -198,7 +202,7 @@ export class WorkstationRelayAgent {
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
   const agent = new WorkstationRelayAgent();
   agent.start();
-  console.log(`LeeWay Workstation Relay Daemon running for ${DEVICE_ID}`);
+  console.log(`LeeWay Workstation Relay Daemon running for ${agent.deviceId}`);
   process.on("SIGINT", () => { agent.stop(); process.exit(0); });
   process.on("SIGTERM", () => { agent.stop(); process.exit(0); });
 }

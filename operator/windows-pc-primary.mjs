@@ -1,9 +1,9 @@
 /*
 LEEWAY HEADER — DO NOT REMOVE
 REGION: LEEWAY.DEVICE.BRIDGE.WINDOWS.IDENTITY
-TAG: LEEWAY.WINDOWS.PC_PRIMARY.PASSPORT_ADAPTER_V1
+TAG: LEEWAY.WINDOWS.PASSPORT_ADAPTER_V1
 WHO: LeeWay Industries / owner-authorized Device Bridge maintainers
-WHAT: Read-only source-bound Windows pc-primary identity observation.
+WHAT: Read-only, passport-bound Windows identity observation.
 WHY: A configured desktop name must not become a verified execution target.
 HOW: Windows CIM/BIOS observation + owner-signed passport + injected trust record.
 AUTHORITY: Candidate adapter; no enrollment, Veritas decision or production root.
@@ -14,7 +14,6 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
-const WINDOWS_DEVICE_ID = 'pc-primary';
 const WINDOWS_PLATFORM = 'windows';
 const WINDOWS_PASSPORT_AUTHORITY = 'OWNER_SIGNED_WINDOWS_PASSPORT';
 const WINDOWS_IDENTITY_SOURCE = 'WINDOWS_CIM_READONLY';
@@ -35,6 +34,10 @@ function canonical(value) {
 
 function normalized(value) {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+function validDeviceId(value) {
+  return typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(value);
 }
 
 function comparable(value) {
@@ -158,6 +161,7 @@ export function verifyWindowsPcPrimaryPassport({
   observedIdentity,
   ownerSubject,
   trustRegistry,
+  expectedDeviceId,
   clock = Date.now,
   clockSkewMs = 30000,
 } = {}) {
@@ -165,7 +169,8 @@ export function verifyWindowsPcPrimaryPassport({
   if (passport.schemaVersion !== '1.0.0' ||
       passport.authority !== WINDOWS_PASSPORT_AUTHORITY ||
       passport.platform !== WINDOWS_PLATFORM ||
-      passport.deviceId !== WINDOWS_DEVICE_ID ||
+      !validDeviceId(passport.deviceId) ||
+      (expectedDeviceId !== undefined && passport.deviceId !== expectedDeviceId) ||
       typeof passport.ownerSubject !== 'string' ||
       typeof passport.keyId !== 'string' ||
       typeof passport.signature !== 'string') {
@@ -233,7 +238,7 @@ export function verifyWindowsPcPrimaryPassport({
 }
 
 /**
- * Read-only adapter for the owner-enrolled primary Windows workstation.
+ * Read-only adapter for an owner-enrolled Windows workstation.
  * It exposes only health/info and requires fresh host evidence on every call.
  */
 export class WindowsPcPrimaryAdapter {
@@ -241,15 +246,15 @@ export class WindowsPcPrimaryAdapter {
     passport,
     ownerSubject,
     trustRegistry,
-    deviceId = WINDOWS_DEVICE_ID,
+    deviceId = passport?.deviceId,
     hostPlatform = process.platform,
     probe = readWindowsHostIdentity,
     clock = Date.now,
     timeoutMs = 15000,
   } = {}) {
-    if (deviceId !== WINDOWS_DEVICE_ID) throw new Error('WINDOWS_PC_PRIMARY_DEVICE_REQUIRED');
     if (hostPlatform !== 'win32') throw new Error('WINDOWS_HOST_REQUIRED');
     if (!passport) throw new Error('WINDOWS_PASSPORT_REQUIRED');
+    if (!validDeviceId(deviceId)) throw new Error('WINDOWS_DEVICE_ID_REQUIRED');
     if (typeof ownerSubject !== 'string' || ownerSubject.length === 0) throw new Error('WINDOWS_OWNER_SUBJECT_REQUIRED');
     if (!trustRecordFor(trustRegistry, passport.keyId)) throw new Error('WINDOWS_PASSPORT_ISSUER_UNTRUSTED');
     this.passport = passport;
@@ -276,6 +281,7 @@ export class WindowsPcPrimaryAdapter {
       observedIdentity: observed,
       ownerSubject: this.ownerSubject,
       trustRegistry: this.trustRegistry,
+      expectedDeviceId: this.deviceId,
       clock: this.clock,
     });
     const base = {
@@ -312,7 +318,7 @@ export class WindowsPcPrimaryAdapter {
  * creates identity evidence from a configured device name.
  */
 export function createTrustedWindowsRegistryRecord(observation) {
-  if (!observation || observation.deviceId !== WINDOWS_DEVICE_ID ||
+  if (!observation || !validDeviceId(observation.deviceId) ||
       observation.platform !== WINDOWS_PLATFORM || observation.identityVerified !== true ||
       observation.registrationState !== WINDOWS_REGISTRATION_STATE ||
       observation.identitySource !== WINDOWS_IDENTITY_SOURCE ||
@@ -322,6 +328,7 @@ export function createTrustedWindowsRegistryRecord(observation) {
     throw new Error('WINDOWS_REGISTRY_OBSERVATION_NOT_VERIFIED');
   }
   return Object.freeze({
+    deviceId: observation.deviceId,
     platform: WINDOWS_PLATFORM,
     identityVerified: true,
     registrationState: WINDOWS_REGISTRATION_STATE,
@@ -333,7 +340,6 @@ export function createTrustedWindowsRegistryRecord(observation) {
 }
 
 export const WINDOWS_PC_PRIMARY_CONSTANTS = Object.freeze({
-  deviceId: WINDOWS_DEVICE_ID,
   platform: WINDOWS_PLATFORM,
   passportAuthority: WINDOWS_PASSPORT_AUTHORITY,
   identitySource: WINDOWS_IDENTITY_SOURCE,

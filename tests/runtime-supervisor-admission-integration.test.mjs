@@ -20,6 +20,15 @@ import path from 'node:path';
 import { evaluateWorkerAdmission } from '../operator/worker-admission-gate.mjs';
 import { createHostAdmissionVerifier } from '../operator/runtime-supervisor-admission-adapter.mjs';
 
+// Test-only principal registry. Production must inject an independently
+// verified registry and never derives authority from a model/provider name.
+const TEST_WORKFORCE = Object.freeze({
+  'F1-Codex': { role: 'TEST_INTEGRATOR', permittedScopes: ['device.health', 'device.info', 'device.files.write'] },
+  'F2-ChatGPT': { role: 'TEST_REVIEWER', permittedScopes: ['device.health', 'device.info'] },
+  'F4-Antigravity': { role: 'TEST_MANAGER', permittedScopes: ['*'] },
+  'agent-lee-local': { role: 'TEST_HARDWARE', permittedScopes: ['device.health', 'device.info'] },
+});
+
 function withTempDb(fn) {
   const dir = mkdtempSync(path.join(os.tmpdir(), 'leeway-adm-wal-'));
   const dbPath = path.join(dir, 'admission.sqlite');
@@ -30,7 +39,7 @@ function withTempDb(fn) {
 
 test('ALLOW: F4 Antigravity admitted for device.health on pc-primary', () =>
   withTempDb(async (dbPath) => {
-    const verifier = await createHostAdmissionVerifier({ dbPath });
+    const verifier = await createHostAdmissionVerifier({ dbPath, authorizedWorkforce: TEST_WORKFORCE });
     try {
       const task = {
         id: 'TASK-20261112-HEALTH-01',
@@ -58,7 +67,7 @@ test('ALLOW: F4 Antigravity admitted for device.health on pc-primary', () =>
 
 test('ALLOW: F1 Codex admitted for device.files.write on phone-fold6', () =>
   withTempDb(async (dbPath) => {
-    const verifier = await createHostAdmissionVerifier({ dbPath });
+    const verifier = await createHostAdmissionVerifier({ dbPath, authorizedWorkforce: TEST_WORKFORCE });
     try {
       const task = {
         id: 'TASK-20261112-WRITE-01',
@@ -84,7 +93,7 @@ test('ALLOW: F1 Codex admitted for device.files.write on phone-fold6', () =>
 
 test('DENY: Unauthorized worker ID is blocked fail-closed', () =>
   withTempDb(async (dbPath) => {
-    const verifier = await createHostAdmissionVerifier({ dbPath });
+    const verifier = await createHostAdmissionVerifier({ dbPath, authorizedWorkforce: TEST_WORKFORCE });
     try {
       const task = {
         id: 'TASK-20261112-ROGUE-01',
@@ -109,7 +118,7 @@ test('DENY: Unauthorized worker ID is blocked fail-closed', () =>
 
 test('DENY: Privilege escalation (F2 ChatGPT attempting mutation) is denied', () =>
   withTempDb(async (dbPath) => {
-    const verifier = await createHostAdmissionVerifier({ dbPath });
+    const verifier = await createHostAdmissionVerifier({ dbPath, authorizedWorkforce: TEST_WORKFORCE });
     try {
       const task = {
         id: 'TASK-20261112-ESCALATE-01',
@@ -135,7 +144,7 @@ test('DENY: Privilege escalation (F2 ChatGPT attempting mutation) is denied', ()
 
 test('REPLAY DENIAL ACROSS RESTART: Replaying digest after process/verifier restart is blocked by SQLite WAL', () =>
   withTempDb(async (dbPath) => {
-    const verifier1 = await createHostAdmissionVerifier({ dbPath });
+    const verifier1 = await createHostAdmissionVerifier({ dbPath, authorizedWorkforce: TEST_WORKFORCE });
     const task1 = {
       id: 'TASK-20261112-REPLAY-01',
       workId: 'WORK-20261112-DEVICE-BRIDGE',
@@ -152,7 +161,7 @@ test('REPLAY DENIAL ACROSS RESTART: Replaying digest after process/verifier rest
     verifier1.close();
 
     // Simulate daemon restart opening a brand-new verifier against the same SQLite WAL dbPath
-    const verifier2 = await createHostAdmissionVerifier({ dbPath });
+    const verifier2 = await createHostAdmissionVerifier({ dbPath, authorizedWorkforce: TEST_WORKFORCE });
     try {
       const result2 = await evaluateWorkerAdmission(task1, {
         workerId: 'agent-lee-local',
