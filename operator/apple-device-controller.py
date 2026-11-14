@@ -9,16 +9,27 @@ import asyncio
 import os
 import subprocess
 
+args = sys.argv[1:]
+TARGET_UDID = None
+if len(args) >= 2 and args[0] == "--udid":
+    TARGET_UDID = args[1]
+    args = args[2:]
+if TARGET_UDID is not None and (not TARGET_UDID.isalnum() or not 16 <= len(TARGET_UDID) <= 64):
+    print(json.dumps({"ok": False, "error": "INVALID_UDID"}))
+    sys.exit(1)
+
 def run_cli_cmd(cmd_args):
+    if TARGET_UDID is not None:
+        cmd_args = list(cmd_args) + ["--udid", TARGET_UDID]
     result = subprocess.run([sys.executable, "-m", "pymobiledevice3"] + cmd_args, capture_output=True, text=True, check=False)
     return result
 
 def main():
-    if len(sys.argv) < 2:
+    if not args:
         print(json.dumps({"ok": False, "error": "MISSING_ACTION"}))
         sys.exit(1)
 
-    action = sys.argv[1]
+    action = args[0]
 
     if action == "info":
         res = run_cli_cmd(["lockdown", "info"])
@@ -43,7 +54,7 @@ def main():
             print(json.dumps({"ok": False, "error": res.stderr.strip() or "LOCKDOWN_INFO_FAILED"}))
 
     elif action == "screenshot":
-        out_path = sys.argv[2] if len(sys.argv) > 2 else "screenshot.png"
+        out_path = args[1] if len(args) > 1 else "screenshot.png"
         res = run_cli_cmd(["developer", "dvt", "screenshot", out_path])
         if res.returncode == 0 and os.path.exists(out_path):
             print(json.dumps({"ok": True, "path": os.path.abspath(out_path), "bytes": os.path.getsize(out_path)}))
@@ -52,8 +63,8 @@ def main():
 
     elif action == "tap":
         # x and y can be 0..65535 or pixels (if < 1000 and < 2000, normalize to 828x1792)
-        x = float(sys.argv[2])
-        y = float(sys.argv[3])
+        x = float(args[1])
+        y = float(args[2])
         if x <= 828 and y <= 1792:
             norm_x = int((x / 828.0) * 65535)
             norm_y = int((y / 1792.0) * 65535)
@@ -64,10 +75,10 @@ def main():
         print(json.dumps({"ok": res.returncode == 0, "normX": norm_x, "normY": norm_y, "error": res.stderr.strip() if res.returncode != 0 else None}))
 
     elif action == "drag":
-        x1 = float(sys.argv[2])
-        y1 = float(sys.argv[3])
-        x2 = float(sys.argv[4])
-        y2 = float(sys.argv[5])
+        x1 = float(args[1])
+        y1 = float(args[2])
+        x2 = float(args[3])
+        y2 = float(args[4])
         if x1 <= 828 and y1 <= 1792 and x2 <= 828 and y2 <= 1792:
             nx1 = int((x1 / 828.0) * 65535)
             ny1 = int((y1 / 1792.0) * 65535)
@@ -79,12 +90,12 @@ def main():
         print(json.dumps({"ok": res.returncode == 0, "from": [nx1, ny1], "to": [nx2, ny2], "error": res.stderr.strip() if res.returncode != 0 else None}))
 
     elif action == "type":
-        text = sys.argv[2] if len(sys.argv) > 2 else ""
+        text = args[1] if len(args) > 1 else ""
         res = run_cli_cmd(["developer", "core-device", "universal-hid-service", "type", text])
         print(json.dumps({"ok": res.returncode == 0, "typed": text, "error": res.stderr.strip() if res.returncode != 0 else None}))
 
     elif action == "button":
-        btn = sys.argv[2] if len(sys.argv) > 2 else "home"
+        btn = args[1] if len(args) > 1 else "home"
         res = run_cli_cmd(["developer", "core-device", "hid", "button", btn, "press"])
         print(json.dumps({"ok": res.returncode == 0, "button": btn, "error": res.stderr.strip() if res.returncode != 0 else None}))
 
@@ -93,7 +104,7 @@ def main():
         print(json.dumps({"ok": res.returncode == 0, "text": res.stdout, "error": res.stderr.strip() if res.returncode != 0 else None}))
 
     elif action == "clipboard-write":
-        text = sys.argv[2] if len(sys.argv) > 2 else ""
+        text = args[1] if len(args) > 1 else ""
         res = run_cli_cmd(["developer", "core-device", "copy", text])
         print(json.dumps({"ok": res.returncode == 0, "text": text, "error": res.stderr.strip() if res.returncode != 0 else None}))
 

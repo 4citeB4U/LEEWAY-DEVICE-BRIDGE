@@ -17,6 +17,7 @@
     "test:installation-adapter": "node --test tests/installation-adapter.test.mjs",
     "test:windows-native-installer": "node --test tests/windows-native-installer.test.mjs",
     "test:hp-secondary-legacy-retirement": "node --test tests/hp-secondary-legacy-retirement.test.mjs",
+    "test:physical-adapter-routing": "node --test tests/physical-adapter-routing.test.mjs",
     "test:iloader-observer": "node --test tests/windows-iloader-observer.test.mjs",
     "observe:iloader": "node scripts/observe-windows-iloader.mjs",
     "test:cli": "node --test tests/cli/*.test.mjs",

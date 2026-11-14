@@ -36,6 +36,33 @@ function sha256Buffer(value) {
   return crypto.createHash("sha256").update(value).digest("hex");
 }
 
+function decodeXml(value) {
+  return String(value ?? "").replaceAll("&quot;", '"').replaceAll("&amp;", "&").replaceAll("&lt;", "<").replaceAll("&gt;", ">");
+}
+
+/** Returns only actionable Android nodes; it never guesses a target from pixels. */
+export function parseAndroidUiSnapshot(raw) {
+  const xml = String(raw ?? "");
+  const nodes = [];
+  const matcher = /<node\s+([^>]*?)\/?>(?:<\/node>)?/g;
+  for (let match; (match = matcher.exec(xml)) && nodes.length < 128;) {
+    const attrs = Object.fromEntries([...match[1].matchAll(/([\w:-]+)="([^"]*)"/g)].map(([, key, value]) => [key, decodeXml(value)]));
+    if (attrs.clickable !== "true" && attrs.editable !== "true" && attrs.focusable !== "true") continue;
+    const bounds = /^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$/.exec(attrs.bounds ?? "");
+    if (!bounds) continue;
+    nodes.push({
+      className: attrs.class ?? null,
+      resourceId: attrs["resource-id"] || null,
+      label: (attrs["content-desc"] || attrs.text || "").slice(0, 160) || null,
+      clickable: attrs.clickable === "true",
+      editable: attrs.editable === "true",
+      focused: attrs.focused === "true",
+      bounds: bounds.slice(1).map(Number)
+    });
+  }
+  return { ok: true, source: "ANDROID_UIAUTOMATOR", nodes, truncated: nodes.length >= 128 };
+}
+
 export class PhysicalAndroidAdapter {
   constructor({ serial, timeoutMs = 15000 } = {}) {
     if (typeof serial !== "string" || !/^[A-Za-z0-9._:-]{4,128}$/.test(serial)) {
@@ -54,6 +81,7 @@ export class PhysicalAndroidAdapter {
       "device.files.read",
       "device.files.write",
       "device.screen.capture",
+      "device.ui.snapshot",
       "device.ui.tap",
       "device.ui.swipe",
       "device.ui.text",
@@ -175,6 +203,12 @@ export class PhysicalAndroidAdapter {
       };
     }
 
+    if (capability === "device.ui.snapshot") {
+      const { stdout } = await execFileAsync("adb", ["-s", this.serial, "shell", "uiautomator", "dump", "/dev/tty"], { timeout: this.timeoutMs, maxBuffer: 512 * 1024 });
+      if (!String(stdout).includes("<hierarchy")) throw new Error("ANDROID_UI_SNAPSHOT_UNAVAILABLE");
+      return parseAndroidUiSnapshot(stdout);
+    }
+
     if (capability === "device.ui.tap") {
       const x = Math.round(Number(args.x ?? 0));
       const y = Math.round(Number(args.y ?? 0));
@@ -260,7 +294,7 @@ export class PhysicalAppleAdapter {
   async execute(capability, args = {}) {
     if (capability === "device.info") {
       try {
-        const { stdout } = await execFileAsync("python", [this.controllerScript, "info"], { timeout: this.timeoutMs });
+        const { stdout } = await execFileAsync("python", [this.controllerScript, "--udid", this.deviceId, "info"], { timeout: this.timeoutMs });
         const parsed = JSON.parse(stdout.trim());
         if (parsed.ok === true) {
           return {
@@ -313,7 +347,7 @@ export class PhysicalAppleAdapter {
     if (capability === "device.health") {
       let rsdTunnelActive = false;
       try {
-        const { stdout } = await execFileAsync("python", [this.controllerScript, "info"], { timeout: 5000 });
+        const { stdout } = await execFileAsync("python", [this.controllerScript, "--udid", this.deviceId, "info"], { timeout: 5000 });
         const parsed = JSON.parse(stdout.trim());
         rsdTunnelActive = parsed.ok === true;
       } catch {
@@ -333,7 +367,7 @@ export class PhysicalAppleAdapter {
     if (capability === "device.screen.capture") {
       const tempPath = path.join(os.tmpdir(), `iphone-capture-${Date.now()}-${Math.random().toString(36).substring(2, 7)}.png`);
       try {
-        const { stdout } = await execFileAsync("python", [this.controllerScript, "screenshot", tempPath], { timeout: this.timeoutMs });
+        const { stdout } = await execFileAsync("python", [this.controllerScript, "--udid", this.deviceId, "screenshot", tempPath], { timeout: this.timeoutMs });
         const parsed = JSON.parse(stdout.trim());
         if (!parsed.ok) throw new Error(parsed.error || "SCREENSHOT_FAILED");
         const buf = await fs.readFile(tempPath);
@@ -354,7 +388,7 @@ export class PhysicalAppleAdapter {
     if (capability === "device.ui.tap") {
       const x = String(args.x ?? 0);
       const y = String(args.y ?? 0);
-      const { stdout } = await execFileAsync("python", [this.controllerScript, "tap", x, y], { timeout: this.timeoutMs });
+      const { stdout } = await execFileAsync("python", [this.controllerScript, "--udid", this.deviceId, "tap", x, y], { timeout: this.timeoutMs });
       const parsed = JSON.parse(stdout.trim());
       if (!parsed.ok) throw new Error(parsed.error || "TAP_FAILED");
       return { ok: true, tapped: { x, y, normX: parsed.normX, normY: parsed.normY } };
@@ -365,7 +399,7 @@ export class PhysicalAppleAdapter {
       const y1 = String(args.y1 ?? 0);
       const x2 = String(args.x2 ?? 0);
       const y2 = String(args.y2 ?? 0);
-      const { stdout } = await execFileAsync("python", [this.controllerScript, "drag", x1, y1, x2, y2], { timeout: this.timeoutMs });
+      const { stdout } = await execFileAsync("python", [this.controllerScript, "--udid", this.deviceId, "drag", x1, y1, x2, y2], { timeout: this.timeoutMs });
       const parsed = JSON.parse(stdout.trim());
       if (!parsed.ok) throw new Error(parsed.error || "SWIPE_FAILED");
       return { ok: true, swiped: { from: parsed.from, to: parsed.to } };
@@ -373,14 +407,14 @@ export class PhysicalAppleAdapter {
 
     if (capability === "device.ui.text") {
       const text = String(args.text ?? "");
-      const { stdout } = await execFileAsync("python", [this.controllerScript, "type", text], { timeout: this.timeoutMs });
+      const { stdout } = await execFileAsync("python", [this.controllerScript, "--udid", this.deviceId, "type", text], { timeout: this.timeoutMs });
       const parsed = JSON.parse(stdout.trim());
       if (!parsed.ok) throw new Error(parsed.error || "TYPE_FAILED");
       return { ok: true, typed: text };
     }
 
     if (capability === "device.ui.home") {
-      const { stdout } = await execFileAsync("python", [this.controllerScript, "button", "home"], { timeout: this.timeoutMs });
+      const { stdout } = await execFileAsync("python", [this.controllerScript, "--udid", this.deviceId, "button", "home"], { timeout: this.timeoutMs });
       const parsed = JSON.parse(stdout.trim());
       if (!parsed.ok) throw new Error(parsed.error || "HOME_BUTTON_FAILED");
       return { ok: true, button: "home" };
