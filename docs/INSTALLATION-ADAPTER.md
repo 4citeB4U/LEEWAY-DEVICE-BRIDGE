@@ -32,6 +32,10 @@ Generic Apple USB presence is only a diagnostic marker and **does not** prove ex
 
 The desktop provider routes remain dry-run only until their native adapters are implemented and qualified. The iOS route recognizes iLoader as the current Windows USB fallback; the LeeWay bridge does not call iLoader or claim installer readiness on its own.
 
+## Windows package handoff
+
+`operator/windows-native-installer.mjs` supplies the narrow Windows execution primitive for a **locally staged MSIX/AppX package only**. It verifies an absolute package path, SHA-256, Authenticode `Valid` state, and the exact expected signer thumbprint before an explicit owner-approved `Add-AppxPackage` handoff. It does not download a package, install EXE/MSI files, elevate, uninstall, bypass SmartScreen/Defender, or call a release qualified. The result remains `WINDOWS_INSTALL_EXECUTED_PENDING_VERIFICATION` until a separately observed post-install check is implemented and run against the target device.
+
 ## Apple preflight states
 
 `PACKAGE_HASH_MISMATCH`, `TRANSPORT_NOT_READY`, `ANISETTE_PROVIDER_UNAVAILABLE`, `APPLE_ACCOUNT_AUTH_FAILED`, `SIGNING_IDENTITY_MISSING`, `CERT_EXPIRED`, `PROFILE_MISMATCH`, `DEVICE_NOT_IN_PROFILE`, `ENTITLEMENT_MISMATCH`, and `READY_TO_INSTALL` are separate findings. They are supplied by a future read-only host diagnostic; absent data never becomes a pass.
