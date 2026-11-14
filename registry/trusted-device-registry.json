@@ -1,0 +1,10 @@
+{
+  "deviceId": "hp-node-secondary-01",
+  "platform": "windows",
+  "identityVerified": true,
+  "registrationState": "TRUSTED_REGISTRY_READ",
+  "registrationAuthority": "TRUSTED_RUNTIME_DEVICE_REGISTRY",
+  "ownerSubject": "Leonard J. Lee",
+  "passportSha256": "2b16305f6b64b1dc8eefe1c66d43546bbb826af6578f162b5d4c692a3e2a4412",
+  "enrolledUtc": "2026-11-14T03:17:50Z"
+}
