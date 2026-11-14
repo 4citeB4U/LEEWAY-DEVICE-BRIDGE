@@ -101,3 +101,18 @@ a Device Bridge configuration mistake. It requires a separately governed
 signing-key lifecycle, owner/device enrollment registry, issuance/revocation,
 receipt custody, and an authenticated Runtime route. Do not generate an
 ad-hoc key or substitute a static relay manifest merely to make a test pass.
+
+## Local custody probe — 2026-11-14T01:01:00-06:00
+
+Read-only loopback probes found two owner-local services:
+
+- The Machine Consciousness carrier reports a connected Continuum with an
+  explicit per-request owner-admission policy for writes.
+- The local Receipt Ledger health route reports a valid existing receipt chain.
+
+These are **owner-local custody observations**, not a Railway-facing enrollment
+authority. The carrier does not expose an enrollment route, and neither
+observation establishes a remote authenticated adapter, signer, device
+registry, issuance/revocation service, or canonical receipt write/readback for
+this enrollment workflow. No local record was created or modified by this
+probe.
