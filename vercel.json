@@ -8,10 +8,21 @@
     {
       "source": "/.well-known/oauth-protected-resource/mcp",
       "destination": "/api/oauth-protected-resource"
+    },
+    {
+      "source": "/mcp-execute",
+      "destination": "/api/mcp-execute"
+    },
+    {
+      "source": "/.well-known/oauth-protected-resource/mcp-execute",
+      "destination": "/api/oauth-protected-resource-execute"
     }
   ],
   "functions": {
     "api/mcp.mjs": {
+      "maxDuration": 60
+    },
+    "api/mcp-execute.mjs": {
       "maxDuration": 60
     },
     "api/device-relay.mjs": {

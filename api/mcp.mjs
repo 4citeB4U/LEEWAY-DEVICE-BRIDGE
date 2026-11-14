@@ -71,8 +71,8 @@ function browserCorsHeaders(origin) {
   };
 }
 
-function resolveUpstreamUrl(env) {
-  const value = String(env.LEEWAY_MCP_UPSTREAM || "").trim();
+function resolveUpstreamUrl(env, { key = "LEEWAY_MCP_UPSTREAM", path = "/mcp" } = {}) {
+  const value = String(env[key] || "").trim();
   if (!value) return { configured: false, reason: "LEEWAY_RUNTIME_UPSTREAM_UNBOUND" };
 
   let url;
@@ -88,7 +88,7 @@ function resolveUpstreamUrl(env) {
     || url.password
     || url.search
     || url.hash
-    || url.pathname !== "/mcp") {
+    || url.pathname !== path) {
     return { configured: false, reason: "LEEWAY_RUNTIME_UPSTREAM_INVALID" };
   }
 
@@ -196,7 +196,13 @@ function augmentInitializeEventStream(bytes, requestId) {
   return changed ? Buffer.from(sections.join(""), "utf8") : null;
 }
 
-export function createMcpIngressHandler({ env = process.env, fetchImpl = globalThis.fetch } = {}) {
+export function createMcpIngressHandler({
+  env = process.env,
+  fetchImpl = globalThis.fetch,
+  resolveResourceConfig = resolvePublicMcpResourceConfig,
+  upstreamEnvKey = "LEEWAY_MCP_UPSTREAM",
+  upstreamPath = "/mcp"
+} = {}) {
   return async function handleMcpIngress(req, res) {
     const origin = readHeader(req.headers, "origin");
     const allowedOrigins = resolveBrowserOriginAllowlist(env);
@@ -218,7 +224,7 @@ export function createMcpIngressHandler({ env = process.env, fetchImpl = globalT
       return reply(405, { error: "METHOD_NOT_ALLOWED" }, { allow: "POST, OPTIONS" });
     }
 
-    const resourceConfig = resolvePublicMcpResourceConfig(env);
+    const resourceConfig = resolveResourceConfig(env);
     if (!resourceConfig.configured) {
       return reply(503, { error: resourceConfig.reason });
     }
@@ -244,7 +250,7 @@ export function createMcpIngressHandler({ env = process.env, fetchImpl = globalT
       });
     }
 
-    const upstreamConfig = resolveUpstreamUrl(env);
+    const upstreamConfig = resolveUpstreamUrl(env, { key: upstreamEnvKey, path: upstreamPath });
     if (!upstreamConfig.configured) {
       return reply(503, { error: upstreamConfig.reason });
     }

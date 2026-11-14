@@ -4,7 +4,7 @@
   "normalization": "LF_UTF8_SHA256",
   "pins": {
     "operator/identity/zitadel-access.mjs": "707ee08c8459dcc6a9a7c806b4ea1353b56cd2ef155cfd04364d9370adeb8476",
-    "operator/identity/public-mcp-resource-config.mjs": "4c2a1444bd5a19a89dd0aa53f000adec757f9dd0804facf50a41eae1e3e7ac45",
+    "operator/identity/public-mcp-resource-config.mjs": "03fa28479478f4a7b7f6c2671735ec19536ce10641ff18ca98a8265b7a089734",
     "operator/identity/relay-mcp-access-policy.mjs": "4944fd264c88eb1af26db7e5477dbb028fc388b6ef55eb2e489911e66cd6f848",
     "operator/identity/create-zitadel-mcp-server.mjs": "ebec0cb2fbc0664f01cd692ab8a3cd15cbfea92767f3658b89efee3ae1e40b8c",
     "operator/identity/create-zitadel-universal-handler.mjs": "6e9c01d13e17630ff75e11eee4f25f3d318656b7abfb12add399e2d0e7ebc03f",

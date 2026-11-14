@@ -30,7 +30,7 @@ function sendJson(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
-export function createOAuthProtectedResourceHandler({ env = process.env } = {}) {
+export function createOAuthProtectedResourceHandler({ env = process.env, resolveResourceConfig = resolvePublicMcpResourceConfig } = {}) {
   return function handler(req, res) {
     if (req.method === "OPTIONS") {
       res.writeHead(204, CORS_HEADERS);
@@ -42,7 +42,7 @@ export function createOAuthProtectedResourceHandler({ env = process.env } = {}) 
       return;
     }
 
-    const config = resolvePublicMcpResourceConfig(env);
+    const config = resolveResourceConfig(env);
     if (!config.configured) {
       sendJson(res, 503, { error: "OAUTH_RESOURCE_METADATA_UNAVAILABLE", reason: config.reason });
       return;

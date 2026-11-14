@@ -16,17 +16,24 @@ import { createServer } from "node:http";
 import { once } from "node:events";
 import test from "node:test";
 import ingressFunction, { createMcpIngressHandler } from "../../api/mcp.mjs";
+import executionIngressFunction, { createExecutionMcpIngressHandler } from "../../api/mcp-execute.mjs";
 import { LEEWAY_MCP_INSTRUCTIONS } from "../../packages/protocol/operating-contract.mjs";
 import { createOAuthProtectedResourceHandler } from "../../api/oauth-protected-resource.mjs";
+import { createExecutionOAuthProtectedResourceHandler } from "../../api/oauth-protected-resource-execute.mjs";
 import {
+  BRIDGE_EXECUTE_SCOPE,
+  EXECUTION_MCP_METADATA_PATH,
   PUBLIC_MCP_METADATA_PATH,
   RUNTIME_READ_SCOPE,
+  resolveExecutionMcpResourceConfig,
   resolvePublicMcpResourceConfig
 } from "../../operator/identity/public-mcp-resource-config.mjs";
 
 const ISSUER = "https://zitadel.example:10000";
 const RESOURCE = "https://bridge.example/mcp";
 const UPSTREAM = "https://runtime-fabric.example/mcp";
+const EXECUTION_RESOURCE = "https://bridge.example/mcp-execute";
+const EXECUTION_UPSTREAM = "https://runtime-fabric.example/mcp-execute";
 const env = {
   LEEWAY_MCP_AUTH_ISSUER: ISSUER,
   LEEWAY_MCP_AUDIENCE: RESOURCE,
@@ -91,7 +98,60 @@ test("Vercel maps /mcp and path-scoped protected-resource metadata to Node Funct
 
   assert.equal(rewrites.get("/mcp"), "/api/mcp");
   assert.equal(rewrites.get(PUBLIC_MCP_METADATA_PATH), "/api/oauth-protected-resource");
+  assert.equal(rewrites.get("/mcp-execute"), "/api/mcp-execute");
+  assert.equal(rewrites.get(EXECUTION_MCP_METADATA_PATH), "/api/oauth-protected-resource-execute");
   assert.equal(config.functions["api/mcp.mjs"].maxDuration >= 30, true);
+  assert.equal(config.functions["api/mcp-execute.mjs"].maxDuration >= 30, true);
+});
+
+test("execution ingress is separately opt-in and never promotes a read resource", async t => {
+  const disabled = resolveExecutionMcpResourceConfig(env);
+  assert.equal(disabled.configured, false);
+  assert.equal(disabled.reason, "MCP_EXECUTION_NOT_AUTHORIZED");
+
+  const executionEnv = {
+    ...env,
+    LEEWAY_MCP_EXECUTION_AUTHORIZED: "owner-execute",
+    LEEWAY_MCP_EXECUTION_AUDIENCE: EXECUTION_RESOURCE,
+    LEEWAY_MCP_EXECUTION_UPSTREAM: EXECUTION_UPSTREAM
+  };
+  const config = resolveExecutionMcpResourceConfig(executionEnv);
+  assert.equal(config.configured, true);
+  assert.equal(config.audience, EXECUTION_RESOURCE);
+  assert.equal(config.metadataUrl, `https://bridge.example${EXECUTION_MCP_METADATA_PATH}`);
+  assert.ok(config.scopes.includes(BRIDGE_EXECUTE_SCOPE));
+  assert.equal(resolveExecutionMcpResourceConfig({ ...executionEnv, LEEWAY_MCP_EXECUTION_AUDIENCE: RESOURCE }).reason, "MCP_EXECUTION_ENVIRONMENT_INVALID");
+
+  let calls = 0;
+  const ingress = createExecutionMcpIngressHandler({
+    env: executionEnv,
+    fetchImpl: async (url, init) => {
+      calls += 1;
+      assert.equal(String(url), EXECUTION_UPSTREAM);
+      assert.equal(new Headers(init.headers).get("x-device-scopes"), null);
+      return new Response('{"jsonrpc":"2.0","id":1,"result":{}}', { headers: { "content-type": "application/json" } });
+    }
+  });
+  const base = await startServer(ingress, t);
+  const denied = await fetch(`${base}/mcp-execute`, {
+    method: "POST", headers: { "content-type": "application/json" }, body: "{}"
+  });
+  assert.equal(denied.status, 401);
+  assert.match(denied.headers.get("www-authenticate"), /mcp-execute/);
+  assert.equal(calls, 0);
+
+  const accepted = await fetch(`${base}/mcp-execute`, {
+    method: "POST",
+    headers: { authorization: "Bearer execution-test-token", "content-type": "application/json", "x-device-scopes": "device.bridge.execute" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize" })
+  });
+  assert.equal(accepted.status, 200);
+  assert.equal(calls, 1);
+
+  const metadataBase = await startServer(createExecutionOAuthProtectedResourceHandler({ env: executionEnv }), t);
+  const metadata = await (await fetch(`${metadataBase}${EXECUTION_MCP_METADATA_PATH}`)).json();
+  assert.equal(metadata.resource, EXECUTION_RESOURCE);
+  assert.ok(metadata.scopes_supported.includes(BRIDGE_EXECUTE_SCOPE));
 });
 
 test("unauthenticated MCP gets a path-scoped OAuth challenge without calling upstream", async t => {
@@ -287,6 +347,7 @@ test("Vercel OAuth metadata function fails closed when issuer bindings are missi
 
 test("default Vercel handler and source gates use the same canonical ingress contract", () => {
   assert.equal(typeof ingressFunction, "function");
+  assert.equal(typeof executionIngressFunction, "function");
 });
 
 
