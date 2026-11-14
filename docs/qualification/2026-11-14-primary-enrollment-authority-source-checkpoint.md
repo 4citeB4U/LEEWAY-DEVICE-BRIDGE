@@ -22,10 +22,10 @@ The coordinator admits an active record only after proof and approval, signs a p
 Command:
 
 ```text
-node --test tests/enrollment-relay-binding-authority.test.mjs tests/dynamic-enrollment.test.mjs
+node --test tests/enrollment-relay-binding-authority.test.mjs tests/primary-enrollment-authority-http.test.mjs tests/dynamic-enrollment.test.mjs
 ```
 
-Result: 8 passed, 0 failed.
+Result: 10 passed, 0 failed.
 
 ## Still unbound — do not call this production
 
