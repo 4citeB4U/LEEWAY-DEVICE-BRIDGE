@@ -76,7 +76,7 @@ export function composeZitadelHost({ env = process.env, runtimeInput = null, fet
     throw new Error(relayAccessPolicy.reason || 'RELAY_MCP_ACCESS_POLICY_UNBOUND');
   }
   const trustedC3 = runtimeInput
-    ? buildHostInjectedC3Composition({ ownerSubject: resolved.ownerSubject, runtimeInput })
+    ? buildHostInjectedC3Composition({ ownerSubject: resolved.ownerSubject, runtimeInput, hostDeviceId: resolved.hostDeviceId })
     : null;
 
   return Object.freeze({
