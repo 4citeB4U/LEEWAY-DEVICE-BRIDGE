@@ -77,6 +77,32 @@ durable journal readback and a source/target content-hash comparison. Do not
 infer direct or LAN transport from a device label, USB attachment, or this
 relay recovery alone.
 
+## Portable endpoint-discovery repair boundary
+
+Investigation after recovery found a source-level contradiction that must be
+repaired before calling the onboarding portable:
+
+- `packages/protocol/README.md:41` requires an owner-approved deployment
+  binding and explicitly says there is no qualified remote relay endpoint in
+  the public discovery manifest.
+- `docs/remote-relay.json:5-7` nevertheless publishes a historical
+  Tailscale host and a Vercel fallback.
+- `operator/workstation-relay-agent.mjs:23-24` defaults to loopback and a
+  fixed Vercel relay.
+- `apps/apple/Sources/AppleRelayClient.swift:63` defaults to a fixed
+  Tailscale relay before attempting the static manifest refresh.
+
+The Vercel endpoint is a stateless ingress and cannot qualify as the durable
+in-memory WebSocket room relay by itself. The recovered Funnel is an observed
+current owner binding, but it cannot become a universal source default.
+
+**Repair direction:** after sign-in, obtain a signed, owner-scoped relay
+binding from the existing authenticated enrollment/Runtime authority; validate
+its issuer, expiry, owner and device binding; persist it in platform storage;
+and fail closed with actionable enrollment status when it is absent. Remove
+historical endpoint fallbacks only when that real binding is available. This
+checkpoint does not claim that discovery authority has been implemented.
+
 ## Rollback
 
 Stop the relay process and remove only the `/api/device-relay` Funnel mapping
