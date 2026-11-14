@@ -47,7 +47,7 @@ function normalizePackageIdentity(value) {
   });
 }
 
-function validateCompletedEnrollment(value, { platform, keyThumbprint }) {
+function validateCompletedEnrollment(value, { platform, keyThumbprint, account }) {
   const record = value?.deviceRecord;
   if (!record || typeof record !== 'object' || !DEVICE_ID.test(String(record.deviceId || '')) ||
       record.platform !== platform || record.status !== 'ACTIVE' ||
@@ -57,7 +57,8 @@ function validateCompletedEnrollment(value, { platform, keyThumbprint }) {
       !/^[a-f0-9]{64}$/i.test(String(value?.enrollmentReceiptSha256 || ''))) {
     throw new Error('ENROLLMENT_COMPLETION_INVALID');
   }
-  if (typeof value.accessToken !== 'string' || value.accessToken.length < 16) {
+  const accessToken = typeof value.accessToken === 'string' ? value.accessToken : account?.accessToken;
+  if (typeof accessToken !== 'string' || accessToken.length < 16) {
     throw new Error('ENROLLMENT_ACCESS_TOKEN_MISSING');
   }
   if (!RELAY_BINDING_ARTIFACT.test(String(value.relayBindingArtifact || ''))) {
@@ -65,7 +66,9 @@ function validateCompletedEnrollment(value, { platform, keyThumbprint }) {
   }
   return Object.freeze({
     deviceRecord: Object.freeze({ ...record }),
-    accessToken: value.accessToken,
+    // The authority may return an existing session credential, but never mints
+    // one. A completed user login may supply that same credential directly.
+    accessToken,
     enrollmentReceiptSha256: value.enrollmentReceiptSha256.toLowerCase(),
     relayBindingArtifact: value.relayBindingArtifact,
   });
@@ -169,7 +172,7 @@ export function createDynamicEnrollment({ keyProvider, enrollmentAuthority, serv
         enrollmentId: pending.enrollmentId,
         deviceProof,
         ownerProof: approval.ownerProof,
-      }), { platform: normalizedPlatform, keyThumbprint: key.thumbprint });
+      }), { platform: normalizedPlatform, keyThumbprint: key.thumbprint, account });
 
       const relayBinding = validateVerifiedRelayBinding(await relayBindingVerifier.verifyRelayBinding({
         artifact: completed.relayBindingArtifact,

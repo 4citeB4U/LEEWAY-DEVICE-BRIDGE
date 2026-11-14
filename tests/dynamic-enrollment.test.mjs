@@ -120,3 +120,16 @@ test('dynamic enrollment blocks before device-key creation when service entitlem
     requestedCapabilities: ['device.health'],
   }), /SERVICE_ENTITLEMENT_REQUIRED/);
 });
+
+test('dynamic enrollment carries the authenticated login credential when the authority does not mint one', async () => {
+  let runtimeInput;
+  const enrollment = createDynamicEnrollment(providers({
+    enrollmentAuthority: {
+      async beginEnrollment() { return { enrollmentId: 'enr-test-04', challenge: 'runtime-issued-nonce', expiresAt: '2030-12-01T00:00:00.000Z' }; },
+      async completeEnrollment() { return { enrollmentReceiptSha256: receipt, relayBindingArtifact, deviceRecord: { deviceId: 'dev-portable-04', platform: 'windows', status: 'ACTIVE', deviceKeyThumbprint: thumbprint, ownerSubject: 'owner-fixture', capabilityGrantVersion: 1 } }; },
+    },
+    runtimeStarter: { async startEnrolledRuntime(input) { runtimeInput = input; return { started: true }; } },
+  }));
+  await enrollment.enroll({ account: { accessToken: 'existing-authenticated-session-token' }, platform: 'windows', packageIdentity: { packageId: 'com.leeway.devicebridge', version: '1.0.0', artifactSha256: 'c'.repeat(64) }, requestedCapabilities: ['device.health'] });
+  assert.equal(runtimeInput.accessToken, 'existing-authenticated-session-token');
+});
