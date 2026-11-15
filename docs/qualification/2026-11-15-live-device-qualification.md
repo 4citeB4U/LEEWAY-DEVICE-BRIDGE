@@ -49,7 +49,7 @@ The test contract is in [live-device-qualification.test.mjs](../../tests/mcp/liv
 - The configured `phone-fold6` and `LDB-04ff1b33-8a70-434c-9aba-8752a30789ee` records use the same serial. Earlier read-only ADB discovery associated them with one attached transport; that transport was not re-probed in this run. The test exposes only `phone-fold6`.
 - The configured iPhone hardware ID matched a currently present Windows PnP identity. This does not establish a trusted Apple pairing, screen permission, or successful Bridge operation; none was attempted.
 - Runtime and Formula loopback health requests returned HTTP 200. Runtime reported `leeway-runtime-fabric` in `cloud` mode. Formula reported `formula-only`, `LEEWAY_FORMULA_V1_PASS`, and `VERIFIED_AT_STARTUP`; its health explicitly reports other Runtime Fabric services as not restored.
-- Latest Windows listener snapshot: **4011, 4015, 4312, 4302, 4304, 4305, and 4306 all had zero visible listeners**. Earlier snapshots briefly showed 4015, 4302, or 4305, but each owner lookup found no stable PID and subsequent snapshots returned zero. Loopback HTTP responses did not identify a stable Windows process owner.
+- Listener ownership was unstable. At the 2026-11-15 13:28 snapshot, 4011, 4015, 4312, 4302, 4304, and 4305 had zero visible Windows listeners; 4306 briefly showed one, but an immediate owner lookup found no listener/PID. Earlier snapshots also briefly showed 4015, 4302, or 4305, with the same disappearance. No stable process owner was identified.
 - Read-only loopback endpoint observations:
 
 | Port | Endpoint | Result |
@@ -60,6 +60,7 @@ The test contract is in [live-device-qualification.test.mjs](../../tests/mcp/liv
 | 4015 | `/runtime/formula/v1/health` | HTTP 200; `LEEWAY_FORMULA_V1_PASS`, `VERIFIED_AT_STARTUP` |
 | 4302 | `/v1/receipts/public-key` | HTTP 200; `leeway-receipt-local-ed25519-v1`, matching the existing local qualification key; no append/readback |
 | 4305 | `/v1/ledger/public-key` | HTTP 404; no Ledger admission/readback |
+| 4306 | `/v1/ledger/public-key` | HTTP 200; `leeway-ledger-local-ed25519-v1`, matching the existing local qualification key; no admission/readback or stable process owner |
 | 4312 | No Veritas verdict request | No stable Windows listener; no PRE/POST executed |
 
 These endpoint observations are not proof of canonical service ownership or authority. Receipt/Ledger route responses do not establish that a service was listening under an identified process.
