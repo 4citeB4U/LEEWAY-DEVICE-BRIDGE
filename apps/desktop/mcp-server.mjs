@@ -198,6 +198,10 @@ const deviceSchema = z.object({
   } else if (device.type === 'physical-apple') {
     if (device.platform !== 'ios' || !device.hardwareId || device.serial || device.url || device.workspace || device.tokenEnv) invalid('APPLE_USB_EXPLICIT_IDENTITY_REQUIRED');
     if ((device.cameraEndpoint && !device.cameraTokenEnv) || (!device.cameraEndpoint && device.cameraTokenEnv)) invalid('APPLE_CAMERA_PAIRING_REQUIRED');
+  } else if (device.type === 'relay') {
+    if (!device.url || !device.tokenEnv || device.workspace || device.serial || device.hardwareId) invalid('REMOTE_RELAY_BINDING_REQUIRED');
+  } else if (device.type === 'desktop') {
+    if (!device.workspace || device.url || device.tokenEnv || device.serial || device.hardwareId) invalid('LOCAL_DESKTOP_WORKSPACE_REQUIRED');
   } else if (device.serial || device.hardwareId) {
     invalid('PHYSICAL_USB_FIELDS_NOT_ALLOWED');
   }

@@ -2,10 +2,10 @@
 REGION: 🟢 CORE / OPERATOR
 TAG: LEEWAY-WORKSTATION-RELAY-AGENT
 WHO: Agent Lee / Runtime Fabric / Device Bridge
-WHAT: Outbound persistent relay daemon for an enrolled desktop node.
-      Connects outbound to wss://leeway-device-bridge.vercel.app/api/device-relay
-      so phones on 5G cellular, public Wi-Fi, or interstate routes can command
-      the primary GPU workstation without inbound firewall or LAN dependencies.
+WHAT: Outbound persistent relay daemon for any enrolled desktop node.
+      Uses the owner/device-scoped relay binding supplied by enrollment so
+      authorized clients can command the workstation without an inbound
+      firewall rule, LAN dependency, or source-defined provider endpoint.
 WHEN: Always-on background daemon.
 WHERE: 4citeB4U/LEEWAY-DEVICE-BRIDGE/operator
 WHY: Network-agnostic sovereign mesh for remote orchestration.
@@ -21,19 +21,32 @@ import { DigitalBrainEngine } from "../apps/desktop/digital-brain.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SOVEREIGN_RELAY_URL = process.env.LEEWAY_RELAY_URL || "ws://127.0.0.1:8008/api/device-relay";
-const VERCEL_RELAY_URL = "wss://leeway-device-bridge.vercel.app/api/device-relay";
 const DEVICE_ID = process.env.LEEWAY_DEVICE_ID || null;
 const TOKEN = process.env.LEEWAY_MESH_TOKEN || null;
 const WORKSPACE_DIR = path.resolve(__dirname, "..");
 
 export class WorkstationRelayAgent {
-  constructor({ url = SOVEREIGN_RELAY_URL, deviceId = DEVICE_ID, token = TOKEN, workspace = WORKSPACE_DIR } = {}) {
+  constructor({
+    url = SOVEREIGN_RELAY_URL,
+    fallbackUrl = process.env.LEEWAY_RELAY_FALLBACK_URL || null,
+    deviceId = DEVICE_ID,
+    token = TOKEN,
+    workspace = WORKSPACE_DIR,
+  } = {}) {
     if (typeof deviceId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(deviceId)) {
       throw new Error('LEEWAY_DEVICE_ID_REQUIRED');
     }
     if (typeof token !== 'string' || token.length < 16) throw new Error('LEEWAY_MESH_TOKEN_REQUIRED');
+    for (const [label, endpoint] of [['primary', url], ['fallback', fallbackUrl]]) {
+      if (endpoint === null) continue;
+      let parsed;
+      try { parsed = new URL(endpoint); } catch { throw new Error(`LEEWAY_${label.toUpperCase()}_RELAY_URL_INVALID`); }
+      const loopback = parsed.protocol === 'ws:' && ['127.0.0.1', '[::1]', 'localhost'].includes(parsed.hostname);
+      if (parsed.protocol !== 'wss:' && !loopback) throw new Error(`LEEWAY_${label.toUpperCase()}_RELAY_TLS_REQUIRED`);
+      if (parsed.username || parsed.password || parsed.hash) throw new Error(`LEEWAY_${label.toUpperCase()}_RELAY_URL_CREDENTIALS_FORBIDDEN`);
+    }
     this.primaryUrl = url;
-    this.fallbackUrl = VERCEL_RELAY_URL;
+    this.fallbackUrl = fallbackUrl;
     this.deviceId = deviceId;
     this.token = token;
     this.workspace = workspace;
@@ -45,6 +58,22 @@ export class WorkstationRelayAgent {
   }
 
   async executeCapability(capability, args = {}) {
+    if (capability === "device.capabilities") {
+      try {
+        const remoteQualified = await this.desktopAdapter.discover();
+        return {
+          ok: true,
+          deviceId: this.deviceId,
+          platform: "windows",
+          remoteQualified,
+          authority: "LOCAL_ADAPTER_MEASUREMENT",
+          measuredAt: new Date().toISOString(),
+        };
+      } catch {
+        return { ok: false, error: "WORKSPACE_CAPABILITY_PROBE_FAILED" };
+      }
+    }
+
     if (capability === "device.info") {
       try {
         const hostIdentity = await readWindowsHostIdentity();
@@ -190,7 +219,9 @@ export class WorkstationRelayAgent {
     this.running = true;
     console.log(`[WORKSTATION-RELAY] Starting Dual-Relay Mesh Agent for ${this.deviceId}`);
     this.connectEndpoint(this.primaryUrl, "SOVEREIGN");
-    this.connectEndpoint(this.fallbackUrl, "VERCEL");
+    if (this.fallbackUrl && this.fallbackUrl !== this.primaryUrl) {
+      this.connectEndpoint(this.fallbackUrl, "FALLBACK");
+    }
   }
 
   stop() {
