@@ -4,7 +4,7 @@
 const COMPOSITION_KEYS = new Set([
   'admission', 'receiptSink', 'formulaPreGate', 'veritasPreGate', 'consentProvider',
   'deviceRegistry', 'adapterRegistry', 'trustedIssuerRegistry', 'replayGuard',
-  'complianceCardGate', 'complianceCardProvider', 'visionProviders', 'visionClientId',
+  'complianceCardGate', 'complianceCardProvider', 'visionProviders', 'visionClientId', 'outcomeAttestor',
 ]);
 
 const HOST_INJECTED_C3_KEYS = Object.freeze([
@@ -49,6 +49,9 @@ export function requireTrustedRuntimeComposition(input = {}) {
     throw new Error('TRUSTED_VISION_PROVIDER_CONFIGURATION_INVALID');
   }
   if (values.complianceCardProvider && typeof values.complianceCardGate !== 'function') {
+    throw new Error('TRUSTED_RUNTIME_COMPOSITION_REQUIRED');
+  }
+  if (values.outcomeAttestor !== undefined && typeof values.outcomeAttestor !== 'function') {
     throw new Error('TRUSTED_RUNTIME_COMPOSITION_REQUIRED');
   }
 

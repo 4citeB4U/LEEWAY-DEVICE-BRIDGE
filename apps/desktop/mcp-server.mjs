@@ -261,6 +261,7 @@ export async function createConfiguredBridge(configPath, runtimeInput = null) {
     admission,
     complianceCardGate: runtimeComposition?.complianceCardGate ?? null,
     deviceRegistry: runtimeComposition?.deviceRegistry ?? null,
+    outcomeAttestor: runtimeComposition?.outcomeAttestor ?? null,
     receiptSink: runtimeComposition?.receiptSink ?? (evidence => fs.appendFile(receiptPath, JSON.stringify(evidence) + '\n', { mode: 0o600 })),
   });
   return bridge;

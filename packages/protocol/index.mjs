@@ -136,7 +136,7 @@ export function receipt({ deviceId, capability, args, outcome, result, error, pr
 }
 
 export class Bridge {
-  constructor(devices, { admission, receiptSink = async () => { throw new Error('RECEIPT_SINK_REQUIRED'); }, complianceCardGate = null, deviceRegistry = null } = {}) {
+  constructor(devices, { admission, receiptSink = async () => { throw new Error('RECEIPT_SINK_REQUIRED'); }, complianceCardGate = null, deviceRegistry = null, outcomeAttestor = null } = {}) {
     this.devices = new Map(devices.map(d => [d.id, d]));
     if (this.devices.size !== devices.length) throw new Error('DUPLICATE_DEVICE');
     this.admission = admission;
@@ -145,6 +145,7 @@ export class Bridge {
     // Device adapters are transport bindings. Registration identity must come
     // from the trusted host registry, never from the adapter/config list.
     this.deviceRegistry = deviceRegistry;
+    this.outcomeAttestor = outcomeAttestor;
     this.requiresComplianceCard = typeof complianceCardGate === 'function';
   }
   async discover(id) {
@@ -184,7 +185,10 @@ export class Bridge {
       value = await d.adapter.execute(capability, args);
       const post = receipt({ deviceId, capability, args, outcome: 'PASS', result: value, previousHash, complianceCard, complianceCardValidation });
       await this.receiptSink(post);
-      return { ok: true, operationMayHaveExecuted: true, result: value, receipt: post };
+      const governance = typeof this.outcomeAttestor === 'function'
+        ? await this.outcomeAttestor({ deviceId, capability, args, result: value, preReceipt: pre, postReceipt: post })
+        : { state: 'G3_G4_PROVIDER_NOT_BOUND' };
+      return { ok: true, operationMayHaveExecuted: true, result: value, receipt: post, governance };
     } catch (e) {
       // Do not include arbitrary upstream error text, prompts or filesystem paths in audit records.
       error = /^[A-Z][A-Z0-9_]{0,127}$/.test(e.message) ? e.message : 'ADAPTER_OR_VALIDATION_FAILURE';
