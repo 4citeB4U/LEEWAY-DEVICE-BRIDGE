@@ -26,7 +26,7 @@ function normalizedThumbprint(value) {
 }
 
 function extensionFor(installerPath) {
-  return path.extname(installerPath ?? "").toLowerCase();
+  return path.win32.extname(installerPath ?? "").toLowerCase();
 }
 
 function quotedPowerShellLiteral(value) {
@@ -59,7 +59,7 @@ export async function inspectWindowsPackage({ installerPath, expectedSha256, sig
   stat = fs.stat,
   signatureInspector = defaultSignatureInspector
 } = {}) {
-  if (typeof installerPath !== "string" || !path.isAbsolute(installerPath)) {
+  if (typeof installerPath !== "string" || !path.win32.isAbsolute(installerPath)) {
     return { state: "INSTALLER_PATH_INVALID", ready: false };
   }
   if (!APPX_EXTENSIONS.has(extensionFor(installerPath))) {

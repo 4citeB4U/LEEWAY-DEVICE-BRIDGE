@@ -75,3 +75,11 @@ Checkpoint timestamp: **2026-11-15T12:03:58-06:00 America/Chicago**. A later ind
 The mistakes in this document are concrete engineering examples and reproducible regression cases. Recording them is not a claim to have modified model weights, global training, or another agent's memory. The new Ledger stores the host-provided worker imprint in signed admission records; a declared guard identity does not substitute for a running test or enforced merge check.
 
 Rollback is a revert of the scoped repair commits, retaining historical state. Never delete the original receipt DB, ledger JSONL or unsigned historical records. The Ledger rejects corrupt/partial historical lines instead of rewriting them. Source changes were attributed explicitly to Codex for the new commits; prior Creator-attributed history was preserved.
+
+### GitHub publication and guard readback
+
+All five feature branches were pushed and remote heads read back against the exact local SHA: Formula `aff3926`, Veritas `b0c50fa`, Receipt `40b1b27`, Ledger `3557c84`, Bridge `5f444ff` (initial repair checkpoint). Formula portable/Aura runs `43744776452`/`43744776524`, Veritas Aegis `43744776661`, Receipt Shield `43744773052`, and Ledger Chronos `43744776337` returned **success**.
+
+The initial combined guard run `43744777954` failed at checkout because the default Bridge job token cannot read the private Veritas repository. Receipt is private as well. The workflow now names separate repository-scoped SSH key secrets; provisioning them remains subject to the Creator's explicit approval. Automatic approval review rejected the proposed creation/upload of persistent read-only deploy keys as an access-control/credential change beyond general repair approval. The rejected shell command did not execute. No bypass or credential substitution was attempted.
+
+The existing Android run `43744777911` also surfaced an installer contract failure on Linux: native `path.isAbsolute('C:\\release\\...')` evaluates false there. The owning Windows installer now uses `path.win32` to classify its Windows-format input consistently on every test host. This preserves signature/hash checks and owner authorization. It is a portability repair, not permission to distribute an installer.

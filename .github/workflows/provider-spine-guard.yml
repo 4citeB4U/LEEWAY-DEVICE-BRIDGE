@@ -18,11 +18,15 @@ jobs:
         with:
           repository: 4citeB4U/LEEWAY-VERITAS
           ref: b0c50fa73718da4901f0c9b06d282aa5dbc63223
+          ssh-key: ${{ secrets.LEEWAY_VERITAS_SOURCE_READ_KEY }}
+          persist-credentials: false
           path: veritas
       - uses: actions/checkout@v4
         with:
           repository: 4citeB4U/Receipt-Authority
           ref: 40b1b27c81425beb5471c4155669ffa0d944c684
+          ssh-key: ${{ secrets.LEEWAY_RECEIPT_SOURCE_READ_KEY }}
+          persist-credentials: false
           path: receipt
       - uses: actions/checkout@v4
         with:
