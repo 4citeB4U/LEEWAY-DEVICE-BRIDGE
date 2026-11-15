@@ -107,3 +107,12 @@ The previous combined CI run `43749006451` passed at the parent Bridge SHA `26f4
 6. Rerun provider-spine CI after publication to validate the current private-source secrets. Do not merge, deploy, open Funnel, or claim production readiness before independent Veritas, canonical Receipt/Learning readback, and approved production handoff.
 
 **Promotion limit:** local source CI is not physical-device qualification. This record does not authorize or prove production execution.
+
+## Follow-up execution attempt — 2026-11-15 14:26 CST
+
+- Rechecked ports 4011, 4015, 4312, 4302, 4304, and 4305: no Windows listener was present, so there was no process on those target ports to terminate. The only listener was a known Ledger qualification process on 4306, launched from the pinned Ledger worktree by the prior qualification attempt; its lock file names its current PID. It is not bound to a requested target port and was left running rather than force-killed.
+- `LEEWAY_LIVE_QUALIFICATION_PLAN` and `LEEWAY_PROVIDER_TEST_ROOTS` remain unset. No plan was fabricated and the live test was not run in this attempt.
+- `LEEWAY_RUNTIME_CONTROL_TOKEN` is absent, but the existing `LEEWAY_WORKPLANE_CONTROL_TOKEN` was used only for a read-only authenticated GET of `/runtime/enforcement/manifest` at 4011; it returned HTTP 200. No action authorization or device operation was requested.
+- The pinned Bridge host provider still supplies only Runtime admission and a local observation JSONL sink; it does not supply the trusted device registry required by `requireHostInjectedC3Composition`. The checked-in `createC3AdmissionBinding` also fails closed without real Formula PRE and Veritas PRE callbacks. The pinned Veritas G3 endpoint is a post-execution evidence verifier, not that admission PRE callback. The measured provider attests bounded local file read/write only, not health/info or physical VIEW.
+- Therefore no provider processes were newly started, no existing process was terminated, no `.skip` was removed, and no physical or workspace MCP operation was attempted. Starting an incomplete spine or making the test fail instead of skip would not produce the requested authorized execution and would risk obscuring the missing authority.
+- **Stage result:** `BLOCKED` at complete trusted host composition and source-bound Runtime ownership; no Receipt or Ledger IDs were generated. This follow-up does not alter the previous test results or production admission limits.
