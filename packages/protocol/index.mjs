@@ -185,9 +185,18 @@ export class Bridge {
       value = await d.adapter.execute(capability, args);
       const post = receipt({ deviceId, capability, args, outcome: 'PASS', result: value, previousHash, complianceCard, complianceCardValidation });
       await this.receiptSink(post);
-      const governance = typeof this.outcomeAttestor === 'function'
-        ? await this.outcomeAttestor({ deviceId, capability, args, result: value, preReceipt: pre, postReceipt: post })
-        : { state: 'G3_G4_PROVIDER_NOT_BOUND' };
+      let governance = { state: 'G3_G4_PROVIDER_NOT_BOUND' };
+      if (typeof this.outcomeAttestor === 'function') {
+        try {
+          governance = await this.outcomeAttestor({ deviceId, capability, args, result: value, preReceipt: pre, postReceipt: post });
+        } catch (attestationError) {
+          // A post-operation authority outage cannot rewrite a completed adapter
+          // outcome. Preserve the execution result and expose the separate G4 state.
+          const code = /^[A-Z][A-Z0-9_]{0,127}$/.test(attestationError?.message || '')
+            ? attestationError.message : 'G4_PROVIDER_UNAVAILABLE';
+          governance = { state: 'G4_NOT_TRANSITIONED', error: code };
+        }
+      }
       return { ok: true, operationMayHaveExecuted: true, result: value, receipt: post, governance };
     } catch (e) {
       // Do not include arbitrary upstream error text, prompts or filesystem paths in audit records.
