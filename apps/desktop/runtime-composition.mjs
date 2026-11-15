@@ -1,3 +1,4 @@
+import { createG3G4ProviderSpine } from '../../operator/g3-g4-provider-spine.mjs';
 // This object is supplied by trusted host code, never parsed from device or request JSON.
 // C3 mode builds the canonical Device Bridge admission gate from existing owner providers;
 // direct mode is reserved for a Runtime Fabric callback that already owns that complete gate.
@@ -58,7 +59,7 @@ export function requireTrustedRuntimeComposition(input = {}) {
   const direct = typeof values.admission === 'function';
   const c3 = typeof values.formulaPreGate === 'function' && typeof values.veritasPreGate === 'function';
   const directHasProviderFields = Object.keys(values).some(key =>
-    !['admission', 'receiptSink', 'complianceCardGate', 'complianceCardProvider', 'visionProviders', 'visionClientId'].includes(key));
+    !['admission', 'receiptSink', 'complianceCardGate', 'complianceCardProvider', 'visionProviders', 'visionClientId', 'outcomeAttestor'].includes(key));
   if (direct === c3 || (direct && directHasProviderFields) ||
       (!direct && !c3) ||
       ['formulaPreGate', 'veritasPreGate', 'consentProvider', 'complianceCardGate', 'complianceCardProvider'].some(key =>
@@ -135,4 +136,11 @@ export function requireHostInjectedC3Composition(input = {}) {
   }
 
   return composition;
+}
+
+// Trusted startup explicitly selects the Formula implementation and pinned authorities.
+export function bindProviderSpine(runtimeInput, providerConfig) {
+  const trusted = requireTrustedRuntimeComposition(runtimeInput);
+  const { mode, ...values } = trusted;
+  return requireTrustedRuntimeComposition({ ...values, outcomeAttestor: createG3G4ProviderSpine(providerConfig) });
 }

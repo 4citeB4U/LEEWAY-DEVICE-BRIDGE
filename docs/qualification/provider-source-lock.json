@@ -1,0 +1,9 @@
+{
+  "schema": "leeway.provider-source-lock.v1",
+  "scope": "Source and local qualification bindings, not production root enrollment",
+  "formula": { "repository": "4citeB4U/Leeway-formula-live", "commit": "aff392627c89efb6d20cf2322a89f50d67cbcff7" },
+  "veritas": { "repository": "4citeB4U/LEEWAY-VERITAS", "commit": "b0c50fa73718da4901f0c9b06d282aa5dbc63223" },
+  "receipt": { "repository": "4citeB4U/Receipt-Authority", "commit": "40b1b27c81425beb5471c4155669ffa0d944c684" },
+  "ledger": { "repository": "4citeB4U/LeeWay-Learning-Ledger", "commit": "3557c84dd4a6c3f9986d8cfcfb910a6093627532" },
+  "guards": ["GUARD_FAMILY_4_SHIELD_NOTARY", "GUARD_FAMILY_6_CHRONOS_HISTORIAN", "GUARD_FAMILY_4_AEGIS_VERIFIER", "GUARD_FAMILY_7_AURA_FORMULA_KEEPER", "GUARD_FAMILY_5_SIGNAL_SENTINEL"]
+}

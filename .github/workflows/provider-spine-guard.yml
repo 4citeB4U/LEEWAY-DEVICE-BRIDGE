@@ -1,0 +1,51 @@
+name: Signal and Aura provider spine guards
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  provider-spine-guard:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: bridge
+      - uses: actions/checkout@v4
+        with:
+          repository: 4citeB4U/Leeway-formula-live
+          ref: aff392627c89efb6d20cf2322a89f50d67cbcff7
+          path: formula
+      - uses: actions/checkout@v4
+        with:
+          repository: 4citeB4U/LEEWAY-VERITAS
+          ref: b0c50fa73718da4901f0c9b06d282aa5dbc63223
+          path: veritas
+      - uses: actions/checkout@v4
+        with:
+          repository: 4citeB4U/Receipt-Authority
+          ref: 40b1b27c81425beb5471c4155669ffa0d944c684
+          path: receipt
+      - uses: actions/checkout@v4
+        with:
+          repository: 4citeB4U/LeeWay-Learning-Ledger
+          ref: 3557c84dd4a6c3f9986d8cfcfb910a6093627532
+          path: ledger
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install cryptography
+      - run: npm ci --ignore-scripts
+        working-directory: bridge
+      - run: npm ci --ignore-scripts
+        working-directory: formula/runtime
+      - name: Run guarded four-process chain
+        shell: pwsh
+        working-directory: bridge
+        run: |
+          $root = Split-Path -Parent (Get-Location).Path
+          $env:LEEWAY_PROVIDER_TEST_ROOTS = @{formula=(Join-Path $root 'formula');veritas=(Join-Path $root 'veritas');receipt=(Join-Path $root 'receipt');ledger=(Join-Path $root 'ledger')} | ConvertTo-Json -Compress
+          node --test tests/mcp/g3-g4-bridge-integration.test.mjs
+      - run: npm run test:mcp
+        working-directory: bridge

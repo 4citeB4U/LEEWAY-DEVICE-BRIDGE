@@ -11,6 +11,7 @@ LICENSE: MIT
 */
 import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
+import os from 'node:os';
 
 const empty = z.object({}).strict();
 const coordinate = z.number().finite().min(0).max(32768);
@@ -157,6 +158,14 @@ export class Bridge {
     })) };
   }
   async call(deviceId, capability, args = {}, context = {}) {
+    const started = performance.now();
+    const lifecycle = [];
+    let admissionPassed = false;
+    let evidenceDigest = null;
+    const mark = name => lifecycle.push({ name, elapsedMs: performance.now() - started,
+      state: [admissionPassed ? 1 : 0, this.devices.has(deviceId) ? 1 : 0,
+        Math.max(0, 1 - (performance.now() - started) / 120000), os.freemem() / os.totalmem(),
+        evidenceDigest ? 1 : 0, 1] });
     let value, error, outcome = 'BLOCKED';
     let previousHash = null;
     let complianceCardValidation = null;
@@ -164,9 +173,13 @@ export class Bridge {
     try {
       const d = this.devices.get(deviceId);
       if (!d) throw new Error('UNKNOWN_DEVICE');
+      mark('device_lookup');
       if (!Object.hasOwn(schemas, capability)) throw new Error('UNKNOWN_CAPABILITY');
+      mark('capability_schema_lookup');
       args = schemas[capability].parse(args);
+      mark('schema_parse');
       if (!d.grants.includes(capability)) throw new Error('CAPABILITY_NOT_GRANTED');
+      mark('grant_check');
       if (this.requiresComplianceCard) {
         let decision = null;
         try { decision = await this.complianceCardGate({ complianceCard, deviceId, capability, args }); } catch { decision = null; }
@@ -175,20 +188,34 @@ export class Bridge {
         }
         complianceCardValidation = { valid: true, cardHash: decision.cardHash, authority: decision.authority };
       }
+      mark('compliance_check');
+      mark('admission_dispatch');
       if (!this.admission || await this.admission({ deviceId, capability, args, complianceCard }) !== true) throw new Error('ADMISSION_DENIED');
+      admissionPassed = true; mark('admission_complete');
+      mark('capability_discovery_dispatch');
       if (!(await d.adapter.discover()).includes(capability)) throw new Error('CAPABILITY_UNAVAILABLE');
+      mark('capability_discovery_complete');
       // Durable pre-execution evidence failure prevents execution.
       const pre = receipt({ deviceId, capability, args, outcome: 'ADMITTED', complianceCard, complianceCardValidation });
+      evidenceDigest = pre.sha256;
+      mark('pre_observation_created');
       await this.receiptSink(pre);
+      mark('pre_observation_persisted');
       previousHash = pre.sha256;
       outcome = 'FAILED';
+      mark('adapter_dispatch');
       value = await d.adapter.execute(capability, args);
+      mark('adapter_complete');
       const post = receipt({ deviceId, capability, args, outcome: 'PASS', result: value, previousHash, complianceCard, complianceCardValidation });
+      evidenceDigest = post.sha256;
+      mark('post_observation_created');
       await this.receiptSink(post);
+      mark('post_observation_persisted');
+      mark('execution_sealed');
       let governance = { state: 'G3_G4_PROVIDER_NOT_BOUND' };
       if (typeof this.outcomeAttestor === 'function') {
         try {
-          governance = await this.outcomeAttestor({ deviceId, capability, args, result: value, preReceipt: pre, postReceipt: post });
+          governance = await this.outcomeAttestor({ deviceId, capability, args, result: value, preReceipt: pre, postReceipt: post, lifecycle });
         } catch (attestationError) {
           // A post-operation authority outage cannot rewrite a completed adapter
           // outcome. Preserve the execution result and expose the separate G4 state.
