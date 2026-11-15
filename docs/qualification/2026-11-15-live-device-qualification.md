@@ -8,7 +8,7 @@ WHY: Preserve truthful outcomes without promoting a local test into production a
 -->
 # Live Device Qualification — Guard Family 5
 
-**Disposition: SOURCE TEST PASS / LIVE G4 NOT QUALIFIED / PRODUCTION BLOCKED**
+**Disposition: SOURCE AND CI PASS / BOUNDED LOCAL G4 PASS / MULTI-DEVICE PRODUCTION BLOCKED**
 
 ## 1. Identity, continuity, and authority
 
@@ -126,3 +126,14 @@ The previous combined CI run `43749006451` passed at the parent Bridge SHA `26f4
 - Direct Bridge capability discovery, `device.info`, and `device.health` for `pc-hp-secondary` failed at the adapter/validation boundary. Receipts `07006a38-bb8d-4c87-97a4-0c4966ef6bae` and `91017821-9f3b-40c2-9d96-1978c549daf6` record the two blocked calls with `operationMayHaveExecuted=false`. Registration alone did not provide a remote adapter.
 - Every successful phone observation in this continuation was a `CONTROLLER_OBSERVATION` with Formula `NOT_EVALUATED`. These calls prove bounded physical visibility only; they do not establish G4 admission, signed provider custody, or production readiness.
 - GitHub readback found the two repository-scoped read-only deploy keys and encrypted Bridge secret names present. Combined provider guard run `43749006451` passed on published Bridge commit `26f452f7abd1ac5c794359f466f3479efa3590f5`; it predates the local live-test commits and therefore does not qualify the current local HEAD.
+
+## Source-pinned host-plan execution — 2026-11-15 14:45 CST
+
+- The four local provider worktrees were started on isolated loopback ports Formula `4415`, Veritas `4412`, Receipt `4404`, and Ledger `4406`. They used the existing ACL-protected qualification keys and isolated host-only state. Existing Runtime, Receipt, Ledger, and other legacy processes were not stopped or replaced.
+- The source-pinned host plan remained outside Git under `E:\LeeWay-Work\AGENT-LEE-FLOATING-WIDGET-TEST\live-qualification-host-20261115`. It filtered the duplicate Fold6 alias, exposed only `pc-primary`, `phone-fold6`, and `phone-apple-iphone`, and declared `pc-hp-secondary` blocked with `NO_REMOTE_ADAPTER`.
+- `node --test tests/mcp/live-device-qualification.test.mjs` completed with **1 passed, 0 failed, 0 skipped**. The bounded `pc-primary` write and independent read both returned `G4_ADMITTED` through Runtime admission, measured Formula evidence, independent Veritas POST verification, signed Receipt append/GET readback, and signed Learning Ledger admission/GET readback.
+- Receipt `ra-1674d5dc-8391-47c9-97cb-92aadf4b527c` and Ledger admission `ll-e78af3d8-aaed-4cfc-aa0d-f66a4e994280` share request ID `b433756c-807f-40ed-9a54-0af5844f80a5`. Receipt hash `f412c9df201674e71b2af3ea65a45bd6e8c5a26ee0a1236471debcd2cf949c86` was read back, Ledger state was `ADMITTED`, and Ledger referenced the same Receipt ID.
+- The host-only result contains eight observations and has SHA-256 `0f96c4fdcada138bab8748193a1331df9408882708d34b5d15454bab8de3a3e7`. The temporary workspace file was removed by the test. Original provider records, result, logs, and keys remain private and were not committed.
+- Fold6 `device.info` and 2160x1856 screen capture were physically observed but correctly remained `G4_NOT_TRANSITIONED`; the measured post-execution provider qualifies bounded local files, not physical view operations. iPhone info passed but screen capture returned `ADAPTER_OR_VALIDATION_FAILURE`. HP remained blocked before execution because no remote adapter exists. No generic failure was relabeled as an OS denial.
+- Combined provider-spine GitHub Actions run `43759254713` passed on current published commit `894865e5477a17295e57981f61be1661996297bc`, including all five repository checkouts, guarded four-process chain, and full MCP suite.
+- After durable Receipt/Ledger readback, only the four isolated qualification PIDs were stopped after command-line identity verification. Ports `4415`, `4412`, `4404`, and `4406` were read back closed. This bounded pass does not update the already-loaded Device Bridge connector, enroll production signing roots, repair the iPhone capture adapter, create an HP remote adapter, or establish full multi-device production readiness.
