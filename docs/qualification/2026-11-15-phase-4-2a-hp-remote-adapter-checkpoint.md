@@ -115,4 +115,12 @@ The active Codex Device Bridge composition was inspected read-only. It loads a s
 
 ## Next executable gate
 
-First repair or independently classify the unchanged mock relay fixture failure, then launch the updated enrolled workstation daemon on the HP using its verified relay binding. From Device Bridge, call `device.capabilities`, `device.info`, and `device.health`; then perform the owner-approved Notepad poststate test. Preserve remote result correlation and send the resulting operation evidence through the qualified G3→G4 provider chain before claiming physical acceptance.
+The mock relay fixture has been independently classified as a restricted-sandbox network effect and passes unchanged when localhost networking is permitted. Launch the updated enrolled workstation daemon on the HP using its verified relay binding. From Device Bridge, call `device.capabilities`, `device.info`, and `device.health`; then perform the owner-approved Notepad poststate test. Preserve remote result correlation and send the resulting operation evidence through the qualified G3→G4 provider chain before claiming physical acceptance.
+
+## Published source and final continuation — 2026-11-15 16:08 CST
+
+The sandbox classification was completed: the full MCP suite passed with localhost networking permitted, so no harness repair is required. The source repair and this checkpoint were committed as `cb69684482dfd56d23a724359ca3086061d574eb` and pushed to `feature/device-bridge-g3-g4-spine-20261115`.
+
+GitHub Actions run `43767657588` (`Portable protocol and MCP`) passed the exact published commit on Windows, Ubuntu, and macOS. Android, Apple, and provider-spine workflows were still running at this readback and are not claimed complete here.
+
+The physical HP operation remains `BLOCKED_BEFORE_EXECUTION`: the HP is offline to the active Device Bridge adapter, WinRM, SMB, and the callable plugin surface available to this chat. No Notepad command was dispatched, no physical poststate was observed, and no `ra-...` or `ll-...` identifier exists for an HP operation. The next executable action is for the HP to restore one enrolled bootstrap lane and pull commit `cb69684`; Device Bridge discovery and the bounded Notepad/G4 sequence can then resume without redesigning the source.
