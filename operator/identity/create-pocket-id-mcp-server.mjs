@@ -14,7 +14,7 @@ LICENSE: MIT
 import { createRemoteMcpHttpServer } from '../../apps/desktop/remote-mcp-http.mjs';
 import { createPocketIdAuthenticator } from './pocket-id-access.mjs';
 
-export function createPocketIdMcpServer({ bridge, issuer, resource, ownerSubject, permission = 'device.bridge.read', tokenAudiences = [], fetchImpl } = {}) {
+export function createPocketIdMcpServer({ bridge, issuer, resource, ownerSubject, permission = 'device.bridge.read', tokenAudiences = [], fetchImpl, executionEnabled = true } = {}) {
   const authenticate = createPocketIdAuthenticator({ issuer, resource, ownerSubject, permission, tokenAudiences, fetchImpl });
-  return createRemoteMcpHttpServer({ bridge, authenticate, resourceUrl: resource, authorizationServerUrl: issuer });
+  return createRemoteMcpHttpServer({ bridge, authenticate, resourceUrl: resource, authorizationServerUrl: issuer, executionEnabled });
 }
