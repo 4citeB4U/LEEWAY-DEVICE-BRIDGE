@@ -24,8 +24,8 @@ export const schemas = Object.freeze({
   'digital-brain.read': empty,
   'continuum.transfer.stage': z.object({
     transferId: z.string().uuid(),
-    sourceNodeId: z.enum(['pc-primary', 'pc-hp-secondary']),
-    targetNodeId: z.enum(['pc-primary', 'pc-hp-secondary']),
+    sourceNodeId: z.string().min(1).max(128),
+    targetNodeId: z.string().min(1).max(128),
     filename: z.string().min(1).max(240).regex(/^[^\\/:*?"<>|\x00-\x1f]+$/),
     base64: z.string().min(4).max(349528),
     expectedSha256: z.string().regex(/^[a-f0-9]{64}$/),

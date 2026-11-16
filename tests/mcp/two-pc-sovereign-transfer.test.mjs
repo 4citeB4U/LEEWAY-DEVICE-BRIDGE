@@ -79,7 +79,19 @@ test('MCP configuration preserves the strict remote-relay boundary', async () =>
   const source = await fs.readFile(new URL('../../apps/desktop/mcp-server.mjs', import.meta.url), 'utf8');
   assert.match(source, /REMOTE_RELAY_BINDING_REQUIRED/);
   assert.match(source, /LOCAL_DESKTOP_WORKSPACE_REQUIRED/);
-  assert.match(source, /\['pc-primary', 'pc-hp-secondary'\]/);
+  assert.doesNotMatch(source, /\['pc-primary', 'pc-hp-secondary'\]/);
+});
+
+test('Continuum and workstation adapters accept portable enrolled-style device identifiers', async t => {
+  const f=await fixture(t);
+  const nodeId='future-linux-edge-2040';
+  const peerId='agent-virtual-tablet';
+  const engine=new DigitalBrainEngine({nodeId,continuumRoot:f.primary.continuum,workspaceRoot:f.primary.workspace});
+  const bytes=Buffer.from('portable Continuum payload','utf8');
+  const staged=await engine.stage({transferId:randomUUID(),sourceNodeId:peerId,targetNodeId:nodeId,filename:'portable.txt',base64:bytes.toString('base64'),expectedSha256:sha256(bytes),transport:'relay'});
+  assert.equal(staged.targetNodeId,nodeId);
+  const agent=new WorkstationRelayAgent({nodeId,workspace:f.primary.workspace,continuumRoot:f.primary.continuum,relayUrl:'wss://relay.example.test/api/device-relay',token:'owner-bound-test-token-0123456789'});
+  assert.equal(agent.nodeId,nodeId);
 });
 
 test('workstation daemon uses the relay execution role and is directly launchable', async () => {

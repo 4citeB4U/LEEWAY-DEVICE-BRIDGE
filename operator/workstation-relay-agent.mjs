@@ -1,6 +1,6 @@
 /*
 LEEWAY HEADER — DO NOT REMOVE
-REGION: LEEWAY.DEVICE.BRIDGE.TWO_PC
+REGION: LEEWAY.DEVICE.BRIDGE.WORKSTATION
 TAG: LEEWAY.WORKSTATION_RELAY_AGENT_V2
 WHO: LeeWay Industries; WHAT: enrolled workstation relay capability endpoint.
 WHEN: 2026-11-15; WHERE: operator/workstation-relay-agent.mjs.
@@ -16,7 +16,7 @@ import { randomUUID } from 'node:crypto';
 import { DesktopAdapter } from '../apps/desktop/adapter.mjs';
 import { DigitalBrainEngine } from '../apps/desktop/digital-brain.mjs';
 
-const TWO_PC_CAPABILITIES = Object.freeze([
+const WORKSTATION_CAPABILITIES = Object.freeze([
   'device.health', 'device.info', 'pc.diagnostics.read', 'digital-brain.read',
   'continuum.transfer.stage', 'continuum.transfer.read', 'continuum.transfer.materialize',
 ]);
@@ -35,18 +35,20 @@ export class WorkstationRelayAgent {
     nodeId = process.env.LEEWAY_DEVICE_ID,
     relayUrl = process.env.LEEWAY_RELAY_URL,
     token = process.env.LEEWAY_MESH_TOKEN,
+    ownerToken = process.env.OIDC_ACCESS_TOKEN_VERIFIED || null,
     subLinkUrl = process.env.LEEWAY_USER_SUBLINK_URL || null,
     workspace = process.env.LEEWAY_WORKSPACE || process.env.LEEWAY_WORKSPACE_ROOT || path.join(os.homedir(), 'LeeWay', 'SovereignNode', 'Workspace'),
     continuumRoot = process.env.LEEWAY_CONTINUUM_ROOT || path.join(os.homedir(), 'LeeWay', 'SovereignNode', 'Continuum'),
     subLinkClient = null,
   } = {}) {
-    if (!['pc-primary', 'pc-hp-secondary'].includes(nodeId)) throw new Error('TWO_PC_NODE_ID_REQUIRED');
+    if (typeof nodeId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(nodeId)) throw new Error('DEVICE_ID_REQUIRED');
     if (typeof token !== 'string' || token.length < 16) throw new Error('LEEWAY_MESH_TOKEN_REQUIRED');
     this.nodeId = nodeId;
     this.relayUrl = validRelayUrl(relayUrl, 'LEEWAY_RELAY');
     this.subLinkUrl = subLinkUrl ? validRelayUrl(subLinkUrl, 'LEEWAY_USER_SUBLINK') : null;
-    if (!workspace || !continuumRoot) throw new Error('TWO_PC_STORAGE_ROOT_REQUIRED');
+    if (!workspace || !continuumRoot) throw new Error('DEVICE_STORAGE_ROOT_REQUIRED');
     this.token = token;
+    this.ownerToken = typeof ownerToken === 'string' && ownerToken.length >= 8 ? ownerToken : null;
     this.desktopAdapter = new DesktopAdapter(path.resolve(workspace));
     this.digitalBrain = new DigitalBrainEngine({
       nodeId, continuumRoot: path.resolve(continuumRoot), workspaceRoot: path.resolve(workspace),
@@ -56,7 +58,7 @@ export class WorkstationRelayAgent {
   }
 
   async executeCapability(capability, args = {}) {
-    if (capability === 'device.capabilities') return { ok: true, nodeId: this.nodeId, remoteQualified: [...new Set([...TWO_PC_CAPABILITIES, ...(await this.desktopAdapter.discover())])], authority: 'LOCAL_ADAPTER_MEASUREMENT' };
+    if (capability === 'device.capabilities') return { ok: true, nodeId: this.nodeId, remoteQualified: [...new Set([...WORKSTATION_CAPABILITIES, ...(await this.desktopAdapter.discover())])], authority: 'LOCAL_ADAPTER_MEASUREMENT' };
     if (capability === 'device.health') return { ok: true, nodeId: this.nodeId, continuum: await this.digitalBrain.diagnosticsReadback() };
     if (capability === 'device.info') return { nodeId: this.nodeId, platform: process.platform, architecture: os.arch(), continuumRootBound: true, cloudConsciousnessAuthority: 'NOT_REQUIRED_FOR_SUB_LINK' };
     if (capability === 'pc.diagnostics.read') return this.digitalBrain.diagnosticsReadback();
@@ -89,7 +91,7 @@ export class WorkstationRelayAgent {
     const socket = new WebSocket(this.relayUrl, { maxPayload: 8 * 1024 * 1024, followRedirects: false });
     // The relay's execution endpoint is named "phone" for protocol
     // compatibility. It is a role, not a hardware classification.
-    socket.on('open', () => socket.send(JSON.stringify({ type: 'hello', role: 'phone', deviceId: this.nodeId, token: this.token })));
+    socket.on('open', () => socket.send(JSON.stringify({ type: 'hello', role: 'phone', deviceId: this.nodeId, token: this.token, ...(this.ownerToken ? { ownerToken: this.ownerToken } : {}) })));
     socket.on('message', async raw => {
       let message;
       try { message = JSON.parse(raw.toString()); } catch { return; }

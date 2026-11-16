@@ -77,7 +77,7 @@ function hasPermission(claims, permission) {
  * No fallback to session cookies, ID tokens, unsigned tokens, or unqualified scopes.
  * Caller must supply resource + approved owner sub from actual enrollment.
  */
-export function createPocketIdAuthenticator({ issuer, resource, ownerSubject, permission = 'device.bridge.read', tokenAudiences = [], fetchImpl = fetch, now = () => Date.now() } = {}) {
+export function createOidcAccessAuthenticator({ issuer, resource, ownerSubject, permission = 'device.bridge.read', tokenAudiences = [], fetchImpl = fetch, now = () => Date.now() } = {}) {
   const expectedIssuer = requireHttps(issuer, 'ISSUER');
   const expectedResource = requireHttps(resource, 'RESOURCE');
   const acceptedAudiences = new Set([expectedResource, ...normalizeTokenAudiences(tokenAudiences)]);
@@ -123,3 +123,7 @@ export function createPocketIdAuthenticator({ issuer, resource, ownerSubject, pe
     }
   };
 }
+
+// Backward-compatible export for historical consumers. The implementation is
+// provider-neutral OIDC/JWKS verification and does not require Pocket ID.
+export const createPocketIdAuthenticator = createOidcAccessAuthenticator;

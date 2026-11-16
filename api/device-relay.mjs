@@ -10,6 +10,8 @@ AUTHORITY: Transport only. The phone remains the execution and Formula boundary.
 import { createServer } from 'node:http';
 import { createHash, timingSafeEqual, randomUUID } from 'node:crypto';
 import { WebSocketServer, WebSocket } from 'ws';
+import { createOidcAccessAuthenticator } from '../operator/identity/pocket-id-access.mjs';
+import { loadTrustedDeviceRegistry, isTrustedDeviceRecord } from '../operator/identity/trusted-device-registry.mjs';
 
 const MAX_PAYLOAD_BYTES = 64 * 1024;
 const HELLO_TIMEOUT_MS = 10_000;
@@ -17,8 +19,9 @@ const MAX_ID_LENGTH = 128;
 const MAX_CAPABILITY_LENGTH = 128;
 const MAX_DEVICE_ID_LENGTH = 128;
 const MAX_TOKEN_LENGTH = 512;
+const MAX_OWNER_TOKEN_LENGTH = 16_384;
 const DELIVERY_MODE = 'VERCEL_FUNCTION_WEBSOCKET_V1';
-const OWNER_ENROLLED_PC_IDS = new Set(['pc-primary', 'pc-hp-secondary']);
+const SOVEREIGN_MESH_TOKEN = process.env.LEEWAY_MESH_TOKEN || null;
 
 function json(res, status, value) {
   res.writeHead(status, {
@@ -50,18 +53,19 @@ function protocolError(ws, error) {
   ws.close(1008, error);
 }
 
-function helloAck(ws, role, room) {
+function helloAck(ws, role, room, volatileRoomState) {
   ws.send(JSON.stringify({
     type: 'hello-ack',
     role,
-    deliveryMode: DELIVERY_MODE,
-    volatileRoomState: true,
+    deliveryMode: volatileRoomState ? DELIVERY_MODE : 'PROCESS_PERSISTENT_WEBSOCKET_V1',
+    volatileRoomState,
     authority: 'TRANSPORT_ONLY',
+    admissionAuthority: room.admissionAuthority,
     deviceId: room.deviceId,
   }));
 }
 
-function makeRoom(deviceId, token) {
+function makeRoom(deviceId, token, admissionAuthority) {
   return {
     deviceId,
     tokenHash: tokenDigest(token),
@@ -69,6 +73,7 @@ function makeRoom(deviceId, token) {
     client: null,
     pending: new Map(),
     completed: new Set(),
+    admissionAuthority,
   };
 }
 
@@ -83,16 +88,52 @@ function closeReplaced(connection) {
   }
 }
 
-function createRelayServer({ rooms = new Map() } = {}) {
+function defaultOwnerTokenVerifier(env = process.env) {
+  const issuer = String(env.LEEWAY_MCP_AUTH_ISSUER || '').trim();
+  const resource = String(env.LEEWAY_MCP_AUDIENCE || '').trim();
+  const ownerSubject = String(env.LEEWAY_MCP_OWNER_SUB || '').trim();
+  if (!issuer || !resource || !ownerSubject) return null;
+  try {
+    return createOidcAccessAuthenticator({
+      issuer, resource, ownerSubject, permission: 'device.bridge.execute',
+      tokenAudiences: String(env.LEEWAY_MCP_TOKEN_AUDIENCES || '').split(/[\n,]/).map(value => value.trim()).filter(Boolean),
+    });
+  } catch {
+    return null;
+  }
+}
+
+function createRelayServer({
+  rooms = new Map(),
+  deviceRegistry = loadTrustedDeviceRegistry(),
+  meshToken = SOVEREIGN_MESH_TOKEN,
+  verifyOwnerToken = defaultOwnerTokenVerifier(),
+  volatileRoomState = true,
+} = {}) {
+  const trustedRecord = deviceId => deviceRegistry instanceof Map
+    ? deviceRegistry.get(deviceId)
+    : Array.isArray(deviceRegistry)
+      ? deviceRegistry.find(record => (record?.deviceId ?? record?.id) === deviceId)
+      : null;
+  const meshTokenMatches = token => typeof meshToken === 'string' && meshToken.length >= 16 &&
+    digestsMatch(tokenDigest(token), tokenDigest(meshToken));
+  const roomAdmission = async ({ deviceId, token, ownerToken }) => {
+    if (!meshTokenMatches(token)) return null;
+    if (isTrustedDeviceRecord(trustedRecord(deviceId))) return 'TRUSTED_RUNTIME_DEVICE_REGISTRY';
+    if (typeof ownerToken !== 'string' || ownerToken.length < 8 || ownerToken.length > MAX_OWNER_TOKEN_LENGTH ||
+      typeof verifyOwnerToken !== 'function') return null;
+    const verified = await verifyOwnerToken({ headers: { authorization: `Bearer ${ownerToken}` } });
+    return verified === true ? 'OIDC_OWNER_AND_MESH_TOKEN' : null;
+  };
   const server = createServer((req, res) => {
     if (req.method === 'GET' && (req.url === '/api/device-relay' || req.url === '/api/device-relay/')) {
       return json(res, 200, {
         ok: true,
         service: 'leeway-device-bridge-relay',
         protocol: 'LEEWAY_DEVICE_RELAY_TOKEN_ROOM_WEBSOCKET_V1',
-        deliveryMode: DELIVERY_MODE,
+        deliveryMode: volatileRoomState ? DELIVERY_MODE : 'PROCESS_PERSISTENT_WEBSOCKET_V1',
         authority: 'TRANSPORT_ONLY',
-        volatileRoomState: true,
+        volatileRoomState,
         supportsWebSocket: true,
         activeRooms: rooms.size,
         truthBoundary: 'RUNTIME_OBSERVED_ONLY',
@@ -167,7 +208,7 @@ function createRelayServer({ rooms = new Map() } = {}) {
     const connection = { ws, id: randomUUID(), role: null, deviceId: null, authenticated: false };
     const helloTimer = setTimeout(() => protocolError(ws, 'HELLO_TIMEOUT'), HELLO_TIMEOUT_MS);
 
-    ws.on('message', (raw) => {
+    ws.on('message', async (raw) => {
       let message;
       try {
         message = JSON.parse(raw.toString('utf8'));
@@ -183,18 +224,21 @@ function createRelayServer({ rooms = new Map() } = {}) {
         const role = text(message.role, 32);
         const deviceId = text(message.deviceId, MAX_DEVICE_ID_LENGTH);
         const token = text(message.token, MAX_TOKEN_LENGTH);
+        const ownerToken = text(message.ownerToken, MAX_OWNER_TOKEN_LENGTH);
         if (!['phone', 'client', 'workstation'].includes(role) || !deviceId || !token) {
           return protocolError(ws, 'HELLO_INVALID');
         }
 
         let room = rooms.get(deviceId);
+        if (!room) {
+          const admissionAuthority = await roomAdmission({ deviceId, token, ownerToken });
+          if (!admissionAuthority) return protocolError(ws, 'DEVICE_ENROLLMENT_REQUIRED');
+          room = makeRoom(deviceId, token, admissionAuthority);
+          rooms.set(deviceId, room);
+        }
         if (role === 'phone') {
           if (room && !digestsMatch(tokenDigest(token), room.tokenHash)) {
             return protocolError(ws, 'PAIRING_TOKEN_REJECTED');
-          }
-          if (!room) {
-            room = makeRoom(deviceId, token);
-            rooms.set(deviceId, room);
           }
           closeReplaced(room.phone);
           connection.role = role;
@@ -202,14 +246,6 @@ function createRelayServer({ rooms = new Map() } = {}) {
           connection.authenticated = true;
           room.phone = connection;
         } else {
-          // Runtime Fabric authenticates the owner before opening this mesh
-          // client connection. For the two explicitly enrolled PC rooms, a
-          // matching mesh token can establish the client side before the
-          // target reconnects on this volatile relay instance.
-          if (!room && OWNER_ENROLLED_PC_IDS.has(deviceId)) {
-            room = makeRoom(deviceId, token);
-            rooms.set(deviceId, room);
-          }
           if (!room || !digestsMatch(tokenDigest(token), room.tokenHash)) {
             return protocolError(ws, 'PAIRING_REQUIRED');
           }
@@ -220,7 +256,7 @@ function createRelayServer({ rooms = new Map() } = {}) {
           room.client = connection;
         }
         clearTimeout(helloTimer);
-        helloAck(ws, role, room);
+        helloAck(ws, role, room, volatileRoomState);
         return;
       }
 

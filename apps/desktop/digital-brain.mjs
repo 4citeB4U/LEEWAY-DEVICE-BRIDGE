@@ -13,12 +13,11 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 
-const NODE_IDS = new Set(['pc-primary', 'pc-hp-secondary']);
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const indexFile = 'digital-brain-index.json';
 
 function requireNodeId(value) {
-  if (!NODE_IDS.has(value)) throw new Error('TWO_PC_NODE_ID_REQUIRED');
+  if (typeof value !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(value)) throw new Error('DEVICE_ID_REQUIRED');
   return value;
 }
 
@@ -39,7 +38,7 @@ function decodeBase64(value) {
 export class DigitalBrainEngine {
   constructor({ nodeId, continuumRoot, workspaceRoot, diagnostics = null } = {}) {
     this.nodeId = requireNodeId(nodeId);
-    if (!continuumRoot || !workspaceRoot) throw new Error('TWO_PC_STORAGE_ROOT_REQUIRED');
+    if (!continuumRoot || !workspaceRoot) throw new Error('DEVICE_STORAGE_ROOT_REQUIRED');
     this.continuumRoot = path.resolve(continuumRoot);
     this.workspaceRoot = path.resolve(workspaceRoot);
     this.diagnostics = diagnostics;
