@@ -43,6 +43,14 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - name: Build Rust registry authority for persistent-relay process test
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo --version
+          cargo build --release --locked -p leeway-core
+          test -x target/release/leeway-core
+
       - name: Qualify source and contracts
         shell: bash
         run: |
