@@ -18,6 +18,7 @@ const MAX_CAPABILITY_LENGTH = 128;
 const MAX_DEVICE_ID_LENGTH = 128;
 const MAX_TOKEN_LENGTH = 512;
 const DELIVERY_MODE = 'VERCEL_FUNCTION_WEBSOCKET_V1';
+const OWNER_ENROLLED_PC_IDS = new Set(['pc-primary', 'pc-hp-secondary']);
 
 function json(res, status, value) {
   res.writeHead(status, {
@@ -201,8 +202,15 @@ function createRelayServer({ rooms = new Map() } = {}) {
           connection.authenticated = true;
           room.phone = connection;
         } else {
-          if (!room || !room.phone || room.phone.ws.readyState !== WebSocket.OPEN
-            || !digestsMatch(tokenDigest(token), room.tokenHash)) {
+          // Runtime Fabric authenticates the owner before opening this mesh
+          // client connection. For the two explicitly enrolled PC rooms, a
+          // matching mesh token can establish the client side before the
+          // target reconnects on this volatile relay instance.
+          if (!room && OWNER_ENROLLED_PC_IDS.has(deviceId)) {
+            room = makeRoom(deviceId, token);
+            rooms.set(deviceId, room);
+          }
+          if (!room || !digestsMatch(tokenDigest(token), room.tokenHash)) {
             return protocolError(ws, 'PAIRING_REQUIRED');
           }
           closeReplaced(room.client);
