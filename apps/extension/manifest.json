@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "LeeWay Sovereign Device Bridge",
+  "short_name": "LeeWay Bridge",
+  "version": "0.2.0",
+  "description": "An owner-initiated browser interface to the existing LeeWay Device Bridge. Requires an enrolled native host.",
+  "minimum_chrome_version": "116",
+  "action": { "default_title": "Open LeeWay Agent Tablet" },
+  "permissions": ["activeTab", "scripting", "nativeMessaging"],
+  "background": { "service_worker": "background.js" }
+}
