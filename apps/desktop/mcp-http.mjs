@@ -19,11 +19,14 @@ const reply = (res, status, error) => {
 /**
  * Host code supplies these callbacks; request data never selects modules/providers.
  * resolveBridge must return a fresh, principal-scoped Bridge with owner providers.
+ * When supplied, the trusted agent-policy callback grants an exact tool subset
+ * to the authenticated agent and rechecks each operation before dispatch.
  * This factory issues no credentials and infers no authority from an OS or device name.
  */
-export function createRemoteMcpHandler({ authenticate, resolveBridge, resolveComplianceCardProvider = null, allowedHosts, allowedOrigins = [], discoveryOnly = false } = {}) {
+export function createRemoteMcpHandler({ authenticate, resolveBridge, resolveComplianceCardProvider = null, resolveAgentExecutionPolicy = null, allowedHosts, allowedOrigins = [], discoveryOnly = false } = {}) {
   if (typeof authenticate !== 'function' || typeof resolveBridge !== 'function' ||
       (resolveComplianceCardProvider !== null && typeof resolveComplianceCardProvider !== 'function') ||
+      (resolveAgentExecutionPolicy !== null && typeof resolveAgentExecutionPolicy !== 'function') ||
       !Array.isArray(allowedHosts) || !allowedHosts.length ||
       allowedHosts.some(x => typeof x !== 'string' || !x.trim() || x.includes('*')) ||
       !Array.isArray(allowedOrigins) ||
@@ -81,6 +84,19 @@ export function createRemoteMcpHandler({ authenticate, resolveBridge, resolveCom
       if (typeof principalDiscoveryOnly !== 'boolean') {
         return reply(res, 503, 'TRUSTED_MCP_TOOL_POLICY_REQUIRED');
       }
+      let agentPolicy = null;
+      if (resolveAgentExecutionPolicy !== null) {
+        try { agentPolicy = await resolveAgentExecutionPolicy(principal); }
+        catch { return reply(res, 503, 'TRUSTED_AGENT_EXECUTION_POLICY_UNAVAILABLE'); }
+        // MCP request JSON never establishes its own agent identity or privileges.
+        if (principalDiscoveryOnly || !principal || typeof principal !== 'object' ||
+            typeof principal.agentId !== 'string' || !/^[A-Za-z0-9._-]{3,128}$/.test(principal.agentId) ||
+            !agentPolicy || typeof agentPolicy !== 'object' || agentPolicy.agentId !== principal.agentId ||
+            !Array.isArray(agentPolicy.allowedCapabilities) || agentPolicy.allowedCapabilities.length === 0 ||
+            typeof agentPolicy.recheckCapability !== 'function') {
+          return reply(res, 403, 'AGENT_EXECUTION_NOT_AUTHORIZED');
+        }
+      }
       let complianceCardProvider = null;
       if (bridge.requiresComplianceCard) {
         if (typeof resolveComplianceCardProvider !== 'function') {
@@ -96,6 +112,14 @@ export function createRemoteMcpHandler({ authenticate, resolveBridge, resolveCom
         readOnlyCapabilities: principalDiscoveryOnly
           ? ['device.health', 'device.info', 'device.directories.list', 'device.files.read', ...(process.env.LEEWAY_MODEL_HUB_URL ? ['model.hub.catalog'] : [])]
           : [],
+        allowedCapabilities: agentPolicy?.allowedCapabilities ?? null,
+        authorizeCapabilityInvocation: agentPolicy ? async ({ deviceId, capability, args }) => {
+          try {
+            return (await agentPolicy.recheckCapability({
+              agentId: principal.agentId, principal, deviceId, capability, args,
+            })) === true;
+          } catch { return false; }
+        } : null,
         complianceCardProvider,
         // Trust only the host-authenticated principal, never caller-supplied vision arguments.
         visionClientId: typeof principal === 'object' && principal !== null &&
