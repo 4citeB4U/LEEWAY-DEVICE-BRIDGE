@@ -58,3 +58,9 @@ The added test proves only local source behavior with temporary fixture director
 
 This branch is a clean source-promotion candidate, not an authorization to update `main`. Required next gates are: (1) a dependency-capable CI run, (2) a trusted Runtime registry/admission binding for both Windows nodes, (3) a mutation-enabled owner-scoped Device Bridge grant, (4) a real owner-approved stage and materialization operation, and (5) actual Formula → Veritas → Receipt → Ledger provider responses and readbacks. Only then may production acceptance be claimed.
 
+## GitHub and live readback
+
+GitHub readback confirmed the documentation and evidence files on `feature/two-pc-sovereign-transfer-20261115`; its then-current head was `53fb2145f59437f422050d209ce9c41b9dc4f5da`.
+
+Fresh owner-scoped, read-only Runtime observations at `2026-11-16T02:31:59Z` found Runtime Fabric available, but Device Bridge, Continuum, Formula, Independent Veritas, Receipt Admission, and authenticated mutation remained `NOT_PROBED`. `pc-primary` discovery returned source-defined capabilities with `verified:false`, and its health wrapper returned controller-observation receipt `4fdd35c3-324c-424e-b88b-0dcd525f3c54` with `formula: NOT_EVALUATED`. `pc-hp-secondary` capability discovery returned `LEEWAY_BRIDGE_UPSTREAM_DISCOVERY_FAILED`; its health call returned `LEEWAY_BRIDGE_UPSTREAM_ADAPTER_OR_VALIDATION_FAILURE`. Therefore the requested simultaneous Gate 1 readback, Gates 2–4, and production receipt chain are still blocked and are not claimed by this record.
+
