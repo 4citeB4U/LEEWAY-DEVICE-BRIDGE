@@ -97,7 +97,17 @@ function hasTrustedDeviceRegistration(deviceRegistry, bridge, deviceId) {
     record.platform.trim().length > 0 && hasSourceBoundWindowsIdentity(deviceId, record);
 }
 
-export function createServer(bridge, { discoveryOnly = false, readOnlyCapabilities = [], complianceCardProvider = null, visionClientId = null, deviceRegistry = bridge.deviceRegistry ?? null } = {}) {
+export function createServer(bridge, { discoveryOnly = false, readOnlyCapabilities = [], allowedCapabilities = null, authorizeCapabilityInvocation = null, complianceCardProvider = null, visionClientId = null, deviceRegistry = bridge.deviceRegistry ?? null } = {}) {
+  // The host, not the MCP request body, selects the agent's actual tool set.
+  if (allowedCapabilities !== null &&
+      (!Array.isArray(allowedCapabilities) || allowedCapabilities.length === 0 ||
+        allowedCapabilities.some(name => typeof name !== 'string' || !Object.hasOwn(schemas, name)) ||
+        new Set(allowedCapabilities).size !== allowedCapabilities.length)) {
+    throw new Error('INVALID_AGENT_CAPABILITY_POLICY');
+  }
+  if (authorizeCapabilityInvocation !== null && typeof authorizeCapabilityInvocation !== 'function') {
+    throw new Error('INVALID_AGENT_RECHECK_PROVIDER');
+  }
   const boundVisionClientId = typeof visionClientId === 'string' && visionClientId.trim() && visionClientId.length <= 128 ? visionClientId : null;
   const server = new McpServer({ name: 'leeway-device-bridge', version: '0.1.0' }, {
     instructions: LEEWAY_MCP_INSTRUCTIONS,
@@ -142,7 +152,7 @@ export function createServer(bridge, { discoveryOnly = false, readOnlyCapabiliti
   });
   // Never advertise agent-facing optical operations without an identity supplied by trusted Runtime or authenticated MCP ingress.
   const selectedCapabilities = discoveryOnly ? [...new Set(readOnlyCapabilities)] :
-    Object.keys(schemas).filter(name => !name.startsWith('vision.') || boundVisionClientId !== null);
+    (allowedCapabilities ?? Object.keys(schemas)).filter(name => !name.startsWith('vision.') || boundVisionClientId !== null);
   for (const capability of selectedCapabilities) {
     const schema = schemas[capability];
     if (!schema || (discoveryOnly && !['device.health', 'device.info', 'device.directories.list', 'device.files.read', 'model.hub.catalog'].includes(capability)))
@@ -159,6 +169,12 @@ export function createServer(bridge, { discoveryOnly = false, readOnlyCapabiliti
     }, async ({ deviceId, arguments: args, complianceCard }) => {
       if (capability.startsWith('vision.') && args.clientId !== boundVisionClientId) {
         return result({ ok: false, error: 'VISION_PRINCIPAL_MISMATCH', operationMayHaveExecuted: false });
+      }
+      if (authorizeCapabilityInvocation !== null) {
+        let authorized = false;
+        try { authorized = (await authorizeCapabilityInvocation({ deviceId, capability, args })) === true; }
+        catch { authorized = false; }
+        if (!authorized) return result({ ok: false, error: 'AGENT_CAPABILITY_NOT_AUTHORIZED', operationMayHaveExecuted: false });
       }
       let effectiveComplianceCard = complianceCard;
       if (!effectiveComplianceCard && typeof complianceCardProvider === 'function') {
