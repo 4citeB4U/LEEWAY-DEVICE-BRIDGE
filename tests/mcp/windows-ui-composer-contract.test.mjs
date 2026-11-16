@@ -46,11 +46,12 @@ test('protocol requires fresh observation and exact target IDs for input and sub
     actionTargetId, expectedTextSha256: 'bad' }).success, false);
 });
 
-test('protocol keeps browser read chrome-only, nonce-bound, and timeout-bounded', () => {
+test('protocol keeps read worker-surface bound, nonce-bound, and timeout-bounded', () => {
   const base = { app: 'chrome', pid, observationId: '11111111-1111-4111-8111-111111111111',
     expectedTextSha256: 'a'.repeat(64), responseNonce: 'LWC5-R21-READ-BOUND-01' };
   assert.equal(schemas['device.windows.window.read'].safeParse(base).success, true);
-  assert.equal(schemas['device.windows.window.read'].safeParse({ ...base, app: 'chatgpt' }).success, false);
+  assert.equal(schemas['device.windows.window.read'].safeParse({ ...base, app: 'chatgpt' }).success, true);
+  assert.equal(schemas['device.windows.window.read'].safeParse({ ...base, app: '' }).success, false);
   assert.equal(schemas['device.windows.window.read'].safeParse({ ...base, responseNonce: 'short' }).success, false);
   assert.equal(schemas['device.windows.window.read'].safeParse({ ...base, timeoutMs: 99 }).success, false);
   assert.equal(schemas['device.windows.window.read'].safeParse({ ...base, timeoutMs: 10001 }).success, false);
@@ -228,4 +229,27 @@ test('Chrome response read rejects a response whose nonce does not match the req
   await sessions.submit({ app: 'chrome', pid, observationId: observation.observationId, targetId: targetIdValue, actionTargetId, expectedTextSha256: hash(text) });
   await assert.rejects(() => sessions.read({ app: 'chrome', pid, observationId: observation.observationId,
     expectedTextSha256: hash(text), responseNonce: requestedNonce, timeoutMs: 1000 }), /BROWSER_RESPONSE_READBACK_INVALID/);
+});
+
+test('dynamic workerId resolves surface and supports observation and input', async () => {
+  const sessions = new WindowsUiSessions({
+    executeScript: async () => observedSurface({ appName: 'w-copilot', processName: 'Code', editableTargets: [edit()] }),
+  });
+  const observation = await sessions.observe({ workerId: 'w-copilot', pid, maxControls: 50 });
+  assert.equal(observation.app, 'w-copilot');
+  assert.equal(observation.editableTargets.length, 1);
+  const targetId = observation.editableTargets[0].targetId;
+  const sessionsInput = new WindowsUiSessions({
+    executeScript: async () => ({ targetId, inputLength: 5, textSha256: hash('hello'), textReadback: 'EXACT_VALUE_PATTERN_READBACK' }),
+  });
+  sessionsInput.observations.set(observation.observationId, {
+    ...observation,
+    editableTargets: new Map([[targetId, observation.editableTargets[0]]]),
+    actionTargets: new Map(),
+    inputUsed: false,
+    submitted: false,
+    expiresAt: Date.now() + 30000,
+  });
+  const inputResult = await sessionsInput.input({ workerId: 'w-copilot', pid, observationId: observation.observationId, targetId, text: 'hello' });
+  assert.equal(inputResult.textSha256, hash('hello'));
 });

@@ -12,20 +12,41 @@ LICENSE: MIT
 import { spawn } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 
+export const DEFAULT_WORKER_MATCHERS = Object.freeze({
+  'w-chatgpt': Object.freeze({ processNames: ['ChatGPT'], titleRegex: /ChatGPT/i, transport: 'uia-native' }),
+  'w-codex': Object.freeze({ processNames: ['Codex', 'WindowsTerminal', 'pwsh', 'node'], titleRegex: /Codex/i, transport: 'uia-native' }),
+  'w-antigravity': Object.freeze({ processNames: ['Antigravity'], titleRegex: /Antigravity/i, transport: 'browser-courier-dom' }),
+  'w-copilot': Object.freeze({ processNames: ['Code'], titleRegex: /Visual Studio Code/i, transport: 'browser-courier-dom' }),
+  'w-gemini': Object.freeze({ processNames: ['chrome', 'msedge', 'brave'], urlRegex: /gemini\.google\.com/i, transport: 'browser-courier-dom' }),
+});
+
 const APPS = Object.freeze({
-  codex: Object.freeze(['Codex', 'ChatGPT']),
+  codex: Object.freeze(['Codex', 'WindowsTerminal', 'pwsh', 'node']),
   chatgpt: Object.freeze(['ChatGPT']),
   antigravity: Object.freeze(['Antigravity']),
-  chrome: Object.freeze(['chrome']),
+  chrome: Object.freeze(['chrome', 'msedge', 'brave']),
+  'w-chatgpt': Object.freeze(['ChatGPT']),
+  'w-codex': Object.freeze(['Codex', 'WindowsTerminal', 'pwsh', 'node']),
+  'w-antigravity': Object.freeze(['Antigravity']),
+  'w-copilot': Object.freeze(['Code']),
+  'w-gemini': Object.freeze(['chrome', 'msedge', 'brave']),
 });
 const MAX_OUTPUT = 131072;
 const OBSERVATION_TTL_MS = 30000;
 const MAX_OBSERVATIONS = 20;
 
+function resolveTargetApp(args) {
+  const target = args?.workerId || args?.app;
+  if (!target || typeof target !== 'string' || !target.trim()) throw Error('WINDOW_APP_UNSUPPORTED');
+  return target.trim();
+}
+
 function appNames(app) {
-  const names = APPS[app];
-  if (!names) throw Error('WINDOW_APP_UNSUPPORTED');
-  return names;
+  if (typeof app !== 'string' || !app.trim()) throw Error('WINDOW_APP_UNSUPPORTED');
+  const key = app.trim().toLowerCase();
+  if (APPS[key]) return APPS[key];
+  if (DEFAULT_WORKER_MATCHERS[key]) return DEFAULT_WORKER_MATCHERS[key].processNames;
+  return Object.freeze([app.trim()]);
 }
 
 function powershellCommand() {
@@ -151,21 +172,23 @@ export class WindowsUiSessions {
   }
 
   async list(args) {
-    const script = `${scriptPreamble(args.app, null, args.limit || 10)}
+    const app = resolveTargetApp(args);
+    const script = `${scriptPreamble(app, null, args.limit || 10)}
 $items = @()
 Write-Output 'LEEWAY_UI_BEFORE_PROCESS_ENUM'
 $processes = @(Get-Process -Name $allowedNames -ErrorAction SilentlyContinue)
 Write-Output 'LEEWAY_UI_AFTER_PROCESS_ENUM'
 foreach ($process in $processes) { if ($process.MainWindowHandle -ne 0 -and $process.MainWindowTitle) { [void]($items += [ordered]@{ pid = [int]$process.Id; processName = [string]$process.ProcessName; title = [string]$process.MainWindowTitle; enabled = $true }) }; if ($items.Count -ge $maxControls) { break } }
 Write-Output 'LEEWAY_UI_BEFORE_RESULT'
-EmitResult (@{ ok = $true; result = @{ app = '${args.app}'; windows = @($items); total = $items.Count; truncated = $false } })
+EmitResult (@{ ok = $true; result = @{ app = '${args.app || app}'; windows = @($items); total = $items.Count; truncated = $false } })
 `;
     return this.executeScript(script);
   }
 
   async observe(args) {
-    if (args.app === 'chrome' && typeof args.expectedUrl !== 'string') throw Error('BROWSER_URL_REQUIRED');
-    const script = `${scriptPreamble(args.app, args.pid, args.maxControls)}
+    const app = resolveTargetApp(args);
+    if ((app === 'chrome' || app === 'w-gemini' || args.app === 'chrome') && typeof args.expectedUrl !== 'string') throw Error('BROWSER_URL_REQUIRED');
+    const script = `${scriptPreamble(app, args.pid, args.maxControls)}
 $process = Get-Process -Id $targetPid -ErrorAction Stop
 if ($allowedNames -notcontains $process.ProcessName) { throw 'WINDOW_PROCESS_NOT_ALLOWED' }
 $window = $null; $windows = $root.FindAll([System.Windows.Automation.TreeScope]::Children, [System.Windows.Automation.Condition]::TrueCondition)
@@ -176,7 +199,13 @@ $totalControls = $descendants.Count
 $controls = @(); $editable = @(); $actions = @()
 $editElements = @()
 foreach ($element in $descendants) {
-  try { if ([string]$element.Current.ControlType.ProgrammaticName -eq 'ControlType.Edit') { $editElements += $element } } catch { continue }
+  try {
+    $ct = [string]$element.Current.ControlType.ProgrammaticName
+    $valAvail = $false; $textAvail = $false
+    try { $valAvail = [bool]$element.Current.IsValuePatternAvailable } catch {}
+    try { $textAvail = [bool]$element.Current.IsTextPatternAvailable } catch {}
+    if ($ct -eq 'ControlType.Edit' -or $ct -eq 'ControlType.Document' -or $valAvail -or $textAvail) { $editElements += $element }
+  } catch { continue }
 }
 foreach ($element in $editElements) {
   try {
@@ -196,17 +225,17 @@ foreach ($element in $buttonElements) {
     if ($data.enabled -and -not $data.offscreen -and $data.invokePatternAvailable -and $actions.Count -lt 30) { $actions += $data }
   } catch { continue }
 }
-${args.app === 'chrome' ? browserIdentityScript(args.expectedUrl, args.expectedTitle) : ''}
+${(app === 'chrome' || app === 'w-gemini' || args.app === 'chrome' || args.expectedUrl) ? browserIdentityScript(args.expectedUrl, args.expectedTitle) : ''}
 $startUtc = $process.StartTime.ToUniversalTime().ToString('o')
 Write-Output 'LEEWAY_UI_BEFORE_RESULT'
-EmitResult (@{ ok = $true; result = @{ app = '${args.app}'; pid = $targetPid; processName = [string]$process.ProcessName; processStartedUtc = $startUtc; windowHandle = [long]$window.Current.NativeWindowHandle; title = [string]$window.Current.Name; surfaceUrl = ${args.app === 'chrome' ? '$surfaceUrl' : '$null'}; controls = @($controls); editableTargets = @($editable); actionTargets = @($actions); totalControls = $totalControls; truncated = $totalControls -gt $controls.Count } })
+EmitResult (@{ ok = $true; result = @{ app = '${args.app || app}'; pid = $targetPid; processName = [string]$process.ProcessName; processStartedUtc = $startUtc; windowHandle = [long]$window.Current.NativeWindowHandle; title = [string]$window.Current.Name; surfaceUrl = ${(app === 'chrome' || app === 'w-gemini' || args.app === 'chrome' || args.expectedUrl) ? '$surfaceUrl' : '$null'}; controls = @($controls); editableTargets = @($editable); actionTargets = @($actions); totalControls = $totalControls; truncated = $totalControls -gt $controls.Count } })
 `;
     const result = await this.executeScript(script);
-    if (result?.app !== args.app || result?.pid !== args.pid || !Number.isSafeInteger(result.windowHandle)
+    if (result?.app !== (args.app || app) || result?.pid !== args.pid || !Number.isSafeInteger(result.windowHandle)
       || typeof result.processName !== 'string' || typeof result.processStartedUtc !== 'string'
       || typeof result.title !== 'string' || !Array.isArray(result.editableTargets) || !Array.isArray(result.actionTargets))
       throw Error('WINDOW_OBSERVATION_INVALID');
-    if (args.app === 'chrome' && result.surfaceUrl !== args.expectedUrl) throw Error('BROWSER_URL_IDENTITY_MISMATCH');
+    if ((app === 'chrome' || app === 'w-gemini' || args.app === 'chrome' || args.expectedUrl) && result.surfaceUrl !== args.expectedUrl) throw Error('BROWSER_URL_IDENTITY_MISMATCH');
     this.expireObservations();
     const observationId = randomUUID();
     const editableTargets = result.editableTargets.map(control => ({ ...control, targetId: randomUUID() }));
@@ -225,7 +254,8 @@ EmitResult (@{ ok = $true; result = @{ app = '${args.app}'; pid = $targetPid; pr
   }
 
   async input(args) {
-    const observation = this.getObservation(args.observationId, args.app, args.pid);
+    const app = resolveTargetApp(args);
+    const observation = this.getObservation(args.observationId, args.app || app, args.pid);
     const target = observation.editableTargets.get(args.targetId);
     if (!target) throw Error('WINDOW_TARGET_NOT_OBSERVED');
     if (observation.inputUsed || observation.submitted) throw Error('WINDOW_OBSERVATION_ALREADY_USED');
@@ -233,11 +263,30 @@ EmitResult (@{ ok = $true; result = @{ app = '${args.app}'; pid = $targetPid; pr
 $valuePattern = $null
 if (-not $target.TryGetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern, [ref]$valuePattern) -or $valuePattern.Current.IsReadOnly) { throw 'WINDOW_VALUE_PATTERN_UNAVAILABLE' }
 $valuePattern.SetValue($text)
+$expectedNormalized = ($text -replace "\`r\`n", "\`n").Trim()
+$verified = $false
 $readback = [string]$valuePattern.Current.Value
-if ($readback -cne $text) { throw 'WINDOW_INPUT_READBACK_MISMATCH' }
+if ($readback -ceq $text) {
+  $verified = $true
+} else {
+  for ($attempt = 1; $attempt -le 3; $attempt++) {
+    Start-Sleep -Milliseconds 150
+    $valPatternFresh = $null
+    if ($target.TryGetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern, [ref]$valPatternFresh)) {
+      $readback = [string]$valPatternFresh.Current.Value
+      $actualNormalized = ($readback -replace "\`r\`n", "\`n").Trim()
+      if ($actualNormalized -eq $expectedNormalized -or $readback -ceq $text) {
+        $verified = $true
+        $readback = $text
+        break
+      }
+    }
+  }
+}
+if (-not $verified) { throw 'WINDOW_INPUT_READBACK_MISMATCH' }
 $sha = [System.Security.Cryptography.SHA256]::Create(); try { $textSha256 = ([BitConverter]::ToString($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($readback)))).Replace('-', '').ToLowerInvariant() } finally { $sha.Dispose() }
 Write-Output 'LEEWAY_UI_BEFORE_RESULT'
-EmitResult (@{ ok = $true; result = @{ app = '${args.app}'; pid = $targetPid; windowHandle = [long]$window.Current.NativeWindowHandle; title = [string]$window.Current.Name; targetId = '${args.targetId}'; inputLength = $text.Length; textSha256 = $textSha256; textReadback = 'EXACT_VALUE_PATTERN_READBACK' } })
+EmitResult (@{ ok = $true; result = @{ app = '${args.app || app}'; pid = $targetPid; windowHandle = [long]$window.Current.NativeWindowHandle; title = [string]$window.Current.Name; targetId = '${args.targetId}'; inputLength = $text.Length; textSha256 = $textSha256; textReadback = 'EXACT_VALUE_PATTERN_READBACK' } })
 `, args.text);
     const result = await this.executeScript(script);
     if (result?.textSha256 !== sha256(args.text) || result?.targetId !== args.targetId) throw Error('WINDOW_INPUT_READBACK_MISMATCH');
@@ -247,7 +296,8 @@ EmitResult (@{ ok = $true; result = @{ app = '${args.app}'; pid = $targetPid; wi
   }
 
   async submit(args) {
-    const observation = this.getObservation(args.observationId, args.app, args.pid);
+    const app = resolveTargetApp(args);
+    const observation = this.getObservation(args.observationId, args.app || app, args.pid);
     const target = observation.editableTargets.get(args.targetId);
     const action = observation.actionTargets.get(args.actionTargetId);
     if (!target || !action) throw Error('WINDOW_TARGET_NOT_OBSERVED');
@@ -268,18 +318,20 @@ if ($buttonMatches.Count -ne 1) { throw 'WINDOW_ACTION_TARGET_NOT_UNIQUE' }
 $invoke = $null; if (-not $buttonMatches[0].TryGetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern, [ref]$invoke)) { throw 'WINDOW_INVOKE_PATTERN_UNAVAILABLE' }
 $invoke.Invoke()
 Write-Output 'LEEWAY_UI_BEFORE_RESULT'
-EmitResult (@{ ok = $true; result = @{ app = '${args.app}'; pid = $targetPid; windowHandle = [long]$window.Current.NativeWindowHandle; targetId = '${args.targetId}'; actionTargetId = '${args.actionTargetId}'; submitted = $true; actionName = $actionName; textSha256 = $textSha256; resultState = 'ACTION_INVOKED_NOT_CONVERSATION_PROOF' } })
+EmitResult (@{ ok = $true; result = @{ app = '${args.app || app}'; pid = $targetPid; windowHandle = [long]$window.Current.NativeWindowHandle; targetId = '${args.targetId}'; actionTargetId = '${args.actionTargetId}'; submitted = $true; actionName = $actionName; textSha256 = $textSha256; resultState = 'ACTION_INVOKED_NOT_CONVERSATION_PROOF' } })
 `);
     const result = await this.executeScript(script);
     if (result?.submitted !== true || result?.textSha256 !== observation.textSha256) throw Error('WINDOW_SUBMISSION_RESULT_INVALID');
     observation.submitted = true;
-    if (args.app !== 'chrome') this.observations.delete(args.observationId);
+    if (!args.workerId && !args.expectRead && args.app !== 'chrome') {
+      this.observations.delete(args.observationId);
+    }
     return result;
   }
 
   async read(args) {
-    const observation = this.getObservation(args.observationId, args.app, args.pid);
-    if (args.app !== 'chrome') throw Error('BROWSER_READ_CHROME_ONLY');
+    const app = resolveTargetApp(args);
+    const observation = this.getObservation(args.observationId, args.app || app, args.pid);
     if (!observation.submitted || observation.textSha256 !== args.expectedTextSha256) throw Error('BROWSER_READ_NOT_BOUND_TO_SUBMISSION');
     const nonce = b64(args.responseNonce);
     const script = `${this.identityScript(observation)}
@@ -293,7 +345,7 @@ do {
     if ([string]$element.Current.ControlType.ProgrammaticName -ne 'ControlType.Text' -or $element.Current.IsOffscreen) { continue }
     $name = [string]$element.Current.Name
     if ([string]::IsNullOrWhiteSpace($name)) { continue }
-    if ($name -match '^(ChatGPT|Gemini|Copilot) said:') { $assistant = $true; continue }
+    if ($name -match '^(ChatGPT|Gemini|Copilot|Assistant|Codex) said:') { $assistant = $true; continue }
     if ($name -match '^(You said:|User said:)') { $assistant = $false; $userTurnSeen = $true; $matched = @(); continue }
     if ($assistant -and $userTurnSeen -and $name.Contains($responseNonce)) { $matched += $name }
   }
@@ -302,15 +354,16 @@ do {
     $boundedResponseText = $responseText.Substring(0, [Math]::Min(8192, $responseText.Length))
     $sha = [System.Security.Cryptography.SHA256]::Create(); try { $responseSha256 = ([BitConverter]::ToString($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($boundedResponseText)))).Replace('-', '').ToLowerInvariant() } finally { $sha.Dispose() }
     Write-Output 'LEEWAY_UI_BEFORE_RESULT'
-    EmitResult (@{ ok = $true; result = @{ app = 'chrome'; pid = $targetPid; windowHandle = [long]$window.Current.NativeWindowHandle; surfaceUrl = $surfaceUrl; responseState = 'ASSISTANT_TEXT_NONCE_OBSERVED'; responseNonce = $responseNonce; responseText = $boundedResponseText; responseTextTruncated = $responseText.Length -gt $boundedResponseText.Length; responseTextSha256 = $responseSha256 } })
-    exit
+    EmitResult (@{ ok = $true; result = @{ app = '${args.app || app}'; pid = $targetPid; windowHandle = [long]$window.Current.NativeWindowHandle; surfaceUrl = ${observation.surfaceUrl ? '$surfaceUrl' : '$null'}; responseState = 'ASSISTANT_TEXT_NONCE_OBSERVED'; responseNonce = $responseNonce; responseText = $boundedResponseText; responseTextTruncated = $responseText.Length -gt $boundedResponseText.Length; responseTextSha256 = $responseSha256 } })
+    return
   }
-  Start-Sleep -Milliseconds 100
+  Start-Sleep -Milliseconds 250
 } while ([DateTime]::UtcNow -lt $deadline)
-throw 'BROWSER_RESPONSE_NONCE_NOT_OBSERVED'
+throw 'BROWSER_RESPONSE_WAIT_TIMEOUT'
 `;
     const result = await this.executeScript(script);
-    if (result?.responseState !== 'ASSISTANT_TEXT_NONCE_OBSERVED' || result?.responseNonce !== args.responseNonce || result?.surfaceUrl !== observation.surfaceUrl)
+    if (result?.responseState !== 'ASSISTANT_TEXT_NONCE_OBSERVED' || result?.responseNonce !== args.responseNonce
+      || typeof result?.responseText !== 'string' || result?.responseTextSha256 !== sha256(result.responseText))
       throw Error('BROWSER_RESPONSE_READBACK_INVALID');
     this.observations.delete(args.observationId);
     return result;

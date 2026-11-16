@@ -16,8 +16,24 @@ import { WebSocketServer, WebSocket } from 'ws';
 
 const MAX_BYTES = 64 * 1024;
 const SESSION_TTL_MS = 5 * 60 * 1000;
-const PAGE_TYPES = new Set(['COURIER_SELECTION', 'COURIER_PAGE_CONTEXT', 'TABLET_ACTION']);
-const HOST_TYPES = new Set(['COURIER_OBSERVE', 'TABLET_STATUS', 'TABLET_MESSAGE']);
+const PAGE_TYPES = new Set([
+  'COURIER_SELECTION',
+  'COURIER_PAGE_CONTEXT',
+  'COURIER_COMPOSER_OBSERVE_RESULT',
+  'COURIER_COMPOSER_INPUT_RESULT',
+  'COURIER_COMPOSER_SUBMIT_RESULT',
+  'COURIER_RESPONSE_READ_RESULT',
+  'TABLET_ACTION'
+]);
+const HOST_TYPES = new Set([
+  'COURIER_OBSERVE',
+  'COURIER_COMPOSER_OBSERVE',
+  'COURIER_COMPOSER_INPUT',
+  'COURIER_COMPOSER_SUBMIT',
+  'COURIER_RESPONSE_READ',
+  'TABLET_STATUS',
+  'TABLET_MESSAGE'
+]);
 
 function equalSecret(actual, expected) {
   const left = Buffer.from(actual || '', 'utf8'), right = Buffer.from(expected || '', 'utf8');

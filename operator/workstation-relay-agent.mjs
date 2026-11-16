@@ -109,6 +109,8 @@ export class WorkstationRelayAgent {
   }
 
   async connect() {
+    // Initialize DigitalBrain & Continuum storage partitions on daemon startup
+    await this.digitalBrain.initialize();
     // Keep the pure capability endpoint independently testable. The relay
     // client is resolved only when an enrolled daemon actually connects.
     const WebSocket = globalThis.WebSocket || (await import('ws')).default;
@@ -140,8 +142,18 @@ export class WorkstationRelayAgent {
         const result = await this.executeCapability(message.capability, message.arguments || {});
         socket.send(JSON.stringify({ type: 'result', id: message.id, capability: message.capability, ok: true, result }));
       } catch (error) {
-        const code = /^[A-Z][A-Z0-9_]{0,127}$/.test(error?.message) ? error.message : 'ADAPTER_OR_VALIDATION_FAILURE';
-        socket.send(JSON.stringify({ type: 'result', id: message.id, capability: message.capability, ok: false, result: { ok: false, error: code } }));
+        const code = /^[A-Z][A-Z0-9_]{0,127}$/.test(error?.message) ? error.message : (error?.code || 'WORKSTATION_EXECUTION_ERROR');
+        socket.send(JSON.stringify({
+          type: 'result',
+          id: message.id,
+          capability: message.capability,
+          ok: false,
+          result: {
+            ok: false,
+            error: code,
+            detail: error?.message || String(error)
+          }
+        }));
       }
     });
     return socket;
