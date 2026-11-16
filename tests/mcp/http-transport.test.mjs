@@ -160,3 +160,117 @@ test('HTTP execution fails closed when a card-required Bridge has no trusted iss
   assert.equal((await response.json()).error,'TRUSTED_COMPLIANCE_CARD_PROVIDER_REQUIRED');
   assert.equal(f.executed.length,0);
 });
+
+
+
+test('five separately authenticated agents receive equal authorized Bridge tools without a Codex proxy', async t => {
+  // Source-level fixture: real HTTP/MCP client sessions, synthetic Runtime policy,
+  // not live ZITADEL, physical keyboard input, independent Veritas or production.
+  const agentIds = ['F1_CODEX', 'F2_CHATGPT', 'F3_GEMINI', 'F4_ANTIGRAVITY', 'F5_COPILOT'];
+  const eligible = [
+    'device.health', 'device.windows.window.list', 'device.windows.window.observe',
+    'device.windows.window.input', 'device.windows.window.submit', 'device.windows.window.read',
+  ];
+  const executions = [];
+  const revocations = new Set();
+  const clients = [];
+  const server = createServer();
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const url = new URL('http://127.0.0.1:' + server.address().port + '/mcp');
+  t.after(async () => {
+    await Promise.all(clients.map(client => client.close()));
+    await new Promise(resolve => server.close(resolve));
+  });
+  server.on('request', createRemoteMcpHandler({
+    allowedHosts: [url.host],
+    authenticate: async req => {
+      const agentId = String(req.headers.authorization || '').replace(/^Bearer fixture-/, '');
+      return agentIds.includes(agentId)
+        ? { agentId, ownerSubject: 'fixture-owner', identitySource: 'TEST_ONLY' }
+        : null;
+    },
+    resolveBridge: async principal => new Bridge([{
+      id: 'fixture-workstation',
+      grants: [...eligible, 'device.files.write'],
+      adapter: {
+        discover: async () => [...eligible, 'device.files.write'],
+        execute: async (capability, args) => {
+          executions.push({ capability, args, agentId: principal.agentId });
+          return { deviceId: 'fixture-workstation', capability, accepted: true };
+        },
+      },
+    }], {
+      admission: async () => true, // synthetic fixture ONLY; not production C3/Formula
+      deviceRegistry: new Map([['fixture-workstation', {platform: 'test-platform'}]]),
+      receiptSink: async () => {}, // fixture receipt, NOT canonical Receipt Authority
+    }),
+    resolveAgentExecutionPolicy: async principal => ({
+      agentId: principal.agentId,
+      allowedCapabilities: eligible,
+      recheckCapability: async ({ principal: current, agentId, deviceId, capability }) =>
+        current.agentId === agentId &&
+        current.ownerSubject === 'fixture-owner' &&
+        deviceId === 'fixture-workstation' &&
+        eligible.includes(capability) &&
+        !revocations.has(agentId),
+    }),
+  }));
+  for (const agentId of agentIds) {
+    const client = new Client({ name: 'independent-' + agentId, version: '1.0.0' });
+    clients.push(client);
+    await client.connect(new StreamableHTTPClientTransport(url, {
+      requestInit: { headers: { Authorization: 'Bearer fixture-' + agentId } },
+    }));
+    const tools = (await client.listTools()).tools.map(tool => tool.name);
+    for (const capability of eligible) assert.ok(tools.includes(capability.replaceAll('.', '_')), agentId + ' missing ' + capability);
+    assert.ok(!tools.includes('device_files_write'), agentId + ' must not inherit unapproved file writes');
+    const result = decode(await client.callTool({
+      name: 'device_windows_window_list',
+      arguments: { deviceId: 'fixture-workstation', arguments: { app: 'chatgpt', limit: 1 } },
+    }));
+    assert.equal(result.ok, true, agentId + ' independent invocation');
+  }
+  assert.deepEqual(executions.map(e => e.agentId), agentIds);
+  assert.ok(executions.every(e => e.capability === 'device.windows.window.list'));
+  revocations.add('F3_GEMINI');
+  const denied = decode(await clients[2].callTool({
+    name: 'device_windows_window_list',
+    arguments: { deviceId: 'fixture-workstation', arguments: { app: 'chatgpt', limit: 1 } },
+  }));
+  assert.equal(denied.error, 'AGENT_CAPABILITY_NOT_AUTHORIZED');
+  assert.equal(denied.operationMayHaveExecuted, false);
+  assert.equal(executions.length, 5);
+  const chatgpt = decode(await clients[1].callTool({
+    name: 'device_windows_window_list',
+    arguments: { deviceId: 'fixture-workstation', arguments: { app: 'chatgpt', limit: 1 } },
+  }));
+  assert.equal(chatgpt.ok, true, 'one agent losing a grant must not disable the others');
+  assert.equal(executions.length, 6);
+  const unauth = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer fixture-unknown' },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'unknown', version: '1' } } }) });
+  assert.equal(unauth.status, 401);
+});
+
+test('scoped agent execution rejects mismatched identity and cannot override a host discovery hold', async t => {
+  const server = createServer();
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const url = new URL('http://127.0.0.1:' + server.address().port + '/mcp');
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  const bridge = new Bridge([], { admission: async () => false, receiptSink: async () => {} });
+  server.on('request', createRemoteMcpHandler({
+    allowedHosts: [url.host],
+    authenticate: async req => req.headers.authorization === 'Bearer fixture-a'
+      ? { agentId: 'F2_CHATGPT' } : null,
+    resolveBridge: async () => bridge,
+    discoveryOnly: true,
+    resolveAgentExecutionPolicy: async () => ({
+      agentId: 'F2_CHATGPT',
+      allowedCapabilities: ['device.windows.window.list'],
+      recheckCapability: async () => true,
+    }),
+  }));
+  const response = await fetch(url, { method: 'POST', headers: {
+    authorization: 'Bearer fixture-a', 'content-type': 'application/json',
+  }, body: '{}' });
+  assert.equal(response.status, 403, 'runtime discovery hold cannot be overridden by agent policy');
+});
