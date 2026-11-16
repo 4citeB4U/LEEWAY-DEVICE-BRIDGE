@@ -199,6 +199,16 @@ test('C3 requires trusted Windows identity and preserves replay/expiry denial', 
   });
   assert.equal(await admission({ deviceId: 'pc-primary', capability: 'device.info', args: {} }), true);
 
+  const portableWindowsId = 'owner-windows-arm64-future';
+  const portableWindows = { ...registered, id: portableWindowsId, deviceId: portableWindowsId, architecture: 'arm64' };
+  const portableAdmission = createC3AdmissionBinding({
+    deviceRegistry: new Map([[portableWindowsId, portableWindows]]),
+    registry: adapterRegistry,
+    formulaPreGate: async () => true,
+    veritasPreGate: async () => true,
+  });
+  assert.equal(await portableAdmission({ deviceId: portableWindowsId, capability: 'device.info', args: {} }), true);
+
   activeToken = createConsentEvidenceToken({
     issuer: consentIssuer.issuerId,
     keyId: consentIssuer.keyId,

@@ -62,6 +62,9 @@ class RemoteRelayService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        intent?.getStringExtra(EXTRA_OWNER_ACCESS_TOKEN)?.let {
+            EnrollmentCredential.provision(this, it)
+        }
         if (!RemoteRelayState.enabled(this)) {
             stopSelf()
             return START_NOT_STICKY
@@ -146,7 +149,7 @@ class RemoteRelayService : Service() {
 
         val request = Request.Builder().url(relayUrl).build()
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
-            override fun onOpen(ws: WebSocket, response: Response) {
+            override fun onOpen(webSocket: WebSocket, response: Response) {
                 connecting = false
                 val identity = DeviceIdentity.ensure(this@RemoteRelayService)
                 val hello = JSONObject().apply {
@@ -154,8 +157,10 @@ class RemoteRelayService : Service() {
                     put("role", "phone")
                     put("deviceId", identity.optString("deviceId"))
                     put("token", BridgeSecret.ensure(this@RemoteRelayService))
+                    put("publicKey", identity.optString("publicKeyDerBase64"))
+                    EnrollmentCredential.read(this@RemoteRelayService)?.let { put("ownerToken", it) }
                 }
-                ws.send(hello.toString())
+                webSocket.send(hello.toString())
                 RemoteRelayState.setConnection(
                     this@RemoteRelayService,
                     false,
@@ -163,11 +168,11 @@ class RemoteRelayService : Service() {
                 )
             }
 
-            override fun onMessage(ws: WebSocket, text: String) {
-                handleMessage(ws, text)
+            override fun onMessage(webSocket: WebSocket, text: String) {
+                handleMessage(webSocket, text)
             }
-            override fun onClosed(ws: WebSocket, code: Int, reason: String) {
-                if (webSocket === ws) webSocket = null
+            override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+                if (this@RemoteRelayService.webSocket === webSocket) this@RemoteRelayService.webSocket = null
                 connecting = false
                 RemoteRelayState.setConnection(
                     this@RemoteRelayService,
@@ -177,8 +182,8 @@ class RemoteRelayService : Service() {
                 scheduleReconnect()
             }
 
-            override fun onFailure(ws: WebSocket, t: Throwable, response: Response?) {
-                if (webSocket === ws) webSocket = null
+            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                if (this@RemoteRelayService.webSocket === webSocket) this@RemoteRelayService.webSocket = null
                 connecting = false
                 RemoteRelayState.setConnection(
                     this@RemoteRelayService,
@@ -193,8 +198,18 @@ class RemoteRelayService : Service() {
     private fun handleMessage(ws: WebSocket, text: String) {
         val msg = runCatching { JSONObject(text) }.getOrNull() ?: return
         when (msg.optString("type")) {
+            "hello-challenge" -> {
+                val nonce=msg.optString("nonce")
+                if(nonce.isBlank()) return
+                val proof=JSONObject().apply {
+                    put("type","hello-proof")
+                    put("signature",DeviceIdentity.signRelayProof(this@RemoteRelayService,nonce))
+                }
+                ws.send(proof.toString())
+            }
             "hello-ack" -> {
                 reconnectDelayMs = 1_000L
+                EnrollmentCredential.clear(this)
                 RemoteRelayState.setConnection(this, true, "AUTHENTICATED")
                 GitHubUpdateChecker.check(this, force = false, notifyOnly = true)
                 updateNotification("LeeWay remote bridge connected")
@@ -310,6 +325,7 @@ class RemoteRelayService : Service() {
         private const val CHANNEL_ID = "leeway_remote_bridge"
         private const val NOTIFICATION_ID = 5323
         private const val WORKSTATION_KEEPER_INTERVAL_MS = 30_000L
+        const val EXTRA_OWNER_ACCESS_TOKEN = "industries.leeway.devicebridge.OWNER_ACCESS_TOKEN"
 
         fun start(context: Context) {
             RemoteRelayState.setEnabled(context, true)

@@ -13,6 +13,11 @@ import { DigitalBrainEngine } from '../../apps/desktop/digital-brain.mjs';
 import { WorkstationRelayAgent } from '../../operator/workstation-relay-agent.mjs';
 
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
+const sourceProof = capsuleSha256 => ({
+  capsuleSha256,
+  nonce: randomUUID(),
+  signature: 'A'.repeat(86),
+});
 
 async function fixture(t) {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'leeway-two-pc-'));
@@ -31,10 +36,11 @@ test('stage one remains in the receiving Continuum and Digital Brain until expli
   const transferId = randomUUID();
   const staged = await hp.stage({
     transferId, sourceNodeId: 'pc-primary', targetNodeId: 'pc-hp-secondary', filename: 'proof.txt',
-    base64: bytes.toString('base64'), expectedSha256: sha256(bytes), transport: 'relay',
+    base64: bytes.toString('base64'), expectedSha256: sha256(bytes), transport: 'relay', sourceProof: sourceProof(sha256(bytes)),
   });
   assert.equal(staged.inContinuum, true);
   assert.equal(staged.materializedToWindowsOs, false);
+  assert.equal(staged.sourceProof.capsuleSha256, sha256(bytes));
   await assert.rejects(fs.stat(path.join(f.hp.workspace, 'proof.txt')), { code: 'ENOENT' });
   const read = await hp.read({ transferId });
   assert.equal(Buffer.from(read.base64, 'base64').toString('utf8'), bytes.toString('utf8'));
@@ -88,7 +94,7 @@ test('Continuum and workstation adapters accept portable enrolled-style device i
   const peerId='agent-virtual-tablet';
   const engine=new DigitalBrainEngine({nodeId,continuumRoot:f.primary.continuum,workspaceRoot:f.primary.workspace});
   const bytes=Buffer.from('portable Continuum payload','utf8');
-  const staged=await engine.stage({transferId:randomUUID(),sourceNodeId:peerId,targetNodeId:nodeId,filename:'portable.txt',base64:bytes.toString('base64'),expectedSha256:sha256(bytes),transport:'relay'});
+  const staged=await engine.stage({transferId:randomUUID(),sourceNodeId:peerId,targetNodeId:nodeId,filename:'portable.txt',base64:bytes.toString('base64'),expectedSha256:sha256(bytes),transport:'relay',sourceProof:sourceProof(sha256(bytes))});
   assert.equal(staged.targetNodeId,nodeId);
   const agent=new WorkstationRelayAgent({nodeId,workspace:f.primary.workspace,continuumRoot:f.primary.continuum,relayUrl:'wss://relay.example.test/api/device-relay',token:'owner-bound-test-token-0123456789'});
   assert.equal(agent.nodeId,nodeId);

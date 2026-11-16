@@ -3,6 +3,7 @@ import path from "node:path";
 import os from "node:os";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { createPrivateKey, createPublicKey, sign as signProof } from "node:crypto";
 import WebSocket from "ws";
 
 const execFileAsync=promisify(execFile);
@@ -11,6 +12,8 @@ const CREDS=JSON.parse(fs.readFileSync(path.join(ROOT,"credentials.json"),"utf8"
 const RELAY=CREDS.relay;
 const DEVICE_ID=CREDS.deviceId;
 const TOKEN=CREDS.token;
+const PRIVATE_KEY=createPrivateKey(CREDS.devicePrivateKeyPem||"");
+const PUBLIC_KEY=createPublicKey(PRIVATE_KEY).export({type:"spki",format:"pem"}).toString();
 const RECEIPTS=path.join(ROOT,"receipts.jsonl");
 const ALLOWED_ROOTS=[path.resolve(os.homedir()),"/sdcard","/storage/emulated/0"];
 const MAX_OUTPUT=512*1024;
@@ -108,10 +111,16 @@ async function execute(capability,args){
 function connect(){
   const ws=new WebSocket(RELAY_URL);
   ws.on("open",()=>{
-    ws.send(JSON.stringify({type:"hello",role:"workstation",deviceId:DEVICE_ID,token:TOKEN}));
+    ws.send(JSON.stringify({type:"hello",role:"phone",deviceId:DEVICE_ID,token:TOKEN,publicKey:PUBLIC_KEY}));
   });
   ws.on("message",async raw=>{
     let msg;try{msg=JSON.parse(raw.toString())}catch{return}
+    if(msg.type==="hello-challenge"&&msg.deviceId===DEVICE_ID&&typeof msg.nonce==="string"){
+      const payload=Buffer.from(`leeway-device-relay-proof-v1\n${DEVICE_ID}\n${msg.nonce}`,"utf8");
+      const algorithm=PRIVATE_KEY.asymmetricKeyType==="ed25519"?null:"sha256";
+      ws.send(JSON.stringify({type:"hello-proof",signature:signProof(algorithm,payload,PRIVATE_KEY).toString("base64url")}));
+      return;
+    }
     if(msg.type==="hello-ack"){
       reconnectMs=1000;
       receipt({event:"workstation.connect",status:"PASS",deliveryMode:msg.deliveryMode||null});

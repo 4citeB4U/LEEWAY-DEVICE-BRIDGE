@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SovereignPartition {
     Workspace,
+    Sandbox,
     Continuum,
     DigitalBrain,
     Diagnostics,
@@ -13,8 +14,9 @@ pub enum SovereignPartition {
 }
 
 impl SovereignPartition {
-    pub const ALL: [Self; 6] = [
+    pub const ALL: [Self; 7] = [
         Self::Workspace,
+        Self::Sandbox,
         Self::Continuum,
         Self::DigitalBrain,
         Self::Diagnostics,
@@ -25,6 +27,7 @@ impl SovereignPartition {
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::Workspace => "Workspace",
+            Self::Sandbox => "Sandbox",
             Self::Continuum => "Continuum",
             Self::DigitalBrain => "DigitalBrain",
             Self::Diagnostics => "Diagnostics",
@@ -64,7 +67,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn creates_exact_six_partitions() {
+    fn creates_exact_seven_partitions() {
         let root = tempfile::tempdir().expect("tempdir");
         let vault = SovereignVault::new(root.path()).expect("vault");
         for partition in SovereignPartition::ALL {

@@ -3,11 +3,13 @@
 pub mod continuum;
 pub mod registry;
 pub mod router;
+pub mod sandbox;
 pub mod vault;
 
 pub use continuum::{ContinuumCapsule, ContinuumJournal};
 pub use registry::{DeviceNode, UniversalMeshRegistry};
 pub use router::SovereignRouter;
+pub use sandbox::{HardwareSnapshot, SandboxEvent, SandboxFabric};
 pub use vault::{SovereignPartition, SovereignVault};
 
 use thiserror::Error;
@@ -22,5 +24,7 @@ pub enum SovereignError {
     Registry(String),
     #[error("routing error: {0}")]
     Routing(String),
+    #[error("sandbox error: {0}")]
+    Sandbox(String),
 }
 

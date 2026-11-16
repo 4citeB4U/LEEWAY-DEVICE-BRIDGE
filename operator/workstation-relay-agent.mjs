@@ -11,14 +11,15 @@ LICENSE: MIT
 */
 import os from 'node:os';
 import path from 'node:path';
+import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createPrivateKey, createPublicKey, sign as signProof } from 'node:crypto';
 import { DesktopAdapter } from '../apps/desktop/adapter.mjs';
 import { DigitalBrainEngine } from '../apps/desktop/digital-brain.mjs';
 
 const WORKSTATION_CAPABILITIES = Object.freeze([
   'device.health', 'device.info', 'pc.diagnostics.read', 'digital-brain.read',
-  'continuum.transfer.stage', 'continuum.transfer.read', 'continuum.transfer.materialize',
+  'continuum.transfer.proof', 'continuum.transfer.stage', 'continuum.transfer.read', 'continuum.transfer.materialize',
 ]);
 
 function validRelayUrl(value, label) {
@@ -30,12 +31,19 @@ function validRelayUrl(value, label) {
   return url.toString();
 }
 
+function socketOn(socket, event, listener, once = false) {
+  if (typeof socket.on === 'function') return once ? socket.once(event, listener) : socket.on(event, listener);
+  socket.addEventListener(event, value => listener(event === 'message' ? value.data : value), { once });
+}
+
 export class WorkstationRelayAgent {
   constructor({
     nodeId = process.env.LEEWAY_DEVICE_ID,
     relayUrl = process.env.LEEWAY_RELAY_URL,
     token = process.env.LEEWAY_MESH_TOKEN,
     ownerToken = process.env.OIDC_ACCESS_TOKEN_VERIFIED || null,
+    devicePrivateKeyPem = process.env.LEEWAY_DEVICE_PRIVATE_KEY_PEM || null,
+    devicePrivateKeyPath = process.env.LEEWAY_DEVICE_PRIVATE_KEY_PATH || null,
     subLinkUrl = process.env.LEEWAY_USER_SUBLINK_URL || null,
     workspace = process.env.LEEWAY_WORKSPACE || process.env.LEEWAY_WORKSPACE_ROOT || path.join(os.homedir(), 'LeeWay', 'SovereignNode', 'Workspace'),
     continuumRoot = process.env.LEEWAY_CONTINUUM_ROOT || path.join(os.homedir(), 'LeeWay', 'SovereignNode', 'Continuum'),
@@ -49,6 +57,12 @@ export class WorkstationRelayAgent {
     if (!workspace || !continuumRoot) throw new Error('DEVICE_STORAGE_ROOT_REQUIRED');
     this.token = token;
     this.ownerToken = typeof ownerToken === 'string' && ownerToken.length >= 8 ? ownerToken : null;
+    const privateKeyValue = devicePrivateKeyPem ||
+      (devicePrivateKeyPath ? fs.readFileSync(path.resolve(devicePrivateKeyPath), 'utf8') : null);
+    this.devicePrivateKey = privateKeyValue ? createPrivateKey(privateKeyValue) : null;
+    this.devicePublicKey = this.devicePrivateKey
+      ? createPublicKey(this.devicePrivateKey).export({ type: 'spki', format: 'pem' }).toString()
+      : null;
     this.desktopAdapter = new DesktopAdapter(path.resolve(workspace));
     this.digitalBrain = new DigitalBrainEngine({
       nodeId, continuumRoot: path.resolve(continuumRoot), workspaceRoot: path.resolve(workspace),
@@ -63,6 +77,16 @@ export class WorkstationRelayAgent {
     if (capability === 'device.info') return { nodeId: this.nodeId, platform: process.platform, architecture: os.arch(), continuumRootBound: true, cloudConsciousnessAuthority: 'NOT_REQUIRED_FOR_SUB_LINK' };
     if (capability === 'pc.diagnostics.read') return this.digitalBrain.diagnosticsReadback();
     if (capability === 'digital-brain.read') return this.digitalBrain.readback();
+    if (capability === 'continuum.transfer.proof') {
+      if (args.sourceNodeId !== this.nodeId || typeof args.targetNodeId !== 'string' ||
+        !/^[a-f0-9]{64}$/i.test(args.capsuleSha256 || '') || typeof args.nonce !== 'string' || args.nonce.length < 1 || args.nonce.length > 128) {
+        throw new Error('CONTINUUM_PROOF_ARGUMENTS_INVALID');
+      }
+      const payload = Buffer.from(`leeway-continuum-transfer-v1\n${this.nodeId}\n${args.targetNodeId}\n${args.capsuleSha256}\n${args.nonce}`, 'utf8');
+      const algorithm = this.devicePrivateKey.asymmetricKeyType === 'ed25519' ? null : 'sha256';
+      return { sourceNodeId: this.nodeId, targetNodeId: args.targetNodeId, capsuleSha256: args.capsuleSha256,
+        nonce: args.nonce, signature: signProof(algorithm, payload, this.devicePrivateKey).toString('base64url') };
+    }
     if (capability === 'continuum.transfer.stage') return this.digitalBrain.stage(args);
     if (capability === 'continuum.transfer.read') return this.digitalBrain.read(args);
     if (capability === 'continuum.transfer.materialize') return this.digitalBrain.materialize(args);
@@ -87,14 +111,26 @@ export class WorkstationRelayAgent {
   async connect() {
     // Keep the pure capability endpoint independently testable. The relay
     // client is resolved only when an enrolled daemon actually connects.
-    const { default: WebSocket } = await import('ws');
-    const socket = new WebSocket(this.relayUrl, { maxPayload: 8 * 1024 * 1024, followRedirects: false });
+    const WebSocket = globalThis.WebSocket || (await import('ws')).default;
+    if (!this.devicePrivateKey || !this.devicePublicKey) throw new Error('LEEWAY_DEVICE_PRIVATE_KEY_REQUIRED');
+    const socket = new WebSocket(this.relayUrl);
     // The relay's execution endpoint is named "phone" for protocol
     // compatibility. It is a role, not a hardware classification.
-    socket.on('open', () => socket.send(JSON.stringify({ type: 'hello', role: 'phone', deviceId: this.nodeId, token: this.token, ...(this.ownerToken ? { ownerToken: this.ownerToken } : {}) })));
-    socket.on('message', async raw => {
+    socketOn(socket, 'open', () => socket.send(JSON.stringify({
+      type: 'hello', role: 'phone', deviceId: this.nodeId, token: this.token,
+      publicKey: this.devicePublicKey,
+      ...(this.ownerToken ? { ownerToken: this.ownerToken } : {}),
+    })));
+    socketOn(socket, 'message', async raw => {
       let message;
       try { message = JSON.parse(raw.toString()); } catch { return; }
+      if (message.type === 'hello-challenge' && message.deviceId === this.nodeId && typeof message.nonce === 'string') {
+        const payload = Buffer.from(`leeway-device-relay-proof-v1\n${this.nodeId}\n${message.nonce}`, 'utf8');
+        const algorithm = this.devicePrivateKey.asymmetricKeyType === 'ed25519' ? null : 'sha256';
+        const signature = signProof(algorithm, payload, this.devicePrivateKey).toString('base64url');
+        socket.send(JSON.stringify({ type: 'hello-proof', signature }));
+        return;
+      }
       if (message.type === 'hello-ack') {
         console.log(`[WORKSTATION-RELAY:SOVEREIGN] Joined room as target: ${this.nodeId}`);
         return;
@@ -110,6 +146,25 @@ export class WorkstationRelayAgent {
     });
     return socket;
   }
+
+  async runForever({ minimumDelayMs = 1_000, maximumDelayMs = 30_000 } = {}) {
+    let delayMs = minimumDelayMs;
+    for (;;) {
+      let socket;
+      try {
+        socket = await this.connect();
+        await new Promise(resolve => {
+          socketOn(socket, 'open', () => { delayMs = minimumDelayMs; }, true);
+          socketOn(socket, 'close', resolve, true);
+          socketOn(socket, 'error', () => {
+            try { socket.close(); } catch {}
+          }, true);
+        });
+      } catch {}
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+      delayMs = Math.min(delayMs * 2, maximumDelayMs);
+    }
+  }
 }
 
 // The daemon can be launched directly on an owner-enrolled workstation. The
@@ -118,8 +173,6 @@ export class WorkstationRelayAgent {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const agent = new WorkstationRelayAgent();
   console.log(`[WORKSTATION-RELAY] Starting relay endpoint for ${agent.nodeId}`);
-  const socket = await agent.connect();
-  socket.on('close', code => console.log(`[WORKSTATION-RELAY:SOVEREIGN] Connection closed: ${code}`));
-  socket.on('error', error => console.error(`[WORKSTATION-RELAY:SOVEREIGN] Error: ${error.message}`));
+  await agent.runForever();
 }
 

@@ -12,7 +12,7 @@ object RemoteCommandRouter {
         "device.ui.tap", "device.ui.swipe", "device.ui.text",
         "device.apps.list", "device.apps.launch", "device.apps.install.status", "device.apps.install",
         "device.media.scan", "device.media.delete.request",
-        "model.status", "model.install", "model.inference", "voice.status", "voice.speak", "agent.chat"
+        "continuum.transfer.proof", "model.status", "model.install", "model.inference", "voice.status", "voice.speak", "agent.chat"
     )
 
     fun execute(context: Context, commandId: String, capability: String, arguments: JSONObject, firstSeen: Boolean, conversationRequest: Boolean = false, onStream: ((String) -> Unit)? = null): JSONObject {
@@ -34,6 +34,9 @@ object RemoteCommandRouter {
             "device.media.delete.request" -> arguments.optJSONArray("uris")?.length()?.let { it > 0 } == true
             "device.apps.install" -> arguments.optString("url").startsWith("https://") &&
                 arguments.optString("sha256").matches(Regex("^[A-Fa-f0-9]{64}$"))
+            "continuum.transfer.proof" -> arguments.optString("sourceNodeId") == DeviceIdentity.ensure(context).optString("deviceId") &&
+                arguments.optString("targetNodeId").isNotBlank() && arguments.optString("capsuleSha256").matches(Regex("^[a-f0-9]{64}$")) &&
+                arguments.optString("nonce").length in 1..128
             else -> true
         }
         val gate = FormulaF8Gate.evaluate(
@@ -86,6 +89,8 @@ object RemoteCommandRouter {
                     val uris = (0 until raw.length()).map { raw.getString(it) }
                     MediaOperator.requestDelete(context, uris)
                 }
+                "continuum.transfer.proof" -> DeviceIdentity.signContinuumProof(context,
+                    arguments.getString("targetNodeId"),arguments.getString("capsuleSha256"),arguments.getString("nonce"))
                 "model.status" -> ModelRuntime.status(context)
                 "model.install" -> ModelRuntime.download(context) { _, _ -> }
                 "model.inference" -> if (conversationRequest) ModelRuntime.generateConversation(context, prompt) else ModelRuntime.generate(context, prompt)

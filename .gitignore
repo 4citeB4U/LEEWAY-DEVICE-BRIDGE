@@ -7,4 +7,7 @@ local.properties
 apps/android/.kotlin/
 node_modules/
 target/
+apps/android/build/
+apps/android/app/build/
 .bridge-local/
+state/

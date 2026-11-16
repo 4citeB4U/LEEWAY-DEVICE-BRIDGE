@@ -69,13 +69,18 @@ export class DigitalBrainEngine {
     await fs.rename(temporary, this.indexPath());
   }
 
-  async stage({ transferId, sourceNodeId, targetNodeId, filename, base64, expectedSha256, transport }) {
+  async stage({ transferId, sourceNodeId, targetNodeId, filename, base64, expectedSha256, transport, sourceProof }) {
     await this.initialize();
     requireNodeId(sourceNodeId);
     if (targetNodeId !== this.nodeId) throw new Error('CONTINUUM_TARGET_NODE_MISMATCH');
     if (sourceNodeId === targetNodeId || typeof transferId !== 'string' || !/^[0-9a-f-]{36}$/i.test(transferId)) throw new Error('CONTINUUM_TRANSFER_INVALID');
     if (typeof filename !== 'string' || !/^[^\\/:*?"<>|\x00-\x1f]{1,240}$/.test(filename)) throw new Error('CONTINUUM_FILENAME_INVALID');
     if (!['relay', 'sub-link'].includes(transport)) throw new Error('CONTINUUM_TRANSPORT_INVALID');
+    if (transport === 'relay' && (
+      !sourceProof || sourceProof.capsuleSha256 !== expectedSha256 ||
+      typeof sourceProof.nonce !== 'string' || sourceProof.nonce.length < 1 || sourceProof.nonce.length > 128 ||
+      typeof sourceProof.signature !== 'string' || sourceProof.signature.length < 32 || sourceProof.signature.length > 16_384
+    )) throw new Error('CONTINUUM_SOURCE_PROOF_REQUIRED');
     const bytes = decodeBase64(base64);
     if (hash(bytes) !== expectedSha256) throw new Error('CONTINUUM_DIGEST_MISMATCH');
     const index = await this.readIndex();
@@ -85,7 +90,12 @@ export class DigitalBrainEngine {
     await fs.rename(temporary, this.blobPath(transferId));
     const record = {
       transferId, sourceNodeId, targetNodeId, filename, sha256: expectedSha256, byteLength: bytes.length,
-      transport, inContinuum: true, materializedToWindowsOs: false, stagedAt: new Date().toISOString(), materializedAt: null,
+      transport, sourceProof: sourceProof ? {
+        capsuleSha256: sourceProof.capsuleSha256,
+        nonce: sourceProof.nonce,
+        signature: sourceProof.signature,
+      } : null,
+      inContinuum: true, materializedToWindowsOs: false, stagedAt: new Date().toISOString(), materializedAt: null,
     };
     index.records[transferId] = record;
     await this.writeIndex(index);

@@ -14,6 +14,8 @@ pub struct DeviceNode {
     #[serde(default)]
     pub public_key: Option<String>,
     #[serde(default)]
+    pub mesh_token_sha256: Option<String>,
+    #[serde(default)]
     pub passport_sha256: Option<String>,
     #[serde(default)]
     pub admitted: Option<bool>,
@@ -42,9 +44,10 @@ impl DeviceNode {
                 .is_some_and(|key| key.len() == 64 && key.bytes().all(|byte| byte.is_ascii_hexdigit()));
             let pem = value.starts_with("-----BEGIN PUBLIC KEY-----") &&
                 value.ends_with("-----END PUBLIC KEY-----");
-            ed25519_hex || pem
-        }) ||
-            self.passport_sha256.as_ref().is_some_and(|value| value.len() == 64 && value.bytes().all(|byte| byte.is_ascii_hexdigit()))
+            let der_base64 = (40..=512).contains(&value.len()) &&
+                value.bytes().all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'+' | b'/' | b'='));
+            ed25519_hex || pem || der_base64
+        })
     }
 
     pub fn is_admitted(&self) -> bool {
@@ -52,7 +55,9 @@ impl DeviceNode {
         let canonical = self.identity_verified == Some(true) &&
             self.registration_state.as_deref() == Some("TRUSTED_REGISTRY_READ") &&
             self.registration_authority.as_deref() == Some("TRUSTED_RUNTIME_DEVICE_REGISTRY");
-        self.has_valid_id() && self.has_cryptographic_identity() && (explicit || canonical)
+        let token_bound = self.mesh_token_sha256.as_ref()
+            .is_some_and(|value| value.len() == 64 && value.bytes().all(|byte| byte.is_ascii_hexdigit()));
+        self.has_valid_id() && self.has_cryptographic_identity() && token_bound && (explicit || canonical)
     }
 }
 
@@ -99,6 +104,10 @@ impl UniversalMeshRegistry {
         self.admitted_devices.contains_key(device_id)
     }
 
+    pub fn node(&self, device_id: &str) -> Option<&DeviceNode> {
+        self.admitted_devices.get(device_id)
+    }
+
     pub fn verify_pair(&self, source_id: &str, target_id: &str) -> Result<(), SovereignError> {
         if source_id == target_id {
             return Err(SovereignError::Registry("source and target must differ".into()));
@@ -130,6 +139,7 @@ mod tests {
                 "deviceId": device_id,
                 "platform": "portable",
                 "publicKey": format!("ed25519:{}", "a".repeat(64)),
+                "meshTokenSha256": "b".repeat(64),
                 "admitted": true
             })).collect::<Vec<_>>();
         fs::write(&path, serde_json::to_vec(&serde_json::json!({"devices": devices})).expect("json")).expect("write");
@@ -140,7 +150,7 @@ mod tests {
     }
 
     #[test]
-    fn parses_canonical_single_record_with_passport_hash() {
+    fn rejects_passport_only_record_without_bound_device_key_and_token() {
         let root = tempfile::tempdir().expect("tempdir");
         let path = root.path().join("trusted-device-registry.json");
         fs::write(&path, serde_json::to_vec(&serde_json::json!({
@@ -152,7 +162,7 @@ mod tests {
             "registrationAuthority": "TRUSTED_RUNTIME_DEVICE_REGISTRY"
         })).expect("json")).expect("write");
         let registry = UniversalMeshRegistry::load(path).expect("registry");
-        assert!(registry.verify_node("portable-workstation"));
+        assert!(!registry.verify_node("portable-workstation"));
     }
 }
 

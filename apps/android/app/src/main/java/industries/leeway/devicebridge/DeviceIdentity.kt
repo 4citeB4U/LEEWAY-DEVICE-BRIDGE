@@ -8,6 +8,7 @@ import org.json.JSONObject
 import java.security.KeyPairGenerator
 import java.security.KeyStore
 import java.security.MessageDigest
+import java.security.Signature
 import java.util.UUID
 
 object DeviceIdentity {
@@ -46,5 +47,30 @@ object DeviceIdentity {
             put("publicKeyDerBase64",Base64.encodeToString(publicKey,Base64.NO_WRAP))
             put("authority","ANDROID_KEYSTORE")
         }
+    }
+
+    fun signRelayProof(context: Context, nonce: String): String {
+        val identity=ensure(context)
+        val deviceId=identity.getString("deviceId")
+        val store=KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+        val privateKey=store.getKey(ALIAS,null) as java.security.PrivateKey
+        val payload="leeway-device-relay-proof-v1\n$deviceId\n$nonce".toByteArray(Charsets.UTF_8)
+        val signer=Signature.getInstance("SHA256withECDSA")
+        signer.initSign(privateKey)
+        signer.update(payload)
+        return Base64.encodeToString(signer.sign(),Base64.NO_WRAP or Base64.URL_SAFE or Base64.NO_PADDING)
+    }
+
+    fun signContinuumProof(context: Context, targetNodeId: String, capsuleSha256: String, nonce: String): JSONObject {
+        val deviceId=ensure(context).getString("deviceId")
+        require(targetNodeId.isNotBlank() && capsuleSha256.matches(Regex("^[a-f0-9]{64}$")) && nonce.length in 1..128)
+        val store=KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+        val privateKey=store.getKey(ALIAS,null) as java.security.PrivateKey
+        val payload="leeway-continuum-transfer-v1\n$deviceId\n$targetNodeId\n$capsuleSha256\n$nonce".toByteArray(Charsets.UTF_8)
+        val signer=Signature.getInstance("SHA256withECDSA")
+        signer.initSign(privateKey); signer.update(payload)
+        return JSONObject().put("sourceNodeId",deviceId).put("targetNodeId",targetNodeId)
+            .put("capsuleSha256",capsuleSha256).put("nonce",nonce)
+            .put("signature",Base64.encodeToString(signer.sign(),Base64.NO_WRAP or Base64.URL_SAFE or Base64.NO_PADDING))
     }
 }

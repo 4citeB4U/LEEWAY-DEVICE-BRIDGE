@@ -8,10 +8,12 @@ HOW: Pair the already enrolled phone and client by device ID plus owner pairing 
 AUTHORITY: Transport only. The phone remains the execution and Formula boundary.
 */
 import { createServer } from 'node:http';
-import { createHash, timingSafeEqual, randomUUID } from 'node:crypto';
+import { createHash, timingSafeEqual, randomUUID, createPublicKey, verify as verifySignature } from 'node:crypto';
 import { WebSocketServer, WebSocket } from 'ws';
+import fs from 'node:fs';
+import path from 'node:path';
 import { createOidcAccessAuthenticator } from '../operator/identity/pocket-id-access.mjs';
-import { loadTrustedDeviceRegistry, isTrustedDeviceRecord } from '../operator/identity/trusted-device-registry.mjs';
+import { loadTrustedDeviceRegistry, isTrustedDeviceRecord, trustedDeviceTokenMatches } from '../operator/identity/trusted-device-registry.mjs';
 
 const MAX_PAYLOAD_BYTES = 64 * 1024;
 const HELLO_TIMEOUT_MS = 10_000;
@@ -44,6 +46,33 @@ function digestsMatch(left, right) {
     && left.length === right.length && timingSafeEqual(left, right);
 }
 
+function devicePublicKey(value) {
+  if (typeof value !== 'string' || value.length > 16_384) return null;
+  try {
+    if (/^ed25519:[a-f0-9]{64}$/i.test(value)) {
+      const raw = Buffer.from(value.slice(8), 'hex');
+      return createPublicKey({ key: Buffer.concat([Buffer.from('302a300506032b6570032100', 'hex'), raw]), format: 'der', type: 'spki' });
+    }
+    if (value.includes('BEGIN PUBLIC KEY')) return createPublicKey(value);
+    if (/^[A-Za-z0-9+/]{40,512}={0,2}$/.test(value)) {
+      return createPublicKey({ key: Buffer.from(value, 'base64'), format: 'der', type: 'spki' });
+    }
+  } catch {}
+  return null;
+}
+
+function publicKeyValue(record) {
+  return record?.publicKey ?? record?.publicKeySpki ?? record?.publicKeyDerBase64 ?? null;
+}
+
+function proofPayload(deviceId, nonce) {
+  return Buffer.from(`leeway-device-relay-proof-v1\n${deviceId}\n${nonce}`, 'utf8');
+}
+
+function continuumProofPayload({ sourceNodeId, targetNodeId, capsuleSha256, nonce }) {
+  return Buffer.from(`leeway-continuum-transfer-v1\n${sourceNodeId}\n${targetNodeId}\n${capsuleSha256}\n${nonce}`, 'utf8');
+}
+
 function validArguments(value) {
   return value && typeof value === 'object' && !Array.isArray(value);
 }
@@ -65,27 +94,23 @@ function helloAck(ws, role, room, volatileRoomState) {
   }));
 }
 
-function makeRoom(deviceId, token, admissionAuthority) {
+function makeRoom(deviceId, token, admissionAuthority, publicKey) {
   return {
     deviceId,
     tokenHash: tokenDigest(token),
+    deviceCredential: token,
     phone: null,
-    client: null,
+    clients: new Map(),
     pending: new Map(),
     completed: new Set(),
     admissionAuthority,
+    publicKey,
   };
 }
 
 function roomHasSocket(room) {
   return room.phone?.ws?.readyState === WebSocket.OPEN
-    || room.client?.ws?.readyState === WebSocket.OPEN;
-}
-
-function closeReplaced(connection) {
-  if (connection?.ws?.readyState === WebSocket.OPEN) {
-    connection.ws.close(4001, 'REPLACED_BY_RECONNECT');
-  }
+    || [...room.clients.values()].some(connection => connection.ws.readyState === WebSocket.OPEN);
 }
 
 function defaultOwnerTokenVerifier(env = process.env) {
@@ -109,21 +134,36 @@ function createRelayServer({
   meshToken = SOVEREIGN_MESH_TOKEN,
   verifyOwnerToken = defaultOwnerTokenVerifier(),
   volatileRoomState = true,
+  authorizeCommand = async () => true,
+  enrollDevice = null,
+  verifiedOwnerSubject = process.env.LEEWAY_MCP_OWNER_SUB || null,
+  replayStorePath = process.env.LEEWAY_RELAY_REPLAY_STORE_PATH || null,
 } = {}) {
+  const consumedProofs = new Set();
+  const replayCustodyDir = replayStorePath ? `${replayStorePath}.proofs` : null;
+  if (replayStorePath) {
+    try { for (const line of fs.readFileSync(replayStorePath, 'utf8').split(/\r?\n/)) if (/^[a-f0-9]{64}$/.test(line)) consumedProofs.add(line); } catch {}
+    try { for (const entry of fs.readdirSync(replayCustodyDir)) if (/^[a-f0-9]{64}\.json$/.test(entry)) consumedProofs.add(entry.slice(0, 64)); } catch {}
+  }
   const trustedRecord = deviceId => deviceRegistry instanceof Map
     ? deviceRegistry.get(deviceId)
     : Array.isArray(deviceRegistry)
       ? deviceRegistry.find(record => (record?.deviceId ?? record?.id) === deviceId)
       : null;
-  const meshTokenMatches = token => typeof meshToken === 'string' && meshToken.length >= 16 &&
-    digestsMatch(tokenDigest(token), tokenDigest(meshToken));
-  const roomAdmission = async ({ deviceId, token, ownerToken }) => {
-    if (!meshTokenMatches(token)) return null;
-    if (isTrustedDeviceRecord(trustedRecord(deviceId))) return 'TRUSTED_RUNTIME_DEVICE_REGISTRY';
+  const roomAdmission = async ({ deviceId, token, ownerToken, suppliedPublicKey }) => {
+    const record = trustedRecord(deviceId);
+    if (isTrustedDeviceRecord(record) && trustedDeviceTokenMatches(record, token) && devicePublicKey(publicKeyValue(record))) {
+      return { authority: 'TRUSTED_RUNTIME_DEVICE_REGISTRY', publicKeyValue: publicKeyValue(record), enrollment: null };
+    }
     if (typeof ownerToken !== 'string' || ownerToken.length < 8 || ownerToken.length > MAX_OWNER_TOKEN_LENGTH ||
-      typeof verifyOwnerToken !== 'function') return null;
+      typeof verifyOwnerToken !== 'function' || typeof enrollDevice !== 'function' || !devicePublicKey(suppliedPublicKey) || token.length < 16) return null;
     const verified = await verifyOwnerToken({ headers: { authorization: `Bearer ${ownerToken}` } });
-    return verified === true ? 'OIDC_OWNER_AND_MESH_TOKEN' : null;
+    return verified === true || (verified && typeof verified === 'object') ? {
+      authority: 'OIDC_OWNER_AND_DEVICE_CREDENTIAL',
+      publicKeyValue: suppliedPublicKey,
+      enrollment: { deviceId, publicKey: suppliedPublicKey, meshToken: token,
+        ownerSubject: (typeof verified?.subject === 'string' ? verified.subject : verifiedOwnerSubject) || 'OIDC_OWNER_VERIFIED' },
+    } : null;
   };
   const server = createServer((req, res) => {
     if (req.method === 'GET' && (req.url === '/api/device-relay' || req.url === '/api/device-relay/')) {
@@ -148,14 +188,14 @@ function createRelayServer({
     const room = rooms.get(connection.deviceId);
     if (!room) return;
     if (room.phone === connection) room.phone = null;
-    if (room.client === connection) room.client = null;
+    room.clients.delete(connection.id);
     for (const [id, pending] of room.pending) {
       if (pending.connection === connection) room.pending.delete(id);
     }
     if (!roomHasSocket(room)) rooms.delete(connection.deviceId);
   }
 
-  function routeCommand(connection, message, room) {
+  async function routeCommand(connection, message, room) {
     if (connection.role !== 'client' && connection.role !== 'workstation') {
       return protocolError(connection.ws, 'ROLE_CANNOT_COMMAND');
     }
@@ -164,6 +204,59 @@ function createRelayServer({
     if (!id || !capability || !validArguments(message.arguments)) {
       return protocolError(connection.ws, 'COMMAND_INVALID');
     }
+    if (capability === 'continuum.transfer.stage') {
+      const sourceNodeId = text(message.arguments.sourceNodeId, MAX_DEVICE_ID_LENGTH);
+      const targetNodeId = text(message.arguments.targetNodeId, MAX_DEVICE_ID_LENGTH);
+      const proof = message.arguments.sourceProof;
+      const capsuleSha256 = text(proof?.capsuleSha256, 64);
+      const nonce = text(proof?.nonce, 128);
+      const signature = text(proof?.signature, 16_384);
+      const sourceRecord = trustedRecord(sourceNodeId);
+      const sourceKey = devicePublicKey(publicKeyValue(sourceRecord));
+      let sourceProofValid = false;
+      try {
+        sourceProofValid = Boolean(sourceKey && signature && /^[a-f0-9]{64}$/i.test(capsuleSha256 || '') && nonce) && verifySignature(
+          sourceKey.asymmetricKeyType === 'ed25519' ? null : 'sha256',
+          continuumProofPayload({ sourceNodeId, targetNodeId, capsuleSha256, nonce }),
+          sourceKey,
+          Buffer.from(signature, 'base64url'),
+        );
+      } catch { sourceProofValid = false; }
+      const proofId = createHash('sha256').update(`${sourceNodeId}\n${targetNodeId}\n${capsuleSha256}\n${nonce}`).digest('hex');
+      if (!sourceNodeId || targetNodeId !== room.deviceId || !isTrustedDeviceRecord(sourceRecord) || !sourceProofValid || consumedProofs.has(proofId)) {
+        return protocolError(connection.ws, 'CONTINUUM_DEVICE_IDENTITY_REJECTED');
+      }
+      if (replayStorePath) {
+        try {
+          fs.mkdirSync(path.dirname(replayStorePath), { recursive: true });
+          fs.mkdirSync(replayCustodyDir, { recursive: true, mode: 0o700 });
+          const custodyPath = path.join(replayCustodyDir, `${proofId}.json`);
+          const descriptor = fs.openSync(custodyPath, 'wx', 0o600);
+          try {
+            fs.writeFileSync(descriptor, JSON.stringify({
+              proofId, sourceNodeId, targetNodeId, capsuleSha256, nonce,
+              consumedUtc: new Date().toISOString(),
+            }));
+            fs.fsyncSync(descriptor);
+          } finally { fs.closeSync(descriptor); }
+          fs.appendFileSync(replayStorePath, `${proofId}\n`, { encoding: 'utf8', mode: 0o600 });
+        }
+        catch { return protocolError(connection.ws, 'CONTINUUM_REPLAY_CUSTODY_UNAVAILABLE'); }
+      }
+      consumedProofs.add(proofId);
+    }
+    let commandAdmitted = false;
+    try {
+      commandAdmitted = await authorizeCommand({
+        deviceId: room.deviceId,
+        capability,
+        arguments: message.arguments,
+        meshToken: room.deviceCredential,
+      });
+    } catch {
+      commandAdmitted = false;
+    }
+    if (commandAdmitted !== true) return protocolError(connection.ws, 'RUST_ROUTER_ADMISSION_REJECTED');
     if (room.completed.has(id) || room.pending.has(id)) {
       return protocolError(connection.ws, 'DUPLICATE_COMMAND_ID');
     }
@@ -188,7 +281,10 @@ function createRelayServer({
     }
     const pending = room.pending.get(id);
     if (!pending || pending.capability !== capability) {
-      return protocolError(connection.ws, 'UNKNOWN_COMMAND_ID');
+      if (connection.ws.readyState === WebSocket.OPEN) {
+        connection.ws.send(JSON.stringify({ type: 'error', error: 'UNKNOWN_COMMAND_ID' }));
+      }
+      return;
     }
     room.pending.delete(id);
     room.completed.add(id);
@@ -205,7 +301,7 @@ function createRelayServer({
   }
 
   wss.on('connection', (ws) => {
-    const connection = { ws, id: randomUUID(), role: null, deviceId: null, authenticated: false };
+    const connection = { ws, id: randomUUID(), role: null, deviceId: null, authenticated: false, meshToken: null };
     const helloTimer = setTimeout(() => protocolError(ws, 'HELLO_TIMEOUT'), HELLO_TIMEOUT_MS);
 
     ws.on('message', async (raw) => {
@@ -220,40 +316,88 @@ function createRelayServer({
       }
 
       if (!connection.authenticated) {
+        if (message.type === 'hello-proof' && connection.challenge) {
+          const signature = text(message.signature, 16_384);
+          const challenge = connection.challenge;
+          let valid = false;
+          try {
+            valid = Boolean(signature) && verifySignature(
+              challenge.key.asymmetricKeyType === 'ed25519' ? null : 'sha256',
+              proofPayload(challenge.deviceId, challenge.nonce),
+              challenge.key,
+              Buffer.from(signature, 'base64url'),
+            );
+          } catch {
+            valid = false;
+          }
+          if (!valid) return protocolError(ws, 'DEVICE_KEY_PROOF_REJECTED');
+          if (challenge.enrollment) {
+            let persisted;
+            try { persisted = await enrollDevice(challenge.enrollment); } catch { persisted = null; }
+            if (!isTrustedDeviceRecord(persisted) || publicKeyValue(persisted) !== challenge.publicKeyValue ||
+              !trustedDeviceTokenMatches(persisted, challenge.token)) return protocolError(ws, 'DEVICE_ENROLLMENT_PERSISTENCE_FAILED');
+            if (deviceRegistry instanceof Map) deviceRegistry.set(challenge.deviceId, persisted);
+          }
+          let room = rooms.get(challenge.deviceId);
+          if (!room) {
+            room = makeRoom(challenge.deviceId, challenge.token, challenge.admissionAuthority, challenge.publicKeyValue);
+            rooms.set(challenge.deviceId, room);
+          }
+          if (!digestsMatch(tokenDigest(challenge.token), room.tokenHash) || room.publicKey !== challenge.publicKeyValue) {
+            return protocolError(ws, 'DEVICE_KEY_BINDING_REJECTED');
+          }
+          if (room.phone?.ws?.readyState === WebSocket.OPEN) room.phone.ws.close(4001, 'REPLACED_BY_RECONNECT');
+          connection.role = 'phone';
+          connection.deviceId = challenge.deviceId;
+          connection.authenticated = true;
+          connection.meshToken = challenge.token;
+          connection.challenge = null;
+          room.phone = connection;
+          clearTimeout(helloTimer);
+          helloAck(ws, 'phone', room, volatileRoomState);
+          return;
+        }
         if (message.type !== 'hello') return protocolError(ws, 'HELLO_REQUIRED');
         const role = text(message.role, 32);
         const deviceId = text(message.deviceId, MAX_DEVICE_ID_LENGTH);
         const token = text(message.token, MAX_TOKEN_LENGTH);
         const ownerToken = text(message.ownerToken, MAX_OWNER_TOKEN_LENGTH);
-        if (!['phone', 'client', 'workstation'].includes(role) || !deviceId || !token) {
+        if (!['phone', 'client', 'workstation'].includes(role) || !deviceId || (role === 'phone' && !token)) {
           return protocolError(ws, 'HELLO_INVALID');
         }
 
         let room = rooms.get(deviceId);
-        if (!room) {
-          const admissionAuthority = await roomAdmission({ deviceId, token, ownerToken });
-          if (!admissionAuthority) return protocolError(ws, 'DEVICE_ENROLLMENT_REQUIRED');
-          room = makeRoom(deviceId, token, admissionAuthority);
-          rooms.set(deviceId, room);
-        }
         if (role === 'phone') {
-          if (room && !digestsMatch(tokenDigest(token), room.tokenHash)) {
+          const record = trustedRecord(deviceId);
+          const suppliedPublicKey = text(message.publicKey, 16_384);
+          const admission = room ? { authority: room.admissionAuthority, publicKeyValue: room.publicKey, enrollment: null }
+            : await roomAdmission({ deviceId, token, ownerToken, suppliedPublicKey });
+          const candidatePublicKey = admission?.publicKeyValue;
+          const key = devicePublicKey(candidatePublicKey);
+          if (!admission?.authority || !key) return protocolError(ws, 'DEVICE_ENROLLMENT_REQUIRED');
+          if (room && (!digestsMatch(tokenDigest(token), room.tokenHash) || room.publicKey !== candidatePublicKey)) {
             return protocolError(ws, 'PAIRING_TOKEN_REJECTED');
           }
-          closeReplaced(room.phone);
-          connection.role = role;
-          connection.deviceId = deviceId;
-          connection.authenticated = true;
-          room.phone = connection;
+          const nonce = randomUUID();
+          connection.challenge = { deviceId, token, admissionAuthority: admission.authority, publicKeyValue: candidatePublicKey, enrollment: admission.enrollment, key, nonce };
+          ws.send(JSON.stringify({ type: 'hello-challenge', deviceId, nonce, algorithm: key.asymmetricKeyType }));
+          return;
         } else {
-          if (!room || !digestsMatch(tokenDigest(token), room.tokenHash)) {
+          let ownerVerified = false;
+          try {
+            ownerVerified = typeof verifyOwnerToken === 'function' &&
+              await verifyOwnerToken({ headers: { authorization: `Bearer ${ownerToken || ''}` } }) === true;
+          } catch {
+            ownerVerified = false;
+          }
+          if (!ownerVerified || !room) {
             return protocolError(ws, 'PAIRING_REQUIRED');
           }
-          closeReplaced(room.client);
           connection.role = role;
           connection.deviceId = deviceId;
           connection.authenticated = true;
-          room.client = connection;
+          connection.meshToken = null;
+          room.clients.set(connection.id, connection);
         }
         clearTimeout(helloTimer);
         helloAck(ws, role, room, volatileRoomState);
@@ -262,7 +406,7 @@ function createRelayServer({
 
       const room = rooms.get(connection.deviceId);
       if (!room) return protocolError(ws, 'ROOM_NOT_FOUND');
-      if (message.type === 'command') return routeCommand(connection, message, room);
+      if (message.type === 'command') return await routeCommand(connection, message, room);
       if (message.type === 'result') return routeResult(connection, message, room);
       if (message.type === 'ping') {
         if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'pong' }));

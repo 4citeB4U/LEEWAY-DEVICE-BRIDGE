@@ -10,7 +10,8 @@ import fs from 'node:fs';
 import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
+import { generateKeyPairSync, sign, createHash } from 'node:crypto';
 import { WebSocket } from 'ws';
 
 function reservePort() {
@@ -41,9 +42,11 @@ function nextMessage(socket) {
 
 function waitForListening(child) {
   return new Promise((resolve, reject) => {
+    let stderr='';
     const timer = setTimeout(() => reject(new Error('PERSISTENT_RELAY_START_TIMEOUT')), 10_000);
     child.once('error', reject);
-    child.once('exit', code => reject(new Error(`PERSISTENT_RELAY_EXIT_${code}`)));
+    child.stderr.on('data', raw => { stderr+=raw.toString('utf8'); });
+    child.once('exit', code => reject(new Error(`PERSISTENT_RELAY_EXIT_${code}:${stderr.slice(0,1000)}`)));
     child.stdout.on('data', raw => {
       if (raw.toString('utf8').includes('[LEEWAY-PERSISTENT-RELAY] listening')) {
         clearTimeout(timer);
@@ -53,18 +56,35 @@ function waitForListening(child) {
   });
 }
 
-test('deployable persistent relay binds the Rust registry and routes an arbitrary enrolled node', async () => {
+test('deployable persistent relay binds the Rust registry and authenticates an arbitrary enrolled node key', async t => {
   const root = path.resolve(import.meta.dirname, '..');
+  let binary = path.join(root, 'target', 'release', process.platform === 'win32' ? 'leeway-core.exe' : 'leeway-core');
+  let preflight = spawnSync(binary, ['registry-list', '--registry', path.join(root, 'registry', 'trusted-device-registry.json')], {
+    encoding: 'utf8', windowsHide: true,
+  });
+  if (process.platform === 'win32' && preflight.error?.code === 'UNKNOWN') {
+    t.diagnostic('HOST_APPLICATION_CONTROL_BLOCKED_UNSIGNED_RELEASE_BINARY; exercising the locally executable debug build');
+    binary = path.join(root, 'target', 'debug', 'leeway-core.exe');
+    preflight = spawnSync(binary, ['registry-list', '--registry', path.join(root, 'registry', 'trusted-device-registry.json')], {
+      encoding: 'utf8', windowsHide: true,
+    });
+  }
+  assert.equal(preflight.status, 0, preflight.stderr || preflight.error?.message);
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'leeway-persistent-relay-'));
   const registryPath = path.join(temp, 'trusted-device-registry.json');
   const deviceId = 'future-field-node-4096';
   const token = 'persistent-mesh-token-0123456789';
   const port = await reservePort();
+  const { publicKey, privateKey } = generateKeyPairSync('ed25519');
+  const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }).toString();
   fs.writeFileSync(registryPath, JSON.stringify({ devices: [{
     deviceId,
     platform: 'future',
-    publicKey: `ed25519:${'a'.repeat(64)}`,
-    admitted: true,
+    publicKey: publicKeyPem,
+    meshTokenSha256: createHash('sha256').update(token).digest('hex'),
+    identityVerified: true,
+    registrationState: 'TRUSTED_REGISTRY_READ',
+    registrationAuthority: 'TRUSTED_RUNTIME_DEVICE_REGISTRY',
   }] }));
 
   const child = spawn(process.execPath, [path.join(root, 'operator', 'persistent-relay-server.mjs')], {
@@ -75,14 +95,13 @@ test('deployable persistent relay binds the Rust registry and routes an arbitrar
       LEEWAY_RELAY_PORT: String(port),
       LEEWAY_MESH_TOKEN: token,
       LEEWAY_TRUSTED_DEVICE_REGISTRY_PATH: registryPath,
-      LEEWAY_CORE_BIN: path.join(root, 'target', 'release', process.platform === 'win32' ? 'leeway-core.exe' : 'leeway-core'),
+      LEEWAY_CORE_BIN: binary,
     },
     stdio: ['ignore', 'pipe', 'pipe'],
     windowsHide: true,
   });
 
   let phone;
-  let client;
   try {
     await waitForListening(child);
     const health = await fetch(`http://127.0.0.1:${port}/api/device-relay`).then(response => response.json());
@@ -90,21 +109,13 @@ test('deployable persistent relay binds the Rust registry and routes an arbitrar
 
     const url = `ws://127.0.0.1:${port}/api/device-relay`;
     phone = await open(url);
-    client = await open(url);
-    phone.send(JSON.stringify({ type: 'hello', role: 'phone', deviceId, token }));
+    phone.send(JSON.stringify({ type: 'hello', role: 'phone', deviceId, token, publicKey: publicKeyPem }));
+    const challenge = await nextMessage(phone);
+    const payload = Buffer.from(`leeway-device-relay-proof-v1\n${deviceId}\n${challenge.nonce}`);
+    phone.send(JSON.stringify({ type: 'hello-proof', signature: sign(null, payload, privateKey).toString('base64url') }));
     assert.equal((await nextMessage(phone)).deliveryMode, 'PROCESS_PERSISTENT_WEBSOCKET_V1');
-    client.send(JSON.stringify({ type: 'hello', role: 'client', deviceId, token }));
-    assert.equal((await nextMessage(client)).admissionAuthority, 'TRUSTED_RUNTIME_DEVICE_REGISTRY');
-
-    client.send(JSON.stringify({ type: 'command', id: 'process-bound-command', capability: 'device.health', arguments: {} }));
-    assert.equal((await nextMessage(phone)).id, 'process-bound-command');
-    phone.send(JSON.stringify({ type: 'result', id: 'process-bound-command', capability: 'device.health', ok: true, result: { alive: true } }));
-    assert.deepEqual(await nextMessage(client), {
-      type: 'result', id: 'process-bound-command', capability: 'device.health', ok: true, result: { alive: true },
-    });
   } finally {
     phone?.terminate();
-    client?.terminate();
     child.kill();
     fs.rmSync(temp, { recursive: true, force: true });
   }

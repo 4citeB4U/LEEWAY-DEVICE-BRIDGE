@@ -27,7 +27,7 @@ impl ContinuumJournal {
         Ok(Self { continuum_dir })
     }
 
-    pub fn record(&self, author: &str, intent: &str, payload: &str) -> Result<ContinuumCapsule, SovereignError> {
+    pub fn build(author: &str, intent: &str, payload: &str) -> Result<ContinuumCapsule, SovereignError> {
         if author.trim().is_empty() || intent.trim().is_empty() {
             return Err(SovereignError::Continuum("author and intent are required".into()));
         }
@@ -49,6 +49,11 @@ impl ContinuumJournal {
             payload: payload.to_owned(),
             sha256,
         };
+        Ok(capsule)
+    }
+
+    pub fn record(&self, author: &str, intent: &str, payload: &str) -> Result<ContinuumCapsule, SovereignError> {
+        let capsule = Self::build(author, intent, payload)?;
         let serialized = serde_json::to_vec_pretty(&capsule)
             .map_err(|error| SovereignError::Continuum(error.to_string()))?;
         let target = self.continuum_dir.join(format!("{}.json", capsule.capsule_id));

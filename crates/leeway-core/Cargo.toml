@@ -5,16 +5,21 @@ edition.workspace = true
 license.workspace = true
 authors = ["Leonard Jerome Lee <Leonardlee6@outlook.com>"]
 
+[[bin]]
+name = "leeway-core"
+path = "src/main.rs"
+test = false
+
 [dependencies]
 chrono = { version = "0.4", default-features = false, features = ["clock", "serde"] }
-env_logger = "0.11"
+base64 = "0.22"
+ed25519-dalek = { version = "2.2", features = ["pkcs8", "pem", "rand_core"] }
 hex = "0.4"
-log = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sha2 = "0.10"
 thiserror = "2.0"
-tokio = { version = "1.48", features = ["macros", "rt-multi-thread", "sync"] }
+tokio = { version = "1.48", features = ["macros", "rt-multi-thread", "sync", "net", "io-util"] }
 
 [dev-dependencies]
 tempfile = "3.23"

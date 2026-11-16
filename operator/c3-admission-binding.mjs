@@ -52,7 +52,8 @@ function resolveCapabilityMetadata(platform, capability, registry) {
 
 function hasSourceBoundWindowsIdentity(deviceId, device) {
   if (device?.platform !== 'windows') return true;
-  return deviceId === 'pc-primary' &&
+  const embeddedDeviceId = device.deviceId ?? device.id ?? null;
+  return (!embeddedDeviceId || embeddedDeviceId === deviceId) &&
     device.identityVerified === true &&
     device.registrationState === 'TRUSTED_REGISTRY_READ' &&
     device.identitySource === 'WINDOWS_CIM_READONLY' &&
@@ -118,9 +119,9 @@ export function createC3AdmissionBinding({
       return false;
     }
 
-    // Windows pc-primary may enter C3 only after the trusted host registry
-    // carries a fresh adapter observation. A configured ID, passport-shaped
-    // object, or caller claim cannot satisfy this boundary.
+    // Any Windows device may enter C3 only after its own registry-bound,
+    // source-observed passport record is present. A configured name,
+    // passport-shaped object, or caller claim cannot satisfy this boundary.
     if (!hasSourceBoundWindowsIdentity(deviceId, device)) return false;
 
     // 5. Derive capability metadata strictly from registry

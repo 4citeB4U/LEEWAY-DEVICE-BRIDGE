@@ -86,7 +86,7 @@ object GitHubUpdateChecker {
                             "UPDATE_AVAILABLE",
                             "GitHub Android package versionCode=$remoteCode"
                         )
-                        if (notifyOnly) showNotification(appContext, update!!)
+                        if (notifyOnly) showNotification(appContext, update)
                     }
                 }
             } catch (error: Throwable) {
