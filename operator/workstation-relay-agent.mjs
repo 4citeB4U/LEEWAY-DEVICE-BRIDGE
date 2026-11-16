@@ -56,7 +56,7 @@ export class WorkstationRelayAgent {
   }
 
   async executeCapability(capability, args = {}) {
-    if (capability === 'device.capabilities') return { ok: true, nodeId: this.nodeId, remoteQualified: TWO_PC_CAPABILITIES, authority: 'LOCAL_ADAPTER_MEASUREMENT' };
+    if (capability === 'device.capabilities') return { ok: true, nodeId: this.nodeId, remoteQualified: [...new Set([...TWO_PC_CAPABILITIES, ...(await this.desktopAdapter.discover())])], authority: 'LOCAL_ADAPTER_MEASUREMENT' };
     if (capability === 'device.health') return { ok: true, nodeId: this.nodeId, continuum: await this.digitalBrain.diagnosticsReadback() };
     if (capability === 'device.info') return { nodeId: this.nodeId, platform: process.platform, architecture: os.arch(), continuumRootBound: true, cloudConsciousnessAuthority: 'NOT_REQUIRED_FOR_SUB_LINK' };
     if (capability === 'pc.diagnostics.read') return this.digitalBrain.diagnosticsReadback();
