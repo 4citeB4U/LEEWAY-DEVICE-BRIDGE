@@ -42,11 +42,12 @@ async function readBody(req) {
  * Loopback-only by default; public deployment requires approved OAuth resource
  * validation at the hosting boundary before calling this handler.
  */
-export function createRemoteMcpHttpServer({ bridge, authenticate, host = '127.0.0.1', resourceUrl, authorizationServerUrl } = {}) {
+export function createRemoteMcpHttpServer({ bridge, authenticate, host = '127.0.0.1', resourceUrl, authorizationServerUrl, executionEnabled = false } = {}) {
   if (!bridge || !(bridge.devices instanceof Map) || typeof bridge.discover !== 'function') {
     throw new Error('CANONICAL_BRIDGE_REQUIRED');
   }
   if (typeof authenticate !== 'function') throw new Error('AUTHENTICATION_PROVIDER_REQUIRED');
+  if (typeof executionEnabled !== 'boolean') throw new Error('INVALID_MCP_EXECUTION_MODE');
   if (host !== '127.0.0.1' && host !== '::1') {
     throw new Error('REMOTE_PUBLIC_BIND_NOT_QUALIFIED');
   }
@@ -86,8 +87,8 @@ export function createRemoteMcpHttpServer({ bridge, authenticate, host = '127.0.
       sessionIdGenerator: undefined,
       enableJsonResponse: true,
     });
-    const mcp = createServer(bridge, { discoveryOnly: true,
-      readOnlyCapabilities: ['device.health', 'device.info', 'device.directories.list', 'device.files.read',
+    const mcp = createServer(bridge, { discoveryOnly: !executionEnabled,
+      readOnlyCapabilities: executionEnabled ? [] : ['device.health', 'device.info', 'device.directories.list', 'device.files.read',
         ...(process.env.LEEWAY_MODEL_HUB_URL ? ['model.hub.catalog'] : [])] });
     try {
       await mcp.connect(transport);
