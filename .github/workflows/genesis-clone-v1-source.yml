@@ -1,0 +1,35 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.DEVICE_BRIDGE.GENESIS.CI
+# TAG: LEEWAY.GENESIS.CLONE.V1.SOURCE.CI
+# 5WH:
+# WHAT = Test signed Genesis manifest and encrypted-capsule integrity contract.
+# WHY = Preserve fail-closed owner and content checks before future native restore integration.
+# WHO = Creator-authorized Device Bridge contributors.
+# WHERE = .github/workflows/genesis-clone-v1-source.yml.
+# WHEN = 2026-11-16.
+# HOW = Node standard-library real Ed25519 tests; no provider credentials or physical effects.
+# LICENSE = Existing repository terms; no new license asserted.
+name: Genesis Clone V1 source checks
+on:
+  pull_request:
+    paths:
+      - 'packages/protocol/sovereign-genesis-v1.mjs'
+      - 'tests/sovereign-genesis-v1.test.mjs'
+      - '.github/workflows/genesis-clone-v1-source.yml'
+  push:
+    paths:
+      - 'packages/protocol/sovereign-genesis-v1.mjs'
+      - 'tests/sovereign-genesis-v1.test.mjs'
+      - '.github/workflows/genesis-clone-v1-source.yml'
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check packages/protocol/sovereign-genesis-v1.mjs && node --check tests/sovereign-genesis-v1.test.mjs
+      - run: node --test tests/sovereign-genesis-v1.test.mjs
