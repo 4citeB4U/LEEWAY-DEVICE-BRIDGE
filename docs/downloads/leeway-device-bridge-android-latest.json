@@ -1,9 +1,9 @@
 {
   "versionName": "0.10.0-agent-update-rc1",
   "versionCode": 25,
-  "sha256": "c5abac7f365e1eb0cb7bbfafc5434d36666916afe27cdf73268b7578f4aeac87",
+  "sha256": "ea026156a486b0ff6c54e58a9357303456267f6fb1bdff4e03fedb9ebabf8586",
   "sizeBytes": 66462262,
   "downloadUrl": "./leeway-device-bridge-android-latest-debug.apk",
-  "sourceRunId": "43796189307",
-  "sourceCommit": "a8d44df74ae8a56ca9b1ef87aedc2c25461f9944"
+  "sourceRunId": "43798909563",
+  "sourceCommit": "6bf5d427242f186df12187653391402975426740"
 }
