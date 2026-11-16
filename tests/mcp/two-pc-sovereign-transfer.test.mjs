@@ -82,3 +82,11 @@ test('MCP configuration preserves the strict remote-relay boundary', async () =>
   assert.match(source, /\['pc-primary', 'pc-hp-secondary'\]/);
 });
 
+test('workstation daemon uses the relay execution role and is directly launchable', async () => {
+  const source = await fs.readFile(new URL('../../operator/workstation-relay-agent.mjs', import.meta.url), 'utf8');
+  assert.match(source, /role: 'phone'/);
+  assert.match(source, /LEEWAY_CLI_AUTOSTART|Starting relay endpoint/);
+  assert.match(source, /pathToFileURL/);
+  assert.doesNotMatch(source, /role: 'agent'/);
+});
+
