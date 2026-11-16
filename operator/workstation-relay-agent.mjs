@@ -11,6 +11,7 @@ LICENSE: MIT
 */
 import os from 'node:os';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { DesktopAdapter } from '../apps/desktop/adapter.mjs';
 import { DigitalBrainEngine } from '../apps/desktop/digital-brain.mjs';
@@ -35,8 +36,8 @@ export class WorkstationRelayAgent {
     relayUrl = process.env.LEEWAY_RELAY_URL,
     token = process.env.LEEWAY_MESH_TOKEN,
     subLinkUrl = process.env.LEEWAY_USER_SUBLINK_URL || null,
-    workspace = process.env.LEEWAY_WORKSPACE,
-    continuumRoot = process.env.LEEWAY_CONTINUUM_ROOT,
+    workspace = process.env.LEEWAY_WORKSPACE || process.env.LEEWAY_WORKSPACE_ROOT || path.join(os.homedir(), 'LeeWay', 'SovereignNode', 'Workspace'),
+    continuumRoot = process.env.LEEWAY_CONTINUUM_ROOT || path.join(os.homedir(), 'LeeWay', 'SovereignNode', 'Continuum'),
     subLinkClient = null,
   } = {}) {
     if (!['pc-primary', 'pc-hp-secondary'].includes(nodeId)) throw new Error('TWO_PC_NODE_ID_REQUIRED');
@@ -86,10 +87,16 @@ export class WorkstationRelayAgent {
     // client is resolved only when an enrolled daemon actually connects.
     const { default: WebSocket } = await import('ws');
     const socket = new WebSocket(this.relayUrl, { maxPayload: 8 * 1024 * 1024, followRedirects: false });
-    socket.on('open', () => socket.send(JSON.stringify({ type: 'hello', role: 'agent', deviceId: this.nodeId, token: this.token })));
+    // The relay's execution endpoint is named "phone" for protocol
+    // compatibility. It is a role, not a hardware classification.
+    socket.on('open', () => socket.send(JSON.stringify({ type: 'hello', role: 'phone', deviceId: this.nodeId, token: this.token })));
     socket.on('message', async raw => {
       let message;
       try { message = JSON.parse(raw.toString()); } catch { return; }
+      if (message.type === 'hello-ack') {
+        console.log(`[WORKSTATION-RELAY:SOVEREIGN] Joined room as target: ${this.nodeId}`);
+        return;
+      }
       if (message.type !== 'command' || typeof message.id !== 'string' || typeof message.capability !== 'string') return;
       try {
         const result = await this.executeCapability(message.capability, message.arguments || {});
@@ -101,5 +108,16 @@ export class WorkstationRelayAgent {
     });
     return socket;
   }
+}
+
+// The daemon can be launched directly on an owner-enrolled workstation. The
+// relay URL, token, and node identity stay in environment variables, not CLI
+// source or a command line.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const agent = new WorkstationRelayAgent();
+  console.log(`[WORKSTATION-RELAY] Starting relay endpoint for ${agent.nodeId}`);
+  const socket = await agent.connect();
+  socket.on('close', code => console.log(`[WORKSTATION-RELAY:SOVEREIGN] Connection closed: ${code}`));
+  socket.on('error', error => console.error(`[WORKSTATION-RELAY:SOVEREIGN] Error: ${error.message}`));
 }
 
