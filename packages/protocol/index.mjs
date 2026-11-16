@@ -17,6 +17,30 @@ const coordinate = z.number().finite().min(0).max(32768);
 export const schemas = Object.freeze({
   'device.health': empty,
   'device.info': empty,
+  // Two-PC transfer operations are deliberately separate from the raw
+  // workspace file capabilities. Stage one is Continuum-only; materializing
+  // bytes to a Windows workspace requires an explicit owner request.
+  'pc.diagnostics.read': empty,
+  'digital-brain.read': empty,
+  'continuum.transfer.stage': z.object({
+    transferId: z.string().uuid(),
+    sourceNodeId: z.enum(['pc-primary', 'pc-hp-secondary']),
+    targetNodeId: z.enum(['pc-primary', 'pc-hp-secondary']),
+    filename: z.string().min(1).max(240).regex(/^[^\\/:*?"<>|\x00-\x1f]+$/),
+    base64: z.string().min(4).max(349528),
+    expectedSha256: z.string().regex(/^[a-f0-9]{64}$/),
+    transport: z.enum(['relay', 'sub-link']),
+  }).strict(),
+  'continuum.transfer.read': z.object({
+    transferId: z.string().uuid(),
+    offset: z.number().int().min(0).safe().default(0),
+    length: z.number().int().min(1).max(262144).default(65536),
+  }).strict(),
+  'continuum.transfer.materialize': z.object({
+    transferId: z.string().uuid(),
+    destinationPath: z.string().min(1).max(1024),
+    explicitUserRequest: z.literal(true),
+  }).strict(),
   'device.windows.window.list': z.object({ app: z.enum(['codex', 'chatgpt', 'antigravity', 'chrome']), limit: z.number().int().min(1).max(20).default(10) }).strict(),
   'device.windows.window.observe': z.object({ app: z.enum(['codex', 'chatgpt', 'antigravity', 'chrome']), pid: z.number().int().min(1), maxControls: z.number().int().min(1).max(200).default(100), expectedUrl: z.string().min(1).max(2048).optional(), expectedTitle: z.string().min(1).max(512).optional() }).strict(),
   'device.windows.window.invoke': z.object({ app: z.enum(['codex', 'chatgpt', 'antigravity', 'chrome']), pid: z.number().int().min(1), controlName: z.literal('Connecting to MCP and Codex') }).strict(),
@@ -194,4 +218,5 @@ export class Bridge {
     }
   }
 }
+
 
