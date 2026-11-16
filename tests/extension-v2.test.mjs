@@ -56,7 +56,7 @@ test('native hello requires authenticated v2 and capability',()=>{
 test('no device singleton, token literal, or hidden page collection',()=>{
   for(const file of ['browser-polyfill.js','background.js','content-courier.js','floating-tablet.js']){
     const c=js(file);
-    assert.doesNotMatch(c,/pc-primary|pc-hp-secondary|C:\\\\Users\\\\|E:\\\\|<all_urls>/);
+    assert.doesNotMatch(c,/pc-primary|pc-hp-secondary|C:\\Users\\|E:\\|<all_urls>/);
   }
   assert.doesNotMatch(js('content-courier.js'),/innerText|querySelectorAll|keydown|MutationObserver/);
 });
