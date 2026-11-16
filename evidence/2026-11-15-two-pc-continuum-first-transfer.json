@@ -1,0 +1,31 @@
+{
+  "schema": "leeway.device-bridge.two-pc-continuum-first.candidate.v1",
+  "implementationCommit": "f1b6eb710c7f6216aaa06da7c584f9f93274859c",
+  "baselineCommit": "2eb0328a5e5f678e718b0a637d93564fa1a2eb62",
+  "scope": {
+    "nodes": ["pc-primary", "pc-hp-secondary"],
+    "phones": "OUT_OF_SCOPE",
+    "physicalExecution": "NOT_EXECUTED"
+  },
+  "expectedContract": {
+    "stageOne": { "inContinuum": true, "materializedToWindowsOs": false },
+    "stageTwo": { "requiresExplicitUserRequest": true, "sha256VerifiedOnDisk": true },
+    "subLink": { "environmentBinding": "LEEWAY_USER_SUBLINK_URL", "cloudConsciousnessFallback": true }
+  },
+  "tests": [
+    {
+      "command": "node --check apps/desktop/digital-brain.mjs && node --check operator/workstation-relay-agent.mjs && node --test tests/mcp/two-pc-sovereign-transfer.test.mjs",
+      "exitCode": 0,
+      "passed": 3,
+      "failed": 0
+    }
+  ],
+  "providerEvidence": {
+    "formula": "NOT_EXECUTED",
+    "independentVeritas": "NOT_EXECUTED",
+    "receipt": "NOT_CREATED",
+    "ledger": "NOT_UPDATED"
+  },
+  "nextGate": "Obtain live owner-scoped mutation authority and actual Formula, Veritas, Receipt, and Ledger provider readbacks."
+}
+
