@@ -109,10 +109,10 @@
       "releaseUrl": "https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/tag/apple-latest",
       "downloadUrl": "https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/download/apple-latest/LeeWayDeviceBridge-unsigned.ipa",
       "metadataUrl": "https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/download/apple-latest/LEEWAY-APPLE-PACKAGE-MANIFEST.json",
-      "sha256": "9508c0173af179a639607934eb6fd1dbf2cd39203c25467eb4852ba01fa0db10",
-      "sizeBytes": 376212,
-      "versionName": "0.1.135",
-      "versionCode": 135,
+      "sha256": "bafabb7c978670ed3a5e05081d4de073db1fc750a994c3efea77a7e52ef993ba",
+      "sizeBytes": 376232,
+      "versionName": "0.1.146",
+      "versionCode": 146,
       "updateAction": "OPEN_GITHUB_IPA_AND_REQUEST_ILOADER_OWNER_CONFIRMATION",
       "formulaQualification": {
         "required": true,
@@ -121,13 +121,13 @@
       },
       "githubActionsQualification": {
         "state": "VERIFIED",
-        "runId": 42572156968,
-        "sourceRevision": "5ddce9aae9509386a9878c679b39dafbbe4de266",
-        "ipaSizeBytes": 376212,
-        "ipaSha256": "9508c0173af179a639607934eb6fd1dbf2cd39203c25467eb4852ba01fa0db10",
+        "runId": 43796189284,
+        "sourceRevision": "a8d44df74ae8a56ca9b1ef87aedc2c25461f9944",
+        "ipaSizeBytes": 376232,
+        "ipaSha256": "bafabb7c978670ed3a5e05081d4de073db1fc750a994c3efea77a7e52ef993ba",
         "note": "GitHub publishes the unsigned IPA; the owner-controlled iLoader route signs and installs it over USB."
       }
     }
   ],
-  "updatedAtUtc": "2026-11-16T03:08:25Z"
+  "updatedAtUtc": "2026-11-16T03:09:17Z"
 }
