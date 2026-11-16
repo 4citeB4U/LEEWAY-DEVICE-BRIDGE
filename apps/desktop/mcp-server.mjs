@@ -83,7 +83,7 @@ function trustedRegistryRecord(deviceRegistry, deviceId) {
 
 function hasSourceBoundWindowsIdentity(deviceId, record) {
   if (record?.platform !== 'windows') return true;
-  return deviceId === 'pc-primary' &&
+  return ['pc-primary', 'pc-hp-secondary'].includes(deviceId) &&
     record.identityVerified === true &&
     record.registrationState === 'TRUSTED_REGISTRY_READ' &&
     record.identitySource === 'WINDOWS_CIM_READONLY' &&
@@ -197,6 +197,10 @@ const deviceSchema = z.object({
   } else if (device.type === 'physical-apple') {
     if (device.platform !== 'ios' || !device.hardwareId || device.serial || device.url || device.workspace || device.tokenEnv) invalid('APPLE_USB_EXPLICIT_IDENTITY_REQUIRED');
     if ((device.cameraEndpoint && !device.cameraTokenEnv) || (!device.cameraEndpoint && device.cameraTokenEnv)) invalid('APPLE_CAMERA_PAIRING_REQUIRED');
+  } else if (device.type === 'relay') {
+    if (!device.url || !device.tokenEnv || device.workspace || device.serial || device.hardwareId) invalid('REMOTE_RELAY_BINDING_REQUIRED');
+  } else if (device.type === 'desktop') {
+    if (!device.workspace || device.url || device.tokenEnv || device.serial || device.hardwareId) invalid('LOCAL_DESKTOP_WORKSPACE_REQUIRED');
   } else if (device.serial || device.hardwareId) {
     invalid('PHYSICAL_USB_FIELDS_NOT_ALLOWED');
   }
@@ -293,4 +297,5 @@ export async function start(configPath, runtimeInput = null) {
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   start(process.argv[2]).catch(() => { console.error('Device Bridge MCP startup failed; check configuration and credential environment.'); process.exitCode = 1; });
 }
+
 
