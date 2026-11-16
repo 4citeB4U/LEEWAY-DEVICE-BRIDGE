@@ -44,6 +44,7 @@
 - `git diff --check`: **passed**, with only Git line-ending warnings on pre-existing modified Rust/checkpoint files.
 - Latest exact Rust source test execution: **NOT EXECUTED at this checkpoint**. Earlier 6/6 evidence predates later receipt-chain changes; Windows Application Control blocked the newly rebuilt unsigned test executable. CI must test the exact current Rust bytes.
 - Android build evidence remains the earlier scoped **BUILD SUCCESSFUL / 43 tasks** result; no Android source was changed in this checkpoint segment.
+- First GitHub Android workflow run `43877919756`: **FAILED** in source qualification because the workflow enumerated the persistent-process integration test before building Rust, producing `spawnSync .../target/release/leeway-core ENOENT`. The test now skips only when neither release nor debug core artifact exists; the portable-package workflow still builds the core before invoking it. Local repair check: **1 skipped, 0 failed** due host Application Control and absent debug artifact. CI retest is pending the repair push.
 
 ## VERIFY → EVIDENCE
 
@@ -83,5 +84,5 @@
 - **NEXT_ACTION:** package/install Native Messaging manifests and supervise the browser gateway, then run current-byte CI and live-device acceptance.
 - **CAPABILITY_STATE:** source adapters implemented; browser package and local gateway tested; platform browser adapters not installed; live Bridge reachability not probed in this checkpoint.
 - **EVIDENCE_STATE:** Level A/B local test evidence only; Formula, Veritas, Receipt Authority, Learning Ledger, and production qualification not executed.
-- **SOURCE_REFERENCES:** the seven canonical repository SHAs in `SOURCE_FIRST_ACK`, Device Bridge committed head `dd3aa4d…`, and this checkpoint SHA-256 readback.
+- **SOURCE_REFERENCES:** the seven canonical repository SHAs in `SOURCE_FIRST_ACK`, Device Bridge repair commits `6ee932bf…` plus its pending CI-order repair, and this checkpoint SHA-256 readback.
 - **INDEPENDENT_VALIDATION:** checkpoint structure and SHA are read back by the read-only engineering-loop checkpoint reader; claim truth is not independently assessed. Independent Veritas remains not executed.

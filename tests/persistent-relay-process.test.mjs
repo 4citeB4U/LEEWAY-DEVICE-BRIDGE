@@ -58,13 +58,24 @@ function waitForListening(child) {
 
 test('deployable persistent relay binds the Rust registry and authenticates an arbitrary enrolled node key', async t => {
   const root = path.resolve(import.meta.dirname, '..');
-  let binary = path.join(root, 'target', 'release', process.platform === 'win32' ? 'leeway-core.exe' : 'leeway-core');
+  const executable = process.platform === 'win32' ? 'leeway-core.exe' : 'leeway-core';
+  const releaseBinary = path.join(root, 'target', 'release', executable);
+  const debugBinary = path.join(root, 'target', 'debug', executable);
+  if (!fs.existsSync(releaseBinary) && !fs.existsSync(debugBinary)) {
+    t.skip('RUST_CORE_ARTIFACT_REQUIRED; the portable-package workflow builds the core before this integration test');
+    return;
+  }
+  let binary = fs.existsSync(releaseBinary) ? releaseBinary : debugBinary;
   let preflight = spawnSync(binary, ['registry-list', '--registry', path.join(root, 'registry', 'trusted-device-registry.json')], {
     encoding: 'utf8', windowsHide: true,
   });
   if (process.platform === 'win32' && preflight.error?.code === 'UNKNOWN') {
     t.diagnostic('HOST_APPLICATION_CONTROL_BLOCKED_UNSIGNED_RELEASE_BINARY; exercising the locally executable debug build');
-    binary = path.join(root, 'target', 'debug', 'leeway-core.exe');
+    if (!fs.existsSync(debugBinary)) {
+      t.skip('HOST_APPLICATION_CONTROL_BLOCKED_UNSIGNED_RELEASE_BINARY_AND_NO_DEBUG_ARTIFACT');
+      return;
+    }
+    binary = debugBinary;
     preflight = spawnSync(binary, ['registry-list', '--registry', path.join(root, 'registry', 'trusted-device-registry.json')], {
       encoding: 'utf8', windowsHide: true,
     });
