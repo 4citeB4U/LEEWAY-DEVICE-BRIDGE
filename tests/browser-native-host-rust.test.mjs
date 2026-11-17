@@ -48,7 +48,7 @@ test('compiled Rust native host obtains a one-use session from the real loopback
   t.after(() => { if (!child.killed) child.kill(); });
   child.stdin.end(frame({ type: 'LEEWAY_BROWSER_SESSION_REQUEST', extensionId }));
   const response = await readFrame(child.stdout);
-  assert.equal(response.type, 'LEEWAY_BROWSER_SESSION');
+  assert.equal(response.type, 'LEEWAY_BROWSER_SESSION', JSON.stringify(response));
   assert.equal(response.wsUrl, 'ws://127.0.0.1:4280/mesh');
   assert.ok(response.sessionToken.length >= 32);
   assert.ok(Date.parse(response.expiresUtc) > Date.now());
