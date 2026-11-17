@@ -3,6 +3,7 @@
 pub mod continuum;
 pub mod continuum_memory;
 pub mod compute_backend;
+pub mod native_compute;
 pub mod registry;
 pub mod router;
 pub mod sandbox;
@@ -11,8 +12,10 @@ pub mod vault;
 
 pub use continuum::{ContinuumCapsule, ContinuumJournal};
 pub use compute_backend::{
-    execute_cpu_reference, tensor_buffer_sha256, ComputeExecutionEvidence, TENSOR_OPERATION_ID,
+    execute_cpu_reference, tensor_buffer_sha256, ComputeExecutionEvidence, TENSOR_ABSOLUTE_TOLERANCE,
+    TENSOR_OPERATION_ID,
 };
+pub use native_compute::{execute_native_gpu, NativeComputeEvidence};
 pub use continuum_memory::{
     Block256, CacheStageResult, ContinuumMemoryCache, ContinuumMemoryStats, ContinuumPointer,
     ContinuumPointerState, ReconstructionManifest, ReversibleBlockStream, TensorProjection16,

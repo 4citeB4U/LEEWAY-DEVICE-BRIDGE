@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 pub const TENSOR_OPERATION_ID: &str = "LEEWAY_TENSOR_AFFINE_16X16_V1";
+pub const TENSOR_ABSOLUTE_TOLERANCE: f32 = 1.0e-6;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -39,9 +40,13 @@ pub fn tensor_buffer_sha256(values: &[f32]) -> String {
 }
 
 pub fn execute_cpu_reference(values: &[f32]) -> Result<ComputeExecutionEvidence, SovereignError> {
-    if values.len() != MATRIX_CELLS || values.iter().any(|value| !value.is_finite()) {
+    if values.len() != MATRIX_CELLS
+        || values
+            .iter()
+            .any(|value| !value.is_finite() || !(0.0..=1.0).contains(value))
+    {
         return Err(SovereignError::Compute(
-            "COMPUTE_TENSOR_16X16_FINITE_INPUT_REQUIRED".into(),
+            "COMPUTE_TENSOR_16X16_NORMALIZED_FINITE_INPUT_REQUIRED".into(),
         ));
     }
     let output = values
@@ -85,5 +90,8 @@ mod tests {
         let mut non_finite = [0.0_f32; MATRIX_CELLS];
         non_finite[7] = f32::NAN;
         assert!(execute_cpu_reference(&non_finite).is_err());
+        let mut out_of_range = [0.0_f32; MATRIX_CELLS];
+        out_of_range[9] = 1.01;
+        assert!(execute_cpu_reference(&out_of_range).is_err());
     }
 }

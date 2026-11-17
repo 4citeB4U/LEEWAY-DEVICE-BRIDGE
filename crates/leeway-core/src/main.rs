@@ -1,5 +1,5 @@
 use leeway_core::{
-    ContinuumMemoryCache, ContinuumPointer, ContinuumPointerState, HardwareSnapshot,
+    execute_native_gpu, ContinuumMemoryCache, ContinuumPointer, ContinuumPointerState, HardwareSnapshot,
     ReversibleBlockStream, SandboxFabric, SovereignRouter, SovereignVault, TensorProjection16, TransportProfile,
     UniversalMeshRegistry,
 };
@@ -73,6 +73,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let encoded: ReversibleBlockStream = serde_json::from_slice(&input)?;
         let decoded = encoded.decode(MAX_PROJECTION_INPUT_BYTES)?;
         io::stdout().write_all(&decoded)?;
+        return Ok(());
+    }
+    if command == "compute-native-probe" {
+        let mut input = Vec::new();
+        io::stdin().take(64 * 1024 + 1).read_to_end(&mut input)?;
+        if input.len() > 64 * 1024 {
+            return Err("COMPUTE_NATIVE_INPUT_LIMIT_EXCEEDED".into());
+        }
+        let values: Vec<f32> = serde_json::from_slice(&input)?;
+        let evidence = execute_native_gpu(&values).await?;
+        println!("{}", serde_json::to_string(&evidence)?);
+        if evidence.tolerance_mismatch_count != 0 {
+            std::process::exit(4);
+        }
         return Ok(());
     }
     if command == "authorize-command" {
