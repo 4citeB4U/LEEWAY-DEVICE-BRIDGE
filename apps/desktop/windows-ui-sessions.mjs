@@ -306,8 +306,8 @@ public static class LeeWayUnicodeInput {
     keybd_event(0x41, 0, 2, UIntPtr.Zero); keybd_event(0x11, 0, 2, UIntPtr.Zero);
     foreach (char c in value) {
       var inputs = new INPUT[] {
-        new INPUT { type=1, keyboard=new KEYBDINPUT { scanCode=c, flags=4 } },
-        new INPUT { type=1, keyboard=new KEYBDINPUT { scanCode=c, flags=6 } }
+        new INPUT { type=1, keyboard=new KEYBDINPUT { scanCode=(ushort)c, flags=4 } },
+        new INPUT { type=1, keyboard=new KEYBDINPUT { scanCode=(ushort)c, flags=6 } }
       };
       if (SendInput(2, inputs, Marshal.SizeOf(typeof(INPUT))) != 2) throw new InvalidOperationException("UNICODE_SEND_INPUT_FAILED");
     }
