@@ -15,10 +15,38 @@ struct AppleBridgeEvidence: Identifiable, Codable, Sendable {
     let state: AppleBridgeEvidenceState
     let laneCount: Int
     let mismatchCount: Int?
-    let operationID: String? = nil
-    let inputSHA256: String? = nil
-    let outputSHA256: String? = nil
+    let operationID: String?
+    let inputSHA256: String?
+    let outputSHA256: String?
     let detail: String
+
+    init(
+        id: UUID,
+        observedAt: Date,
+        adapterID: String,
+        physicalDeviceName: String?,
+        backend: String,
+        state: AppleBridgeEvidenceState,
+        laneCount: Int,
+        mismatchCount: Int?,
+        operationID: String? = nil,
+        inputSHA256: String? = nil,
+        outputSHA256: String? = nil,
+        detail: String
+    ) {
+        self.id = id
+        self.observedAt = observedAt
+        self.adapterID = adapterID
+        self.physicalDeviceName = physicalDeviceName
+        self.backend = backend
+        self.state = state
+        self.laneCount = laneCount
+        self.mismatchCount = mismatchCount
+        self.operationID = operationID
+        self.inputSHA256 = inputSHA256
+        self.outputSHA256 = outputSHA256
+        self.detail = detail
+    }
 
     static func unverified(detail: String) -> AppleBridgeEvidence {
         AppleBridgeEvidence(
