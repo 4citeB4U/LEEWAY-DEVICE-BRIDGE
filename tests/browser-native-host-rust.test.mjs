@@ -54,3 +54,26 @@ test('compiled Rust native host obtains a one-use session from the real loopback
   assert.ok(Date.parse(response.expiresUtc) > Date.now());
   await once(child, 'exit');
 });
+
+test('loopback gateway emits bounded content-length JSON for the native host', async t => {
+  const gateway = createBrowserLocalGateway({
+    port: 0,
+    nativeHostSecret: secret,
+    allowedExtensionIds: [extensionId],
+  });
+  const address = await gateway.listen();
+  t.after(() => gateway.close());
+
+  const response = await fetch(`http://127.0.0.1:${address.port}/native/session`, {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${secret}`,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({ extensionId }),
+  });
+  const raw = await response.text();
+  assert.equal(Number(response.headers.get('content-length')), Buffer.byteLength(raw));
+  assert.equal(response.headers.get('transfer-encoding'), null);
+  assert.equal(JSON.parse(raw).type, 'LEEWAY_BROWSER_SESSION');
+});

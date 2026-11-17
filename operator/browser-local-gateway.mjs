@@ -41,8 +41,13 @@ function equalSecret(actual, expected) {
 }
 
 function sendJson(res, status, value) {
-  res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
-  res.end(JSON.stringify(value));
+  const payload = Buffer.from(JSON.stringify(value), 'utf8');
+  res.writeHead(status, {
+    'content-type': 'application/json; charset=utf-8',
+    'content-length': String(payload.length),
+    'cache-control': 'no-store',
+  });
+  res.end(payload);
 }
 
 async function readBody(req) {
