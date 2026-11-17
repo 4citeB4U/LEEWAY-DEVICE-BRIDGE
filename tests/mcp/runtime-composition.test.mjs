@@ -55,6 +55,16 @@ test('trusted Runtime card provider is accepted only with a matching validation 
  assert.throws(()=>requireTrustedRuntimeComposition({admission,receiptSink,complianceCardProvider}),/TRUSTED_RUNTIME_COMPOSITION_REQUIRED/);
 });
 
+test('native compute providers are host-injected maps with a bounded execute seam',()=>{
+ const admission=async()=>true,receiptSink=async()=>{};
+ const provider={execute:async()=>({laneCount:256,canonicalReceiptIssued:false})};
+ const nativeComputeProviders=new Map([['portable-node',provider]]);
+ const result=requireTrustedRuntimeComposition({admission,receiptSink,nativeComputeProviders});
+ assert.equal(result.nativeComputeProviders,nativeComputeProviders);
+ assert.throws(()=>requireTrustedRuntimeComposition({admission,receiptSink,nativeComputeProviders:{'portable-node':provider}}),/TRUSTED_NATIVE_COMPUTE_PROVIDER_CONFIGURATION_INVALID/);
+ assert.throws(()=>requireTrustedRuntimeComposition({admission,receiptSink,nativeComputeProviders:new Map([['portable-node',{}]])}),/TRUSTED_NATIVE_COMPUTE_PROVIDER_CONFIGURATION_INVALID/);
+});
+
 test('candidate execution seam requires the complete host-injected C3 dependency set', () => {
  const deviceRegistry = new Map([['pc-primary', { platform: 'windows' }]]);
  const adapterRegistry = { adapters: [{ platform: 'windows', capabilities: { 'device.info': { state: 'AVAILABLE' } } }] };

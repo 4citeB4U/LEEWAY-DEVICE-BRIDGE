@@ -168,6 +168,9 @@ export const schemas = Object.freeze({
     ciphertext: z.string().min(1).max(48 * 1024),
     tag: z.string().regex(/^[A-Za-z0-9_-]{22}$/),
   }).strict(),
+  'gpu.compute.native.probe': z.object({
+    values: z.array(z.number().finite().min(0).max(1)).length(256),
+  }).strict(),
   'voice.status': empty,
   'voice.speak': z.object({ text: z.string().min(1).max(4096) }).strict(),
   'vision.sources.list': z.object({ clientId: z.string().min(1).max(128) }).strict(),

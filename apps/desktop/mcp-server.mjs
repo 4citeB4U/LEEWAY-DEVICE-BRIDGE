@@ -246,6 +246,7 @@ export async function createConfiguredBridge(configPath, runtimeInput = null) {
   if (!runtimeComposition && !receiptPath) throw new Error('RECEIPTS_REQUIRED');
   const visionProviders = runtimeComposition?.visionProviders ?? new Map();
   const browserCourierProviders = runtimeComposition?.browserCourierProviders ?? new Map();
+  const nativeComputeProviders = runtimeComposition?.nativeComputeProviders ?? new Map();
   for (const deviceId of visionProviders.keys()) {
     if (!config.devices.some(device => device.id === deviceId && device.type === 'desktop')) {
       throw new Error('TRUSTED_VISION_PROVIDER_DEVICE_NOT_CONFIGURED');
@@ -257,7 +258,8 @@ export async function createConfiguredBridge(configPath, runtimeInput = null) {
       adapter = new DesktopAdapter(d.workspace ? path.resolve(base, d.workspace) : (() => { throw new Error('WORKSPACE_REQUIRED'); })(), {
         skillsRoot: d.skillsRoot ? path.resolve(base, d.skillsRoot) : null,
         voiceEndpoint: d.voiceEndpoint || null, receiptPath, visionProvider: visionProviders.get(d.id) ?? null,
-        browserCourierProvider: browserCourierProviders.get(d.id) ?? null
+        browserCourierProvider: browserCourierProviders.get(d.id) ?? null,
+        nativeComputeProvider: nativeComputeProviders.get(d.id) ?? null,
       });
     } else if (d.type === 'physical-android') {
       adapter = new PhysicalAndroidAdapter({ serial: d.serial });

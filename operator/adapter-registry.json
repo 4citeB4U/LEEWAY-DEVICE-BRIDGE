@@ -196,6 +196,11 @@
           "state": "SUPPORTED",
           "requiresHumanConsent": false,
           "notes": "Read-only host identity observation; no configured desktop name or registry row can promote identityVerified."
+        },
+        "gpu.compute.native.probe": {
+          "state": "AVAILABLE",
+          "requiresHumanConsent": false,
+          "notes": "Bounded user-space D3D12/Vulkan compute with fixed 256-lane kernel and CPU differential readback; physical execution remains per-device evidence."
         }
       },
       "evidenceState": "OBSERVED",
@@ -238,6 +243,11 @@
         "device.apps.install": {
           "state": "SUPPORTED",
           "requiresHumanConsent": true
+        },
+        "gpu.compute.native.probe": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false,
+          "notes": "Metal backend is source/build qualified; each enrolled Apple host still requires physical execution evidence."
         }
       },
       "evidenceState": "PROPOSED",
@@ -280,6 +290,11 @@
         "device.apps.install": {
           "state": "SUPPORTED",
           "requiresHumanConsent": true
+        },
+        "gpu.compute.native.probe": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false,
+          "notes": "Vulkan/GL backend is source/build qualified; each enrolled Linux host still requires physical execution evidence."
         }
       },
       "evidenceState": "PROPOSED",
