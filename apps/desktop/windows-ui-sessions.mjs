@@ -185,7 +185,11 @@ foreach ($process in $processes) { if ($process.MainWindowHandle -ne 0 -and $pro
 Write-Output 'LEEWAY_UI_BEFORE_RESULT'
 EmitResult (@{ ok = $true; result = @{ app = '${args.app || app}'; windows = @($items); total = $items.Count; truncated = $false } })
 `;
-    return this.executeScript(script);
+    const result = await this.executeScript(script);
+    const matcher = DEFAULT_WORKER_MATCHERS[app.toLowerCase()];
+    if (!matcher?.titleRegex) return result;
+    const windows = result.windows.filter(window => matcher.titleRegex.test(window.title));
+    return { ...result, windows, total: windows.length };
   }
 
   async observe(args) {
@@ -284,6 +288,40 @@ if ($readback -ceq $text) {
         break
       }
     }
+  }
+}
+if (-not $verified) {
+  $target.SetFocus()
+  if (-not ('LeeWayUnicodeInput' -as [type])) {
+    Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+public static class LeeWayUnicodeInput {
+  [DllImport("user32.dll")] static extern void keybd_event(byte key, byte scan, uint flags, UIntPtr extra);
+  [DllImport("user32.dll", SetLastError=true)] static extern uint SendInput(uint count, INPUT[] inputs, int size);
+  [StructLayout(LayoutKind.Sequential)] struct INPUT { public uint type; public KEYBDINPUT keyboard; }
+  [StructLayout(LayoutKind.Sequential)] struct KEYBDINPUT { public ushort virtualKey; public ushort scanCode; public uint flags; public uint time; public UIntPtr extra; }
+  public static void Replace(string value) {
+    keybd_event(0x11, 0, 0, UIntPtr.Zero); keybd_event(0x41, 0, 0, UIntPtr.Zero);
+    keybd_event(0x41, 0, 2, UIntPtr.Zero); keybd_event(0x11, 0, 2, UIntPtr.Zero);
+    foreach (char c in value) {
+      var inputs = new INPUT[] {
+        new INPUT { type=1, keyboard=new KEYBDINPUT { scanCode=c, flags=4 } },
+        new INPUT { type=1, keyboard=new KEYBDINPUT { scanCode=c, flags=6 } }
+      };
+      if (SendInput(2, inputs, Marshal.SizeOf(typeof(INPUT))) != 2) throw new InvalidOperationException("UNICODE_SEND_INPUT_FAILED");
+    }
+  }
+}
+'@
+  }
+  [LeeWayUnicodeInput]::Replace($text)
+  Start-Sleep -Milliseconds 250
+  $valueAfterInput = $null
+  if ($target.TryGetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern, [ref]$valueAfterInput)) {
+    $readback = [string]$valueAfterInput.Current.Value
+    $actualNormalized = ($readback -replace "\`r\`n", "\`n").Trim()
+    if ($actualNormalized -eq $expectedNormalized -or $readback -ceq $text) { $verified = $true; $readback = $text }
   }
 }
 if (-not $verified) { throw 'WINDOW_INPUT_READBACK_MISMATCH' }

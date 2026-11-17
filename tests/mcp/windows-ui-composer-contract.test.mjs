@@ -253,3 +253,31 @@ test('dynamic workerId resolves surface and supports observation and input', asy
   const inputResult = await sessionsInput.input({ workerId: 'w-copilot', pid, observationId: observation.observationId, targetId, text: 'hello' });
   assert.equal(inputResult.textSha256, hash('hello'));
 });
+
+test('worker list enforces the registered title matcher and input script contains bounded Unicode fallback', async () => {
+  let inputScript = '';
+  const sessions = new WindowsUiSessions({
+    executeScript: async () => ({ app: 'w-codex', windows: [
+      { pid: 1, processName: 'WindowsTerminal', title: 'Administrator: PowerShell', enabled: true },
+      { pid: 2, processName: 'Codex', title: 'Codex project', enabled: true },
+    ], total: 2, truncated: false }),
+  });
+  const listed = await sessions.list({ workerId: 'w-codex', limit: 20 });
+  assert.deepEqual(listed.windows.map(window => window.pid), [2]);
+
+  const observationId = '11111111-1111-4111-8111-111111111111';
+  const targetId = '22222222-2222-4222-8222-222222222222';
+  const inputSessions = new WindowsUiSessions({ executeScript: async script => {
+    inputScript = script;
+    return { targetId, inputLength: 5, textSha256: hash('hello'), textReadback: 'EXACT_VALUE_PATTERN_READBACK' };
+  } });
+  inputSessions.observations.set(observationId, {
+    app: 'w-copilot', pid, processName: 'Code', processStartedUtc: '2026-11-07T12:00:00.0000000Z',
+    windowHandle: 5678, title: 'Visual Studio Code', editableTargets: new Map([[targetId, edit()]]),
+    actionTargets: new Map(), inputUsed: false, submitted: false, expiresAt: Date.now() + 30000,
+  });
+  await inputSessions.input({ workerId: 'w-copilot', pid, observationId, targetId, text: 'hello' });
+  assert.match(inputScript, /LeeWayUnicodeInput/);
+  assert.match(inputScript, /SendInput/);
+  assert.match(inputScript, /WINDOW_INPUT_READBACK_MISMATCH/);
+});
