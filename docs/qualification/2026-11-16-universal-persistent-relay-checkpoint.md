@@ -135,3 +135,11 @@ The host has no `LEEWAY_BROWSER_GATEWAY_SECRET`, no enrolled browser extension I
 ### CHECKPOINT → CONTINUE
 
 Next executable action: with action-time confirmation, install the unpacked LeeWay extension in the selected browser, capture its actual extension ID, provision the host-held gateway secret and dynamic worker/origin bindings, register the Native Messaging host, restart only the MCP client process that owns the wrapper, then retest Antigravity and Gemini through browser courier. Independently, select the intended Codex PID and refine the Copilot editor adapter against the observed readback mismatch.
+
+### REPAIR → RETEST ADDENDUM — 2026-11-16T18:30:07-06:00
+
+- False Codex discovery was repaired by enforcing each registered worker's title matcher after process enumeration. Fresh live readback now returns zero `w-codex` windows instead of misclassifying two PowerShell terminals; receipt `4bd95ace-90eb-4cd2-9d39-7578d9be09fa`. This is an honest absence, not a Codex input pass.
+- Copilot's Electron editor rejected UIA `ValuePattern.SetValue`. A provider-agnostic fallback now focuses only the fresh observation-bound control, replaces its contents through correctly sized Win32 Unicode `SendInput`, and still requires exact `ValuePattern` readback before success.
+- Focused contract suite: **12/12 PASS**. Full MCP suite after the repair: **185/185 PASS**.
+- Physical Copilot retest through Device Bridge: **PASS**. Marker length 45, exact readback SHA-256 `42f4e272294271e18d66c3366e9cb0e686d225e6b90b08f000565595bbba43d3`, receipt `bff37e74-28c9-423f-9ae3-4dd31e971643`.
+- Current repair head: `883ec7d` (`fix(workers): use Win32 input union layout`). The local host wrapper pin was advanced to source SHA-256 `E920FE699AC45BEB6A0677F384B212C98E8E3C02205925902737E426322127C7` and the host checkout was fast-forwarded to that commit.
