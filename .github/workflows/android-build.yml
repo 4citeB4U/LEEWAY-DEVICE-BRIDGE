@@ -46,7 +46,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Build native test prerequisites
-        run: cargo build --workspace
+        run: |
+          cargo build --workspace
+          cargo build --workspace --release
 
       - name: Qualify source and contracts
         shell: bash
