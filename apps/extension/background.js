@@ -44,7 +44,11 @@
       try { message = JSON.parse(event.data); } catch { return; }
       if (!message || !HOST_COMMANDS.has(message.type) || typeof message.requestId !== 'string' || !bounded(message)) return;
       const [tab] = await bridge.tabsQuery({ active: true, currentWindow: true });
-      if (Number.isInteger(tab?.id)) await bridge.tabsSend(tab.id, message).catch(() => {});
+      if (!Number.isInteger(tab?.id)) return;
+      const pageResult = await bridge.tabsSend(tab.id, message).catch(() => null);
+      if (pageResult && PAGE_MESSAGES.has(pageResult.type) && pageResult.requestId === message.requestId && bounded(pageResult)) {
+        socket.send(JSON.stringify({ ...pageResult, tabId: tab.id, frameId: 0 }));
+      }
     };
     socket.onclose = () => { socket = null; if (validSession(session)) reconnectTimer = setTimeout(connectSocket, 3_000); };
     socket.onerror = () => { try { socket.close(); } catch {} };

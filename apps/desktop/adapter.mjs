@@ -18,6 +18,7 @@ import { fileDigest, binaryRange, binaryCreate, guardedMove, exactEdit } from '.
 import { DesktopSessions } from './process-sessions.mjs';
 import { DesktopSearchSessions } from './search-sessions.mjs';
 import { WindowsUiSessions } from './windows-ui-sessions.mjs';
+import { BrowserCourierSessions } from './browser-courier-sessions.mjs';
 import { LeeWaySkillsCatalog } from './skills-catalog.mjs';
 import { appendBinary, directoryPage } from './transfer-parity.mjs';
 import { writePdf } from './documents-parity.mjs';
@@ -28,7 +29,7 @@ const execFileAsync = promisify(execFile);
 
 // Bounded workspace files and explicitly allowlisted process execution. Never invokes a shell.
 export class DesktopAdapter {
-  constructor(root,{skillsRoot=null,receiptPath=null,modelHubUrl=process.env.LEEWAY_MODEL_HUB_URL||'',visionProvider=null,voiceEndpoint=null,voiceFetchImpl=globalThis.fetch}={}) { this.root = path.resolve(root); this.jobs = new Map(); this.sessions = new DesktopSessions(this); this.searchSessions = new DesktopSearchSessions(this); this.vision = visionProvider; this.voice=voiceEndpoint?new VoiceFabricAdapter(voiceEndpoint,{fetchImpl:voiceFetchImpl}):null; this.windows = process.platform === 'win32' ? new WindowsUiSessions() : null; this.skills=skillsRoot?new LeeWaySkillsCatalog(skillsRoot):null; this.receiptPath=receiptPath; this.modelHubUrl=modelHubUrl; }
+  constructor(root,{skillsRoot=null,receiptPath=null,modelHubUrl=process.env.LEEWAY_MODEL_HUB_URL||'',visionProvider=null,browserCourierProvider=null,voiceEndpoint=null,voiceFetchImpl=globalThis.fetch}={}) { this.root = path.resolve(root); this.jobs = new Map(); this.sessions = new DesktopSessions(this); this.searchSessions = new DesktopSearchSessions(this); this.vision = visionProvider; this.voice=voiceEndpoint?new VoiceFabricAdapter(voiceEndpoint,{fetchImpl:voiceFetchImpl}):null; this.windows = process.platform === 'win32' ? new WindowsUiSessions() : null; this.browserWindows=browserCourierProvider?new BrowserCourierSessions(browserCourierProvider):null; this.skills=skillsRoot?new LeeWaySkillsCatalog(skillsRoot):null; this.receiptPath=receiptPath; this.modelHubUrl=modelHubUrl; }
   async discover() {
     await fs.access(this.root);
     let visionCapabilities = [];
@@ -247,11 +248,14 @@ export class DesktopAdapter {
     if (capability === 'voice.speak' && this.voice) return this.voice.speak(args);
     if (capability.startsWith('vision.') && this.vision) return this.vision.execute(capability, args);
     if (capability === 'device.windows.window.list' && this.windows) return this.windows.list(args);
-    if (capability === 'device.windows.window.observe' && this.windows) return this.windows.observe(args);
+    if (capability === 'device.windows.window.observe' && this.windows) {
+      if ((args.transport === 'browser-courier-dom' || (args.transport === 'auto' && this.browserWindows?.supports(args))) && this.browserWindows) return this.browserWindows.observe(args);
+      return this.windows.observe(args);
+    }
     if (capability === 'device.windows.window.invoke' && this.windows) return this.windows.invoke(args);
-    if (capability === 'device.windows.window.input' && this.windows) return this.windows.input(args);
-    if (capability === 'device.windows.window.submit' && this.windows) return this.windows.submit(args);
-    if (capability === 'device.windows.window.read' && this.windows) return this.windows.read(args);
+    if (capability === 'device.windows.window.input' && this.windows) return this.browserWindows?.owns(args.observationId) ? this.browserWindows.input(args) : this.windows.input(args);
+    if (capability === 'device.windows.window.submit' && this.windows) return this.browserWindows?.owns(args.observationId) ? this.browserWindows.submit(args) : this.windows.submit(args);
+    if (capability === 'device.windows.window.read' && this.windows) return this.browserWindows?.owns(args.observationId) ? this.browserWindows.read(args) : this.windows.read(args);
     if (capability === 'model.hub.catalog' && this.modelHubUrl) return this.readModelHubCatalog(args);
     if (capability === 'skills.list' && this.skills) return this.skills.list(args);
     if (capability === 'skills.read' && this.skills) return this.skills.read(args);

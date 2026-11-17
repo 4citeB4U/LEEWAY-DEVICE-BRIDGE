@@ -81,7 +81,10 @@ async function executePowerShell(script) {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
-      if (code !== 0) return reject(Error('WINDOW_UI_AUTOMATION_FAILED'));
+      if (code !== 0) {
+        const explicit = stderr.match(/\b(WINDOW_[A-Z0-9_]{3,120})\b/)?.[1];
+        return reject(Error(explicit || `WINDOW_UI_AUTOMATION_EXIT_${Number.isInteger(code) ? code : 'UNKNOWN'}`));
+      }
       const marker = 'LEEWAY_UI_RESULT:';
       const line = stdout.trim().split(/\r?\n/).reverse().find(value => value.startsWith(marker));
       if (!line) {

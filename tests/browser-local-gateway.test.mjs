@@ -36,3 +36,20 @@ test('one-use native session admits enrolled extension and routes bounded browse
   const closed=await new Promise(resolve=>replay.once('close',code=>resolve(code)));
   assert.equal(closed,1008);
 });
+
+test('host request correlates the exact enrolled browser result',async t=>{
+  const f=await fixture(t);
+  const response=await fetch(`${f.base}/native/session`,{method:'POST',headers:{authorization:`Bearer ${secret}`,'content-type':'application/json'},body:JSON.stringify({extensionId})});
+  const session=await response.json();
+  const ws=await opened(f.ws); ws.send(JSON.stringify({type:'BROWSER_NODE_HELLO',sessionToken:session.sessionToken,extensionId}));
+  await next(ws);
+  const requested=f.gateway.request(extensionId,{type:'COURIER_COMPOSER_OBSERVE',requestId:'observe-1',nonce:'nonce-12345678'},
+    {expectedType:'COURIER_COMPOSER_OBSERVE_RESULT',timeoutMs:1000});
+  const command=await next(ws);
+  assert.equal(command.type,'COURIER_COMPOSER_OBSERVE');
+  ws.send(JSON.stringify({type:'COURIER_COMPOSER_OBSERVE_RESULT',requestId:'observe-1',ok:true,targetId:'target-1'}));
+  assert.equal((await requested).targetId,'target-1');
+  await assert.rejects(()=>f.gateway.request(extensionId,{type:'COURIER_COMPOSER_OBSERVE',requestId:'observe-2'},
+    {expectedType:'NOT_A_PAGE_RESULT'}),/BROWSER_REQUEST_CONFIGURATION_INVALID/);
+  ws.terminate();
+});

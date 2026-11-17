@@ -65,7 +65,7 @@ export function createBrowserLocalGateway({
   if (typeof nativeHostSecret !== 'string' || nativeHostSecret.length < 32) throw new Error('BROWSER_GATEWAY_SECRET_REQUIRED');
   const allowed = new Set(allowedExtensionIds);
   if (!allowed.size) throw new Error('BROWSER_EXTENSION_ALLOWLIST_REQUIRED');
-  const sessions = new Map(), browsers = new Map();
+  const sessions = new Map(), browsers = new Map(), pending = new Map();
 
   const server = createServer(async (req, res) => {
     if (req.method === 'GET' && req.url === '/health') return sendJson(res, 200, {
@@ -103,6 +103,12 @@ export function createBrowserLocalGateway({
         return ws.send(JSON.stringify({ type: 'BROWSER_NODE_ACK', extensionId, authority: 'LOCAL_TRANSPORT_ONLY' }));
       }
       if (!PAGE_TYPES.has(message?.type)) return ws.send(JSON.stringify({ type: 'BROWSER_MESSAGE_REJECTED' }));
+      const waiter = pending.get(message.requestId);
+      if (waiter && waiter.extensionId === extensionId && waiter.expectedType === message.type) {
+        pending.delete(message.requestId);
+        clearTimeout(waiter.timer);
+        waiter.resolve(message);
+      }
       server.emit('browser-message', { extensionId, message });
     });
     ws.on('close', () => { clearTimeout(timer); if (browsers.get(extensionId) === ws) browsers.delete(extensionId); });
@@ -116,6 +122,25 @@ export function createBrowserLocalGateway({
       if (!HOST_TYPES.has(message?.type)) throw new Error('BROWSER_HOST_MESSAGE_REJECTED');
       const ws = browsers.get(extensionId); if (!ws || ws.readyState !== WebSocket.OPEN) throw new Error('BROWSER_NODE_OFFLINE');
       ws.send(JSON.stringify(message));
+    },
+    request(extensionId, message, { timeoutMs = 5000, expectedType } = {}) {
+      if (!HOST_TYPES.has(message?.type) || typeof message.requestId !== 'string' || !message.requestId) {
+        return Promise.reject(new Error('BROWSER_HOST_MESSAGE_REJECTED'));
+      }
+      if (!PAGE_TYPES.has(expectedType) || !Number.isInteger(timeoutMs) || timeoutMs < 100 || timeoutMs > 30000) {
+        return Promise.reject(new Error('BROWSER_REQUEST_CONFIGURATION_INVALID'));
+      }
+      if (pending.has(message.requestId)) return Promise.reject(new Error('BROWSER_REQUEST_ID_REUSED'));
+      const ws = browsers.get(extensionId);
+      if (!ws || ws.readyState !== WebSocket.OPEN) return Promise.reject(new Error('BROWSER_NODE_OFFLINE'));
+      return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+          pending.delete(message.requestId);
+          reject(new Error('BROWSER_REQUEST_TIMEOUT'));
+        }, timeoutMs);
+        pending.set(message.requestId, { extensionId, expectedType, resolve, timer });
+        ws.send(JSON.stringify(message));
+      });
     },
   };
 }
