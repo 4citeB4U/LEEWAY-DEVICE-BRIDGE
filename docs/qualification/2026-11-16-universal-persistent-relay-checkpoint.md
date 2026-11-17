@@ -244,3 +244,38 @@ The browser-native transport is implemented and cross-platform qualified at sour
 #### CHECKPOINT → CONTINUE
 
 Phase 1 is accepted at scoped Level A/B evidence on commit `0275ec7...`. The next canonical engineering gate is Phase 2 adapter assembly: define the governed compute-backend request/evidence envelope, bind the existing Apple local Metal probe first without changing its receipt boundary, add CPU differential readback, and then qualify D3D12/Vulkan adapters independently. Raw PCIe/MMIO remains outside Device Bridge command authority unless a separately signed, OS-mediated driver and physical safety lab establish that capability.
+
+### COMPUTE ADAPTER PHASE 2 AND ANDROID QUALIFICATION REPAIR — 2026-11-16T19:41:54-06:00
+
+**Identity / authority:** `F1_CODEX_LEAD` under Leonard Jerome Lee's continuing Phase 1 → Phase 2 implementation order.
+
+**Current branch head:** `3cd4e3cd28c4f2237031a416a13ce098537af746` on `repair/universal-relay-20261116`.
+
+#### IMPLEMENT → TEST
+
+- Commit `abd99628cacb16aeb5e55bc0c6ee095bc5bdb96a` added the governed `LEEWAY_TENSOR_AFFINE_16X16_V1` compute envelope. The CPU reference accepts exactly 256 finite `f32` lanes, computes `input[i].mul_add(3.0, i / 255)`, and emits domain-separated little-endian input/output hashes. Candidate evidence explicitly keeps `canonical_receipt_issued: false`.
+- The existing Apple Metal probe now uses the same 256-lane fused affine contract, records the operation and hashes, and performs CPU differential readback. The Metal shader uses `fma`; no Formula, Veritas, Receipt Authority, or Learning Ledger result is self-issued by the adapter.
+- Commit `dcdf8b1847601882225ab5d4f64faaaf9840585c` repaired the Swift evidence initializer exposed by the first clean Apple build.
+- Apple Device Bridge Qualification run `43996180364` then passed source/package contracts, toolchain evidence, runtime boundary checks, Xcode project generation, unsigned iPhone arm64 source build, package assembly, and artifact upload. This is Apple build qualification, not physical iPhone Metal execution.
+
+#### DIAGNOSE → REPAIR → RETEST
+
+- The Android workflow originally ran executable-backed repository tests without building their Rust prerequisites. Commit `3a632e015a29b22452f02ed85fe972de3476e964` added the Rust toolchain and debug workspace build.
+- Diagnostic commit `9acfe1a962352a63c67afba96590c762e7da1b0b` exposed the exact native-host result: `LOCAL_GATEWAY_OFFLINE`.
+- Investigation proved the loopback socket was available, but the Node gateway emitted chunked JSON while the bounded Rust native host parsed the response body as direct JSON. Commit `dfd3fa32d71ecd2a7fec2cbebcb2615f2a0d3bc8` made the gateway emit an explicit UTF-8 `Content-Length` and added a framing regression. Local elevated gateway tests passed **4/4**; local spawning of the rebuilt unsigned Rust executable remained blocked by Windows Application Control (`spawn UNKNOWN`).
+- The next clean run exposed an independent release-profile prerequisite: `continuum-memory-core.test.mjs` intentionally executes `target/release/leeway-core`, but Android CI had only built debug. Commit `3cd4e3cd28c4f2237031a416a13ce098537af746` now builds both debug and release profiles before the unfiltered test loop.
+- Android Build run `43997157628` at exact SHA `3cd4e3c...` passed both Rust prerequisite builds, the complete source/contract loop, Android SDK 35 setup, compact APK assembly, package hashing, and artifact upload. The GitHub Pages publish step was not applicable on this non-default branch and was skipped by workflow condition.
+
+#### VERIFY → EVIDENCE
+
+- LeeWay Core Portable Package run `43997157356` at exact SHA `3cd4e3c...`:
+  - Windows qualification: Rust tests PASS, Clippy `-D warnings` PASS, release build PASS, selected Node integration/regression suite PASS, hash/upload PASS.
+  - macOS qualification: same chain PASS.
+  - Ubuntu qualification: same chain PASS.
+  - Overall workflow remains red only at `windows-production-signing-gate`; `Sign and verify Windows production executables` failed because protected production signing credentials are not configured. No unsigned artifact was relabeled as production-signed.
+- **Scoped evidence admitted:** deterministic CPU compute contract, Apple source/build differential contract, three-OS portable-core qualification, compiled Rust native-host/gateway handshake on Linux CI, complete Android source/contract qualification, and APK artifact production.
+- **Still not physically verified:** Apple Metal execution on an attached iPhone/Mac GPU, D3D12/Vulkan compute execution, direct PCIe register/MPS state, MMIO/DMA, zero-copy behavior, thermal or sustained CPU improvements, physical-device transfer, Formula decision, independent Veritas verdict, canonical receipt, Learning Ledger admission, Windows Authenticode production signing, or installation on a field device.
+
+#### CHECKPOINT → CONTINUE
+
+Phase 2's CPU reference and Apple build adapter are qualified at source/build scope. The next executable engineering gate is physical differential execution: bind an authorized device adapter to the compute envelope, run the same 256-lane vector through CPU and the real OS-mediated GPU backend, compare exact output/hash evidence, and then submit that evidence through the existing Formula → Veritas → Receipt → Ledger chain. D3D12 and Vulkan remain separate adapter gates; raw PCIe/MMIO remains outside this user-space implementation.
