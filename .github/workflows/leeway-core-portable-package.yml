@@ -29,7 +29,7 @@ jobs:
       - run: cargo test --workspace
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo build --workspace --release
-      - run: node --test tests/device-relay-server.test.mjs tests/rust-registry-adapter.test.mjs tests/sovereign-package.test.mjs tests/browser-extension-package.test.mjs tests/browser-local-gateway.test.mjs
+      - run: node --test tests/device-relay-server.test.mjs tests/rust-registry-adapter.test.mjs tests/sovereign-package.test.mjs tests/continuum-memory-core.test.mjs tests/browser-extension-package.test.mjs tests/browser-local-gateway.test.mjs
       - name: Hash portable core
         shell: bash
         run: |
