@@ -152,3 +152,47 @@ Next executable action: with action-time confirmation, install the unpacked LeeW
 - Two stale, reverified `node.exe supervisor.mjs` processes were found at PIDs `36532` and `50204`; only those exact PIDs were terminated. One canonical supervisor remains: PID `57872`, parent `20120`.
 - Final 30-second clean-owner stability readback: Runtime `127.0.0.1:4011` listening at PID `38048`; relay `127.0.0.1:8008` listening at PID `40856`; `LeeWay Runtime Supervisor` state `Running`; Device Bridge relay launcher state `Ready` after leaving its independently persistent relay provider live.
 - This proves the two localhost listeners survived the measured 30-second gate. It does not prove external Vercel relay continuity: captured relay logs still show intermittent WebSocket close `1006` and historical `404` responses, mixed with successful room joins for `pc-primary`.
+
+### BROWSER NATIVE-HOST PACKAGING AND TRUST GATE — 2026-11-16T18:57:21-06:00
+
+**Identity / authority:** Codex engineering worker under Leonard Jerome Lee's continuing repair order
+
+**Committed source:** `9714e618dc476e2f5c9b7f9d4a9720a8ad5ff25e` on `repair/universal-relay-20261116`
+
+**CI evidence:** GitHub Actions run `43991443038`
+**Gate:** Cross-platform source qualification passed; Windows production signing and physical browser enrollment remain open.
+
+#### INVESTIGATE → DIAGNOSE
+
+- The extension and loopback gateway existed, but the Native Messaging host was only `operator/browser-native-host.mjs`. A Windows Native Messaging manifest needs a directly launchable host path; the source package did not provide or register one.
+- The newly built Rust executable was blocked on this host by Windows Application Control with `An Application Control policy has blocked this file`. `Get-AuthenticodeSignature` returned `NotSigned`.
+- No usable Current User code-signing certificate with a private key was present. The existing CI job only checked whether one secret existed; it did not sign a file or verify a signature.
+
+#### PLAN → IMPLEMENT
+
+- Added `leeway-browser-native-host`, a bounded Rust stdio host that accepts dynamic browser extension IDs, requests a one-use session from the authenticated loopback gateway, and exposes no Device Bridge authority of its own.
+- Added an owner-scoped Windows installer that generates Chrome, Edge, or Firefox Native Messaging manifests, writes the appropriate `HKCU` registration, reads the registration back, and refuses any executable whose Authenticode status is not `Valid`.
+- Extended the portable bootstrap to carry the extension package and the native-host executable.
+- Replaced the CI credential-presence placeholder with an actual Windows signing lane: import protected PFX custody, sign both Windows executables with SHA-256 and timestamping, read both signatures back, remove temporary certificate material, and upload only the signed package.
+
+#### TEST → VALIDATE → REPAIR → RETEST
+
+- Rust workspace tests: **9 passed, 0 failed** (6 sovereign-core tests plus 3 native-host protocol/bounds tests).
+- Focused browser courier/gateway/package tests: **8 passed, 0 failed** when run with permitted localhost access.
+- Sovereign package, Rust registry adapter, and browser package tests: **11 passed, 0 failed**.
+- PowerShell parser checks for `bootstrap.ps1` and `scripts/install-browser-native-host.ps1`: **PASS**.
+- Release build: **PASS**.
+- Installer negative gate against the local unsigned release binary: **EXPECTED FAIL CLOSED** with `LEEWAY_BROWSER_NATIVE_HOST_TRUST_REQUIRED: Authenticode status is NotSigned`.
+- Local `cargo fmt` was blocked by Application Control and local Clippy was blocked by host directory access. Those exact gates subsequently passed on all three clean GitHub runners.
+- GitHub matrix run `43991443038`: Windows, macOS, and Ubuntu each passed Rust tests, Clippy with `-D warnings`, release build, the selected JavaScript/browser suite, hashing, and artifact upload.
+
+#### VERIFY → EVIDENCE
+
+- Windows signing job downloaded the qualified Windows package and then failed closed with the exact error `WINDOWS_PRODUCTION_SIGNING_NOT_CONFIGURED`.
+- The Actions environment showed both required secrets empty: `WINDOWS_CODE_SIGNING_CERTIFICATE_PFX` and `WINDOWS_CODE_SIGNING_CERTIFICATE_PASSWORD`.
+- This is a credential-custody boundary, not a source compilation failure. No unsigned executable was installed or registered, no browser policy was weakened, and no Windows Application Control rule was bypassed.
+- Task Formula evaluation: **NOT EXECUTED**. Independent Veritas: **NOT EXECUTED**. Canonical Receipt Authority: **NOT CREATED**. Learning Ledger: **NOT UPDATED**.
+
+#### CHECKPOINT → CONTINUE
+
+The browser-native transport is implemented and cross-platform qualified at source/build scope. Production installation is correctly stopped at one exact boundary: provide the two protected GitHub signing secrets from a valid Windows code-signing PFX, rerun workflow `LeeWay Core Portable Package`, verify the signed artifact, and only then request action-time confirmation to install/register the extension and native host in the selected browser. After enrollment, run physical unsent input/readback against the browser workers. Until then, browser-worker physical execution is not passed.
