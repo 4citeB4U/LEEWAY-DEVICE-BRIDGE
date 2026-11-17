@@ -10,6 +10,10 @@ name = "leeway-core"
 path = "src/main.rs"
 test = false
 
+[[bin]]
+name = "leeway-browser-native-host"
+path = "src/bin/leeway-browser-native-host.rs"
+
 [dependencies]
 chrono = { version = "0.4", default-features = false, features = ["clock", "serde"] }
 base64 = "0.22"

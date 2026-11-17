@@ -22,6 +22,7 @@
     "mcp": "node apps/desktop/mcp-server.mjs",
     "relay:persistent": "node operator/persistent-relay-server.mjs",
     "browser:gateway": "node operator/browser-local-gateway.mjs",
+    "test:browser-native-host": "cargo build --workspace --bin leeway-browser-native-host && node --test tests/browser-native-host-rust.test.mjs",
     "build:rust-core": "cargo build --workspace --release",
     "test:rust-core": "cargo test --workspace --all-targets",
     "start:public-mcp": "node operator/hosting/start-public-mcp-ingress.mjs",

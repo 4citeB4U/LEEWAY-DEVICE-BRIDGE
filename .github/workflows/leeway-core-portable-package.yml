@@ -44,8 +44,11 @@ jobs:
           path: |
             target/release/leeway-core
             target/release/leeway-core.exe
+            target/release/leeway-browser-native-host
+            target/release/leeway-browser-native-host.exe
             bootstrap.ps1
             bootstrap.sh
+            scripts/install-browser-native-host.ps1
             scripts/generate-device-key.mjs
             scripts/start-leeway-core.ps1
             scripts/mesh-replication-worker.mjs
@@ -58,14 +61,52 @@ jobs:
     runs-on: windows-latest
     needs: qualify
     steps:
-      - name: Production signing custody gate
+      - uses: actions/download-artifact@v4
+        with:
+          name: leeway-core-windows-latest
+          path: package
+      - name: Sign and verify Windows production executables
         shell: pwsh
         env:
-          CERTIFICATE_PRESENT: ${{ secrets.WINDOWS_CODE_SIGNING_CERTIFICATE_PFX != '' }}
+          WINDOWS_CODE_SIGNING_CERTIFICATE_PFX: ${{ secrets.WINDOWS_CODE_SIGNING_CERTIFICATE_PFX }}
+          WINDOWS_CODE_SIGNING_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CODE_SIGNING_CERTIFICATE_PASSWORD }}
         run: |
-          if ($env:CERTIFICATE_PRESENT -ne 'true') {
-            Write-Output 'WINDOWS_PRODUCTION_SIGNING_NOT_CONFIGURED'
-            Write-Output 'Unsigned artifacts remain release candidates and may not be promoted to production.'
-            exit 1
+          $ErrorActionPreference = 'Stop'
+          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_CODE_SIGNING_CERTIFICATE_PFX) -or
+              [string]::IsNullOrWhiteSpace($env:WINDOWS_CODE_SIGNING_CERTIFICATE_PASSWORD)) {
+            throw 'WINDOWS_PRODUCTION_SIGNING_NOT_CONFIGURED'
           }
-          Write-Output 'WINDOWS_PRODUCTION_SIGNING_CREDENTIAL_CONFIGURED'
+          $pfxPath = Join-Path $env:RUNNER_TEMP 'leeway-windows-signing.pfx'
+          [IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String($env:WINDOWS_CODE_SIGNING_CERTIFICATE_PFX))
+          $password = ConvertTo-SecureString $env:WINDOWS_CODE_SIGNING_CERTIFICATE_PASSWORD -AsPlainText -Force
+          $certificate = Import-PfxCertificate -FilePath $pfxPath -CertStoreLocation Cert:\CurrentUser\My -Password $password -Exportable:$false
+          if (-not $certificate.HasPrivateKey) { throw 'WINDOWS_CODE_SIGNING_PRIVATE_KEY_MISSING' }
+          try {
+            $signTool = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin' -Filter signtool.exe -Recurse |
+              Where-Object FullName -Match '\\x64\\signtool\.exe$' |
+              Sort-Object FullName -Descending |
+              Select-Object -First 1 -ExpandProperty FullName
+            if (-not $signTool) { throw 'WINDOWS_SIGNTOOL_NOT_FOUND' }
+            $targets = @(
+              'package\target\release\leeway-core.exe',
+              'package\target\release\leeway-browser-native-host.exe'
+            )
+            foreach ($target in $targets) {
+              if (-not (Test-Path -LiteralPath $target -PathType Leaf)) { throw "WINDOWS_SIGNING_TARGET_MISSING: $target" }
+              & $signTool sign /sha1 $certificate.Thumbprint /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 $target
+              if ($LASTEXITCODE -ne 0) { throw "WINDOWS_SIGNING_FAILED: $target" }
+              $signature = Get-AuthenticodeSignature -LiteralPath $target
+              if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Thumbprint -ne $certificate.Thumbprint) {
+                throw "WINDOWS_SIGNATURE_READBACK_FAILED: $target status=$($signature.Status)"
+              }
+              Write-Output "WINDOWS_SIGNATURE_VERIFIED: $target thumbprint=$($certificate.Thumbprint)"
+            }
+          } finally {
+            Remove-Item -LiteralPath $pfxPath -Force -ErrorAction SilentlyContinue
+            Remove-Item -LiteralPath "Cert:\CurrentUser\My\$($certificate.Thumbprint)" -Force -ErrorAction SilentlyContinue
+          }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: leeway-core-windows-signed
+          path: package
+          if-no-files-found: error

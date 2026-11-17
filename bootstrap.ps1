@@ -13,18 +13,20 @@ if (-not (Test-Path -LiteralPath $cargo)) { throw 'RUST_TOOLCHAIN_REQUIRED' }
 if ($LASTEXITCODE -ne 0) { throw 'LEEWAY_CORE_BUILD_FAILED' }
 
 $partitions = 'Workspace','Sandbox','Continuum','DigitalBrain','Diagnostics','Ledger','Receipts'
-foreach ($path in @('bin','config','credentials','keys','scripts','runtime\operator','runtime\apps','runtime\scripts','SovereignNode')) {
+foreach ($path in @('bin','config','credentials','keys','scripts','runtime\operator','runtime\apps','runtime\apps\extension','runtime\scripts','SovereignNode')) {
   New-Item -ItemType Directory -Path (Join-Path $InstallRoot $path) -Force | Out-Null
 }
 foreach ($partition in $partitions) {
   New-Item -ItemType Directory -Path (Join-Path $InstallRoot "SovereignNode\$partition") -Force | Out-Null
 }
 Copy-Item -LiteralPath (Join-Path $sourceRoot 'target\release\leeway-core.exe') -Destination (Join-Path $InstallRoot 'bin\leeway-core.exe') -Force
+Copy-Item -LiteralPath (Join-Path $sourceRoot 'target\release\leeway-browser-native-host.exe') -Destination (Join-Path $InstallRoot 'bin\leeway-browser-native-host.exe') -Force
 Copy-Item -LiteralPath (Join-Path $sourceRoot 'scripts\start-leeway-core.ps1') -Destination (Join-Path $InstallRoot 'scripts\start-leeway-core.ps1') -Force
 Copy-Item -LiteralPath (Join-Path $sourceRoot 'scripts\generate-device-key.mjs') -Destination (Join-Path $InstallRoot 'scripts\generate-device-key.mjs') -Force
 Copy-Item -LiteralPath (Join-Path $sourceRoot 'operator\workstation-relay-agent.mjs') -Destination (Join-Path $InstallRoot 'runtime\operator\workstation-relay-agent.mjs') -Force
 New-Item -ItemType Directory -Path (Join-Path $InstallRoot 'runtime\apps\desktop') -Force | Out-Null
 Copy-Item -Path (Join-Path $sourceRoot 'apps\desktop\*') -Destination (Join-Path $InstallRoot 'runtime\apps\desktop') -Recurse -Force
+Copy-Item -Path (Join-Path $sourceRoot 'apps\extension\*') -Destination (Join-Path $InstallRoot 'runtime\apps\extension') -Recurse -Force
 Copy-Item -LiteralPath (Join-Path $sourceRoot 'scripts\mesh-replication-worker.mjs') -Destination (Join-Path $InstallRoot 'runtime\scripts\mesh-replication-worker.mjs') -Force
 
 $privateKey = Join-Path $InstallRoot 'keys\device-private.pem'
