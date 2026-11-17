@@ -1,7 +1,7 @@
 use leeway_core::{
-    execute_native_gpu, ContinuumMemoryCache, ContinuumPointer, ContinuumPointerState, HardwareSnapshot,
-    ReversibleBlockStream, SandboxFabric, SovereignRouter, SovereignVault, TensorProjection16, TransportProfile,
-    UniversalMeshRegistry,
+    discover_native_gpu, execute_native_gpu, ContinuumMemoryCache, ContinuumPointer,
+    ContinuumPointerState, HardwareSnapshot, ReversibleBlockStream, SandboxFabric,
+    SovereignRouter, SovereignVault, TensorProjection16, TransportProfile, UniversalMeshRegistry,
 };
 use serde::Deserialize;
 use serde_json::json;
@@ -87,6 +87,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         if evidence.tolerance_mismatch_count != 0 {
             std::process::exit(4);
         }
+        return Ok(());
+    }
+    if command == "compute-native-inventory" {
+        let descriptor = discover_native_gpu().await?;
+        println!("{}", serde_json::to_string(&descriptor)?);
         return Ok(());
     }
     if command == "authorize-command" {

@@ -57,12 +57,16 @@ test('trusted Runtime card provider is accepted only with a matching validation 
 
 test('native compute providers are host-injected maps with a bounded execute seam',()=>{
  const admission=async()=>true,receiptSink=async()=>{};
- const provider={execute:async()=>({laneCount:256,canonicalReceiptIssued:false})};
+ const provider={discover:async()=>({capabilityId:'gpu.compute.native.probe'}),execute:async()=>({laneCount:256,canonicalReceiptIssued:false})};
  const nativeComputeProviders=new Map([['portable-node',provider]]);
  const result=requireTrustedRuntimeComposition({admission,receiptSink,nativeComputeProviders});
  assert.equal(result.nativeComputeProviders,nativeComputeProviders);
  assert.throws(()=>requireTrustedRuntimeComposition({admission,receiptSink,nativeComputeProviders:{'portable-node':provider}}),/TRUSTED_NATIVE_COMPUTE_PROVIDER_CONFIGURATION_INVALID/);
  assert.throws(()=>requireTrustedRuntimeComposition({admission,receiptSink,nativeComputeProviders:new Map([['portable-node',{}]])}),/TRUSTED_NATIVE_COMPUTE_PROVIDER_CONFIGURATION_INVALID/);
+ const nativeComputeBinding={localNodeId:'portable-node',executablePath:'C:\\Program Files\\LeeWay\\leeway-core.exe',expectedSha256:'a'.repeat(64)};
+ assert.equal(requireTrustedRuntimeComposition({admission,receiptSink,nativeComputeBinding}).nativeComputeBinding,nativeComputeBinding);
+ assert.throws(()=>requireTrustedRuntimeComposition({admission,receiptSink,nativeComputeBinding:{...nativeComputeBinding,localNodeId:'pc primary'}}),/TRUSTED_NATIVE_COMPUTE_BINDING_INVALID/);
+ assert.throws(()=>requireTrustedRuntimeComposition({admission,receiptSink,nativeComputeBinding:{...nativeComputeBinding,expectedSha256:'untrusted'}}),/TRUSTED_NATIVE_COMPUTE_BINDING_INVALID/);
 });
 
 test('candidate execution seam requires the complete host-injected C3 dependency set', () => {

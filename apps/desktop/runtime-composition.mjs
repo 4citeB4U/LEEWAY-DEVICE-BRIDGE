@@ -6,6 +6,7 @@ const COMPOSITION_KEYS = new Set([
   'deviceRegistry', 'adapterRegistry', 'trustedIssuerRegistry', 'replayGuard',
   'complianceCardGate', 'complianceCardProvider', 'visionProviders', 'visionClientId', 'browserCourierProviders',
   'nativeComputeProviders',
+  'nativeComputeBinding',
 ]);
 
 const HOST_INJECTED_C3_KEYS = Object.freeze([
@@ -60,8 +61,17 @@ export function requireTrustedRuntimeComposition(input = {}) {
       (!(values.nativeComputeProviders instanceof Map) ||
        [...values.nativeComputeProviders].some(([deviceId, provider]) =>
          typeof deviceId !== 'string' || !deviceId.trim() || !provider ||
-         typeof provider.execute !== 'function'))) {
+         typeof provider.discover !== 'function' || typeof provider.execute !== 'function'))) {
     throw new Error('TRUSTED_NATIVE_COMPUTE_PROVIDER_CONFIGURATION_INVALID');
+  }
+  if(values.nativeComputeBinding!==undefined){
+    const binding=values.nativeComputeBinding;
+    if(!binding||typeof binding!=='object'||Array.isArray(binding)||
+      Reflect.ownKeys(binding).some(key=>!['localNodeId','executablePath','expectedSha256'].includes(key))||
+      typeof binding.localNodeId!=='string'||!/^[A-Za-z0-9._:-]{1,128}$/.test(binding.localNodeId)||
+      typeof binding.executablePath!=='string'||!binding.executablePath||
+      typeof binding.expectedSha256!=='string'||!/^[a-f0-9]{64}$/.test(binding.expectedSha256))
+      throw new Error('TRUSTED_NATIVE_COMPUTE_BINDING_INVALID');
   }
   if (values.complianceCardProvider && typeof values.complianceCardGate !== 'function') {
     throw new Error('TRUSTED_RUNTIME_COMPOSITION_REQUIRED');
@@ -70,7 +80,7 @@ export function requireTrustedRuntimeComposition(input = {}) {
   const direct = typeof values.admission === 'function';
   const c3 = typeof values.formulaPreGate === 'function' && typeof values.veritasPreGate === 'function';
   const directHasProviderFields = Object.keys(values).some(key =>
-    !['admission', 'receiptSink', 'complianceCardGate', 'complianceCardProvider', 'visionProviders', 'visionClientId', 'browserCourierProviders', 'nativeComputeProviders'].includes(key));
+    !['admission', 'receiptSink', 'complianceCardGate', 'complianceCardProvider', 'visionProviders', 'visionClientId', 'browserCourierProviders', 'nativeComputeProviders', 'nativeComputeBinding'].includes(key));
   if (direct === c3 || (direct && directHasProviderFields) ||
       (!direct && !c3) ||
       ['formulaPreGate', 'veritasPreGate', 'consentProvider', 'complianceCardGate', 'complianceCardProvider'].some(key =>

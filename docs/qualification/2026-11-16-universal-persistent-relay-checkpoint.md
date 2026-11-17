@@ -339,3 +339,52 @@ Phase 3 is qualified at local physical D3D12/Vulkan evidence and three-OS source
 - Exact-SHA CI: Portable protocol/MCP run `44000926775` **PASS** across Windows/macOS/Ubuntu; Apple run `44000926781` **PASS**; Android run `44000926771` **PASS**; portable-core run `44000926772` passed all Windows/macOS/Ubuntu qualification jobs. Its separate production-signing job failed at the unchanged credential-custody gate.
 - **Current evidence boundary:** source, tests, cross-platform CI, and local host-provider physical execution are established. A deployed authenticated MCP call through the real Device Bridge to an enrolled device has not yet executed this capability. Formula decision, independent Veritas, canonical Receipt Authority, and Learning Ledger admission remain open.
 - **Next executable action:** bind `NativeComputeProvider` into the canonical host composition for the enrolled primary node, add the capability to that device's owner grant, restart only the owning Bridge process, confirm discovery, execute one authenticated MCP call, then carry its returned evidence through Formula → Veritas → Receipt Authority → Learning Ledger. Repeat physical execution independently for HP, Android, and Apple adapters.
+
+### DYNAMIC CAPABILITY BINDING, ACTIVE WRITE, AND LEGACY ISOLATION — 2026-11-17T00:55:00-06:00
+
+**Identity / authority:** Codex (`F1_CODEX_LEAD`) under Leonard Jerome Lee's dynamic-discovery and active-execution directives.
+
+**Base commit:** `c275d6be230476d9b2e985dbaaa80ce5b785132d` on `repair/universal-relay-20261116`. The verified local changes are not yet represented by a Git commit because this worktree's shared index is outside the writable sandbox and the escalation reviewer returned an account usage-limit failure. This is a commit-boundary failure, not a source or test failure.
+
+#### INVESTIGATE → DIAGNOSE → PLAN
+
+- The GPU and founding-vision monographs were treated as architectural references, not execution proof. The governing separation is preserved: inventory reports a capability; admitted execution uses it; LDWMD/VRAM allocation remains a separate workload lease.
+- The existing native provider map was startup injected but did not derive itself from an authenticated local runtime identity. The executable path was not hash-bound at every discovery/execution boundary, and descriptors lacked bounded expiry validation.
+- Pocket ID-specific deployment, host, backup, workflow, and regression surfaces remained in the active repository after the provider had been retired. A second `remote-mcp-http.mjs` transport existed solely to deny remote execution while the canonical `mcp-http.mjs` already supports principal-scoped active execution.
+- Current Android source emits `remoteQualified` as a real `JSONArray`; the relay's old Java-list string parser was therefore proven unnecessary compatibility code.
+
+#### IMPLEMENT → TEST → REPAIR → RETEST
+
+- Added read-only native inventory with backend, adapter, driver, limits, five-minute expiry, `workloadExecuted=false`, and `memoryReserved=false`.
+- Added exact installed-binary SHA-256 verification before discovery and before each computation. Provider descriptors reject stale, future-skewed, overlong, malformed, hash-mismatched, or platform-spoofed evidence.
+- Added authenticated runtime-ID binding with no fixed machine-name branch. Windows permits D3D12/Vulkan, Linux permits Vulkan/GL, macOS/iOS permit Metal, and Android permits Vulkan. The desktop binder intentionally does not impersonate mobile adapters.
+- Added finite 256-lane GPU readback validation and kept capability registration separate from LDWMD allocation.
+- Focused dynamic/runtime tests: **14/14 PASS**. Full MCP before legacy extraction: **193/193 PASS**.
+- Rust `cargo check --workspace --all-targets`: **PASS**. Clippy with `-D warnings`: **PASS**. Release build: **PASS**. Local debug test binaries remain blocked before assertion execution by Windows Application Control (`os error 4551`); exact-SHA CI is still required for that test gate.
+- Exact current release binary SHA-256: `8381d0171127bb1c642686cd74cf5a036230721088807449dfeed04dbb963c65`.
+- Exact current physical inventory: D3D12, `NVIDIA GeForce RTX 5060 Laptop GPU`, `DiscreteGpu`, driver `32.0.15.9201`, five-minute descriptor, `workloadExecuted=false`, `memoryReserved=false`, and memory budget truthfully `UNAVAILABLE_UNSUPPORTED` because the WGPU limits surface does not expose DXGI/Vulkan memory-budget telemetry.
+- Exact current hash-bound provider execution: 256 lanes, exact mismatches **10**, tolerance mismatches **0**, maximum absolute error `2.3841858e-7`, tolerance `1e-6`, `canonicalReceiptIssued=false`.
+- Quarantined fifteen Pocket ID-era artifacts and then the duplicate remote HTTP transport plus its regression test in `4citeB4U/LEEWAY-D-DRIVE-RECOVERY-20260925`, branch `quarantine/device-bridge-pocket-id-20261117`, under `quarantine/2026-11-17/LEEWAY-DEVICE-BRIDGE/` before removing them locally.
+- Renamed the retained provider-neutral JWT verifier to `operator/identity/oidc-access.mjs`; removed the historical compatibility export; renamed the public issuer workflow; changed public qualification evidence keys to `oidcDiscovery` and `oidcJwks`.
+- Added explicit `device.bridge.execute` OIDC metadata only when the host binds `LEEWAY_MCP_EXECUTION_AUTHORIZED=owner-execution`. Authentication still does not bypass Runtime admission, grants, policy rechecks, availability, or receipts.
+- Removed the old string-serialized Android capability parser after confirming the current Android producer emits a JSON array.
+- Full MCP after Pocket ID, duplicate-transport, and Android string-compatibility extraction: **182/182 PASS**. The count decreased because retired implementation tests were removed; no replacement padding was added.
+- Broad top-level source/integration suite: **186/186 PASS**, with one separately reported optional owner-host fixture skip because its external key-path variables were not supplied.
+
+#### LIVE DEVICE BRIDGE EVIDENCE
+
+- Trusted Runtime registry discovery returned `pc-primary`, `phone-fold6`, `LDB-04ff1b33-8a70-434c-9aba-8752a30789ee`, `pc-hp-secondary`, and `phone-apple-iphone`; this was followed by live health calls rather than treated as reachability proof.
+- `pc-primary`: health **PASS**; file read/write/edit/move/hash, process, session, and Windows UI capabilities were granted. Active write created `leeway-active-write-20261117.txt` (121 bytes), receipt `f7daa7a7-3a9e-4e75-b249-d713e15f414a`; exact readback receipt `4d3bf694-8839-4c0e-a471-2ea9d2187ce9`; file SHA-256 `88887e4ac33298b4fcb5a47bce489e78a907012955af14a706fac59b61d1b499`, hash receipt `8859bb91-44e5-4492-9f91-8bc6dab25560`.
+- `phone-apple-iphone`: health **PASS**, `ONLINE`, RSD tunnel `STANDBY`, receipt `711b8e56-538d-44a6-b194-b18ac9dd05d4e`. The current adapter does not advertise phone file write.
+- `phone-fold6` and `LDB-04ff1b33-8a70-434c-9aba-8752a30789ee`: registered, but live health **FAILED** at `ADAPTER_OR_VALIDATION_FAILURE`; no write claim is made.
+- `pc-hp-secondary`: registered, discovery **FAILED**, health **BLOCKED** before execution at `ADAPTER_OR_VALIDATION_FAILURE`, receipt `12e4c4a3-29a2-4d29-b4e9-3da70c852fe3`.
+
+#### VERIFY → EVIDENCE BOUNDARY
+
+- **PHYSICALLY OBSERVED:** primary-PC health and exact file write/read/hash; iPhone health; local D3D12 inventory and fixed compute readback.
+- **SOURCE/TEST QUALIFIED:** dynamic runtime-ID binding, platform/backend segregation, binary hash binding, descriptor freshness, negative evidence rejection, explicit owner-execution scope, provider-neutral OIDC verification, and JSON-array-only Android capability discovery.
+- **BLOCKED / NOT VERIFIED:** HP reachability, Android health/write, iPhone file write or screen execution, Android/Apple/HP GPU execution, actual memory-budget telemetry, LDWMD allocation, Formula decision, independent Veritas verdict, canonical production Receipt Authority custody, Learning Ledger admission, exact-current Rust test execution on this Windows host, production signing, and production release.
+
+#### CHECKPOINT → CONTINUE
+
+Create the source commit through the available Git authority, then require exact-SHA CI. After CI, repair the HP and Android adapter boundaries separately and add file operations only through their platform-native authorized storage adapters; do not infer phone writes from registration or health.

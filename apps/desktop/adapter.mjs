@@ -33,6 +33,7 @@ export class DesktopAdapter {
   async discover() {
     await fs.access(this.root);
     let visionCapabilities = [];
+    let nativeComputeCapabilities = [];
     if (this.vision) {
       const health = await this.vision.health();
       const descriptor = this.vision.describe();
@@ -40,7 +41,9 @@ export class DesktopAdapter {
         visionCapabilities = descriptor.capabilities.filter(name => typeof name === 'string' && name.startsWith('vision.'));
       }
     }
-    return [...visionCapabilities,...(this.nativeCompute?['gpu.compute.native.probe']:[]),...(this.skills?['skills.list','skills.read']:[]),...(this.modelHubUrl?['model.hub.catalog']:[]),...(this.voice?['voice.status','voice.speak']:[]),...(this.windows?['device.windows.window.list','device.windows.window.observe','device.windows.window.invoke','device.windows.window.input','device.windows.window.submit','device.windows.window.read']:[]),'device.health','device.info','device.documents.write_pdf','device.audit.recent','device.audit.usage','device.files.read','device.files.info','device.files.read_multiple','device.files.write','device.files.hash','device.files.read_binary','device.files.write_binary','device.files.append_binary','device.files.move','device.files.edit','device.directories.list','device.directories.page','device.directories.create','device.search.files','device.search.content','device.search.start','device.search.next','device.search.stop','device.search.list','device.process.list','device.process.terminate','device.process.execute','device.job.start','device.job.status','device.job.stop','device.session.start','device.session.read','device.session.input','device.session.stop','device.session.list']; }
+    if(this.nativeCompute){try{const descriptor=await this.nativeCompute.discover();if(descriptor?.capabilityId==='gpu.compute.native.probe')nativeComputeCapabilities.push(descriptor.capabilityId);}catch{this.nativeCompute.descriptor=null;}}
+    return [...visionCapabilities,...nativeComputeCapabilities,...(this.skills?['skills.list','skills.read']:[]),...(this.modelHubUrl?['model.hub.catalog']:[]),...(this.voice?['voice.status','voice.speak']:[]),...(this.windows?['device.windows.window.list','device.windows.window.observe','device.windows.window.invoke','device.windows.window.input','device.windows.window.submit','device.windows.window.read']:[]),'device.health','device.info','device.documents.write_pdf','device.audit.recent','device.audit.usage','device.files.read','device.files.info','device.files.read_multiple','device.files.write','device.files.hash','device.files.read_binary','device.files.write_binary','device.files.append_binary','device.files.move','device.files.edit','device.directories.list','device.directories.page','device.directories.create','device.search.files','device.search.content','device.search.start','device.search.next','device.search.stop','device.search.list','device.process.list','device.process.terminate','device.process.execute','device.job.start','device.job.status','device.job.stop','device.session.start','device.session.read','device.session.input','device.session.stop','device.session.list']; }
+  describeCapabilities(){return this.nativeCompute?.descriptor?{'gpu.compute.native.probe':this.nativeCompute.descriptor}:{ };}
   async readModelHubCatalog({query=''}) {
     let endpoint;
     try { endpoint = new URL('/v1/catalog', this.modelHubUrl); } catch { throw new Error('MODEL_HUB_ENDPOINT_INVALID'); }

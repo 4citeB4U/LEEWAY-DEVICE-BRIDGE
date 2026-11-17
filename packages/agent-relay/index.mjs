@@ -2,15 +2,9 @@ import WebSocket from 'ws';
 import { randomUUID } from 'node:crypto';
 import { schemas } from '../protocol/index.mjs';
 
-// Android JSONObject.put(List) in older builds emitted Java's list string.
-// Parse only its bounded name grammar; never evaluate or infer missing entries.
 export function parseRemoteQualified(raw) {
-  let names;
-  if (Array.isArray(raw)) names = raw;
-  else if (typeof raw === 'string' && raw.length <= 16384 && /^\[[^\[\]\r\n]*\]$/.test(raw)) {
-    const body = raw.slice(1, -1).trim();
-    names = body === '' ? [] : body.split(',').map(name => name.trim());
-  } else throw new Error('INVALID_CAPABILITY_RESPONSE');
+  if (!Array.isArray(raw)) throw new Error('INVALID_CAPABILITY_RESPONSE');
+  const names = raw;
   if (names.length > 256 || names.some(name => typeof name !== 'string' || name.length > 128 || !/^[a-z][a-z0-9]*(?:[.-][a-z][a-z0-9]*)+$/.test(name))) throw new Error('INVALID_CAPABILITY_RESPONSE');
   return [...new Set(names)].filter(name => Object.hasOwn(schemas, name));
 }

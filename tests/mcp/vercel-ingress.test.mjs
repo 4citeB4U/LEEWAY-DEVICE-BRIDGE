@@ -21,10 +21,11 @@ import { createOAuthProtectedResourceHandler } from "../../api/oauth-protected-r
 import {
   PUBLIC_MCP_METADATA_PATH,
   RUNTIME_READ_SCOPE,
+  BRIDGE_EXECUTE_SCOPE,
   resolvePublicMcpResourceConfig
 } from "../../operator/identity/public-mcp-resource-config.mjs";
 
-const ISSUER = "https://pocket-id.example:10000";
+const ISSUER = "https://oidc.example:10000";
 const RESOURCE = "https://bridge.example/mcp";
 const UPSTREAM = "https://runtime-fabric.example/mcp";
 const env = {
@@ -288,4 +289,16 @@ test("owner-only bridge discovery scope is opt-in and never inferred from mere h
   assert.equal(metadata.resource,RESOURCE);
   assert.deepEqual(metadata.authorization_servers,[ISSUER]);
   assert.equal(metadata.bearer_methods_supported[0],"header");
+});
+
+test("owner execution scope is explicit and advertises active Bridge execution", async t => {
+  const { BRIDGE_READ_SCOPE } = await import("../../operator/identity/public-mcp-resource-config.mjs");
+  const ownerExecution = { ...env, LEEWAY_MCP_EXECUTION_AUTHORIZED: "owner-execution" };
+  const cfg = resolvePublicMcpResourceConfig(ownerExecution);
+  assert.deepEqual(cfg.scopes, [RUNTIME_READ_SCOPE, BRIDGE_READ_SCOPE, BRIDGE_EXECUTE_SCOPE]);
+  const base = await startServer(createOAuthProtectedResourceHandler({ env: ownerExecution }), t);
+  const response = await fetch(base + PUBLIC_MCP_METADATA_PATH);
+  assert.equal(response.status, 200);
+  assert.deepEqual((await response.json()).scopes_supported,
+    [RUNTIME_READ_SCOPE, BRIDGE_READ_SCOPE, BRIDGE_EXECUTE_SCOPE]);
 });

@@ -7,7 +7,7 @@ WHY: Keep the public OAuth resource identity and upstream MCP path consistent wi
 WHERE: api/mcp.mjs
 WHEN: 2026-10-26
 HOW: Validate explicit HTTPS bindings; preserve bounded MCP/auth headers; reject redirects; stream bounded responses
-AUTHORITY: Transport only; Runtime Fabric verifies OIDC JWT/scope and owns the read-only tool
+AUTHORITY: Transport only; Runtime Fabric verifies OIDC JWT/scope and owns tool admission.
 LICENSE: MIT
 */
 import { Readable, Transform } from "node:stream";

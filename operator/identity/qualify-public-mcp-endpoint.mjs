@@ -162,8 +162,8 @@ export async function qualifyPublicMcpEndpoint({ endpoint, expectedIssuer, fetch
       publicMcpUnauthenticatedRefusal: "PASS",
       bearerChallenge: "PASS",
       protectedResourceMetadata: "PASS",
-      pocketIdDiscovery: "PASS",
-      pocketIdJwks: "PASS",
+      oidcDiscovery: "PASS",
+      oidcJwks: "PASS",
       authenticatedMcpCall: "NOT_RUN",
       deviceExecution: "NOT_PROBED"
     },

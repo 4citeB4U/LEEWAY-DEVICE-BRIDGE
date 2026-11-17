@@ -15,7 +15,9 @@ pub use compute_backend::{
     execute_cpu_reference, tensor_buffer_sha256, ComputeExecutionEvidence, TENSOR_ABSOLUTE_TOLERANCE,
     TENSOR_OPERATION_ID,
 };
-pub use native_compute::{execute_native_gpu, NativeComputeEvidence};
+pub use native_compute::{
+    discover_native_gpu, execute_native_gpu, NativeComputeDescriptor, NativeComputeEvidence,
+};
 pub use continuum_memory::{
     Block256, CacheStageResult, ContinuumMemoryCache, ContinuumMemoryStats, ContinuumPointer,
     ContinuumPointerState, ReconstructionManifest, ReversibleBlockStream, TensorProjection16,

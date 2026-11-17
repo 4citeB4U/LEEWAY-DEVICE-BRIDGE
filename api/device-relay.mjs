@@ -12,7 +12,7 @@ import { createHash, timingSafeEqual, randomUUID, createPublicKey, verify as ver
 import { WebSocketServer, WebSocket } from 'ws';
 import fs from 'node:fs';
 import path from 'node:path';
-import { createOidcAccessAuthenticator } from '../operator/identity/pocket-id-access.mjs';
+import { createOidcAccessAuthenticator } from '../operator/identity/oidc-access.mjs';
 import { loadTrustedDeviceRegistry, isTrustedDeviceRecord, trustedDeviceTokenMatches } from '../operator/identity/trusted-device-registry.mjs';
 
 const MAX_PAYLOAD_BYTES = 64 * 1024;

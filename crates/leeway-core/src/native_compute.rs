@@ -51,20 +51,56 @@ pub struct NativeComputeEvidence {
     pub canonical_receipt_issued: bool,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct NativeComputeDescriptor {
+    pub descriptor_version: u32,
+    pub capability_id: String,
+    pub provider_version: String,
+    pub backend_id: String,
+    pub adapter_name: String,
+    pub adapter_device_type: String,
+    pub driver_name: String,
+    pub driver_info: String,
+    pub physical_hardware_claimed: bool,
+    pub health: String,
+    pub discovered_utc: String,
+    pub expires_utc: String,
+    pub maximum_buffer_bytes: u64,
+    pub maximum_storage_binding_bytes: u32,
+    pub maximum_compute_workgroups_per_dimension: u32,
+    pub memory_budget_state: String,
+    pub memory_budget_reason: String,
+    pub workload_executed: bool,
+    pub memory_reserved: bool,
+}
+
 fn compute_error(code: impl Into<String>) -> SovereignError {
     SovereignError::Compute(code.into())
 }
 
-pub async fn execute_native_gpu(values: &[f32]) -> Result<NativeComputeEvidence, SovereignError> {
-    let cpu = execute_cpu_reference(values)?;
+fn validate_observed_output(observed: &[f32]) -> Result<(), SovereignError> {
+    if observed.len() != MATRIX_CELLS || observed.iter().any(|value| !value.is_finite()) {
+        return Err(compute_error("NATIVE_GPU_OUTPUT_256_FINITE_LANES_REQUIRED"));
+    }
+    Ok(())
+}
+
+async fn select_native_adapter() -> Result<wgpu::Adapter, SovereignError> {
     #[cfg(target_os = "windows")]
     let backend_order: &[wgpu::Backends] = &[wgpu::Backends::DX12, wgpu::Backends::VULKAN];
     #[cfg(any(target_os = "macos", target_os = "ios"))]
     let backend_order: &[wgpu::Backends] = &[wgpu::Backends::METAL];
-    #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "ios")))]
+    #[cfg(target_os = "android")]
+    let backend_order: &[wgpu::Backends] = &[wgpu::Backends::VULKAN];
+    #[cfg(not(any(
+        target_os = "windows",
+        target_os = "macos",
+        target_os = "ios",
+        target_os = "android"
+    )))]
     let backend_order: &[wgpu::Backends] = &[wgpu::Backends::VULKAN, wgpu::Backends::GL];
 
-    let mut selected_adapter = None;
     for &backend in backend_order {
         let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
             backends: backend,
@@ -78,12 +114,57 @@ pub async fn execute_native_gpu(values: &[f32]) -> Result<NativeComputeEvidence,
             })
             .await
         {
-            selected_adapter = Some(adapter);
-            break;
+            return Ok(adapter);
         }
     }
-    let adapter = selected_adapter
-        .ok_or_else(|| compute_error("NATIVE_GPU_ADAPTER_UNAVAILABLE_FOR_PLATFORM_BACKENDS"))?;
+    Err(compute_error(
+        "NATIVE_GPU_ADAPTER_UNAVAILABLE_FOR_PLATFORM_BACKENDS",
+    ))
+}
+
+pub async fn discover_native_gpu() -> Result<NativeComputeDescriptor, SovereignError> {
+    let adapter = select_native_adapter().await?;
+    let info = adapter.get_info();
+    let limits = adapter.limits();
+    let discovered = chrono::Utc::now();
+    let expires = discovered + chrono::Duration::minutes(5);
+    let physical_hardware_claimed = matches!(
+        info.device_type,
+        wgpu::DeviceType::IntegratedGpu | wgpu::DeviceType::DiscreteGpu
+    );
+    Ok(NativeComputeDescriptor {
+        descriptor_version: 1,
+        capability_id: "gpu.compute.native.probe".into(),
+        provider_version: env!("CARGO_PKG_VERSION").into(),
+        backend_id: format!("{:?}", info.backend),
+        adapter_name: info.name,
+        adapter_device_type: format!("{:?}", info.device_type),
+        driver_name: info.driver,
+        driver_info: info.driver_info,
+        physical_hardware_claimed,
+        health: if physical_hardware_claimed {
+            "READY_PHYSICAL"
+        } else {
+            "READY_SOFTWARE_OR_VIRTUAL"
+        }
+        .into(),
+        discovered_utc: discovered.to_rfc3339(),
+        expires_utc: expires.to_rfc3339(),
+        maximum_buffer_bytes: limits.max_buffer_size,
+        maximum_storage_binding_bytes: limits.max_storage_buffer_binding_size,
+        maximum_compute_workgroups_per_dimension: limits.max_compute_workgroups_per_dimension,
+        memory_budget_state: "UNAVAILABLE_UNSUPPORTED".into(),
+        memory_budget_reason:
+            "WGPU_ADAPTER_LIMITS_DO_NOT_EXPOSE_DXGI_QUERY_VIDEO_MEMORY_INFO_OR_VK_EXT_MEMORY_BUDGET"
+                .into(),
+        workload_executed: false,
+        memory_reserved: false,
+    })
+}
+
+pub async fn execute_native_gpu(values: &[f32]) -> Result<NativeComputeEvidence, SovereignError> {
+    let cpu = execute_cpu_reference(values)?;
+    let adapter = select_native_adapter().await?;
     let info = adapter.get_info();
     let (device, queue) = adapter
         .request_device(
@@ -200,6 +281,7 @@ pub async fn execute_native_gpu(values: &[f32]) -> Result<NativeComputeEvidence,
     let observed = bytemuck::cast_slice::<u8, f32>(&mapped).to_vec();
     drop(mapped);
     readback.unmap();
+    validate_observed_output(&observed)?;
 
     let exact_mismatch_count = observed
         .iter()
@@ -258,6 +340,20 @@ mod tests {
         assert!(SHADER.contains("array<f32, 256>"));
         assert!(SHADER.contains("fma("));
         assert!(SHADER.contains("id.x < 256u"));
+    }
+
+    #[test]
+    fn observed_output_rejects_wrong_length_nan_and_infinity() {
+        assert!(validate_observed_output(&[0.0; 255]).is_err());
+        let mut nan = [0.0_f32; MATRIX_CELLS];
+        nan[4] = f32::NAN;
+        assert!(validate_observed_output(&nan).is_err());
+        let mut positive = [0.0_f32; MATRIX_CELLS];
+        positive[5] = f32::INFINITY;
+        assert!(validate_observed_output(&positive).is_err());
+        let mut negative = [0.0_f32; MATRIX_CELLS];
+        negative[6] = f32::NEG_INFINITY;
+        assert!(validate_observed_output(&negative).is_err());
     }
 
     #[tokio::test]

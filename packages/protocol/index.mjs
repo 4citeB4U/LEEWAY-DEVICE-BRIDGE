@@ -218,8 +218,10 @@ export class Bridge {
     const d = this.devices.get(id);
     if (!d) throw new Error('UNKNOWN_DEVICE');
     const supported = await d.adapter.discover();
+    const descriptors=typeof d.adapter.describeCapabilities==='function'?d.adapter.describeCapabilities():{};
     return { deviceId: id, capabilities: Object.keys(schemas).filter(c => supported.includes(c)).map(name => ({
       name, supported: true, granted: d.grants.includes(name), verified: false,
+      ...(descriptors?.[name]?{descriptor:descriptors[name]}:{}),
     })) };
   }
   async call(deviceId, capability, args = {}, context = {}) {

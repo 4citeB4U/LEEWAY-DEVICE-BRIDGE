@@ -14,6 +14,7 @@ import {
 } from '../../packages/protocol/operating-contract.mjs';
 import { RelayAdapter } from '../../packages/agent-relay/index.mjs';
 import { DesktopAdapter } from './adapter.mjs';
+import { bindDiscoveredNativeComputeProvider } from './native-compute-provider.mjs';
 import { PhysicalAndroidAdapter, PhysicalAppleAdapter } from '../../operator/physical-adapters.mjs';
 import { createC3AdmissionBinding } from '../../operator/c3-admission-binding.mjs';
 import {
@@ -246,7 +247,10 @@ export async function createConfiguredBridge(configPath, runtimeInput = null) {
   if (!runtimeComposition && !receiptPath) throw new Error('RECEIPTS_REQUIRED');
   const visionProviders = runtimeComposition?.visionProviders ?? new Map();
   const browserCourierProviders = runtimeComposition?.browserCourierProviders ?? new Map();
-  const nativeComputeProviders = runtimeComposition?.nativeComputeProviders ?? new Map();
+  if(runtimeComposition?.nativeComputeProviders&&runtimeComposition?.nativeComputeBinding)throw new Error('NATIVE_COMPUTE_BINDING_CONFLICT');
+  const nativeComputeProviders = runtimeComposition?.nativeComputeBinding
+    ? await bindDiscoveredNativeComputeProvider({...runtimeComposition.nativeComputeBinding,enrolledDevices:runtimeComposition.deviceRegistry})
+    : runtimeComposition?.nativeComputeProviders ?? new Map();
   for (const deviceId of visionProviders.keys()) {
     if (!config.devices.some(device => device.id === deviceId && device.type === 'desktop')) {
       throw new Error('TRUSTED_VISION_PROVIDER_DEVICE_NOT_CONFIGURED');
