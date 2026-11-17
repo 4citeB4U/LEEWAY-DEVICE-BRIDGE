@@ -299,15 +299,20 @@ using System.Runtime.InteropServices;
 public static class LeeWayUnicodeInput {
   [DllImport("user32.dll")] static extern void keybd_event(byte key, byte scan, uint flags, UIntPtr extra);
   [DllImport("user32.dll", SetLastError=true)] static extern uint SendInput(uint count, INPUT[] inputs, int size);
-  [StructLayout(LayoutKind.Sequential)] struct INPUT { public uint type; public KEYBDINPUT keyboard; }
+  [StructLayout(LayoutKind.Sequential)] struct INPUT { public uint type; public INPUTUNION data; }
+  [StructLayout(LayoutKind.Explicit)] struct INPUTUNION {
+    [FieldOffset(0)] public MOUSEINPUT mouse;
+    [FieldOffset(0)] public KEYBDINPUT keyboard;
+  }
+  [StructLayout(LayoutKind.Sequential)] struct MOUSEINPUT { public int dx; public int dy; public uint mouseData; public uint flags; public uint time; public UIntPtr extra; }
   [StructLayout(LayoutKind.Sequential)] struct KEYBDINPUT { public ushort virtualKey; public ushort scanCode; public uint flags; public uint time; public UIntPtr extra; }
   public static void Replace(string value) {
     keybd_event(0x11, 0, 0, UIntPtr.Zero); keybd_event(0x41, 0, 0, UIntPtr.Zero);
     keybd_event(0x41, 0, 2, UIntPtr.Zero); keybd_event(0x11, 0, 2, UIntPtr.Zero);
     foreach (char c in value) {
       var inputs = new INPUT[] {
-        new INPUT { type=1, keyboard=new KEYBDINPUT { scanCode=(ushort)c, flags=4 } },
-        new INPUT { type=1, keyboard=new KEYBDINPUT { scanCode=(ushort)c, flags=6 } }
+        new INPUT { type=1, data=new INPUTUNION { keyboard=new KEYBDINPUT { scanCode=(ushort)c, flags=4 } } },
+        new INPUT { type=1, data=new INPUTUNION { keyboard=new KEYBDINPUT { scanCode=(ushort)c, flags=6 } } }
       };
       if (SendInput(2, inputs, Marshal.SizeOf(typeof(INPUT))) != 2) throw new InvalidOperationException("UNICODE_SEND_INPUT_FAILED");
     }
