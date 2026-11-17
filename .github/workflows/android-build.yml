@@ -43,6 +43,11 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build native test prerequisites
+        run: cargo build --workspace
+
       - name: Qualify source and contracts
         shell: bash
         run: |
