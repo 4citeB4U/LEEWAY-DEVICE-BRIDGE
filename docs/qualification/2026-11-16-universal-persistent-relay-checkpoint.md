@@ -143,3 +143,12 @@ Next executable action: with action-time confirmation, install the unpacked LeeW
 - Focused contract suite: **12/12 PASS**. Full MCP suite after the repair: **185/185 PASS**.
 - Physical Copilot retest through Device Bridge: **PASS**. Marker length 45, exact readback SHA-256 `42f4e272294271e18d66c3366e9cb0e686d225e6b90b08f000565595bbba43d3`, receipt `bff37e74-28c9-423f-9ae3-4dd31e971643`.
 - Current repair head: `883ec7d` (`fix(workers): use Win32 input union layout`). The local host wrapper pin was advanced to source SHA-256 `E920FE699AC45BEB6A0677F384B212C98E8E3C02205925902737E426322127C7` and the host checkout was fast-forwarded to that commit.
+
+### HOST LIFECYCLE REPAIR ADDENDUM — 2026-11-16T18:42:00-06:00
+
+- A post-test stability readback found both `4011` and `8008` had dropped. The exact fault was ownership, not the worker adapter: the Device Bridge scheduled launcher spawned Runtime `4011` as its child, then exited; Windows later removed that child. Bounded retries raced the dying process and produced `EADDRINUSE`.
+- Runtime API startup was moved under the existing `LeeWay Runtime Supervisor` launcher. The Device Bridge launcher now treats `4011` as an owned dependency and no longer starts a competing Runtime provider.
+- The Device Bridge owner received explicit stdout/stderr capture; the obsolete Desktop Commander sidecar remains removed. Both scheduled owners received a bounded `RestartCount=3`, `RestartInterval=PT1M` policy.
+- Two stale, reverified `node.exe supervisor.mjs` processes were found at PIDs `36532` and `50204`; only those exact PIDs were terminated. One canonical supervisor remains: PID `57872`, parent `20120`.
+- Final 30-second clean-owner stability readback: Runtime `127.0.0.1:4011` listening at PID `38048`; relay `127.0.0.1:8008` listening at PID `40856`; `LeeWay Runtime Supervisor` state `Running`; Device Bridge relay launcher state `Ready` after leaving its independently persistent relay provider live.
+- This proves the two localhost listeners survived the measured 30-second gate. It does not prove external Vercel relay continuity: captured relay logs still show intermittent WebSocket close `1006` and historical `404` responses, mixed with successful room joins for `pc-primary`.
