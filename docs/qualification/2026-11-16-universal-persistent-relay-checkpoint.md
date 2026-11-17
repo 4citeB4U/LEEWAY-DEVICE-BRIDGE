@@ -279,3 +279,50 @@ Phase 1 is accepted at scoped Level A/B evidence on commit `0275ec7...`. The nex
 #### CHECKPOINT → CONTINUE
 
 Phase 2's CPU reference and Apple build adapter are qualified at source/build scope. The next executable engineering gate is physical differential execution: bind an authorized device adapter to the compute envelope, run the same 256-lane vector through CPU and the real OS-mediated GPU backend, compare exact output/hash evidence, and then submit that evidence through the existing Formula → Veritas → Receipt → Ledger chain. D3D12 and Vulkan remain separate adapter gates; raw PCIe/MMIO remains outside this user-space implementation.
+
+### NATIVE COMPUTE ADAPTER PHASE 3 — 2026-11-16T20:05:01-06:00
+
+**Identity / authority:** Codex (`F1_CODEX_LEAD`) under Leonard Jerome Lee's continuing native-compute implementation order.
+
+**Committed source:** `b6154c0da0a6dc322bfb7df714dbdaeb4024b230` (`feat(compute): bind bounded native gpu adapter`) on `repair/universal-relay-20261116`, pushed to `origin`.
+
+#### INVESTIGATE → DIAGNOSE → PLAN
+
+- Phase 2 had a deterministic 256-lane CPU reference and Apple source/build adapter, but no cross-platform user-space GPU adapter physically executed on this host.
+- The canonical repair was a bounded `wgpu` adapter using only OS graphics APIs: D3D12 first on Windows, Metal on Apple compile targets, Vulkan first on Linux/Android, and GL only as a fallback. The adapter does not accept caller-supplied shaders, addresses, register offsets, buffer lengths, MMIO, DMA, PCIe controls, or kernel authority.
+- Acceptance requires real GPU command submission, mapped-buffer readback, CPU differential comparison, truthful adapter classification, and separate exact-bit and tolerance evidence. A successful adapter probe must not mint Formula, Veritas, Receipt Authority, or Learning Ledger state.
+
+#### IMPLEMENT
+
+- Added `crates/leeway-core/src/native_compute.rs` with a fixed WGSL kernel for `output[i] = fma(input[i], 3.0, i / 255.0)`, fixed 1,024-byte input/output/readback buffers, bounded dispatch, and mapped-buffer readback.
+- Added the `compute-native-probe` CLI seam and the evidence fields required to identify backend, adapter, device type, physical-hardware classification, hashes, exact mismatch count, tolerance mismatch count, maximum absolute error, and elapsed time.
+- Added `docs/NATIVE-COMPUTE-ADAPTER-PHASE3.md`. Updated the workspace with `wgpu 24` and `bytemuck` while preserving the existing compute-envelope and receipt boundaries.
+- Physical hardware is claimed only for `IntegratedGpu` or `DiscreteGpu`. Software and virtual adapters remain visibly classified and cannot silently become physical evidence.
+
+#### TEST → VALIDATE → REPAIR → RETEST
+
+- Local `cargo check --workspace --all-targets`: **PASS**.
+- Local `cargo clippy --workspace --all-targets -- -D warnings`: **PASS**.
+- Local `cargo build --workspace --release`: **PASS**.
+- Local `cargo test --workspace --all-targets`: **PASS** — library **19/19**, browser native host **3/3**.
+- An early `rustfmt` invocation reformatted unrelated module files through module discovery. Those incidental changes were identified before commit and reversed without resetting or discarding the scoped implementation.
+- First physical probe selected Vulkan on `NVIDIA GeForce RTX 5060 Laptop GPU`: 256 lanes, exact CPU/GPU output-hash equality, exact mismatch count **0**, tolerance mismatch count **0**.
+- Windows backend ordering was then repaired to prefer D3D12. Three physical D3D12 probes selected the same `DiscreteGpu` and completed GPU readback. Every run reported exact mismatch count **10**, tolerance mismatch count **0**, maximum absolute error `2.3841858E-07`, and tolerance `1E-06`. The stable GPU hash was `740ecffa3df3334f48bc6b5128d96dc4e20f9071926a86eaa39bb8429f5635d4`; stable CPU hash was `d37f072284cceac553ba0b2c36e08b72cdcddf2945cfcac83848b386e2691bc5`. Elapsed times were approximately 1302.44 ms cold, 341.45 ms, and 343.06 ms.
+- The ten D3D12 exact-bit differences are preserved as evidence of cross-provider floating-point rounding. They are not hidden or relabeled as exact equality; all 256 lanes remain within the declared absolute tolerance.
+
+#### VERIFY → EVIDENCE
+
+- GitHub Actions run `43999672252` at exact SHA `b6154c0...` completed:
+  - Windows qualification: tests PASS, Clippy with warnings denied PASS, release build PASS, selected Node integration/regression suite PASS, hash/upload PASS.
+  - macOS qualification: the same source/build/integration chain PASS.
+  - Ubuntu qualification: the same source/build/integration chain PASS.
+- The overall workflow conclusion is red only because the separate `windows-production-signing-gate` failed closed with exact error `WINDOWS_PRODUCTION_SIGNING_NOT_CONFIGURED`. Readback showed both `WINDOWS_CODE_SIGNING_CERTIFICATE_PFX` and `WINDOWS_CODE_SIGNING_CERTIFICATE_PASSWORD` empty. No unsigned artifact was represented as production-signed.
+- Real Device Bridge discovery currently lists `pc-primary`, `phone-fold6`, `LDB-04ff1b33-8a70-434c-9aba-8752a30789ee`, `pc-hp-secondary`, and `phone-apple-iphone` as trusted registry identities with reachability `NOT_PROBED`. `pc-primary` capability readback verifies ordinary Windows process/file/window/voice capabilities, but the Bridge does not yet expose a named GPU-compute execution capability.
+- Further Fold6, iPhone, and HP capability probes in this segment were not executed because the external approval-review service reached its usage limit. That boundary is not a device rejection and is not physical-device evidence.
+- **Scoped physical evidence admitted:** OS-mediated Vulkan and D3D12 command submission on the local NVIDIA discrete GPU, fixed-buffer readback, 256-lane CPU differential evaluation, exact/tolerance distinction, deterministic hashes, and three-OS source/build/integration qualification.
+- **Not verified or claimed:** physical Metal execution, Android GPU execution, HP GPU execution, Device Bridge-routed GPU execution, PCIe MPS register state, MMIO, DMA, zero copy, thermal improvement, sustained CPU/RSS performance, Formula decision, independent Veritas verdict, canonical Receipt Authority record, Learning Ledger admission, Windows Authenticode production signing, or production release.
+- `canonicalReceiptIssued` remained `false` for every native-compute probe.
+
+#### CHECKPOINT → CONTINUE
+
+Phase 3 is qualified at local physical D3D12/Vulkan evidence and three-OS source/build scope. The next canonical gate is not another GPU abstraction: expose the bounded native-compute request/evidence envelope as a registry-authorized Device Bridge capability, route one observation-bound request through the real Bridge to an enrolled node, and submit the returned evidence through the existing Formula → Veritas → Receipt Authority → Learning Ledger chain. Apple Metal, Android Vulkan, and HP execution remain independent physical gates; no platform inherits another platform's pass.
