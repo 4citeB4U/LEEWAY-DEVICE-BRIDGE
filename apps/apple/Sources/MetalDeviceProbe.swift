@@ -1,5 +1,6 @@
 import Foundation
 import Metal
+import CryptoKit
 
 enum MetalDeviceProbe {
     private static let laneCount = 256
@@ -16,11 +17,11 @@ enum MetalDeviceProbe {
             return failure(deviceName: device.name, detail: "The bundled Device Bridge Metal kernel is unavailable.")
         }
 
-        let input = (0 ..< laneCount).map(UInt32.init)
+        let input = (0 ..< laneCount).map { Float($0) / 255.0 }
         let expected = input.enumerated().map { index, value in
-            value &* 3 &+ UInt32(index)
+            (Float(index) / 255.0).addingProduct(value, 3.0)
         }
-        let byteCount = laneCount * MemoryLayout<UInt32>.stride
+        let byteCount = laneCount * MemoryLayout<Float>.stride
 
         guard let inputBuffer = input.withUnsafeBytes({ bytes in
             device.makeBuffer(bytes: bytes.baseAddress!, length: byteCount, options: .storageModeShared)
@@ -54,7 +55,7 @@ enum MetalDeviceProbe {
 
         let output = Array(
             UnsafeBufferPointer(
-                start: outputBuffer.contents().bindMemory(to: UInt32.self, capacity: laneCount),
+                start: outputBuffer.contents().bindMemory(to: Float.self, capacity: laneCount),
                 count: laneCount
             )
         )
@@ -68,10 +69,23 @@ enum MetalDeviceProbe {
             state: mismatches == 0 ? .localReadbackPassedPendingReceipt : .failed,
             laneCount: laneCount,
             mismatchCount: mismatches,
+            operationID: "LEEWAY_TENSOR_AFFINE_16X16_V1",
+            inputSHA256: tensorHash(input),
+            outputSHA256: tensorHash(output),
             detail: mismatches == 0
-                ? "Direct Metal readback passed locally; Device Bridge receipt verification remains required."
-                : "Direct Metal readback contained \(mismatches) mismatched lanes."
+                ? "16x16 Metal tensor readback matched the CPU reference locally; Device Bridge receipt verification remains required."
+                : "16x16 Metal tensor readback contained \(mismatches) mismatched lanes."
         )
+    }
+
+    private static func tensorHash(_ values: [Float]) -> String {
+        var hasher = SHA256()
+        hasher.update(data: Data("LEEWAY_TENSOR_AFFINE_16X16_V1\0".utf8))
+        for value in values {
+            var bits = value.bitPattern.littleEndian
+            withUnsafeBytes(of: &bits) { hasher.update(bufferPointer: $0) }
+        }
+        return hasher.finalize().map { String(format: "%02x", $0) }.joined()
     }
 
     private static func failure(deviceName: String?, detail: String) -> AppleBridgeEvidence {
@@ -84,6 +98,7 @@ enum MetalDeviceProbe {
             state: .failed,
             laneCount: laneCount,
             mismatchCount: nil,
+            operationID: "LEEWAY_TENSOR_AFFINE_16X16_V1",
             detail: detail
         )
     }

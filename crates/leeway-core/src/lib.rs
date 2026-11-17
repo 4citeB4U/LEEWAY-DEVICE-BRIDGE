@@ -2,6 +2,7 @@
 
 pub mod continuum;
 pub mod continuum_memory;
+pub mod compute_backend;
 pub mod registry;
 pub mod router;
 pub mod sandbox;
@@ -9,6 +10,9 @@ pub mod transport;
 pub mod vault;
 
 pub use continuum::{ContinuumCapsule, ContinuumJournal};
+pub use compute_backend::{
+    execute_cpu_reference, tensor_buffer_sha256, ComputeExecutionEvidence, TENSOR_OPERATION_ID,
+};
 pub use continuum_memory::{
     Block256, CacheStageResult, ContinuumMemoryCache, ContinuumMemoryStats, ContinuumPointer,
     ContinuumPointerState, ReconstructionManifest, ReversibleBlockStream, TensorProjection16,
@@ -33,6 +37,8 @@ pub enum SovereignError {
     Continuum(String),
     #[error("continuum memory error: {0}")]
     ContinuumMemory(String),
+    #[error("compute error: {0}")]
+    Compute(String),
     #[error("registry error: {0}")]
     Registry(String),
     #[error("routing error: {0}")]

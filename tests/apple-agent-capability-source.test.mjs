@@ -6,6 +6,8 @@ const catalog = readFileSync("apps/apple/Sources/AppleCapabilityCatalog.swift", 
 const handoff = readFileSync("apps/apple/Sources/AppleSystemHandoff.swift", "utf8");
 const intents = readFileSync("apps/apple/Sources/LeeWayDeviceBridgeAppIntents.swift", "utf8");
 const view = readFileSync("apps/apple/Sources/AppleDeviceBridgeView.swift", "utf8");
+const metalProbe = readFileSync("apps/apple/Sources/MetalDeviceProbe.swift", "utf8");
+const metalKernel = readFileSync("apps/apple/Sources/LeeWayDeviceBridgeProbe.metal", "utf8");
 
 test("Apple capability source keeps iPhone control boundaries explicit", () => {
   assert.match(catalog, /device\.gpu\.metal\.probe/);
@@ -28,4 +30,14 @@ test("Apple source exposes the Metal probe through an App Intent", () => {
   assert.match(intents, /AppShortcutsProvider/);
   assert.match(intents, /MetalDeviceProbe\.run/);
   assert.match(intents, /External verification remains separate/);
+});
+
+test("Apple Metal probe shares the governed 16x16 differential contract", () => {
+  assert.match(metalProbe, /LEEWAY_TENSOR_AFFINE_16X16_V1/);
+  assert.match(metalProbe, /laneCount = 256/);
+  assert.match(metalProbe, /tensorHash\(input\)/);
+  assert.match(metalProbe, /tensorHash\(output\)/);
+  assert.match(metalProbe, /Device Bridge receipt verification remains required/);
+  assert.match(metalKernel, /const device float \*input/);
+  assert.match(metalKernel, /fma\(input\[lane\], 3\.0f, float\(lane\) \/ 255\.0f\)/);
 });
