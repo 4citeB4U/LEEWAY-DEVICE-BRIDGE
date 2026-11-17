@@ -86,3 +86,52 @@
 - **EVIDENCE_STATE:** Level A/B local test evidence only; Formula, Veritas, Receipt Authority, Learning Ledger, and production qualification not executed.
 - **SOURCE_REFERENCES:** the seven canonical repository SHAs in `SOURCE_FIRST_ACK`, Device Bridge repair commits `6ee932bf…` plus its pending CI-order repair, and this checkpoint SHA-256 readback.
 - **INDEPENDENT_VALIDATION:** checkpoint structure and SHA are read back by the read-only engineering-loop checkpoint reader; claim truth is not independently assessed. Independent Veritas remains not executed.
+
+---
+
+## Worker Input Repair Continuation — 2026-11-16T18:20:30-06:00
+
+**Identity / authority:** Codex engineering worker under Leonard Jerome Lee's explicit repair and live-input acceptance order  
+**Committed source:** `ae9f5cd4f6cf845ab4e18ae6f8f1b61b062dd8ca` on `repair/universal-relay-20261116`  
+**Remote state:** pushed to `origin/repair/universal-relay-20261116`; host checkout fast-forwarded from `0a0be5c7...` to `ae9f5cd4...` with a clean pre-update worktree  
+**Gate:** Browser courier source integration passed. Live native-browser enrollment remains incomplete; UIA worker tests are partially passing with exact scoped failures.
+
+### INVESTIGATE → DIAGNOSE
+
+- The extension background worker forwarded host commands into the active tab but discarded the content-script response.
+- The local browser gateway had no request/response correlation contract.
+- `DesktopAdapter` had no browser-courier provider seam, so browser workers could never enter the canonical Bridge observation/input/read chain.
+- `inter-worker-orchestrator.mjs` called `Bridge.call` with the wrong signature and omitted the required device, PID, observation, target, action, and exact-text bindings.
+- Windows UI child-process failures were collapsed to `WINDOW_UI_AUTOMATION_FAILED`, hiding actionable device boundaries.
+- The registered Device Bridge owner still launched an obsolete optional Desktop Commander sidecar. That block was removed from the host launcher; no Desktop Commander process was started by the repaired owner.
+
+### IMPLEMENT → TEST → RETEST
+
+- Added `BrowserCourierSessions` with host-injected worker-to-extension/origin bindings, correlated requests, 30-second observation custody, exact input SHA-256 binding, submit binding, and nonce-bound response readback.
+- Routed browser-courier observations through the existing `DesktopAdapter`; no parallel command authority was created.
+- Added trusted Runtime composition validation and configured-bridge injection for browser courier providers.
+- Corrected extension response forwarding, gateway correlation/timeouts, orchestrator Bridge signatures, and Windows error propagation.
+- Updated the local host wrapper's source pins and added optional environment-bound browser courier composition. With no browser settings present, the wrapper remains operational without advertising a fabricated browser connection.
+- Regression evidence after the repair: MCP **184/184 PASS**; CLI **7/7 PASS**; browser/orchestrator **7/7 PASS**; total **198 passed, 0 failed, 0 skipped**. Syntax and `git diff --check` passed.
+- Fresh host-wrapper startup probe: **PASS**, 68 tools, dynamic `workerId` accepted by the live `device_windows_window_list` schema.
+
+### LIVE HOST EVIDENCE
+
+- Canonical Boot Fabric registration validation: `SERVICE_REGISTRATIONS_READY` for `LeeWay Runtime Supervisor` and `LeeWay Device Bridge Relay`.
+- Runtime supervisor source-pin validation: `PASS`, rooted at `E:\LeeWay-Work\pc-consciousness-live\runtime`.
+- Registered owners started. Observed listeners: Runtime `127.0.0.1:4011` and governed relay `127.0.0.1:8008`.
+- Real Bridge discovery listed five trusted registry IDs but reported reachability `NOT_PROBED`; this remains registration evidence only.
+- Real Bridge Windows list returned Chrome `pid 14940`, title `Development Takeover Plan - Google Chrome`, receipt `1fbd7713-9d25-47e9-b2de-ec69f866da37`.
+- Live unsent worker-input probe through the repaired host wrapper:
+  - `w-chatgpt`: exact input SHA-256 readback succeeded; receipt `ab9862ac-068f-4953-a610-6e51fbb4e838`. The probe script's extra `readbackVerified` expectation was not part of the UIA result schema; the canonical result was successful and returned `EXACT_VALUE_PATTERN_READBACK` plus the text hash.
+  - `w-codex`: denied before mutation because two matching windows existed (`WINDOW_COUNT_2`). A PID must be selected from a fresh list.
+  - `w-antigravity`: denied before mutation because the native surface exposed zero writable UIA controls (`EDITABLE_COUNT_0`); browser courier is the intended adapter.
+  - `w-copilot`: reached the selected composer but exact readback failed with `WINDOW_INPUT_READBACK_MISMATCH`; receipt `e7ae5377-be04-4ede-b6da-51b1929a3396`.
+
+### OPEN PHYSICAL BOUNDARY
+
+The host has no `LEEWAY_BROWSER_GATEWAY_SECRET`, no enrolled browser extension ID, no worker binding record, and no Native Messaging registration. Source integration is complete, but installing the browser extension is a distinct browser state change requiring action-time user confirmation. Until that enrollment is performed, Antigravity/Gemini browser-courier execution is **BLOCKED_AT_NATIVE_BROWSER_ENROLLMENT**, not globally blocked and not reported as passed.
+
+### CHECKPOINT → CONTINUE
+
+Next executable action: with action-time confirmation, install the unpacked LeeWay extension in the selected browser, capture its actual extension ID, provision the host-held gateway secret and dynamic worker/origin bindings, register the Native Messaging host, restart only the MCP client process that owns the wrapper, then retest Antigravity and Gemini through browser courier. Independently, select the intended Codex PID and refine the Copilot editor adapter against the observed readback mismatch.
