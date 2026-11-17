@@ -196,3 +196,51 @@ Next executable action: with action-time confirmation, install the unpacked LeeW
 #### CHECKPOINT → CONTINUE
 
 The browser-native transport is implemented and cross-platform qualified at source/build scope. Production installation is correctly stopped at one exact boundary: provide the two protected GitHub signing secrets from a valid Windows code-signing PFX, rerun workflow `LeeWay Core Portable Package`, verify the signed artifact, and only then request action-time confirmation to install/register the extension and native host in the selected browser. After enrollment, run physical unsent input/readback against the browser workers. Until then, browser-worker physical execution is not passed.
+
+### CONTINUUM MEMORY PHASE 1 — 2026-11-16T19:25:32-06:00
+
+**SOURCE_FIRST_ACK**
+
+- **MISSION_ID:** `LW-CONTINUUM-MEMORY-PHASE1-20261116`
+- **WORK_ID:** `device-bridge-universal-relay-20261116`
+- **AGENT_ID:** `F1_CODEX_LEAD`
+- **SOURCES_READ:** repository `4citeB4U/LEEWAY-DEVICE-BRIDGE` at pre-change SHA `b412f9ebe761714063387a36ec5b0457a5751b9c`; host `AGENTS.md`; LeeWay Agent Operating Loop and source-first evidence reference; current canonical checkpoint; user research attachments `862eeedb...`, `f09cba1a...`, and `e05f6d80...`; existing Continuum, Sandbox, registry, router, GPU-candidate, Apple-probe, protocol, and CI seams.
+- **RULES_APPLIED:** preserve canonical Continuum authority; no parallel receipt/Formula/Veritas service; no kernel intrusion; distinguish lossy feature projection from reversible custody; keep hardware adapters contract-only until physical execution proves them.
+- **CONFLICTS_OR_STALE_SOURCES:** the research claim that arbitrary input can be losslessly reconstructed from 256 aggregate values is mathematically unsupported; direct portable user-space PCIe/MMIO/MPS programming is not available in the current source or ordinary OS authority; silent self-trust of a generated certificate is not production Authenticode.
+- **REUSABLE_ACCEPTED_WORK:** universal registry admission, sovereign partitions, Sandbox/Continuum evidence path, existing Apple local Metal probe, portable CI matrix, and browser-native packaging remain intact.
+- **ACTIVE_GATE:** Level A/B Phase 1 source, unit, release-binary, regression, and cross-platform artifact qualification.
+- **FIRST_UNFINISHED_ASSERTION:** bind one governed native compute adapter to the qualified projection/custody contract and run physical differential/readback evidence; no physical backend is yet bound.
+
+#### IMPLEMENTED CANONICAL REPAIR
+
+- **Commit:** `0275ec71857c8bef5f99f68c4fb16b13219d0bd9` (`feat(core): add truthful continuum memory phase one`), pushed to `origin/repair/universal-relay-20261116`.
+- Added deterministic `TensorProjection16`: exactly 256 normalized feature cells, source/projection hashes, and explicit `losslessReconstruction: false`.
+- Added `ReversibleBlockStream`: identity-coded 256-byte blocks, final valid-byte count, encoded/source SHA-256 manifests, bounded decode, exact round-trip, and tamper rejection. No compression ratio is claimed.
+- Added `ContinuumMemoryCache`: tracked payload-capacity and entry-size limits, LRU eviction, original-byte retention, and Continuum pointer hash/state binding. Health truthfully reports that total process memory is not bounded by this payload counter.
+- Added platform transport profiles and an opaque allocation safety arbiter. Windows selects D3D12, Linux/Android Vulkan, Apple Metal, and unknown hosts CPU fallback as preferred future adapters; every profile remains `CONTRACT_ONLY_NOT_BOUND` and advertises no direct PCIe configuration, MMIO, physical DMA, kernel intrusion, or verified zero-copy.
+- Core startup now stages its already-recorded Sandbox event in the RAM cache against the persisted Continuum capsule and exposes the truthful cache/transport state through `/health`.
+- Added release CLI seams `continuum-project`, `continuum-block-encode`, and `continuum-block-decode`; input, JSON document, and reconstructed output sizes are bounded.
+
+#### TEST → VALIDATE → RETEST
+
+- Local elevated Rust `cargo check --workspace --all-targets`: **PASS**.
+- Local elevated Rust `cargo test --workspace --all-targets --no-run`: **PASS**; all test binaries compiled.
+- Local elevated Clippy `--workspace --all-targets -- -D warnings`: **PASS**.
+- Local release build: **PASS**.
+- Local debug test execution: **BLOCKED before assertion execution** by Windows Application Control (`os error 4551`). Rebuilt unsigned release execution was also denied. This denial was preserved rather than treated as a source failure or bypassed.
+- Before the final rebuild, the permitted local release seam plus related regressions executed **11 passed, 0 failed**. After rebuild, the host policy denied the three executable-backed tests while the other **8 passed**; CI below is the current-byte execution authority for this commit.
+- GitHub Actions run `43995060731` at exact SHA `0275ec7...`:
+  - Windows: Rust library **15/15 PASS**, native-host **3/3 PASS**, Node integration/regression **25/25 PASS**, Clippy PASS, release build PASS, hash/upload PASS.
+  - macOS: same qualification chain **PASS**.
+  - Ubuntu: same qualification chain **PASS**.
+- CI annotations about GitHub Action Node 20 deprecation/Ubuntu label migration are platform notices, not Phase 1 assertion failures.
+
+#### VERIFY → EVIDENCE BOUNDARY
+
+- **VERIFIED (Level A/B):** deterministic projection contract; exact reversible block custody; malformed/tampered/oversized rejection; tracked payload eviction; 50,000-case allocation-range safety test; platform profile non-claims; three-OS source/build/integration qualification; portable artifact production.
+- **NOT VERIFIED:** physical D3D12/Vulkan/Metal execution, PCIe MPS register state, MMIO/DMA, zero copy, thermal improvement, CPU utilization under sustained workload, total process RSS limit, physical-device transfer, Formula decision, independent Veritas, canonical Receipt Authority, Learning Ledger admission, or production release.
+- Workflow result is overall red only because the separate Windows production-signing job failed closed with `WINDOWS_PRODUCTION_SIGNING_NOT_CONFIGURED`; both `WINDOWS_CODE_SIGNING_CERTIFICATE_PFX` and `WINDOWS_CODE_SIGNING_CERTIFICATE_PASSWORD` were empty. All three qualification jobs are green.
+
+#### CHECKPOINT → CONTINUE
+
+Phase 1 is accepted at scoped Level A/B evidence on commit `0275ec7...`. The next canonical engineering gate is Phase 2 adapter assembly: define the governed compute-backend request/evidence envelope, bind the existing Apple local Metal probe first without changing its receipt boundary, add CPU differential readback, and then qualify D3D12/Vulkan adapters independently. Raw PCIe/MMIO remains outside Device Bridge command authority unless a separately signed, OS-mediated driver and physical safety lab establish that capability.
