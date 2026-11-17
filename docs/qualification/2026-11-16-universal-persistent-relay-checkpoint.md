@@ -388,3 +388,45 @@ Phase 3 is qualified at local physical D3D12/Vulkan evidence and three-OS source
 #### CHECKPOINT → CONTINUE
 
 Create the source commit through the available Git authority, then require exact-SHA CI. After CI, repair the HP and Android adapter boundaries separately and add file operations only through their platform-native authorized storage adapters; do not infer phone writes from registration or health.
+
+### EXACT-SHA CI READBACK — 2026-11-17T01:06:00-06:00
+
+**Committed source:** `fbe4b9fe1fba7a05721126809acdd03c48248d4e` (`feat: bind dynamic compute and isolate retired bridge code`) on `repair/universal-relay-20261116`. The remote commit contains the 27 writes and 16 active-tree deletions described above; the quarantined historical copies remain on `4citeB4U/LEEWAY-D-DRIVE-RECOVERY-20260925`, branch `quarantine/device-bridge-pocket-id-20261117`.
+
+#### TEST → VALIDATE → VERIFY
+
+- Portable protocol and MCP run `44035351477`: **PASS** on Windows, macOS, and Ubuntu.
+- Apple Device Bridge Qualification run `44035351489`: **PASS**, including source/package contract tests, independent-runtime-boundary enforcement, unsigned iPhone source build, and sideload-artifact packaging.
+- Android Build run `44035351428`: **PASS**, including native prerequisites, source/contracts, SDK 35 package build, package measurement/hash, and artifact publication steps.
+- LeeWay Core Portable Package run `44035351490`:
+  - `qualify (windows-latest)`: **PASS** — Rust tests, Clippy with warnings denied, release build, selected Node integration tests, core hash, and artifact upload.
+  - `qualify (macos-latest)`: **PASS** through the same qualification chain.
+  - `qualify (ubuntu-latest)`: **PASS** through the same qualification chain.
+  - Separate `windows-production-signing-gate`: **FAIL**, exact error `WINDOWS_PRODUCTION_SIGNING_NOT_CONFIGURED`; readback showed `WINDOWS_CODE_SIGNING_CERTIFICATE_PFX` and `WINDOWS_CODE_SIGNING_CERTIFICATE_PASSWORD` empty. No unsigned executable was relabeled as production-signed.
+
+#### EVIDENCE → CHECKPOINT → CONTINUE
+
+The exact committed source is qualified across the protocol/MCP, Android, Apple source/package, and three-OS portable-core lanes. The red aggregate state belongs only to protected Windows production-signing custody, not to compilation, tests, Clippy, packaging, hashing, or artifact upload. This does not prove field installation, phone write/screen control, HP/Android adapter health, Formula evaluation, independent Veritas acceptance, canonical Receipt Authority custody, Learning Ledger admission, or production release.
+
+**Next executable action:** repair `pc-hp-secondary` and Android `ADAPTER_OR_VALIDATION_FAILURE` boundaries independently, then execute observation-bound active read/write tests through each platform-native adapter. Keep Windows production signing as a separate release-custody gate; do not weaken it or represent a locally self-signed development binary as a publicly trusted production artifact.
+
+### LIVE ADAPTER RECHECK AND HP ROOT CAUSE — 2026-11-17T01:09:00-06:00
+
+#### INVESTIGATE → DIAGNOSE → VALIDATE
+
+- Android recovered without a source repair. Both trusted Android identities resolved to physical serial `RFCX70LNT7X`, Samsung `SM-F956U`, Android 17 / SDK 37, battery 78%, transport `LOCAL_USB_ADB`, and `uiControl=true`.
+- `phone-fold6` health receipt `30149504-a36f-48fe-95e4-a3160cbb3f0a` and info receipt `c297d4fd-a0fd-40be-bb69-b5c97ce888f5` passed. Active app inventory passed with receipt `64e7fa4c-8120-4de0-85eb-ddd9de52f59b`; PNG screen capture (968 x 2376) passed with receipt `8c8637b3-a5cc-442f-a9e1-8d13ef9a77fd`; a real Home-button command passed with receipt `aa6d0138-5a0e-4722-8ad4-a5d9e156635e`.
+- The second enrolled Android identity, `LDB-04ff1b33-8a70-434c-9aba-8752a30789ee`, independently returned health receipt `a1bc4c38-3da1-45d1-bab1-30d60c756879` and info receipt `552177b4-4f83-40ca-ba17-5490f5724dee`, but both names currently bind the same physical serial. This is alias evidence, not two-phone evidence.
+- HP discovery still returns `DISCOVERY_FAILED`; health and info stop before execution with receipts `6a3f9c76-2e86-4b20-9944-eed380db4471` and `9c9076b5-49c0-42d3-aea2-32f9f40d250c`.
+
+#### EXACT HP FAILURE LINEAGE
+
+1. The live host config binds `pc-hp-secondary` as `type: desktop` with workspace `C:\\Users\\LEO`. On the active primary host (`AGENT-LEE`, user `Leona`), that directory does not exist. The Bridge therefore constructs a local `DesktopAdapter`, not the implemented `RelayAdapter`.
+2. The current relay client sends its client credential in the `token` field, while the current relay server authenticates client/workstation ingress from `ownerToken`. A config-only switch to `type: relay` would still fail authentication.
+3. The public relay defaults to `rooms = new Map()` and `volatileRoomState = true`; client admission additionally requires the target room to exist in the same process. This cannot provide cross-instance room continuity on an ephemeral serverless deployment.
+4. No local persistent carrier was listening on ports 8008, 4271, or 4011 during this readback. Railway showed the Runtime Fabric deployment online with one replica and a successful keepalive job, but its currently staged change includes deletion of the old MySQL service. That staged deletion was not deployed or altered.
+
+#### REPAIR BOUNDARY → CONTINUE
+
+Do not rewrite the HP entry as a fake local desktop and do not reuse a GitHub credential as a mesh token. The next source/deployment repair must: (a) separate device mesh credentials from owner OIDC client credentials in the relay protocol, (b) run `operator/persistent-relay-server.mjs` on an owner-approved persistent carrier rather than a Vercel function room map, (c) bind the HP config as a relay device using that carrier and owner-token environment seam, and (d) restart only the owning Bridge wrapper before repeating capability, health, file write/read/hash, process, and UI acceptance. Android is now a passing active-control lane; Android file writes remain unimplemented and unclaimed.
+
