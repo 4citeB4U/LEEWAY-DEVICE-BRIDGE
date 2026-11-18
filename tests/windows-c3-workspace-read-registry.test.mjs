@@ -12,8 +12,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { generateKeyPairSync } from 'node:crypto';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import { loadAdapterRegistry, admitCommand } from '../operator/device-operator.mjs';
 import { createC3AdmissionBinding } from '../operator/c3-admission-binding.mjs';
+import { DesktopAdapter } from '../apps/desktop/adapter.mjs';
 import { createConsentEvidenceToken, ConsentReplayGuard } from '../operator/trusted-issuer-registry.mjs';
 
 const readCapabilities = ['device.files.read', 'device.directories.list'];
@@ -123,4 +127,34 @@ test('consent remains required for consequential capabilities; signed nonce repl
   assert.equal(await c3({deviceId:'pc-primary',capability,args}),false,'consent replay rejected');
   assert.equal(registry.adapters.find(a=>a.platform==='windows').capabilities['device.files.write'],undefined,
     'test-only synthetic mutation did not escape into actual registry');
+});
+
+test('DesktopAdapter keeps READ confined to the configured workspace and denies traversal/symlinks', async t => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'leeway-w01-workspace-'));
+  const outside = await fs.mkdtemp(path.join(os.tmpdir(), 'leeway-w01-outside-'));
+  t.after(async()=>{ await fs.rm(root,{recursive:true,force:true}); await fs.rm(outside,{recursive:true,force:true}); });
+  await fs.writeFile(path.join(root,'approved.txt'),'synthetic W01 read evidence');
+  await fs.writeFile(path.join(outside,'outside.txt'),'must not be read');
+  const adapter = new DesktopAdapter(root);
+  const read = await adapter.execute('device.files.read',{path:'approved.txt'});
+  assert.equal(read.text,'synthetic W01 read evidence');
+  const listing = await adapter.execute('device.directories.list',{path:'.',limit:10});
+  assert.ok(listing.entries.some(entry=>entry.name==='approved.txt'));
+  await assert.rejects(
+    adapter.execute('device.files.read',{path:'../outside.txt'}),
+    /INVALID_PATH|PATH_OUTSIDE_WORKSPACE/
+  );
+  await assert.rejects(
+    adapter.execute('device.directories.list',{path:'..',limit:10}),
+    /INVALID_PATH|PATH_OUTSIDE_WORKSPACE/
+  );
+  await assert.rejects(
+    adapter.execute('device.files.read',{path:path.join(outside,'outside.txt')}),
+    /INVALID_PATH|PATH_OUTSIDE_WORKSPACE/
+  );
+  await fs.symlink(path.join(outside,'outside.txt'),path.join(root,'linked.txt'));
+  await assert.rejects(
+    adapter.execute('device.files.read',{path:'linked.txt'}),
+    /LINK_NOT_ALLOWED/
+  );
 });
