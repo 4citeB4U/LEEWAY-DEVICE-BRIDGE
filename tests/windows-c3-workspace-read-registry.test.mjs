@@ -2,11 +2,11 @@
  * LEEWAY HEADER — DO NOT REMOVE
  * REGION: LEEWAY.DEVICE.BRIDGE.WINDOWS.READ_ADMISSION.TEST
  * TAG: LEEWAY.W01.WINDOWS.C3.READ_REGISTRY_REGRESSION.V1
- * 5WH: WHAT=Assert Windows C3 registry declares bounded workspace reads and still rejects unauthorized calls.
- * WHY=Prevent health-only operator metadata from silently denying previously qualified workspace reads.
- * WHO=Creator-authorized W01 outside support contributor; WHERE=tests/windows-c3-workspace-read-registry.test.mjs.
- * WHEN=2026-11-17; HOW=Test-only signed owner consent + source registry + C3 callback, never a physical read.
- * AUTHORITY=TEST_ONLY; no live token, Formula/Veritas decision, Receipt, or production admission.
+ * 5WH: WHAT=Check bounded owner-scoped Windows READ declarations and preserve strict C3 mutation admission.
+ * WHY=Prevent health-only registry drift and accidental conversion of workspace READ into MUTATE.
+ * WHO=Creator-directed W01 engineering; WHERE=tests/windows-c3-workspace-read-registry.test.mjs.
+ * WHEN=2026-11-17; HOW=Source-only C3 contract tests, synthetic identity and test-only signed tokens.
+ * AUTHORITY=TEST_ONLY; all Formula/Veritas provider fakes are explicit test fixtures, no live device approval.
  * LICENSE=MIT.
  */
 import test from 'node:test';
@@ -18,70 +18,109 @@ import { createConsentEvidenceToken, ConsentReplayGuard } from '../operator/trus
 
 const readCapabilities = ['device.files.read', 'device.directories.list'];
 const registry = loadAdapterRegistry();
-const win = registry.adapters.find(a => a.platform === 'windows');
+const windows = registry.adapters.find(adapter => adapter.platform === 'windows');
 
-test('Windows operator registry declares both workspace read capabilities as consent-gated, not verified grants', () => {
-  assert.ok(win, 'Windows operator metadata must exist');
-  for (const cap of readCapabilities) {
-    const claim = win.capabilities?.[cap];
-    assert.ok(claim, `missing Windows C3 metadata: ${cap}`);
-    assert.equal(claim.state, 'SUPPORTED');
-    assert.equal(claim.requiresHumanConsent, true);
-    assert.equal(admitCommand({platform:'windows',capability:cap,authorityTier:'MUTATE',humanConfirmed:false},registry).admitted,false);
-  }
-  assert.equal(win.capabilities['device.files.write'], undefined, 'do not broaden Windows mutation claims');
-  assert.equal(win.capabilities['device.health'].requiresHumanConsent,false);
+// Test-only synthetic registry record: no real Windows passport is created here.
+const identity = Object.freeze({
+  platform: 'windows',
+  identityVerified: true,
+  registrationState: 'TRUSTED_REGISTRY_READ',
+  identitySource: 'WINDOWS_CIM_READONLY',
+  passportAuthority: 'OWNER_SIGNED_WINDOWS_PASSPORT',
+  ownerSubject: 'w01-test-owner',
+  passportSha256: 'a'.repeat(64)
 });
 
-test('read-only Bridge entry remains denied without a trusted owner-signed consent', async () => {
-  const verified = {
-    platform:'windows', identityVerified:true, registrationState:'TRUSTED_REGISTRY_READ',
-    identitySource:'WINDOWS_CIM_READONLY',passportAuthority:'OWNER_SIGNED_WINDOWS_PASSPORT',
-    ownerSubject:'test-owner-only',passportSha256:'a'.repeat(64)
-  };
-  const c3 = createC3AdmissionBinding({
-    deviceRegistry: new Map([['pc-primary',verified]]), registry,
-    formulaPreGate: async()=>true, veritasPreGate: async()=>true
-  });
-  for(const cap of readCapabilities) {
-    assert.equal(await c3({deviceId:'pc-primary',capability:cap,args:{path:'safe.txt'}}),false);
+test('only bounded Windows workspace read/list are declared with the autonomous READ disposition', () => {
+  assert.ok(windows, 'Windows platform adapter must exist');
+  assert.equal(windows.implementationStatus, 'PARTIAL', 'do not promote adapter without live qualification');
+  for (const capability of readCapabilities) {
+    const claim = windows.capabilities?.[capability];
+    assert.ok(claim, `undeclared Windows bounded read: ${capability}`);
+    assert.equal(claim.state, 'SUPPORTED', 'source declaration is not a live verified capability');
+    assert.equal(claim.requiresHumanConsent, false, 'scoped READ policy does not require separate consent token');
+    assert.equal(admitCommand({
+      platform: 'windows', capability, authorityTier: 'READ', humanConfirmed: false
+    }, registry).admitted, true, 'operator metadata must recognize owner-governed READ');
+    assert.equal(admitCommand({
+      platform: 'windows', capability, authorityTier: 'MUTATE', humanConfirmed: false
+    }, registry).admitted, false, 'a caller cannot claim mutation authority without consent');
   }
-  const badIdentity=createC3AdmissionBinding({
-    deviceRegistry:new Map([['pc-primary',{platform:'windows'}]]),registry,
-    formulaPreGate:async()=>true,veritasPreGate:async()=>true
-  });
-  assert.equal(await badIdentity({deviceId:'pc-primary',capability:'device.health',args:{}}),false);
+  assert.equal(windows.capabilities['device.files.write'], undefined);
+  assert.equal(windows.capabilities['device.ui.control'], undefined);
+  assert.equal(windows.capabilities['device.health'].requiresHumanConsent, false);
 });
 
-test('test-only signed owner consent admits only exact requested read and rejects replay',async()=>{
+test('owner-scoped READ requires trusted device identity plus actual Formula and Veritas gate success', async () => {
+  const args = { path: 'workspace' };
+  const admitted = createC3AdmissionBinding({
+    deviceRegistry: new Map([['pc-primary', identity]]), registry,
+    formulaPreGate: async () => true, veritasPreGate: async () => true,
+  });
+  // Successful fixtures demonstrate the C3 policy path, not live authority.
+  for (const capability of readCapabilities) {
+    assert.equal(await admitted({deviceId:'pc-primary',capability,args}), true, capability);
+  }
+  const missingFormula = createC3AdmissionBinding({
+    deviceRegistry: new Map([['pc-primary', identity]]), registry,
+    veritasPreGate: async () => true,
+  });
+  const rejectedFormula = createC3AdmissionBinding({
+    deviceRegistry: new Map([['pc-primary', identity]]), registry,
+    formulaPreGate: async () => false, veritasPreGate: async () => true,
+  });
+  const missingVeritas = createC3AdmissionBinding({
+    deviceRegistry: new Map([['pc-primary', identity]]), registry,
+    formulaPreGate: async () => true,
+  });
+  const rejectedVeritas = createC3AdmissionBinding({
+    deviceRegistry: new Map([['pc-primary', identity]]), registry,
+    formulaPreGate: async () => true, veritasPreGate: async () => false,
+  });
+  for (const gate of [missingFormula,rejectedFormula,missingVeritas,rejectedVeritas]) {
+    assert.equal(await gate({deviceId:'pc-primary',capability:'device.files.read',args}),false);
+  }
+  const unverifiedIdentity = createC3AdmissionBinding({
+    deviceRegistry: new Map([['pc-primary', {platform:'windows'}]]), registry,
+    formulaPreGate: async () => true, veritasPreGate: async () => true,
+  });
+  assert.equal(await unverifiedIdentity({deviceId:'pc-primary',capability:'device.files.read',args}),false);
+  assert.equal(await admitted({deviceId:'unregistered',capability:'device.files.read',args}),false);
+  assert.equal(await admitted({deviceId:'pc-primary',capability:'device.files.write',args}),false);
+});
+
+test('consent remains required for consequential capabilities; signed nonce replay fails closed',async()=>{
+  const isolatedRegistry = structuredClone(registry);
+  const win = isolatedRegistry.adapters.find(adapter=>adapter.platform==='windows');
+  // This capability exists ONLY in this test registry, never in the exported source registry.
+  win.capabilities['device.files.write'] = { state:'SUPPORTED',requiresHumanConsent:true };
   const {privateKey,publicKey}=generateKeyPairSync('ed25519');
-  const issuer={
-    issuerId:'test-w01-consent-issuer',keyId:'test-w01-key',algorithm:'Ed25519',
+  const issuer = {
+    issuerId:'w01-test-only-issuer',keyId:'w01-test-only-key',algorithm:'Ed25519',
     publicKeySpki:publicKey.export({type:'spki',format:'pem'}),
     status:'ACTIVE',validUntil:new Date(Date.now()+86400000).toISOString()
   };
-  const owner='test-owner-only';
-  let nextToken=null;
-  const c3=createC3AdmissionBinding({
-    deviceRegistry:new Map([['pc-primary',{
-      platform:'windows',identityVerified:true,registrationState:'TRUSTED_REGISTRY_READ',
-      identitySource:'WINDOWS_CIM_READONLY',passportAuthority:'OWNER_SIGNED_WINDOWS_PASSPORT',
-      ownerSubject:owner,passportSha256:'b'.repeat(64)
-    }]]),
-    registry, trustedIssuerRegistry:{[issuer.issuerId]:issuer},
-    replayGuard:new ConsentReplayGuard({inMemoryOnly:true}),
-    formulaPreGate:async()=>true,veritasPreGate:async()=>true,
-    consentProvider:async()=>nextToken
+  let consent = null;
+  const c3 = createC3AdmissionBinding({
+    deviceRegistry: new Map([['pc-primary',identity]]),
+    registry: isolatedRegistry,
+    trustedIssuerRegistry: {[issuer.issuerId]:issuer},
+    replayGuard: new ConsentReplayGuard({inMemoryOnly:true}),
+    formulaPreGate: async () => true,
+    veritasPreGate: async () => true,
+    consentProvider: async () => consent
   });
-  const privateKeyPem=privateKey.export({type:'pkcs8',format:'pem'});
-  for(const [i,cap] of readCapabilities.entries()){
-    const args=cap==='device.directories.list'?{path:'workspace',limit:10}:{path:'workspace/checkpoint.md'};
-    nextToken=createConsentEvidenceToken({
-      issuer:issuer.issuerId,keyId:issuer.keyId,privateKeyPem,
-      requestId:`W01-READ-TEST-${i}`,deviceId:'pc-primary',platform:'windows',
-      capability:cap,args,sessionNonce:`session-read-test-${i}`,tokenNonce:`token-read-test-${i}`
-    });
-    assert.equal(await c3({deviceId:'pc-primary',capability:cap,args}),true,`signed ${cap} should be admitted`);
-    assert.equal(await c3({deviceId:'pc-primary',capability:cap,args}),false,'replay must be denied');
-  }
+  const capability='device.files.write';
+  const args={path:'workspace/test-only.txt',text:'synthetic test data'};
+  assert.equal(await c3({deviceId:'pc-primary',capability,args}),false,'no signed consent');
+  consent=createConsentEvidenceToken({
+    issuer:issuer.issuerId,keyId:issuer.keyId,
+    privateKeyPem:privateKey.export({type:'pkcs8',format:'pem'}),
+    requestId:'W01-TEST-MUTATE-001',deviceId:'pc-primary',platform:'windows',
+    capability,args,sessionNonce:'w01-test-session-001',tokenNonce:'w01-test-token-001'
+  });
+  assert.equal(await c3({deviceId:'pc-primary',capability,args}),true,'test-only signed mutation allowed');
+  assert.equal(await c3({deviceId:'pc-primary',capability,args}),false,'consent replay rejected');
+  assert.equal(registry.adapters.find(a=>a.platform==='windows').capabilities['device.files.write'],undefined,
+    'test-only synthetic mutation did not escape into actual registry');
 });
