@@ -199,13 +199,13 @@
         },
         "device.directories.list": {
           "state": "SUPPORTED",
-          "requiresHumanConsent": true,
-          "notes": "Candidate workspace-only read capability. Requires source-bound Windows identity, explicit owner-signed request-bound consent, qualified DesktopAdapter and canonical Formula/Veritas gates; this registry entry is not a grant or live qualification."
+          "requiresHumanConsent": false,
+          "notes": "Owner-scoped bounded workspace READ candidate. Per-request consent token not required by the source READ policy; still requires authenticated Runtime owner and device.bridge.read scope, source-bound Windows passport, a declared qualified DesktopAdapter and actual Formula/independent Veritas pre-gates. No filesystem root expansion, arbitrary file access, execution grant or live qualification is implied."
         },
         "device.files.read": {
           "state": "SUPPORTED",
-          "requiresHumanConsent": true,
-          "notes": "Candidate workspace-only file read. Requires owner-signed request-bound consent, trusted host/adapter composition and independent C3 pre-gates; no filesystem read or production admission is conferred by this declaration."
+          "requiresHumanConsent": false,
+          "notes": "Owner-scoped workspace-only READ candidate (not a mutation tier). Requires scoped owner-authenticated Runtime forwarding, source-bound Windows identity, safePath confinement, qualified DesktopAdapter and Formula/independent Veritas pre-gates. The registry declaration is not itself authorization, a device execution receipt or production qualification."
         }
       },
       "evidenceState": "OBSERVED",
