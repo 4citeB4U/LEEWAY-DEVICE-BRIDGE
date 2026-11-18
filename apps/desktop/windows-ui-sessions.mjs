@@ -492,4 +492,122 @@ ${browserIdentityScript(observation.surfaceUrl, observation.expectedTitle)}
     const now = this.now();
     for (const [id, value] of this.observations) if (value.expiresAt <= now) this.observations.delete(id);
   }
+
+  // ── P0-E: Screen capture via GDI+ ──────────────────────────────────────────
+  async screenCapture() {
+    if (process.platform !== 'win32') throw Error('WINDOW_UI_WINDOWS_ONLY');
+    const script = `
+Add-Type -AssemblyName System.Windows.Forms,System.Drawing
+$screen=[System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+$bmp=New-Object System.Drawing.Bitmap($screen.Width,$screen.Height,[System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+$g=[System.Drawing.Graphics]::FromImage($bmp)
+$g.CopyFromScreen($screen.Location,[System.Drawing.Point]::Empty,$screen.Size)
+$g.Dispose()
+$ms=New-Object System.IO.MemoryStream
+$bmp.Save($ms,[System.Drawing.Imaging.ImageFormat]::Jpeg)
+$bmp.Dispose()
+$bytes=$ms.ToArray()
+$ms.Dispose()
+$sha=[System.Security.Cryptography.SHA256]::Create()
+$hash=[BitConverter]::ToString($sha.ComputeHash($bytes)).Replace('-','').ToLower()
+$sha.Dispose()
+Write-Output ([Convert]::ToBase64String($bytes))
+Write-Output $hash
+Write-Output $screen.Width
+Write-Output $screen.Height
+`;
+    const output = await executePowerShell(script);
+    const lines = output.trim().split(/\r?\n/);
+    if (lines.length < 4) throw Error('SCREEN_CAPTURE_FAILED');
+    const [base64, sha256, width, height] = lines;
+    if (!base64 || !/^[A-Za-z0-9+/]+=*$/.test(base64.trim())) throw Error('SCREEN_CAPTURE_INVALID_IMAGE');
+    return { ok: true, result: { ok: true, mimeType: 'image/jpeg', base64: base64.trim(), sha256: sha256.trim(), width: parseInt(width, 10), height: parseInt(height, 10) } };
+  }
+
+  // ── P0-E: UI accessibility tree snapshot ────────────────────────────────────
+  async uiSnapshot() {
+    if (process.platform !== 'win32') throw Error('WINDOW_UI_WINDOWS_ONLY');
+    const script = `
+Add-Type -AssemblyName UIAutomationClient,UIAutomationTypes
+$root=[System.Windows.Automation.AutomationElement]::RootElement
+$cond=[System.Windows.Automation.Condition]::TrueCondition
+$children=$root.FindAll([System.Windows.Automation.TreeScope]::Children,$cond)
+$result=@()
+foreach($w in $children){
+  $result+=@{name=[string]$w.Current.Name;pid=$w.Current.ProcessId;type=[string]$w.Current.ControlType.ProgrammaticName}
+}
+Write-Output (ConvertTo-Json $result -Compress)
+`;
+    const output = await executePowerShell(script);
+    let windows;
+    try { windows = JSON.parse(output.trim()); } catch { windows = []; }
+    if (!Array.isArray(windows)) windows = [];
+    return { ok: true, result: { windows: windows.slice(0, 50) } };
+  }
+
+  // ── P0-E: Pointer tap via SendInput ─────────────────────────────────────────
+  async tap(args) {
+    if (process.platform !== 'win32') throw Error('WINDOW_UI_WINDOWS_ONLY');
+    const x = Math.round(args.x), y = Math.round(args.y);
+    if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0 || x > 32768 || y > 32768) throw Error('TAP_COORDINATES_INVALID');
+    const script = `
+Add-Type @'
+using System;using System.Runtime.InteropServices;
+public class WinInputTap {
+  [StructLayout(LayoutKind.Sequential)] struct MOUSEINPUT { public int dx,dy,mouseData,dwFlags,time; public IntPtr extra; }
+  [StructLayout(LayoutKind.Sequential)] struct INPUT { public uint type; public MOUSEINPUT mi; }
+  [DllImport("user32.dll")] static extern uint SendInput(uint n,INPUT[] i,int s);
+  [DllImport("user32.dll")] static extern int GetSystemMetrics(int m);
+  public static void Tap(int x,int y){
+    int sw=GetSystemMetrics(0),sh=GetSystemMetrics(1);
+    int nx=(int)((long)x*65535/sw),ny=(int)((long)y*65535/sh);
+    int sz=System.Runtime.InteropServices.Marshal.SizeOf(typeof(INPUT));
+    var move=new INPUT[]{new INPUT{type=0,mi=new MOUSEINPUT{dx=nx,dy=ny,dwFlags=0x0001|0x8000}}};
+    SendInput(1,move,sz);
+    var dn=new INPUT[]{new INPUT{type=0,mi=new MOUSEINPUT{dwFlags=0x0002}}};
+    SendInput(1,dn,sz);
+    var up=new INPUT[]{new INPUT{type=0,mi=new MOUSEINPUT{dwFlags=0x0004}}};
+    SendInput(1,up,sz);
+  }
+}
+'@ -Language CSharp
+[WinInputTap]::Tap(${x},${y})
+Write-Output "TAP_OK"
+`;
+    const output = await executePowerShell(script);
+    if (!output.includes('TAP_OK')) throw Error('TAP_FAILED');
+    return { ok: true, x, y };
+  }
+
+  // ── P0-E: Keyboard text injection via SendInput ─────────────────────────────
+  async uiText(args) {
+    if (process.platform !== 'win32') throw Error('WINDOW_UI_WINDOWS_ONLY');
+    const text = args.text;
+    if (typeof text !== 'string' || text.length < 1 || text.length > 8192) throw Error('TEXT_INPUT_INVALID');
+    const escaped = text.replace(/'/g, "''");
+    const script = `
+Add-Type @'
+using System;using System.Runtime.InteropServices;
+public class WinKeys {
+  [StructLayout(LayoutKind.Sequential)] struct KEYBDINPUT { public ushort wVk,wScan,dwFlags,time; public IntPtr extra; }
+  [StructLayout(LayoutKind.Sequential)] struct INPUT { public uint type; public KEYBDINPUT ki; }
+  [DllImport("user32.dll")] static extern uint SendInput(uint n,INPUT[] i,int s);
+  public static void SendUnicode(string s){
+    var inputs=new INPUT[s.Length*2];
+    int sz=System.Runtime.InteropServices.Marshal.SizeOf(typeof(INPUT));
+    for(int i=0;i<s.Length;i++){
+      inputs[i*2]=new INPUT{type=1,ki=new KEYBDINPUT{wScan=(ushort)s[i],dwFlags=0x0004}};
+      inputs[i*2+1]=new INPUT{type=1,ki=new KEYBDINPUT{wScan=(ushort)s[i],dwFlags=0x0004|0x0002}};
+    }
+    SendInput((uint)inputs.Length,inputs,sz);
+  }
+}
+'@ -Language CSharp
+[WinKeys]::SendUnicode('${escaped}')
+Write-Output "TEXT_OK"
+`;
+    const output = await executePowerShell(script);
+    if (!output.includes('TEXT_OK')) throw Error('TEXT_INPUT_FAILED');
+    return { ok: true, length: text.length };
+  }
 }

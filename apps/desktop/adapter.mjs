@@ -29,11 +29,10 @@ const execFileAsync = promisify(execFile);
 
 // Bounded workspace files and explicitly allowlisted process execution. Never invokes a shell.
 export class DesktopAdapter {
-  constructor(root,{skillsRoot=null,receiptPath=null,modelHubUrl=process.env.LEEWAY_MODEL_HUB_URL||'',visionProvider=null,browserCourierProvider=null,nativeComputeProvider=null,voiceEndpoint=null,voiceFetchImpl=globalThis.fetch}={}) { this.root = path.resolve(root); this.jobs = new Map(); this.sessions = new DesktopSessions(this); this.searchSessions = new DesktopSearchSessions(this); this.vision = visionProvider; this.nativeCompute=nativeComputeProvider; this.voice=voiceEndpoint?new VoiceFabricAdapter(voiceEndpoint,{fetchImpl:voiceFetchImpl}):null; this.windows = process.platform === 'win32' ? new WindowsUiSessions() : null; this.browserWindows=browserCourierProvider?new BrowserCourierSessions(browserCourierProvider):null; this.skills=skillsRoot?new LeeWaySkillsCatalog(skillsRoot):null; this.receiptPath=receiptPath; this.modelHubUrl=modelHubUrl; }
+  constructor(root,{skillsRoot=null,receiptPath=null,modelHubUrl=process.env.LEEWAY_MODEL_HUB_URL||'',visionProvider=null,browserCourierProvider=null,voiceEndpoint=null,voiceFetchImpl=globalThis.fetch}={}) { this.root = path.resolve(root); this.jobs = new Map(); this.sessions = new DesktopSessions(this); this.searchSessions = new DesktopSearchSessions(this); this.vision = visionProvider; this.voice=voiceEndpoint?new VoiceFabricAdapter(voiceEndpoint,{fetchImpl:voiceFetchImpl}):null; this.windows = process.platform === 'win32' ? new WindowsUiSessions() : null; this.browserWindows=browserCourierProvider?new BrowserCourierSessions(browserCourierProvider):null; this.skills=skillsRoot?new LeeWaySkillsCatalog(skillsRoot):null; this.receiptPath=receiptPath; this.modelHubUrl=modelHubUrl; }
   async discover() {
     await fs.access(this.root);
     let visionCapabilities = [];
-    let nativeComputeCapabilities = [];
     if (this.vision) {
       const health = await this.vision.health();
       const descriptor = this.vision.describe();
@@ -41,9 +40,7 @@ export class DesktopAdapter {
         visionCapabilities = descriptor.capabilities.filter(name => typeof name === 'string' && name.startsWith('vision.'));
       }
     }
-    if(this.nativeCompute){try{const descriptor=await this.nativeCompute.discover();if(descriptor?.capabilityId==='gpu.compute.native.probe')nativeComputeCapabilities.push(descriptor.capabilityId);}catch{this.nativeCompute.descriptor=null;}}
-    return [...visionCapabilities,...nativeComputeCapabilities,...(this.skills?['skills.list','skills.read']:[]),...(this.modelHubUrl?['model.hub.catalog']:[]),...(this.voice?['voice.status','voice.speak']:[]),...(this.windows?['device.windows.window.list','device.windows.window.observe','device.windows.window.invoke','device.windows.window.input','device.windows.window.submit','device.windows.window.read']:[]),'device.health','device.info','device.documents.write_pdf','device.audit.recent','device.audit.usage','device.files.read','device.files.info','device.files.read_multiple','device.files.write','device.files.hash','device.files.read_binary','device.files.write_binary','device.files.append_binary','device.files.move','device.files.edit','device.directories.list','device.directories.page','device.directories.create','device.search.files','device.search.content','device.search.start','device.search.next','device.search.stop','device.search.list','device.process.list','device.process.terminate','device.process.execute','device.job.start','device.job.status','device.job.stop','device.session.start','device.session.read','device.session.input','device.session.stop','device.session.list']; }
-  describeCapabilities(){return this.nativeCompute?.descriptor?{'gpu.compute.native.probe':this.nativeCompute.descriptor}:{ };}
+    return [...visionCapabilities,...(this.skills?['skills.list','skills.read']:[]),...(this.modelHubUrl?['model.hub.catalog']:[]),...(this.voice?['voice.status','voice.speak']:[]),...(this.windows?['device.windows.window.list','device.windows.window.observe','device.windows.window.invoke','device.windows.window.input','device.windows.window.submit','device.windows.window.read','device.screen.capture','device.ui.snapshot','device.ui.tap','device.ui.swipe','device.ui.text']:[]),'device.health','device.info','device.documents.write_pdf','device.audit.recent','device.audit.usage','device.files.read','device.files.info','device.files.read_multiple','device.files.write','device.files.hash','device.files.read_binary','device.files.write_binary','device.files.append_binary','device.files.move','device.files.edit','device.directories.list','device.directories.page','device.directories.create','device.search.files','device.search.content','device.search.start','device.search.next','device.search.stop','device.search.list','device.process.list','device.process.terminate','device.process.execute','device.job.start','device.job.status','device.job.stop','device.session.start','device.session.read','device.session.input','device.session.stop','device.session.list']; }
   async readModelHubCatalog({query=''}) {
     let endpoint;
     try { endpoint = new URL('/v1/catalog', this.modelHubUrl); } catch { throw new Error('MODEL_HUB_ENDPOINT_INVALID'); }
@@ -250,7 +247,6 @@ export class DesktopAdapter {
     if (capability === 'voice.status' && this.voice) return this.voice.status();
     if (capability === 'voice.speak' && this.voice) return this.voice.speak(args);
     if (capability.startsWith('vision.') && this.vision) return this.vision.execute(capability, args);
-    if (capability === 'gpu.compute.native.probe' && this.nativeCompute) return this.nativeCompute.execute(args);
     if (capability === 'device.windows.window.list' && this.windows) return this.windows.list(args);
     if (capability === 'device.windows.window.observe' && this.windows) {
       if ((args.transport === 'browser-courier-dom' || (args.transport === 'auto' && this.browserWindows?.supports(args))) && this.browserWindows) return this.browserWindows.observe(args);
@@ -260,6 +256,12 @@ export class DesktopAdapter {
     if (capability === 'device.windows.window.input' && this.windows) return this.browserWindows?.owns(args.observationId) ? this.browserWindows.input(args) : this.windows.input(args);
     if (capability === 'device.windows.window.submit' && this.windows) return this.browserWindows?.owns(args.observationId) ? this.browserWindows.submit(args) : this.windows.submit(args);
     if (capability === 'device.windows.window.read' && this.windows) return this.browserWindows?.owns(args.observationId) ? this.browserWindows.read(args) : this.windows.read(args);
+    // P0-E: Screen capture and native UI input (Windows only, gated on this.windows)
+    if (capability === 'device.screen.capture' && this.windows) return this.windows.screenCapture();
+    if (capability === 'device.ui.snapshot' && this.windows) return this.windows.uiSnapshot();
+    if (capability === 'device.ui.tap' && this.windows) return this.windows.tap(args);
+    if (capability === 'device.ui.swipe' && this.windows) return this.windows.swipe(args);
+    if (capability === 'device.ui.text' && this.windows) return this.windows.uiText(args);
     if (capability === 'model.hub.catalog' && this.modelHubUrl) return this.readModelHubCatalog(args);
     if (capability === 'skills.list' && this.skills) return this.skills.list(args);
     if (capability === 'skills.read' && this.skills) return this.skills.read(args);
