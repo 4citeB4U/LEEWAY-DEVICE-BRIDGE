@@ -1,0 +1,39 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.BRIDGE.W01.WINDOWS.READ_GATE
+# TAG: LEEWAY.W01.WINDOWS.WORKSPACE_READ_C3_SOURCE_GATE
+# 5WH: WHAT=Regression-test Windows C3 workspace read/list admission metadata and signed consent.
+# WHY=Prevent health-only registry drift causing repeated upstream read denial.
+# WHO=Creator-directed W01 outside support contributor.
+# WHERE=.github/workflows/w01-windows-workspace-read-c3.yml.
+# WHEN=2026-11-17.
+# HOW=Dependency-pinned Node test runner, protocol/Windows C3 sibling suites, source-only CI.
+# AUTHORITY=Source-only; no live owner token, production grant, or device control.
+# LICENSE=MIT.
+name: W01 Windows workspace read C3 source gate
+on:
+  pull_request:
+    paths:
+      - operator/adapter-registry.json
+      - tests/windows-c3-workspace-read-registry.test.mjs
+      - .github/workflows/w01-windows-workspace-read-c3.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows-read:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: New upstream read/list registry and owner consent regression
+        run: node --test tests/windows-c3-workspace-read-registry.test.mjs
+      - name: Existing Windows physical identity negative/signed cases
+        run: node --test tests/windows-pc-primary.test.mjs
+      - name: Existing C3 admission boundary
+        run: node --test tests/c3-admission-binding.test.mjs
+      - name: Source integrity and parsing
+        run: node --check operator/c3-admission-binding.mjs
