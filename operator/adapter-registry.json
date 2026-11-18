@@ -196,6 +196,16 @@
           "state": "SUPPORTED",
           "requiresHumanConsent": false,
           "notes": "Read-only host identity observation; no configured desktop name or registry row can promote identityVerified."
+        },
+        "device.directories.list": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Candidate workspace-only read capability. Requires source-bound Windows identity, explicit owner-signed request-bound consent, qualified DesktopAdapter and canonical Formula/Veritas gates; this registry entry is not a grant or live qualification."
+        },
+        "device.files.read": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Candidate workspace-only file read. Requires owner-signed request-bound consent, trusted host/adapter composition and independent C3 pre-gates; no filesystem read or production admission is conferred by this declaration."
         }
       },
       "evidenceState": "OBSERVED",
