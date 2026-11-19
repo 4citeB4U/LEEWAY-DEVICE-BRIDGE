@@ -16,10 +16,13 @@ import { inspectThreePartSources, STANDARDS_MERGE_SHA } from '../../operator/ide
 
 function fixture() {
   return {
-    vercel: { rewrites: [
-      {source:'/mcp', destination:'/api/mcp'},
-      {source:'/.well-known/oauth-protected-resource/mcp',destination:'/api/oauth-protected-resource'}
-    ], functions: {'api/mcp.mjs':{maxDuration:60}} },
+    managedIngress: {
+      transport:'NODE_HTTP',
+      mcpPath:'/mcp',
+      protectedResourcePath:'/.well-known/oauth-protected-resource/mcp',
+      providerNeutral:true,
+      retiredProvider:'RETIRED'
+    },
     continuumTopology: {
       schema:'leeway.continuum.storage-topology.candidate.v1',
       status:'CANDIDATE_SOURCE_ONLY',
@@ -55,10 +58,10 @@ test('valid source route and full Continuum inventory never assert live readines
   assert.match(STANDARDS_MERGE_SHA,/^[a-f0-9]{40}$/);
 });
 
-test('missing public OAuth route denies source pass',()=>{
+test('missing managed public OAuth route denies source pass',()=>{
   const input=fixture();
-  input.vercel.rewrites.pop();
-  assert.throws(()=>inspectThreePartSources(input),/VERCEL_OAUTH_ROUTE_MISSING/);
+  input.managedIngress.protectedResourcePath='/wrong';
+  assert.throws(()=>inspectThreePartSources(input),/MANAGED_INGRESS_OAUTH_ROUTE_MISSING/);
 });
 
 test('duplicate database identities and omitted canonical SQLite deny pass',()=>{

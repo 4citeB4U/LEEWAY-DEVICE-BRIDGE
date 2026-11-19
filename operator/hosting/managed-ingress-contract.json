@@ -1,0 +1,8 @@
+{
+  "schema": "leeway.device-bridge.managed-ingress.v1",
+  "transport": "NODE_HTTP",
+  "mcpPath": "/mcp",
+  "protectedResourcePath": "/.well-known/oauth-protected-resource/mcp",
+  "providerNeutral": true,
+  "retiredProvider": "RETIRED"
+}

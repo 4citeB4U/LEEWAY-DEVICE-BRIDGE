@@ -1,6 +1,6 @@
 /* LEEWAY HEADER — DO NOT REMOVE
 REGION: LEEWAY.DEVICE.BRIDGE.PUBLIC.RELAY
-TAG: LEEWAY.VERCEL.DEVICE.RELAY.WEBSOCKET.V1
+TAG: LEEWAY.MANAGED_NODE.DEVICE.RELAY.WEBSOCKET.V2
 WHO: 4citeB4U/LEEWAY-DEVICE-BRIDGE
 WHAT: Transport-only WebSocket relay for the existing phone/client protocol
 WHY: Restore the canonical Device Bridge route after the retired Agent Lee X transport was removed
@@ -17,7 +17,7 @@ const MAX_ID_LENGTH = 128;
 const MAX_CAPABILITY_LENGTH = 128;
 const MAX_DEVICE_ID_LENGTH = 128;
 const MAX_TOKEN_LENGTH = 512;
-const DELIVERY_MODE = 'VERCEL_FUNCTION_WEBSOCKET_V1';
+const DELIVERY_MODE = 'MANAGED_NODE_WEBSOCKET_V1';
 const OWNER_ENROLLED_PC_IDS = new Set(['pc-primary', 'pc-hp-secondary']);
 
 function json(res, status, value) {

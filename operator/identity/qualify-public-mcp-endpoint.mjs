@@ -2,7 +2,7 @@
 REGION: LEEWAY.DEVICE.BRIDGE.DEPLOYMENT.QUALIFICATION
 TAG: LEEWAY.MCP.PUBLIC_OAUTH_DISCOVERY.QUALIFIER.V1
 WHO: LeeWay Industries
-WHAT: Verify the explicit public Vercel /mcp OAuth-discovery contract without credentials
+WHAT: Verify the explicit public managed-ingress /mcp OAuth-discovery contract without credentials
 WHEN: 2026-10-26
 WHERE: operator/identity/qualify-public-mcp-endpoint.mjs
 WHY: Reject stale Fly targets, SSO redirects, missing challenges, and mismatched OAuth resources

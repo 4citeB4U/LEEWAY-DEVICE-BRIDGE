@@ -1,8 +1,8 @@
 /* LEEWAY HEADER — DO NOT REMOVE
 REGION: LEEWAY.DEVICE.BRIDGE.PUBLIC.INGRESS
-TAG: LEEWAY.VERCEL.MCP.AUTHENTICATED.FORWARDER.V2
+TAG: LEEWAY.PUBLIC.MCP.AUTHENTICATED.FORWARDER.V3
 WHO: LeeWay Industries
-WHAT: Route public Vercel MCP requests to the ZITADEL OIDC-protected Runtime Fabric resource
+WHAT: Route public managed or self-hosted MCP requests to the ZITADEL OIDC-protected Runtime Fabric resource
 WHY: Keep the public OAuth resource identity and upstream MCP path consistent without duplicating execution authority
 WHERE: api/mcp.mjs
 WHEN: 2026-10-26
