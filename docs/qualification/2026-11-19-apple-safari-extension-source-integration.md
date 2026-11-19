@@ -31,6 +31,25 @@ installation, Safari Settings enablement, authenticated Runtime handoff, and
 physical iPhone handshake remain required and are **NOT_EXECUTED** by this
 source checkpoint.
 
+## Executed evidence
+
+```text
+node --test tests/apple-agent-capability-source.test.mjs tests/apple-camera-provider-source.test.mjs tests/apple-camera-transport.test.mjs tests/apple-native-package-contract.test.mjs tests/apple-github-iloader-update-channel.test.mjs tests/installation-adapter.test.mjs
+```
+
+Result: **15 passed, 0 failed**. This verifies only the Apple source and
+package contracts touched by this repair.
+
+```text
+npm run observe:iloader
+```
+
+Observed on Windows: Apple USB present; Apple Mobile Device Service not
+running; iLoader not running; no selected server or account record observed;
+certificate and provisioning states not observed. The resulting installation
+target is not ready. No installer, account, profile, certificate, phone, or
+Safari setting was changed.
+
 ## Rollback
 
 Revert this integration commit. No Apple account, signing certificate, profile,
