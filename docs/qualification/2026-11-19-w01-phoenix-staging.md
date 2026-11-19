@@ -35,8 +35,8 @@ Source branch: `creator/w01-phoenix-restore-staging-20261119`, based on existing
 
 ## Current classification / evidence
 
-- Source stage adapter: **SOURCE_IMPLEMENTED** in candidate branch; exact GitHub commit and test statuses require post-write readback.
-- Automated source tests: **NOT_EXECUTED in this ChatGPT runtime** unless CI independently returns actual results. Test fixtures alone are not physical acceptance.
+- Source stage adapter: **SOURCE_IMPLEMENTED** in draft PR #124, head `b2bf92077f738d094f5a842abd28eb5ff436e4b2`; GitHub readback confirmed module and test blobs. Candidate not merged.
+- Automated source tests: **CI_PASS (source only)**. GitHub Actions workflow `W01 Genesis Restore Source Tests` run `44559007164`, job `135682810455`, checked out PR merge SHA `5837abffd350ba5e9644adbd0c68792fd846a033`: Node v22.23.4 syntax PASS; `node --test tests/sovereign-genesis-v1.test.mjs tests/stage-genesis-snapshot.test.mjs` **21 passed, 0 failed**, including 10 new staging tests. This is CI evidence, not physical restoration or independent Veritas. Workflow URL: https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/actions/runs/44559007164.
 - Live native host and extension registration: **NOT_VERIFIED**.
 - Off-device encrypted replica ACK and recovery key readback: **NOT_VERIFIED**.
 - Replacement device authenticated enrollment; full-data restore; RPO/RTO; Agent Lee continuation: **NOT_EXECUTED**.
