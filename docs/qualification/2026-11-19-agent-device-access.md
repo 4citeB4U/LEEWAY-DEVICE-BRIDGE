@@ -114,6 +114,21 @@ Runtime Fabric MCP -> owner-enrolled iPhone Device Bridge adapter. Safari browse
 must not receive a transferable Bridge token, and the iPhone ChatGPT app cannot be granted
 cross-app iOS control.
 
+## Follow-up observation
+
+On a subsequent read-only probe on 2026-11-19, the Render ingress returned HTTP 200 for
+both `/healthz` and protected-resource metadata. The metadata advertises the expected
+Render audience and ZITADEL issuer, while health truthfully reports
+`CONFIGURED_NOT_PROBED` for identity and upstream. This is an observed configuration
+change, not an authenticated MCP success.
+
+The installed connected-tool `bridge_devices` request still returned exactly
+`McpServerError: Payment required` before any LeeWay Device Bridge response. A source scan
+of the canonical Bridge worktree found no LeeWay `Payment required`/`PAYMENT_REQUIRED`
+gate outside documentation. Therefore this error cannot be removed safely by altering
+Device Bridge source; it remains an external connector entitlement or platform boundary
+until its owner identifies and restores that connector access.
+
 ## Rollback
 
 Remove the host's `agentGrantGate` composition to return to the prior Bridge authorization
