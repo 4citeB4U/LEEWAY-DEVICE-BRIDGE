@@ -1,0 +1,40 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.DEVICE_BRIDGE.RECOVERY.CI
+# TAG: LEEWAY.W01.PHOENIX.STAGING.TESTS.V1
+# 5WH:
+# WHAT = Test the additive Genesis restore staging adapter against existing signed Genesis protocol.
+# WHY = Reject tampering, untrusted grants and unsafe local staging before native integration.
+# WHO = Creator-authorized W01 Device Bridge source contributors.
+# WHERE = .github/workflows/w01-genesis-restore-source.yml.
+# WHEN = 2026-11-19.
+# HOW = Run bounded Node source syntax and negative tests on review branches only.
+# LICENSE = Existing repository terms; no new rights asserted.
+name: W01 Genesis Restore Source Tests
+
+on:
+  pull_request:
+    paths:
+      - 'operator/recovery/stage-genesis-snapshot.mjs'
+      - 'tests/stage-genesis-snapshot.test.mjs'
+      - 'packages/protocol/sovereign-genesis-v1.mjs'
+      - '.github/workflows/w01-genesis-restore-source.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  genesis-staging:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source syntax
+        run: |
+          node --check operator/recovery/stage-genesis-snapshot.mjs
+          node --check tests/stage-genesis-snapshot.test.mjs
+      - name: Signed Genesis and restore staging negative tests
+        run: node --test tests/sovereign-genesis-v1.test.mjs tests/stage-genesis-snapshot.test.mjs
