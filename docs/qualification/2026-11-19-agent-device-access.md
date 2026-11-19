@@ -88,6 +88,32 @@ The request did not reach a device-discovery response. This proves neither an iP
 connection nor the location of the payment gate; it is an external access blocker to be
 diagnosed at the connector/account/upstream boundary.
 
+## Managed ingress reconciliation
+
+The intended public transport is the managed, host-agnostic ingress, not Vercel. A
+read-only Render inspection on 2026-11-19 found the existing service
+`leeway-device-bridge-mcp-qual` (`srv-dbh4vv6k1f9s73efipv0`) still pinned to branch
+`integration/railway-public-mcp-ingress-20261028` with automatic deployment disabled.
+
+Its public protected-resource metadata endpoint returned:
+
+```text
+HTTP 503
+OAUTH_RESOURCE_METADATA_UNAVAILABLE
+MCP_OAUTH_ENVIRONMENT_INCOMPLETE
+```
+
+This establishes that the Render ingress lacks the required bound OAuth resource/issuer
+configuration. It does not establish the value of any missing secret, prove that Render
+caused the separate connector `Payment required` response, or authorize changing identity
+or upstream configuration without the qualified Runtime Fabric bindings.
+
+For an online ChatGPT session on iPhone, the correct route is: ChatGPT custom MCP client
+with its own OAuth client enrollment -> HTTPS protected-resource ingress -> authenticated
+Runtime Fabric MCP -> owner-enrolled iPhone Device Bridge adapter. Safari browser content
+must not receive a transferable Bridge token, and the iPhone ChatGPT app cannot be granted
+cross-app iOS control.
+
 ## Rollback
 
 Remove the host's `agentGrantGate` composition to return to the prior Bridge authorization
