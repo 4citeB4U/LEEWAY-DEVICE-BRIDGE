@@ -160,12 +160,13 @@ export function receipt({ deviceId, capability, args, outcome, result, error, pr
 }
 
 export class Bridge {
-  constructor(devices, { admission, receiptSink = async () => { throw new Error('RECEIPT_SINK_REQUIRED'); }, complianceCardGate = null, deviceRegistry = null } = {}) {
+  constructor(devices, { admission, receiptSink = async () => { throw new Error('RECEIPT_SINK_REQUIRED'); }, complianceCardGate = null, agentGrantGate = null, deviceRegistry = null } = {}) {
     this.devices = new Map(devices.map(d => [d.id, d]));
     if (this.devices.size !== devices.length) throw new Error('DUPLICATE_DEVICE');
     this.admission = admission;
     this.receiptSink = receiptSink;
     this.complianceCardGate = complianceCardGate;
+    this.agentGrantGate = agentGrantGate;
     // Device adapters are transport bindings. Registration identity must come
     // from the trusted host registry, never from the adapter/config list.
     this.deviceRegistry = deviceRegistry;
@@ -197,6 +198,12 @@ export class Bridge {
           throw new Error('COMPLIANCE_CARD_INVALID');
         }
         complianceCardValidation = { valid: true, cardHash: decision.cardHash, authority: decision.authority };
+      }
+      if (typeof this.agentGrantGate === 'function') {
+        const agentGrant = context && typeof context === 'object' ? context.agentGrant : null;
+        const agentId = context && typeof context === 'object' ? context.agentId : null;
+        const ownerSubject = context && typeof context === 'object' ? context.ownerSubject : null;
+        await this.agentGrantGate({ agentGrant, agentId, ownerSubject, deviceId, capability });
       }
       if (!this.admission || await this.admission({ deviceId, capability, args, complianceCard }) !== true) throw new Error('ADMISSION_DENIED');
       if (!(await d.adapter.discover()).includes(capability)) throw new Error('CAPABILITY_UNAVAILABLE');
