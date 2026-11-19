@@ -2,7 +2,7 @@
 REGION: LEEWAY.DEVICE.BRIDGE.IDENTITY.RESOURCE
 TAG: LEEWAY.OIDC.PUBLIC_MCP_RESOURCE_CONFIG.V2
 WHO: LeeWay Industries
-WHAT: Resolve the client-facing OIDC resource metadata for the Vercel MCP ingress
+WHAT: Resolve the client-facing OIDC resource metadata for the managed MCP ingress
 WHEN: 2026-10-26
 WHERE: operator/identity/public-mcp-resource-config.mjs
 WHY: Keep OAuth resource identity exact across the public Device Bridge and Runtime Fabric
@@ -14,6 +14,10 @@ LICENSE: MIT
 export const RUNTIME_READ_SCOPE = "read:runtime";
 export const BRIDGE_READ_SCOPE = "device.bridge.read";
 export const PUBLIC_MCP_METADATA_PATH = "/.well-known/oauth-protected-resource/mcp";
+// Vercel is a retired LeeWay Device Bridge route.  Keeping it out of the
+// accepted resource identity prevents a new deployment or client guide from
+// silently reintroducing the external 402 path observed by the owner.
+export const RETIRED_PUBLIC_MCP_HOSTS = Object.freeze(["leeway-device-bridge.vercel.app"]);
 
 function secureHttpsUrl(value) {
   let url;
@@ -43,7 +47,8 @@ export function resolvePublicMcpResourceConfig(env = process.env) {
 
   const issuerUrl = secureHttpsUrl(issuer);
   const audienceUrl = secureHttpsUrl(audienceValue);
-  if (!issuerUrl || !audienceUrl || audienceUrl.pathname !== "/mcp") {
+  if (!issuerUrl || !audienceUrl || audienceUrl.pathname !== "/mcp"
+    || RETIRED_PUBLIC_MCP_HOSTS.includes(audienceUrl.hostname.toLowerCase())) {
     return { configured: false, reason: "MCP_OAUTH_ENVIRONMENT_INVALID" };
   }
 

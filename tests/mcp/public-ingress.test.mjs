@@ -1,10 +1,10 @@
 /* LEEWAY HEADER — DO NOT REMOVE
 REGION: LEEWAY.DEVICE.BRIDGE.PUBLIC.INGRESS.TEST
-TAG: LEEWAY.VERCEL.MCP.OAUTH.FORWARDER.TEST.V1
+TAG: LEEWAY.PUBLIC.MCP.OAUTH.FORWARDER.TEST.V2
 WHO: LeeWay Industries
-WHAT: Verify Vercel route, OAuth discovery, and bounded MCP forwarding contracts
+WHAT: Verify managed public ingress, OAuth discovery, and bounded MCP forwarding contracts
 WHEN: 2026-10-26
-WHERE: tests/mcp/vercel-ingress.test.mjs
+WHERE: tests/mcp/public-ingress.test.mjs
 WHY: Prevent SSO pages, missing metadata, dropped MCP headers, or an unbound upstream from appearing qualified
 HOW: Local HTTP fixture and controlled upstream responses; no credentials or external calls
 AUTHORITY: Source tests only; not production endpoint or device-execution proof
@@ -20,6 +20,7 @@ import { LEEWAY_MCP_INSTRUCTIONS } from "../../packages/protocol/operating-contr
 import { createOAuthProtectedResourceHandler } from "../../api/oauth-protected-resource.mjs";
 import {
   PUBLIC_MCP_METADATA_PATH,
+  RETIRED_PUBLIC_MCP_HOSTS,
   RUNTIME_READ_SCOPE,
   resolvePublicMcpResourceConfig
 } from "../../operator/identity/public-mcp-resource-config.mjs";
@@ -64,13 +65,12 @@ test("public resource configuration fails closed and accepts only HTTPS /mcp res
   assert.deepEqual(resolvePublicMcpResourceConfig(env).scopes, [RUNTIME_READ_SCOPE]);
 });
 
-test("Vercel maps /mcp and path-scoped protected-resource metadata to Node Functions", async () => {
-  const config = JSON.parse(await readFile(new URL("../../vercel.json", import.meta.url), "utf8"));
-  const rewrites = new Map(config.rewrites.map(route => [route.source, route.destination]));
-
-  assert.equal(rewrites.get("/mcp"), "/api/mcp");
-  assert.equal(rewrites.get(PUBLIC_MCP_METADATA_PATH), "/api/oauth-protected-resource");
-  assert.equal(config.functions["api/mcp.mjs"].maxDuration >= 30, true);
+test("retired Vercel audience is rejected and is not a supported ingress route", () => {
+  assert.deepEqual(RETIRED_PUBLIC_MCP_HOSTS, ["leeway-device-bridge.vercel.app"]);
+  assert.equal(resolvePublicMcpResourceConfig({
+    LEEWAY_MCP_AUTH_ISSUER: ISSUER,
+    LEEWAY_MCP_AUDIENCE: "https://leeway-device-bridge.vercel.app/mcp"
+  }).configured, false);
 });
 
 test("unauthenticated MCP gets a path-scoped OAuth challenge without calling upstream", async t => {
@@ -156,7 +156,7 @@ test("MCP forwarding preserves bearer/session/protocol headers and excludes host
   assert.ok(initialized.result.instructions.includes(LEEWAY_MCP_INSTRUCTIONS));
 });
 
-test("Vercel injects the LeeWay contract into a Streamable HTTP SSE initialize response", async t => {
+test("public ingress injects the LeeWay contract into a Streamable HTTP SSE initialize response", async t => {
   const upstreamResult = {
     jsonrpc: "2.0", id: 7,
     result: { protocolVersion: "2025-03-26", capabilities: {}, serverInfo: { name: "runtime-upstream", version: "1" }, instructions: "Upstream Runtime instructions remain intact." }
@@ -184,7 +184,7 @@ test("Vercel injects the LeeWay contract into a Streamable HTTP SSE initialize r
   assert.ok(initialized.result.instructions.includes(LEEWAY_MCP_INSTRUCTIONS));
 });
 
-test("Vercel bounds an oversized initialize response before adding instructions", async t => {
+test("public ingress bounds an oversized initialize response before adding instructions", async t => {
   const mcpHandler = createMcpIngressHandler({
     env,
     fetchImpl: async () => new Response("x".repeat(1024 * 1024 + 1), {
@@ -257,14 +257,14 @@ test("invalid upstream bindings and redirects fail closed", async t => {
   assert.equal((await redirectResponse.json()).error, "LEEWAY_RUNTIME_UPSTREAM_UNAVAILABLE");
 });
 
-test("Vercel OAuth metadata function fails closed when issuer bindings are missing", async t => {
+test("public ingress OAuth metadata fails closed when issuer bindings are missing", async t => {
   const serverUrl = await startServer(createOAuthProtectedResourceHandler({ env: {} }), t);
   const response = await fetch(`${serverUrl}${PUBLIC_MCP_METADATA_PATH}`);
   assert.equal(response.status, 503);
   assert.equal((await response.json()).reason, "MCP_OAUTH_ENVIRONMENT_INCOMPLETE");
 });
 
-test("default Vercel handler and source gates use the same canonical ingress contract", () => {
+test("default ingress handler and source gates use the same canonical ingress contract", () => {
   assert.equal(typeof ingressFunction, "function");
 });
 

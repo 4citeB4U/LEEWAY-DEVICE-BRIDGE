@@ -8,6 +8,13 @@ The native camera provider requires the owner to open LeeWay Device Bridge and g
 
 The model-runtime interface rejects requests until a LeeWay Formula grant verifier, a Device Bridge-owned local model runtime, and independent receipt verification are connected. A passing Metal readback remains local observation only.
 
+The canonical Apple app now embeds the **LeeWay Safari Extension** target. It
+uses the same App Group as the containing app and stages only user-selected
+browser excerpts after a separately authenticated Runtime session exists. A
+staged excerpt is neither Device Bridge execution nor a Veritas/Receipt
+Authority result. The app starts with no such session, so Safari remains
+fail-closed until the authorized Runtime handoff is implemented and observed.
+
 The direct package guide is [docs/APPLE-CAMERA-PROVIDER.md](../../docs/APPLE-CAMERA-PROVIDER.md). It describes the published GitHub download, owner-controlled signing, explicit host pairing, and the remaining live qualification gate.
 
 `project.yml` is an XcodeGen specification used only to create the Xcode project during development and in GitHub Actions. It is not part of the iPhone runtime. The GitHub qualification workflow builds and packages the unsigned IPA plus its digest-bound manifest. The `apple-latest` GitHub release is the current direct download channel for the owner-controlled signing/install path. It does not install an app or create a TestFlight build by itself.

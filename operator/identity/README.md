@@ -34,13 +34,13 @@ LICENSE: MIT
 
 ## Deployment boundary
 
-The desktop distribution's MCP server remains loopback-only and discovery-only unless separately paired and configured. It is not made publicly reachable by deploying this repository to Vercel.
+The desktop distribution's MCP server remains loopback-only and discovery-only unless separately paired and configured. Public transport is provider-neutral managed Node HTTP or an owner-controlled self-hosted Node path; it is not an execution authority.
 
-The Vercel project can host a separate, stateless MCP ingress at `/mcp`. That ingress is a transport proxy: it validates request shape, requires a bearer token to reach the upstream, and forwards the OAuth challenge and MCP session headers. It does **not** itself validate Pocket ID JWT signatures, own devices, provide Continuum, or authorize device execution. Its upstream must be an independently authenticated Runtime Fabric MCP service at an explicit HTTPS `/mcp` URL.
+The public ingress at `/mcp` validates request shape, requires a bearer token to reach the upstream, and forwards the OAuth challenge and MCP session headers. It does **not** itself validate Pocket ID JWT signatures, own devices, provide Continuum, or authorize device execution. Its upstream must be an independently authenticated Runtime Fabric MCP service at an explicit HTTPS `/mcp` URL.
 
-Configure `LEEWAY_MCP_UPSTREAM`, `LEEWAY_MCP_AUTH_ISSUER`, and `LEEWAY_MCP_AUDIENCE` only in the Vercel project environment, never in Git. The audience is the exact client-facing Device Bridge URL ending in `/mcp`; the same audience and issuer must be accepted by the upstream Runtime Fabric validator. The public protected-resource metadata is path-scoped at `/.well-known/oauth-protected-resource/mcp`. Verify ordinary TLS for the issuer and upstream; do not disable certificate validation.
+Configure `LEEWAY_MCP_UPSTREAM`, `LEEWAY_MCP_AUTH_ISSUER`, and `LEEWAY_MCP_AUDIENCE` only in the selected managed-host or self-hosted environment, never in Git. The audience is the exact client-facing Device Bridge URL ending in `/mcp`; the same audience and issuer must be accepted by the upstream Runtime Fabric validator. The public protected-resource metadata is path-scoped at `/.well-known/oauth-protected-resource/mcp`. Verify ordinary TLS for the issuer and upstream; do not disable certificate validation.
 
-The current Vercel deployment remains SSO-protected, and its production environment values and live authenticated MCP path have not been verified. The manual workflow `Public MCP OAuth discovery qualification` checks the unauthenticated challenge, protected-resource metadata, live Pocket ID OIDC discovery, and issuer-origin JWKS at explicitly supplied HTTPS endpoints. A pass does not prove an authenticated call, device connection, or device execution. **Do not run SQLite inside an ephemeral Vercel Function**. Host Pocket ID on durable owner-controlled infrastructure and expose the issuer through owner-approved HTTPS. Leave the existing Vercel SSO policy intact unless an exact access-policy change is separately approved.
+The retired Vercel route is explicitly rejected and must not be configured by clients. The manual workflow `Public MCP OAuth discovery qualification` checks the unauthenticated challenge, protected-resource metadata, live Pocket ID OIDC discovery, and issuer-origin JWKS at explicitly supplied HTTPS endpoints. A pass does not prove an authenticated call, device connection, or device execution. Host Pocket ID on durable owner-controlled infrastructure and expose the issuer through owner-approved HTTPS.
 
 The trusted Ed25519 consent-issuer registry and voice-owner-auth sessions are **not** substitutes for Pocket ID access tokens. Even with a valid OAuth token, no device execution is authorized until the independent canonical Runtime Fabric admission/receipt controls qualify it.
 
@@ -78,11 +78,11 @@ using a synthetic admission callback. Enroll the exact Pocket ID resource,
 owner subject and permission only through its approved administrative flow,
 and prove a real authenticated deny-path and one scoped physical operation.
 
-**The public Vercel `/mcp` ingress remains a transport proxy to Runtime
+**The public managed `/mcp` ingress is a transport proxy to Runtime
 Fabric's separately authenticated `/mcp` service.** Its currently
-qualified upstream exposes `runtime_health` only; it does not forward
+configured upstream exposes no qualified authenticated capability; it does not forward
 commands to this loopback host. Publishing owner-command mode publicly
 requires a separately authorized Runtime Fabric execution-provider
 binding, independent Veritas PRE/POST and ledger qualification. Do not
-switch `LEEWAY_MCP_UPSTREAM` to an unqualified device endpoint, change
-Vercel SSO, or treat this source change as proof of production execution.
+switch `LEEWAY_MCP_UPSTREAM` to an unqualified device endpoint, restore or
+configure the retired Vercel route, or treat this source change as proof of production execution.

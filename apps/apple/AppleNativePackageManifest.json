@@ -18,6 +18,7 @@
     "nativeMetalService": "INCLUDED",
     "nativeCameraService": "INCLUDED",
     "nativeCameraTransport": "INCLUDED",
+    "safariWebExtension": "INCLUDED_SOURCE_NOT_SIGNED",
     "agentLeeRuntime": "RUNTIME_NOT_INSTALLED",
     "formula": "EXTERNAL_AUTHORITY_REQUIRED",
     "veritas": "EXTERNAL_AUTHORITY_REQUIRED",

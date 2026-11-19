@@ -4,7 +4,7 @@ REGION: LEEWAY.DEVICE.BRIDGE.PUBLIC.MCP.HOST
 TAG: LEEWAY.PLATFORM_AGNOSTIC.PUBLIC_MCP_INGRESS.V1
 5WH:
 WHAT = Run the existing stateless Device Bridge MCP/OAuth ingress on a managed Node HTTP service.
-WHY = Permit GitHub-sourced Railway or another qualified always-on host without Vercel, Dockerfile, or local PC dependency.
+WHY = Permit a qualified managed or self-hosted Node ingress without a Vercel dependency.
 WHO = LeeWay Industries; owner-authorized deployment operators.
 WHERE = operator/hosting/start-public-mcp-ingress.mjs
 WHEN = 2026-10-28
@@ -59,7 +59,7 @@ function configuredUpstream(env) {
 /**
  * The HTTP server is a public, stateless transport only; it never resolves a
  * local device Bridge, signs tokens, or writes Continuum files.
- * Railway terminates external HTTPS and forwards HTTP to this PORT.
+ * The selected managed host terminates external HTTPS and forwards HTTP to this PORT.
  */
 export function createPublicMcpHttpServer({ env = process.env, fetchImpl = globalThis.fetch } = {}) {
   // Never forward tokens into our own public resource, even if misconfigured.

@@ -56,7 +56,7 @@ test('relay health and authenticated phone/client command round trip', async () 
     assert.deepEqual(await nextMessage(phone), {
       type: 'hello-ack',
       role: 'phone',
-      deliveryMode: 'VERCEL_FUNCTION_WEBSOCKET_V1',
+      deliveryMode: 'MANAGED_NODE_WEBSOCKET_V1',
       volatileRoomState: true,
       authority: 'TRANSPORT_ONLY',
       deviceId,
@@ -66,7 +66,7 @@ test('relay health and authenticated phone/client command round trip', async () 
     assert.deepEqual(await nextMessage(client), {
       type: 'hello-ack',
       role: 'client',
-      deliveryMode: 'VERCEL_FUNCTION_WEBSOCKET_V1',
+      deliveryMode: 'MANAGED_NODE_WEBSOCKET_V1',
       volatileRoomState: true,
       authority: 'TRANSPORT_ONLY',
       deviceId,

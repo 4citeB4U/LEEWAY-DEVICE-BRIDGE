@@ -2,7 +2,7 @@
 # REGION: LEEWAY.DEVICE.BRIDGE.DEPLOYMENT.QUALIFICATION
 # TAG: LEEWAY.THREE_PART.CONTINUUM_SOURCE_GATE.CI.V1
 # WHO: LeeWay Industries / owner-authorized maintainers
-# WHAT: Verify GitHub/Vercel source routes and canonical Continuum database/storage inventory
+# WHAT: Verify provider-neutral managed-ingress source contract and canonical Continuum database/storage inventory
 # WHEN: 2026-10-28
 # WHERE: .github/workflows/three-part-continuum-source-gate.yml
 # WHY: Enforce PR #58 without confusing source tests with live identity or execution admission
@@ -17,7 +17,7 @@ on:
       - "api/**"
       - "operator/identity/**"
       - "tests/mcp/three-part-sources.test.mjs"
-      - "vercel.json"
+      - "operator/hosting/managed-ingress-contract.json"
       - ".github/workflows/three-part-continuum-source-gate.yml"
   workflow_dispatch:
 
@@ -45,6 +45,6 @@ jobs:
         with:
           node-version: 22
       - name: Reject invalid source contracts
-        run: node bridge/operator/identity/qualify-three-part-sources.mjs --vercel bridge/vercel.json --topology continuum/config/storage-topology.candidate.json
+        run: node bridge/operator/identity/qualify-three-part-sources.mjs --managed-ingress bridge/operator/hosting/managed-ingress-contract.json --topology continuum/config/storage-topology.candidate.json
       - name: Test fail-closed source classification
         run: node --test bridge/tests/mcp/three-part-sources.test.mjs bridge/tests/mcp/continuum-readback-qualification.test.mjs bridge/tests/mcp/authenticated-bridge-tools.test.mjs
