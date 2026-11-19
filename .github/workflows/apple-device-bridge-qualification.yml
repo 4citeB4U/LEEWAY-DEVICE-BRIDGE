@@ -4,20 +4,24 @@ on:
   push:
     paths:
       - "apps/apple/**"
+      - "contracts/apple-native-package.schema.json"
       - "operator/adapter-registry.json"
       - "operator/physical-adapters.mjs"
       - "apps/desktop/mcp-server.mjs"
       - "tests/apple-camera-transport.test.mjs"
+      - "tests/apple-agent-capability-source.test.mjs"
       - "docs/APPLE-DEVICE-BRIDGE-ADAPTER.md"
       - "docs/APPLE-CAMERA-PROVIDER.md"
       - ".github/workflows/apple-device-bridge-qualification.yml"
   pull_request:
     paths:
       - "apps/apple/**"
+      - "contracts/apple-native-package.schema.json"
       - "operator/adapter-registry.json"
       - "operator/physical-adapters.mjs"
       - "apps/desktop/mcp-server.mjs"
       - "tests/apple-camera-transport.test.mjs"
+      - "tests/apple-agent-capability-source.test.mjs"
       - "docs/APPLE-DEVICE-BRIDGE-ADAPTER.md"
       - "docs/APPLE-CAMERA-PROVIDER.md"
       - ".github/workflows/apple-device-bridge-qualification.yml"

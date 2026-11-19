@@ -37,12 +37,13 @@
     "components": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["deviceBridge", "nativeMetalService", "nativeCameraService", "nativeCameraTransport", "agentLeeRuntime", "formula", "veritas", "receipt"],
+      "required": ["deviceBridge", "nativeMetalService", "nativeCameraService", "nativeCameraTransport", "safariWebExtension", "agentLeeRuntime", "formula", "veritas", "receipt"],
       "properties": {
         "deviceBridge": { "enum": ["INCLUDED", "NOT_INCLUDED"] },
         "nativeMetalService": { "enum": ["INCLUDED", "NOT_INCLUDED"] },
         "nativeCameraService": { "enum": ["INCLUDED", "NOT_INCLUDED"] },
         "nativeCameraTransport": { "enum": ["INCLUDED", "NOT_INCLUDED"] },
+        "safariWebExtension": { "enum": ["INCLUDED_SOURCE_NOT_SIGNED", "NOT_INCLUDED"] },
         "agentLeeRuntime": { "enum": ["INCLUDED", "RUNTIME_NOT_INSTALLED"] },
         "formula": { "enum": ["EXTERNAL_AUTHORITY_REQUIRED", "INCLUDED"] },
         "veritas": { "enum": ["EXTERNAL_AUTHORITY_REQUIRED", "INCLUDED"] },

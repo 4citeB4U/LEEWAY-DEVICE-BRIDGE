@@ -28,6 +28,7 @@ struct AppleDeviceBridgeView: View {
     @State private var emailSubject = "LeeWay Device Bridge"
     @State private var emailBody = ""
     @State private var handoffState = "No system handoff requested."
+    @State private var safariInbox = SafariExtensionBridge.inbox()
 
     var body: some View {
         NavigationStack {
@@ -138,6 +139,23 @@ struct AppleDeviceBridgeView: View {
                 Section("Agent Lee system entry points") {
                     LabeledContent("LeeWay actions", value: "Siri and Shortcuts")
                     Text("The installed app exposes its Metal probe as a LeeWay App Intent. A shortcut may start the LeeWay action; it does not grant control of other apps.")
+                }
+                Section("Safari extension") {
+                    LabeledContent("Native host", value: SafariExtensionBridge.qualifiedSession() == nil ? "RUNTIME GRANT REQUIRED" : "OWNER SESSION AVAILABLE")
+                    Text("Safari can stage only text you explicitly select. A staged item is not a Device Bridge operation, Runtime execution, or evidence receipt.")
+                        .font(.footnote)
+                    Button("Refresh Safari inbox") { safariInbox = SafariExtensionBridge.inbox() }
+                    if safariInbox.isEmpty {
+                        Text("No owner-selected browser excerpts are staged.")
+                    } else {
+                        ForEach(safariInbox.prefix(3)) { excerpt in
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(excerpt.title).font(.headline)
+                                Text(excerpt.selection).lineLimit(3)
+                                Text(excerpt.state).font(.footnote.monospaced())
+                            }
+                        }
+                    }
                 }
                 Section("Owner-visible communications") {
                     TextField("Phone number", text: $phoneNumber)

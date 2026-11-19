@@ -6,6 +6,11 @@ const catalog = readFileSync("apps/apple/Sources/AppleCapabilityCatalog.swift", 
 const handoff = readFileSync("apps/apple/Sources/AppleSystemHandoff.swift", "utf8");
 const intents = readFileSync("apps/apple/Sources/LeeWayDeviceBridgeAppIntents.swift", "utf8");
 const view = readFileSync("apps/apple/Sources/AppleDeviceBridgeView.swift", "utf8");
+const project = readFileSync("apps/apple/project.yml", "utf8");
+const safariHandler = readFileSync("apps/apple/SafariWebExtension/SafariWebExtensionHandler.swift", "utf8");
+const safariShared = readFileSync("apps/apple/Shared/SafariExtensionBridge.swift", "utf8");
+const appEntitlements = readFileSync("apps/apple/LeeWayDeviceBridgeApple.entitlements", "utf8");
+const extensionEntitlements = readFileSync("apps/apple/SafariWebExtension/SafariWebExtension.entitlements", "utf8");
 
 test("Apple capability source keeps iPhone control boundaries explicit", () => {
   assert.match(catalog, /device\.gpu\.metal\.probe/);
@@ -28,4 +33,15 @@ test("Apple source exposes the Metal probe through an App Intent", () => {
   assert.match(intents, /AppShortcutsProvider/);
   assert.match(intents, /MetalDeviceProbe\.run/);
   assert.match(intents, /External verification remains separate/);
+});
+
+test("Apple source embeds a bounded Safari extension in the canonical app", () => {
+  assert.match(project, /LeeWaySafariExtension/);
+  assert.match(appEntitlements, /group\.industries\.leeway\.devicebridge/);
+  assert.match(extensionEntitlements, /group\.industries\.leeway\.devicebridge/);
+  assert.match(safariHandler, /SFExtensionMessageKey/);
+  assert.match(safariHandler, /NATIVE_APP_INBOX_STAGED_NOT_EXECUTED/);
+  assert.match(safariShared, /OWNER_AUTHENTICATED_RUNTIME_GRANTED/);
+  assert.match(safariShared, /STAGED_NOT_EXECUTED/);
+  assert.match(view, /Safari extension/);
 });

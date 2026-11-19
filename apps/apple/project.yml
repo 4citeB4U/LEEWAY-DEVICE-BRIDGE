@@ -17,6 +17,10 @@ targets:
     deploymentTarget: "17.0"
     sources:
       - path: Sources
+      - path: Shared
+    dependencies:
+      - target: LeeWaySafariExtension
+        embed: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: industries.leeway.devicebridge
@@ -28,9 +32,25 @@ targets:
         INFOPLIST_KEY_NSCameraUsageDescription: "LeeWay Device Bridge uses the iPhone camera only after you open and authorize the native camera provider."
         TARGETED_DEVICE_FAMILY: "1"
         SUPPORTS_MACCATALYST: NO
+        CODE_SIGN_ENTITLEMENTS: LeeWayDeviceBridgeApple.entitlements
     info:
       path: Info.plist
       properties:
         NSLocalNetworkUsageDescription: "LeeWay Device Bridge uses the local network only after you start and authorize the owner camera transport."
         NSBonjourServices:
           - _leeway-camera._tcp
+  LeeWaySafariExtension:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: SafariWebExtension
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: industries.leeway.devicebridge.safari-extension
+        PRODUCT_NAME: LeeWay Safari Extension
+        INFOPLIST_FILE: SafariWebExtension/Info.plist
+        CODE_SIGN_ENTITLEMENTS: SafariWebExtension/SafariWebExtension.entitlements
+        TARGETED_DEVICE_FAMILY: "1"
+        SUPPORTS_MACCATALYST: NO
