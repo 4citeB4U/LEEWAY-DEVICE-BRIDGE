@@ -110,3 +110,45 @@ test('consent provider receives real request arguments and their canonical diges
   assert.deepEqual(seen[0].args,args);
   assert.equal(seen[0].argsDigest,computeArgsDigest(args));
 });
+
+test('a signed token is accepted only for matching Windows UI action arguments and rejects replay', async () => {
+  const { generateKeyPairSync, randomUUID } = await import('node:crypto');
+  const { createConsentEvidenceToken } = await import('../operator/trusted-issuer-registry.mjs');
+  const { privateKey, publicKey } = generateKeyPairSync('ed25519');
+  const privateKeyPem = privateKey.export({ format:'pem', type:'pkcs8' });
+  const publicKeySpki = publicKey.export({ format:'pem', type:'spki' });
+  const registry = {
+    adapters: [{
+      adapterId: 'fixture.windows', platform:'windows',
+      capabilities: { 'device.ui.tap': {state:'SUPPORTED',requiresHumanConsent:false} }
+    }]
+  };
+  const deviceRegistry = new Map([['pc-primary',{
+    platform:'windows',identityVerified:true,registrationState:'TRUSTED_REGISTRY_READ',
+    identitySource:'WINDOWS_CIM_READONLY',passportAuthority:'OWNER_SIGNED_WINDOWS_PASSPORT',
+    ownerSubject:'fixture-owner-subject',passportSha256:'a'.repeat(64)
+  }]]);
+  const issuers = {
+    'fixture.runtime': {
+      issuerId:'fixture.runtime',keyId:'fixture-key',algorithm:'Ed25519',
+      publicKeySpki,status:'ACTIVE',validUntil:'2027-01-01T00:00:00.000Z'
+    }
+  };
+  let signedArgs = {x:10,y:20};
+  let tokenNonce = randomUUID();
+  const c3 = createC3AdmissionBinding({
+    deviceRegistry,registry,trustedIssuerRegistry:issuers,replayGuard:new Set(),
+    formulaPreGate:async () => ({passed:true,formulaId:'TEST_ONLY_FORMULA'}),
+    veritasPreGate:async () => true,
+    consentProvider:async ({deviceId,platform,capability}) => createConsentEvidenceToken({
+      issuer:'fixture.runtime',keyId:'fixture-key',privateKeyPem,requestId:randomUUID(),
+      deviceId,platform,capability,args:signedArgs,sessionNonce:randomUUID(),tokenNonce,
+    }),
+  });
+  // The fixture signer grants coordinates (10,20); moving to (99,20) is denied.
+  assert.equal(await c3({deviceId:'pc-primary',capability:'device.ui.tap',args:{x:99,y:20}}),false);
+  // The same signed request arguments can be admitted once; this does NOT
+  // represent real owner interaction, Formula or Veritas production evidence.
+  assert.equal(await c3({deviceId:'pc-primary',capability:'device.ui.tap',args:{x:10,y:20}}),true);
+  assert.equal(await c3({deviceId:'pc-primary',capability:'device.ui.tap',args:{x:10,y:20}}),false);
+});
