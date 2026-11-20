@@ -21,6 +21,12 @@ const windowCapabilities = Object.freeze([
   'device.windows.window.invoke',
   'device.windows.window.input',
   'device.windows.window.submit',
+  'device.ui.tap',
+  'device.ui.swipe',
+  'device.ui.text',
+  'device.ui.snapshot',
+  'device.process.execute',
+  'device.session.input',
 ]);
 
 function admissionFixture() {
@@ -58,4 +64,39 @@ test('window invoke, input and submit deny without verified consent even if regi
   ]) {
     assert.equal(await evaluate(capability), false, capability);
   }
+});
+
+test('UI pointer, keyboard, process and session mutations cannot inherit READ from a faulty registry', async () => {
+  const evaluate = admissionFixture();
+  for (const capability of [
+    'device.ui.tap', 'device.ui.swipe', 'device.ui.text',
+    'device.process.execute', 'device.session.input'
+  ]) {
+    assert.equal(await evaluate(capability), false, capability);
+  }
+  assert.equal(await evaluate('device.ui.snapshot'), true);
+});
+
+test('consent provider receives real request arguments and their canonical digest', async () => {
+  const { computeArgsDigest } = await import('../operator/trusted-issuer-registry.mjs');
+  const seen = [];
+  const registry = {
+    adapters: [{
+      adapterId: 'test.windows', platform: 'linux',
+      capabilities: { 'device.ui.tap': {state:'SUPPORTED', requiresHumanConsent:false} }
+    }]
+  };
+  const c3 = createC3AdmissionBinding({
+    deviceRegistry:new Map([['test-control-node', {platform:'linux'}]]),
+    registry,
+    trustedIssuerRegistry:{},
+    formulaPreGate:async () => true,
+    veritasPreGate:async () => true,
+    consentProvider:async request => {seen.push(request);return null;},
+  });
+  const args = {x:120,y:240,button:'left'};
+  assert.equal(await c3({deviceId:'test-control-node',capability:'device.ui.tap',args}),false);
+  assert.equal(seen.length,1);
+  assert.deepEqual(seen[0].args,args);
+  assert.equal(seen[0].argsDigest,computeArgsDigest(args));
 });
