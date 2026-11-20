@@ -1,0 +1,51 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.DEVICE.BRIDGE.OWNER.REFRESH.CI
+# TAG: LEEWAY.BRIDGE.CONTROL_REFRESH_PREFLIGHT_TEST_V1
+# 5WH:
+# WHAT = Verify guarded owner refresh preparation on a Windows runner.
+# WHY = Prevent a refresh script from enabling execution or changing services on unqualified evidence.
+# WHO = LeeWay Device Bridge CI, under Creator authority.
+# WHERE = .github/workflows/control-refresh-readiness.yml.
+# WHEN = 2026-11-20.
+# HOW = Run Audit on a deliberate unsafe fixture, assert fail-closed output and no host changes.
+# LICENSE = MIT.
+name: Owner control refresh readiness
+on:
+  pull_request:
+    paths:
+      - 'operator/windows/Prepare-LeeWayControlRefresh.ps1'
+      - '.github/workflows/control-refresh-readiness.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit-denial:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify an unsafe bootstrap cannot be called refresh-ready
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $fixture = Join-Path $env:RUNNER_TEMP 'native-discovery-bootstrap.mjs'
+          @'
+          const runtimeInput = {
+            formulaPreGate: async () => {
+              try { const r = await fetch('http://127.0.0.1:4001/health'); if (!r.ok) return true; }
+              catch { return true; }
+            },
+            veritasPreGate: async ({ deviceId, platform, capability }) => Boolean(deviceId && platform && capability),
+            consentProvider: async () => createConsentEvidenceToken({})
+          };
+          await startUniversalPocketIdMcp({enableExecution: false, runtimeInput});
+          '@ | Set-Content -LiteralPath $fixture
+          $output = & pwsh -NoProfile -File operator/windows/Prepare-LeeWayControlRefresh.ps1 -Mode Audit -TaskName 'LEEWAY_CI_NO_SUCH_TASK' -BootstrapPath $fixture
+          $exit = $LASTEXITCODE
+          if($exit -ne 2) { throw "EXPECTED_FAIL_CLOSED_EXIT_2_GOT_$exit" }
+          $report = ($output -join [Environment]::NewLine) | ConvertFrom-Json
+          if($report.desktopExecutionAuthorized -ne $false -or $report.activation -ne 'NOT_EXECUTED') { throw 'FALSE_ACTIVATION_CLAIM' }
+          if($report.originalTaskChanged -ne $false -or $report.runningHostChanged -ne $false) { throw 'UNEXPECTED_MUTATION' }
+          foreach($check in @('EXECUTION_REGISTRATION','FORMULA_PRE','VERITAS_PRE','OWNER_CONSENT','COMPLIANCE_CARD')) {
+            if($check -notin @($report.blockers)) { throw "FAIL_OPEN_$check" }
+          }
+          Write-Output "PASS fail-closed audit evidence: $($report.blockers -join ', ')"
