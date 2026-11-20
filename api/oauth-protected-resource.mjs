@@ -6,7 +6,8 @@ WHAT: Publish OAuth Protected Resource Metadata for the public Device Bridge MCP
 WHEN: 2026-10-26
 WHERE: api/oauth-protected-resource.mjs
 WHY: Let MCP clients discover the configured ZITADEL OIDC authorization server before presenting a bearer token
-HOW: Return only the explicit HTTPS issuer, public /mcp audience, and read scope; fail closed when unbound
+HOW: Return only the explicit HTTPS issuer, public /mcp audience, and explicitly
+configured scopes; fail closed when unbound
 AUTHORITY: Metadata only; ZITADEL issues tokens and Runtime Fabric verifies them
 LICENSE: MIT
 */

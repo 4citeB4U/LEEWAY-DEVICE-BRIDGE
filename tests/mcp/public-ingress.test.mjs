@@ -22,6 +22,8 @@ import {
   PUBLIC_MCP_METADATA_PATH,
   RETIRED_PUBLIC_MCP_HOSTS,
   RUNTIME_READ_SCOPE,
+  BRIDGE_READ_SCOPE,
+  BRIDGE_EXECUTE_SCOPE,
   resolvePublicMcpResourceConfig
 } from "../../operator/identity/public-mcp-resource-config.mjs";
 
@@ -288,4 +290,26 @@ test("owner-only bridge discovery scope is opt-in and never inferred from mere h
   assert.equal(metadata.resource,RESOURCE);
   assert.deepEqual(metadata.authorization_servers,[ISSUER]);
   assert.equal(metadata.bearer_methods_supported[0],"header");
+});
+
+test("owner execution scope is opt-in and cannot be inferred from discovery", async t => {
+  for (const value of [undefined, "", "true", "execute", "owner-read-only", "admin"]) {
+    const scopedEnv = { ...env, LEEWAY_MCP_DISCOVERY_AUTHORIZED: "owner-read-only" };
+    if (value !== undefined) scopedEnv.LEEWAY_MCP_EXECUTION_AUTHORIZED = value;
+    const cfg = resolvePublicMcpResourceConfig(scopedEnv);
+    assert.deepEqual(cfg.scopes, [RUNTIME_READ_SCOPE, BRIDGE_READ_SCOPE]);
+  }
+
+  const ownerExecution = {
+    ...env,
+    LEEWAY_MCP_DISCOVERY_AUTHORIZED: "owner-read-only",
+    LEEWAY_MCP_EXECUTION_AUTHORIZED: "owner-execution"
+  };
+  const cfg = resolvePublicMcpResourceConfig(ownerExecution);
+  assert.deepEqual(cfg.scopes, [RUNTIME_READ_SCOPE, BRIDGE_READ_SCOPE, BRIDGE_EXECUTE_SCOPE]);
+
+  const base = await startServer(createOAuthProtectedResourceHandler({ env: ownerExecution }), t);
+  const response = await fetch(base + PUBLIC_MCP_METADATA_PATH);
+  assert.equal(response.status, 200);
+  assert.deepEqual((await response.json()).scopes_supported, [RUNTIME_READ_SCOPE, BRIDGE_READ_SCOPE, BRIDGE_EXECUTE_SCOPE]);
 });
