@@ -171,6 +171,8 @@ test('Formula and Veritas receive the exact read request arguments and digest', 
   const args={app:'codex',limit:5};
   assert.equal(await c3({deviceId:'pc-primary',capability:'device.windows.window.list',args}),true);
   assert.deepEqual(observations.map(x=>x.stage),['Formula','Veritas']);
+  assert.match(observations[0].data.requestId,/^[0-9a-f-]{36}$/i);
+  assert.equal(observations[0].data.requestId,observations[1].data.requestId);
   for(const proof of observations){
     assert.deepEqual(proof.data.args,args);
     assert.equal(proof.data.argsDigest,computeArgsDigest(args));
