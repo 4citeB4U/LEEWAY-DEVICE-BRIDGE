@@ -19,6 +19,7 @@ import {
   loadTrustedIssuerRegistry,
   DEFAULT_REPLAY_GUARD
 } from "./trusted-issuer-registry.mjs";
+import { randomUUID } from 'node:crypto';
 import { mathematicalEligibility } from "./c3-mathematical-foundation.mjs";
 
 /**
@@ -200,6 +201,11 @@ export function createC3AdmissionBinding({
       return false;
     }
 
+    // The exact owner-signed request ID follows both independent PRE gates.
+    // READ uses a fresh host-generated ID and never inherits user request authority.
+    const requestId = verifiedConsent?.requestId ?? randomUUID();
+    const requestArgsDigest = computeArgsDigest(args);
+
     // 8. Mandatory Formula Pre-Gate Verification (Transformation 2)
     let formulaOk = false;
     let formulaEvidence = null;
@@ -210,8 +216,9 @@ export function createC3AdmissionBinding({
         capability,
         authorityTier,
         decision,
+        requestId,
         args: { ...args },
-        argsDigest: computeArgsDigest(args),
+        argsDigest: requestArgsDigest,
         verifiedConsent
       });
       formulaOk = formulaRes === true || (formulaRes && formulaRes.passed === true);
@@ -232,8 +239,9 @@ export function createC3AdmissionBinding({
         capability,
         authorityTier,
         decision,
+        requestId,
         args: { ...args },
-        argsDigest: computeArgsDigest(args),
+        argsDigest: requestArgsDigest,
         verifiedConsent,
         formulaEvidence
       });
