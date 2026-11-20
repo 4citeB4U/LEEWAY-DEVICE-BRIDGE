@@ -79,15 +79,24 @@ function Stage-PinnedRepo([string]$name,[string]$remote,[string]$pullRef,[string
   $short=$expectedSha.Substring(0,12)
   $dest=Join-Path $StageRoot ($name+'-'+$short)
   if(-not (Test-Path -LiteralPath $dest)){
-    & git clone --no-checkout --filter=blob:none $remote $dest 2>&1 | Out-Null
-    if($LASTEXITCODE -ne 0) { throw "GIT_CLONE_FAILED:$name" }
+    New-Item -ItemType Directory -Force -Path $dest | Out-Null
+    & git init -q $dest
+    if($LASTEXITCODE -ne 0) { throw "GIT_INIT_FAILED:$name" }
+    & git -C $dest remote add origin $remote
+    if($LASTEXITCODE -ne 0) { throw "GIT_REMOTE_BIND_FAILED:$name" }
   }
   if(-not (Test-Path -LiteralPath (Join-Path $dest '.git'))){throw "STAGING_REPO_INVALID:$name"}
-  & git -C $dest fetch --depth 1 origin $pullRef 2>&1 | Out-Null
+  $remoteUrl=(& git -C $dest remote get-url origin).Trim()
+  if($remoteUrl -cne $remote){throw "STAGING_REMOTE_IDENTITY_MISMATCH:$name"}
+  $dirty=(& git -C $dest status --porcelain)
+  if($LASTEXITCODE -ne 0 -or $dirty){throw "STAGING_WORKTREE_DIRTY:$name"}
+  # Fetch the PR ref only as a transport; select the reviewed immutable commit
+  # by full object ID, not the mutable PR head.
+  & git -C $dest fetch --no-tags --depth 50 origin $pullRef 2>&1 | Out-Null
   if($LASTEXITCODE -ne 0) { throw "GIT_FETCH_FAILED:$name" }
-  $actual=(& git -C $dest rev-parse FETCH_HEAD).Trim()
-  if($actual -cne $expectedSha){throw "SOURCE_COMMIT_MISMATCH:$name"}
-  & git -C $dest checkout --detach --force $actual 2>&1 | Out-Null
+  & git -C $dest merge-base --is-ancestor $expectedSha FETCH_HEAD
+  if($LASTEXITCODE -ne 0) { throw "SOURCE_COMMIT_NOT_IN_REVIEWED_PR:$name" }
+  & git -C $dest checkout --detach $expectedSha 2>&1 | Out-Null
   if($LASTEXITCODE -ne 0) { throw "GIT_CHECKOUT_FAILED:$name" }
   $head=(& git -C $dest rev-parse HEAD).Trim()
   if($head -cne $expectedSha){throw "SOURCE_CHECKOUT_MISMATCH:$name"}
