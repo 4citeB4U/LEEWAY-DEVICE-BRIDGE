@@ -17,6 +17,8 @@ const APPS = Object.freeze({
   chatgpt: Object.freeze(['ChatGPT']),
   antigravity: Object.freeze(['Antigravity']),
   chrome: Object.freeze(['chrome']),
+  // Classic Outlook and new Outlook (olk); only list/observe are admitted by protocol.
+  outlook: Object.freeze(['OUTLOOK', 'olk']),
 });
 const MAX_OUTPUT = 131072;
 const OBSERVATION_TTL_MS = 30000;
@@ -156,7 +158,7 @@ $items = @()
 Write-Output 'LEEWAY_UI_BEFORE_PROCESS_ENUM'
 $processes = @(Get-Process -Name $allowedNames -ErrorAction SilentlyContinue)
 Write-Output 'LEEWAY_UI_AFTER_PROCESS_ENUM'
-foreach ($process in $processes) { if ($process.MainWindowHandle -ne 0 -and $process.MainWindowTitle) { [void]($items += [ordered]@{ pid = [int]$process.Id; processName = [string]$process.ProcessName; title = [string]$process.MainWindowTitle; enabled = $true }) }; if ($items.Count -ge $maxControls) { break } }
+foreach ($process in $processes) { if ($process.MainWindowHandle -ne 0 -and $process.MainWindowTitle) { [void]($items += [ordered]@{ pid = [int]$process.Id; processName = [string]$process.ProcessName; title = [string]$process.MainWindowTitle; processStartedUtc = $process.StartTime.ToUniversalTime().ToString('o'); enabled = $true }) }; if ($items.Count -ge $maxControls) { break } }
 Write-Output 'LEEWAY_UI_BEFORE_RESULT'
 EmitResult (@{ ok = $true; result = @{ app = '${args.app}'; windows = @($items); total = $items.Count; truncated = $false } })
 `;
@@ -165,6 +167,10 @@ EmitResult (@{ ok = $true; result = @{ app = '${args.app}'; windows = @($items);
 
   async observe(args) {
     if (args.app === 'chrome' && typeof args.expectedUrl !== 'string') throw Error('BROWSER_URL_REQUIRED');
+    // Require a prior exact window-list observation before inspecting private Outlook content.
+    if (args.app === 'outlook' && (typeof args.expectedTitle !== 'string' || !args.expectedTitle ||
+      typeof args.expectedProcessStartedUtc !== 'string' || !args.expectedProcessStartedUtc))
+      throw Error('OUTLOOK_WINDOW_IDENTITY_REQUIRED');
     const script = `${scriptPreamble(args.app, args.pid, args.maxControls)}
 $process = Get-Process -Id $targetPid -ErrorAction Stop
 if ($allowedNames -notcontains $process.ProcessName) { throw 'WINDOW_PROCESS_NOT_ALLOWED' }
@@ -174,6 +180,23 @@ if ($null -eq $window -or $process.MainWindowHandle -eq 0) { throw 'WINDOW_NOT_F
 $descendants = $window.FindAll([System.Windows.Automation.TreeScope]::Descendants, [System.Windows.Automation.Condition]::TrueCondition)
 $totalControls = $descendants.Count
 $controls = @(); $editable = @(); $actions = @()
+${args.app === 'outlook' ? `
+$expectedOutlookTitle = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${b64(args.expectedTitle)}'))
+$expectedOutlookStart = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${b64(args.expectedProcessStartedUtc)}'))
+if ([string]$window.Current.Name -cne $expectedOutlookTitle -or $process.StartTime.ToUniversalTime().ToString('o') -cne $expectedOutlookStart) { throw 'OUTLOOK_WINDOW_IDENTITY_MISMATCH' }
+# Passive observation only: bounded visible text, list items, and accessible documents.
+foreach ($element in $descendants) {
+  if ($controls.Count -ge [Math]::Min($maxControls, 60)) { break }
+  try {
+    $kind = [string]$element.Current.ControlType.ProgrammaticName
+    if ($kind -notin @('ControlType.Text', 'ControlType.ListItem', 'ControlType.Document', 'ControlType.DataItem')) { continue }
+    $data = ControlData $element
+    if ($data.offscreen -or [string]::IsNullOrWhiteSpace($data.name)) { continue }
+    if ($data.name.Length -gt 1024) { $data.name = $data.name.Substring(0, 1024) }
+    $controls += $data
+  } catch { continue }
+}
+` : ''}
 $editElements = @()
 foreach ($element in $descendants) {
   try { if ([string]$element.Current.ControlType.ProgrammaticName -eq 'ControlType.Edit') { $editElements += $element } } catch { continue }
@@ -199,7 +222,7 @@ foreach ($element in $buttonElements) {
 ${args.app === 'chrome' ? browserIdentityScript(args.expectedUrl, args.expectedTitle) : ''}
 $startUtc = $process.StartTime.ToUniversalTime().ToString('o')
 Write-Output 'LEEWAY_UI_BEFORE_RESULT'
-EmitResult (@{ ok = $true; result = @{ app = '${args.app}'; pid = $targetPid; processName = [string]$process.ProcessName; processStartedUtc = $startUtc; windowHandle = [long]$window.Current.NativeWindowHandle; title = [string]$window.Current.Name; surfaceUrl = ${args.app === 'chrome' ? '$surfaceUrl' : '$null'}; controls = @($controls); editableTargets = @($editable); actionTargets = @($actions); totalControls = $totalControls; truncated = $totalControls -gt $controls.Count } })
+EmitResult (@{ ok = $true; result = @{ app = '${args.app}'; pid = $targetPid; processName = [string]$process.ProcessName; processStartedUtc = $startUtc; windowHandle = [long]$window.Current.NativeWindowHandle; title = [string]$window.Current.Name; surfaceUrl = ${args.app === 'chrome' ? '$surfaceUrl' : '$null'}; controls = @($controls); editableTargets = ${args.app === 'outlook' ? '@()' : '@($editable)'}; actionTargets = ${args.app === 'outlook' ? '@()' : '@($actions)'}; totalControls = $totalControls; truncated = $totalControls -gt $controls.Count } })
 `;
     const result = await this.executeScript(script);
     if (result?.app !== args.app || result?.pid !== args.pid || !Number.isSafeInteger(result.windowHandle)
@@ -207,10 +230,12 @@ EmitResult (@{ ok = $true; result = @{ app = '${args.app}'; pid = $targetPid; pr
       || typeof result.title !== 'string' || !Array.isArray(result.editableTargets) || !Array.isArray(result.actionTargets))
       throw Error('WINDOW_OBSERVATION_INVALID');
     if (args.app === 'chrome' && result.surfaceUrl !== args.expectedUrl) throw Error('BROWSER_URL_IDENTITY_MISMATCH');
+    if (args.app === 'outlook' && (result.title !== args.expectedTitle || result.processStartedUtc !== args.expectedProcessStartedUtc ||
+      !['outlook', 'olk'].includes(result.processName.toLowerCase()))) throw Error('OUTLOOK_WINDOW_IDENTITY_MISMATCH');
     this.expireObservations();
     const observationId = randomUUID();
-    const editableTargets = result.editableTargets.map(control => ({ ...control, targetId: randomUUID() }));
-    const actionTargets = result.actionTargets.map(control => ({ ...control, targetId: randomUUID() }));
+    const editableTargets = (args.app === 'outlook' ? [] : result.editableTargets).map(control => ({ ...control, targetId: randomUUID() }));
+    const actionTargets = (args.app === 'outlook' ? [] : result.actionTargets).map(control => ({ ...control, targetId: randomUUID() }));
     this.observations.set(observationId, {
       app: result.app, pid: result.pid, processName: result.processName,
       processStartedUtc: result.processStartedUtc, windowHandle: result.windowHandle,
@@ -225,6 +250,7 @@ EmitResult (@{ ok = $true; result = @{ app = '${args.app}'; pid = $targetPid; pr
   }
 
   async input(args) {
+    if (args.app === 'outlook') throw Error('OUTLOOK_WINDOW_READ_ONLY');
     const observation = this.getObservation(args.observationId, args.app, args.pid);
     const target = observation.editableTargets.get(args.targetId);
     if (!target) throw Error('WINDOW_TARGET_NOT_OBSERVED');
@@ -247,6 +273,7 @@ EmitResult (@{ ok = $true; result = @{ app = '${args.app}'; pid = $targetPid; wi
   }
 
   async submit(args) {
+    if (args.app === 'outlook') throw Error('OUTLOOK_WINDOW_READ_ONLY');
     const observation = this.getObservation(args.observationId, args.app, args.pid);
     const target = observation.editableTargets.get(args.targetId);
     const action = observation.actionTargets.get(args.actionTargetId);
@@ -353,6 +380,7 @@ EmitResult (@{ ok = $true; result = @{ app = 'codex'; pid = $targetPid; closeReq
     return result;
   }
   async invoke(args) {
+    if (args.app === 'outlook') throw Error('OUTLOOK_WINDOW_READ_ONLY');
     const script = `${scriptPreamble(args.app, args.pid)}
 $process = Get-Process -Id $targetPid -ErrorAction Stop
 if ($allowedNames -notcontains $process.ProcessName) { throw 'WINDOW_PROCESS_NOT_ALLOWED' }
