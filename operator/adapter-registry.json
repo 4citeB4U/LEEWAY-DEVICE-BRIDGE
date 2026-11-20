@@ -196,6 +196,11 @@
           "state": "SUPPORTED",
           "requiresHumanConsent": false,
           "notes": "Read-only host identity observation; no configured desktop name or registry row can promote identityVerified."
+        },
+        "device.windows.window.close": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": true,
+          "notes": "Owner-approved graceful Codex close only, bound to a fresh UIA observation of the exact PID/process start/title/window handle. CloseMainWindow is non-forced; a new window-list readback is required. Requires an enrolled grant, C3, Formula, independent Veritas and current signed owner interaction evidence."
         }
       },
       "evidenceState": "OBSERVED",
