@@ -126,8 +126,8 @@ if($Mode -eq 'Stage'){
     }else{
       try{
         New-Item -ItemType Directory -Force -Path $fullStage | Out-Null
-        Stage-PinnedRepo 'device-bridge' 'https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE.git' 'pull/127/head' '0be4f5aad8cdbd87ded695132da677d93ed8ad62'
-        Stage-PinnedRepo 'runtime-fabric' 'https://github.com/4citeB4U/Leeway-Runtime-Fabric.git' 'pull/182/head' '5ed7801f47a653e1f9d9033f1e70bdb5cb903745'
+        Stage-PinnedRepo 'device-bridge' 'https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE.git' 'pull/127/head' '8f15b5ec10852e87a2c50c6bf7d26154339d63b9'
+        Stage-PinnedRepo 'runtime-fabric' 'https://github.com/4citeB4U/Leeway-Runtime-Fabric.git' 'pull/182/head' '5e9ddf9ebae9ce5969131081d3eb8b349b398dd0'
       }catch{Record 'STAGING' 'BLOCKED' $_.Exception.Message}
     }
   }
