@@ -36,8 +36,12 @@ function resolveCapabilityMetadata(platform, capability, registry) {
   const cap = adapter.capabilities?.[capability];
   if (!cap) return null;
 
+  // Window mutation is consequential even if a registry entry omits consent.
+  // Listing and observation remain read-only; invoke/input/submit require
+  // owner-bound consent, Formula and independent Veritas before dispatch.
+  const windowMutation = /^device\.windows\.window\.(?:invoke|input|submit)$/.test(capability);
   let tier = "READ";
-  if (cap.requiresHumanConsent || capability.includes(".write") || capability.includes(".install") || capability.includes(".terminate") || capability.includes(".create")) {
+  if (windowMutation || cap.requiresHumanConsent || capability.includes(".write") || capability.includes(".install") || capability.includes(".terminate") || capability.includes(".create")) {
     tier = "MUTATE";
   } else if (capability.startsWith("device.ui.") || capability.includes(".execute") || capability.includes(".inference") || capability.includes(".speak")) {
     tier = "OPERATE";
