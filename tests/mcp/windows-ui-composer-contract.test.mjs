@@ -1,3 +1,15 @@
+/* LEEWAY HEADER — DO NOT REMOVE
+REGION: LEEWAY.DEVICE.BRIDGE.DESKTOP.WINDOWS_UI.TESTS
+TAG: LEEWAY.OUTLOOK_PASSIVE_OBSERVATION_SECURITY_V1
+5WH:
+WHAT = Qualify passive Outlook window observation and reject any Outlook action.
+WHY = Prepare owner-authorized mailbox discovery without silently granting message mutations.
+WHO = LeeWay Device Bridge CI under Creator/Standards authority.
+WHERE = tests/mcp/windows-ui-composer-contract.test.mjs.
+WHEN = 2026-11-20.
+HOW = Exercise strict protocol schemas and mocked Windows UIA scripts with positive/negative tests.
+LICENSE = MIT.
+*/
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -228,4 +240,42 @@ test('Chrome response read rejects a response whose nonce does not match the req
   await sessions.submit({ app: 'chrome', pid, observationId: observation.observationId, targetId: targetIdValue, actionTargetId, expectedTextSha256: hash(text) });
   await assert.rejects(() => sessions.read({ app: 'chrome', pid, observationId: observation.observationId,
     expectedTextSha256: hash(text), responseNonce: requestedNonce, timeoutMs: 1000 }), /BROWSER_RESPONSE_READBACK_INVALID/);
+});
+
+
+test('Outlook passive observation is identity-bound and no mutation capability accepts Outlook', async () => {
+  const expectedTitle = 'Inbox - Outlook';
+  const expectedProcessStartedUtc = '2026-11-20T12:00:00.0000000Z';
+  const list = schemas['device.windows.window.list'].safeParse({app:'outlook',limit:10});
+  assert.equal(list.success,true);
+  const observeArgs = {app:'outlook',pid,expectedTitle,expectedProcessStartedUtc,maxControls:30};
+  assert.equal(schemas['device.windows.window.observe'].safeParse(observeArgs).success,true);
+  for (const action of ['invoke','input','submit','close','read']) {
+    const base={app:'outlook',pid,observationId:'11111111-1111-4111-8111-111111111111',targetId:'22222222-2222-4222-8222-222222222222',actionTargetId:'33333333-3333-4333-8333-333333333333',expectedTextSha256:'a'.repeat(64),responseNonce:'OUTLOOK-DENIED-NONCE',controlName:'Connecting to MCP and Codex',text:'blocked'};
+    assert.equal(schemas['device.windows.window.'+action].safeParse(base).success,false,action);
+  }
+  let calls=0;const scripts=[];
+  const sessions=new WindowsUiSessions({executeScript:async script=>{
+    calls++;scripts.push(script);
+    return {...observedSurface({appName:'outlook',processName:'OUTLOOK',editableTargets:[edit()],actionTargets:[button()]}),title:expectedTitle,processStartedUtc:expectedProcessStartedUtc,controls:[{name:'Employer application',controlType:'ControlType.ListItem',offscreen:false}]};
+  }});
+  await assert.rejects(()=>sessions.observe({app:'outlook',pid,maxControls:30}),/OUTLOOK_WINDOW_IDENTITY_REQUIRED/);
+  assert.equal(calls,0);
+  const observation=await sessions.observe(observeArgs);
+  assert.equal(observation.controls[0].name,'Employer application');
+  assert.deepEqual(observation.editableTargets,[]);
+  assert.deepEqual(observation.actionTargets,[]);
+  assert.match(scripts[0],/OUTLOOK_WINDOW_IDENTITY_MISMATCH/);
+  assert.match(scripts[0],/ControlType\\.ListItem/);
+  assert.doesNotMatch(scripts[0],/SetValue\\(|\\$invoke\\.Invoke\\(/);
+  await assert.rejects(()=>sessions.input({app:'outlook',pid,observationId:observation.observationId,text:'never'}),/OUTLOOK_WINDOW_READ_ONLY/);
+  await assert.rejects(()=>sessions.submit({app:'outlook',pid,observationId:observation.observationId}),/OUTLOOK_WINDOW_READ_ONLY/);
+  await assert.rejects(()=>sessions.invoke({app:'outlook',pid}),/OUTLOOK_WINDOW_READ_ONLY/);
+  assert.equal(calls,1);
+});
+
+test('Outlook observation rejects changed process start or mismatched title', async()=>{
+  const expectedTitle='Inbox - Outlook',expectedProcessStartedUtc='2026-11-20T12:00:00.0000000Z';
+  const session=new WindowsUiSessions({executeScript:async()=>({...observedSurface({appName:'outlook',processName:'OUTLOOK'}),title:'Other Window',processStartedUtc:expectedProcessStartedUtc})});
+  await assert.rejects(()=>session.observe({app:'outlook',pid,expectedTitle,expectedProcessStartedUtc,maxControls:20}),/OUTLOOK_WINDOW_IDENTITY_MISMATCH/);
 });
