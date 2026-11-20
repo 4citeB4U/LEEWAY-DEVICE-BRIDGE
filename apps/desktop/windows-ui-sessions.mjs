@@ -316,6 +316,42 @@ throw 'BROWSER_RESPONSE_NONCE_NOT_OBSERVED'
     return result;
   }
 
+  // Owner-approved graceful close only: never use Stop-Process or taskkill.
+  // A fresh observation binds the exact process start time, window handle
+  // and title, avoiding stale-PID closure or guessing which app to exit.
+  async close(args) {
+    if (args.app !== 'codex') throw Error('WINDOW_CLOSE_APP_NOT_ALLOWED');
+    const observation = this.getObservation(args.observationId, args.app, args.pid);
+    if (observation.inputUsed || observation.submitted) throw Error('WINDOW_CLOSE_OBSERVATION_ALREADY_USED');
+    const script = `${scriptPreamble(args.app, args.pid)}
+$expectedProcessName = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${b64(observation.processName)}'))
+$expectedStart = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${b64(observation.processStartedUtc)}'))
+$expectedTitle = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${b64(observation.title)}'))
+$process = ProcessAllowed $targetPid $expectedProcessName $expectedStart
+$window = FindWindow $targetPid ${observation.windowHandle}
+if ([string]$window.Current.Name -cne $expectedTitle) { throw 'WINDOW_IDENTITY_MISMATCH' }
+$closeAccepted = [bool]$process.CloseMainWindow()
+if (-not $closeAccepted) { throw 'WINDOW_GRACEFUL_CLOSE_NOT_ACCEPTED' }
+Start-Sleep -Milliseconds 650
+$after = Get-Process -Id $targetPid -ErrorAction SilentlyContinue
+if ($null -ne $after -and $after.StartTime.ToUniversalTime().ToString('o') -cne $expectedStart) { throw 'WINDOW_PROCESS_IDENTITY_MISMATCH' }
+$processExited = $null -eq $after
+$windowStillPresent = $false
+if ($null -ne $after) { $windowStillPresent = [long]$after.MainWindowHandle -eq ${observation.windowHandle} }
+Write-Output 'LEEWAY_UI_BEFORE_RESULT'
+EmitResult (@{ ok = $true; result = @{ app = 'codex'; pid = $targetPid; closeRequested = $true; processExited = [bool]$processExited; windowStillPresent = [bool]$windowStillPresent; mode = 'GRACEFUL_CLOSE_MAIN_WINDOW'; postState = 'REQUIRES_FRESH_WINDOW_LIST_READBACK' } })
+`;
+    const result = await this.executeScript(script);
+    if (result?.app !== 'codex' || result?.pid !== args.pid ||
+        result.closeRequested !== true || typeof result.processExited !== 'boolean' ||
+        typeof result.windowStillPresent !== 'boolean' ||
+        result.mode !== 'GRACEFUL_CLOSE_MAIN_WINDOW' ||
+        result.postState !== 'REQUIRES_FRESH_WINDOW_LIST_READBACK') {
+      throw Error('WINDOW_CLOSE_READBACK_INVALID');
+    }
+    this.observations.delete(args.observationId);
+    return result;
+  }
   async invoke(args) {
     const script = `${scriptPreamble(args.app, args.pid)}
 $process = Get-Process -Id $targetPid -ErrorAction Stop
