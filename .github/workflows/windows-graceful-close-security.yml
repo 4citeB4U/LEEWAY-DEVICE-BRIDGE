@@ -1,0 +1,44 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.DEVICE.BRIDGE.WINDOWS.GRACEFUL_CLOSE_CI
+# TAG: LEEWAY.WINDOWS.GRACEFUL_CLOSE.SECURITY_CI_V1
+# 5WH:
+# WHAT = Run the canonical Windows graceful-close, consent, and OAuth scope regression tests.
+# WHY = Prevent forced termination, stale UI window authority, and scope escalation.
+# WHO = LeeWay Device Bridge contributors under Creator authority.
+# WHERE = .github/workflows/windows-graceful-close-security.yml.
+# WHEN = 2026-11-20.
+# HOW = Exercise the existing Bridge UI source with non-executing deterministic fixtures on Windows and Linux.
+# LICENSE = MIT
+name: Windows graceful-close security
+on:
+  pull_request:
+    paths:
+      - 'apps/desktop/windows-ui-sessions.mjs'
+      - 'apps/desktop/adapter.mjs'
+      - 'packages/protocol/index.mjs'
+      - 'operator/c3-admission-binding.mjs'
+      - 'operator/identity/pocket-id-access.mjs'
+      - 'operator/identity/runtime-owner-consent-provider.mjs'
+      - 'operator/adapter-registry.json'
+      - 'tests/window-control-c3-consent.test.mjs'
+      - 'tests/windows-graceful-close.test.mjs'
+      - 'tests/bridge-execution-scope.test.mjs'
+      - 'tests/runtime-owner-consent-negative.test.mjs'
+      - '.github/workflows/windows-graceful-close-security.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  consent-and-graceful-close:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: node --check operator/identity/runtime-owner-consent-provider.mjs
+      - run: node --test tests/window-control-c3-consent.test.mjs tests/windows-graceful-close.test.mjs tests/bridge-execution-scope.test.mjs tests/runtime-owner-consent-negative.test.mjs

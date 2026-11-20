@@ -62,6 +62,11 @@ function hasPermission(claims, permission) {
       : '';
   if (scopeValue.split(/\s+/).some(scope => accepted.has(scope))) return true;
 
+  // Project roles may qualify discovery/read aliases only. Execution must
+  // carry the exact delegated OAuth scope in the authenticated access token;
+  // a similarly named role is not a substitute for owner execution consent.
+  if (!['device.bridge.read', 'device.discovery.read'].includes(permission)) return false;
+
   // ZITADEL may carry project roles instead of a literal OAuth scope.
   // Accept only the exact read-only LeeWay aliases; never infer authority
   // from arbitrary claims or from a broader role.

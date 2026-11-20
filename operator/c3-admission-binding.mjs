@@ -19,6 +19,7 @@ import {
   loadTrustedIssuerRegistry,
   DEFAULT_REPLAY_GUARD
 } from "./trusted-issuer-registry.mjs";
+import { randomUUID } from 'node:crypto';
 import { mathematicalEligibility } from "./c3-mathematical-foundation.mjs";
 
 /**
@@ -36,10 +37,20 @@ function resolveCapabilityMetadata(platform, capability, registry) {
   const cap = adapter.capabilities?.[capability];
   if (!cap) return null;
 
+  // Window mutation is consequential even if a registry entry omits consent.
+  // Listing and observation remain read-only; invoke/input/submit require
+  // owner-bound consent, Formula and independent Veritas before dispatch.
+  const consequentialMutation = (
+    /^device\.ui\.(?!snapshot$|observe$|read$|status$)/.test(capability) ||
+    /^device\.windows\.window\.(?:invoke|input|submit|close)$/.test(capability) ||
+    /^device\.session\.(?:input|start|stop)$/.test(capability) ||
+    /^device\.process\.(?:execute|terminate)$/.test(capability) ||
+    /\.(?:write|write_binary|append_binary|edit|move|delete|install|terminate|create|execute|input|invoke|submit|tap|swipe|text|materialize|close)$/.test(capability)
+  );
   let tier = "READ";
-  if (cap.requiresHumanConsent || capability.includes(".write") || capability.includes(".install") || capability.includes(".terminate") || capability.includes(".create")) {
+  if (consequentialMutation || cap.requiresHumanConsent) {
     tier = "MUTATE";
-  } else if (capability.startsWith("device.ui.") || capability.includes(".execute") || capability.includes(".inference") || capability.includes(".speak")) {
+  } else if (capability.includes(".inference") || capability.includes(".speak")) {
     tier = "OPERATE";
   }
 
@@ -145,6 +156,7 @@ export function createC3AdmissionBinding({
           deviceId,
           platform,
           capability,
+          args: { ...args },
           argsDigest,
           authorityTier
         });
@@ -189,6 +201,11 @@ export function createC3AdmissionBinding({
       return false;
     }
 
+    // The exact owner-signed request ID follows both independent PRE gates.
+    // READ uses a fresh host-generated ID and never inherits user request authority.
+    const requestId = verifiedConsent?.requestId ?? randomUUID();
+    const requestArgsDigest = computeArgsDigest(args);
+
     // 8. Mandatory Formula Pre-Gate Verification (Transformation 2)
     let formulaOk = false;
     let formulaEvidence = null;
@@ -199,6 +216,9 @@ export function createC3AdmissionBinding({
         capability,
         authorityTier,
         decision,
+        requestId,
+        args: { ...args },
+        argsDigest: requestArgsDigest,
         verifiedConsent
       });
       formulaOk = formulaRes === true || (formulaRes && formulaRes.passed === true);
@@ -219,6 +239,9 @@ export function createC3AdmissionBinding({
         capability,
         authorityTier,
         decision,
+        requestId,
+        args: { ...args },
+        argsDigest: requestArgsDigest,
         verifiedConsent,
         formulaEvidence
       });
