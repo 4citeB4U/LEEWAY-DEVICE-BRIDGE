@@ -70,7 +70,7 @@
       "runtimeLocation": "phone",
       "dockerRequired": false,
       "downloadUrl": "./downloads/leeway-device-bridge-android-latest-debug.apk",
-      "sha256": "afa9dd9a75cfbaa509150c3d9c99ce12d3dbe113dd7eb30eac8228e3b3c842ea",
+      "sha256": "80039b9caaaef2fc3f5db7ee0e1f73cb0d34c6b274fc2db61d98d31c221c178b",
       "sizeBytes": 66462262,
       "formulaQualification": {
         "required": true,
@@ -78,7 +78,7 @@
         "targetMaxBytes": 104857600,
         "rule": "No compression ratio or reconstruction claim without measured evidence.",
         "measuredBytes": 66462262,
-        "measuredSha256": "afa9dd9a75cfbaa509150c3d9c99ce12d3dbe113dd7eb30eac8228e3b3c842ea"
+        "measuredSha256": "80039b9caaaef2fc3f5db7ee0e1f73cb0d34c6b274fc2db61d98d31c221c178b"
       },
       "versionName": "0.10.0-agent-update-rc1",
       "versionCode": 25,
@@ -88,10 +88,10 @@
       },
       "githubActionsQualification": {
         "state": "VERIFIED",
-        "runId": 44622139498,
-        "headSha": "986eb1f32f4611ebc35430258f4c811c9a5a4fee",
+        "runId": 44693302742,
+        "headSha": "87a717b0d0eca5c15a4786200cb1b0293575a454",
         "apkSizeBytes": 66462262,
-        "apkSha256": "afa9dd9a75cfbaa509150c3d9c99ce12d3dbe113dd7eb30eac8228e3b3c842ea",
+        "apkSha256": "80039b9caaaef2fc3f5db7ee0e1f73cb0d34c6b274fc2db61d98d31c221c178b",
         "note": "The Android app checks this manifest on foreground and reconnect, downloads the verified APK, and opens Android's owner-confirmed installer. It does not silently install or erase app data."
       }
     },
@@ -129,5 +129,5 @@
       }
     }
   ],
-  "updatedAtUtc": "2026-11-19T21:49:18Z"
+  "updatedAtUtc": "2026-11-20T07:14:21Z"
 }
