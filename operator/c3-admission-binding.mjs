@@ -49,7 +49,7 @@ function resolveCapabilityMetadata(platform, capability, registry) {
   let tier = "READ";
   if (consequentialMutation || cap.requiresHumanConsent) {
     tier = "MUTATE";
-  } else if (capability.startsWith("device.ui.") || capability.includes(".execute") || capability.includes(".inference") || capability.includes(".speak")) {
+  } else if (capability.includes(".inference") || capability.includes(".speak")) {
     tier = "OPERATE";
   }
 
