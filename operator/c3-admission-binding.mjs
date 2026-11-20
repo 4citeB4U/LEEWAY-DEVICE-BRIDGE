@@ -210,6 +210,8 @@ export function createC3AdmissionBinding({
         capability,
         authorityTier,
         decision,
+        args: { ...args },
+        argsDigest: computeArgsDigest(args),
         verifiedConsent
       });
       formulaOk = formulaRes === true || (formulaRes && formulaRes.passed === true);
@@ -230,6 +232,8 @@ export function createC3AdmissionBinding({
         capability,
         authorityTier,
         decision,
+        args: { ...args },
+        argsDigest: computeArgsDigest(args),
         verifiedConsent,
         formulaEvidence
       });
