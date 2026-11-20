@@ -49,3 +49,5 @@ jobs:
             if($check -notin @($report.blockers)) { throw "FAIL_OPEN_$check" }
           }
           Write-Output "PASS fail-closed audit evidence: $($report.blockers -join ', ')"
+          # pwsh/GitHub Actions otherwise propagates the deliberate child exit code 2.
+          $global:LASTEXITCODE = 0
