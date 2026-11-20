@@ -570,6 +570,11 @@ export function verifyConsentEvidence({
     issuer: issuerRecord.issuerId,
     keyId: issuerRecord.keyId,
     tokenNonce: nonce,
-    sessionNonce: consentEvidence.sessionNonce
+    sessionNonce: consentEvidence.sessionNonce,
+    requestId: consentEvidence.requestId,
+    deviceId: consentEvidence.deviceId,
+    platform: consentEvidence.platform,
+    capability: consentEvidence.capability,
+    argsDigest: consentEvidence.argsDigest
   };
 }
