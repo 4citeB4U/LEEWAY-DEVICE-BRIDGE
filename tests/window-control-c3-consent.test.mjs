@@ -152,3 +152,27 @@ test('a signed token is accepted only for matching Windows UI action arguments a
   assert.equal(await c3({deviceId:'pc-primary',capability:'device.ui.tap',args:{x:10,y:20}}),true);
   assert.equal(await c3({deviceId:'pc-primary',capability:'device.ui.tap',args:{x:10,y:20}}),false);
 });
+
+test('Formula and Veritas receive the exact read request arguments and digest', async () => {
+  const {computeArgsDigest} = await import('../operator/trusted-issuer-registry.mjs');
+  const observations = [];
+  const registry = {adapters:[{adapterId:'windows-fixture',platform:'windows',
+    capabilities:{'device.windows.window.list':{state:'SUPPORTED',requiresHumanConsent:false}}}]};
+  const c3=createC3AdmissionBinding({
+    deviceRegistry:new Map([['pc-primary',{
+      platform:'windows',identityVerified:true,registrationState:'TRUSTED_REGISTRY_READ',
+      identitySource:'WINDOWS_CIM_READONLY',passportAuthority:'OWNER_SIGNED_WINDOWS_PASSPORT',
+      ownerSubject:'fixture-owner',passportSha256:'a'.repeat(64)
+    }]]),
+    registry,
+    formulaPreGate:async data=>{observations.push({stage:'Formula',data});return {passed:true};},
+    veritasPreGate:async data=>{observations.push({stage:'Veritas',data});return true;}
+  });
+  const args={app:'codex',limit:5};
+  assert.equal(await c3({deviceId:'pc-primary',capability:'device.windows.window.list',args}),true);
+  assert.deepEqual(observations.map(x=>x.stage),['Formula','Veritas']);
+  for(const proof of observations){
+    assert.deepEqual(proof.data.args,args);
+    assert.equal(proof.data.argsDigest,computeArgsDigest(args));
+  }
+});
