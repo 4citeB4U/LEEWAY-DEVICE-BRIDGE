@@ -266,8 +266,9 @@ test('Outlook passive observation is identity-bound and no mutation capability a
   assert.deepEqual(observation.editableTargets,[]);
   assert.deepEqual(observation.actionTargets,[]);
   assert.match(scripts[0],/OUTLOOK_WINDOW_IDENTITY_MISMATCH/);
-  assert.match(scripts[0],/ControlType\\.ListItem/);
-  assert.doesNotMatch(scripts[0],/SetValue\\(|\\$invoke\\.Invoke\\(/);
+  assert.equal(scripts[0].includes('ControlType.ListItem'), true);
+  assert.equal(scripts[0].includes('SetValue('), false);
+  assert.equal(scripts[0].includes('$invoke.Invoke('), false);
   await assert.rejects(()=>sessions.input({app:'outlook',pid,observationId:observation.observationId,text:'never'}),/OUTLOOK_WINDOW_READ_ONLY/);
   await assert.rejects(()=>sessions.submit({app:'outlook',pid,observationId:observation.observationId}),/OUTLOOK_WINDOW_READ_ONLY/);
   await assert.rejects(()=>sessions.invoke({app:'outlook',pid}),/OUTLOOK_WINDOW_READ_ONLY/);
