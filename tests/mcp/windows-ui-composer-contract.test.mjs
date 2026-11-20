@@ -250,9 +250,22 @@ test('Outlook passive observation is identity-bound and no mutation capability a
   assert.equal(list.success,true);
   const observeArgs = {app:'outlook',pid,expectedTitle,expectedProcessStartedUtc,maxControls:30};
   assert.equal(schemas['device.windows.window.observe'].safeParse(observeArgs).success,true);
-  for (const action of ['invoke','input','submit','close','read']) {
-    const base={app:'outlook',pid,observationId:'11111111-1111-4111-8111-111111111111',targetId:'22222222-2222-4222-8222-222222222222',actionTargetId:'33333333-3333-4333-8333-333333333333',expectedTextSha256:'a'.repeat(64),responseNonce:'OUTLOOK-DENIED-NONCE',controlName:'Connecting to MCP and Codex',text:'blocked'};
-    assert.equal(schemas['device.windows.window.'+action].safeParse(base).success,false,action);
+  const observationId='11111111-1111-4111-8111-111111111111';
+  const targetId='22222222-2222-4222-8222-222222222222';
+  const actionTargetId='33333333-3333-4333-8333-333333333333';
+  const actions={
+    invoke:{app:'outlook',pid,controlName:'Connecting to MCP and Codex'},
+    input:{app:'outlook',pid,observationId,targetId,text:'blocked'},
+    submit:{app:'outlook',pid,observationId,targetId,actionTargetId,expectedTextSha256:'a'.repeat(64)},
+    close:{app:'outlook',pid,observationId},
+    read:{app:'outlook',pid,observationId,expectedTextSha256:'a'.repeat(64),responseNonce:'OUTLOOK-DENIED-NONCE'},
+  };
+  for (const [action,argumentsForAction] of Object.entries(actions)) {
+    const schema=schemas['device.windows.window.'+action];
+    assert.equal(schema.safeParse(argumentsForAction).success,false,action);
+    // The baseline non-Outlook action remains structurally valid:
+    const permittedApp=action==='close'?'codex':action==='read'?'chrome':'chatgpt';
+    assert.equal(schema.safeParse({...argumentsForAction,app:permittedApp}).success,true,action+' baseline');
   }
   let calls=0;const scripts=[];
   const sessions=new WindowsUiSessions({executeScript:async script=>{
