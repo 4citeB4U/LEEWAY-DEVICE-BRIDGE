@@ -196,6 +196,16 @@
           "state": "SUPPORTED",
           "requiresHumanConsent": false,
           "notes": "Read-only host identity observation; no configured desktop name or registry row can promote identityVerified."
+        },
+        "device.directories.list": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false,
+          "notes": "Owner-scoped bounded workspace READ candidate. Per-request consent token not required by the source READ policy; still requires authenticated Runtime owner and device.bridge.read scope, source-bound Windows passport, a declared qualified DesktopAdapter and actual Formula/independent Veritas pre-gates. No filesystem root expansion, arbitrary file access, execution grant or live qualification is implied."
+        },
+        "device.files.read": {
+          "state": "SUPPORTED",
+          "requiresHumanConsent": false,
+          "notes": "Owner-scoped workspace-only READ candidate (not a mutation tier). Requires scoped owner-authenticated Runtime forwarding, source-bound Windows identity, safePath confinement, qualified DesktopAdapter and Formula/independent Veritas pre-gates. The registry declaration is not itself authorization, a device execution receipt or production qualification."
         }
       },
       "evidenceState": "OBSERVED",
