@@ -41,10 +41,10 @@ function resolveCapabilityMetadata(platform, capability, registry) {
   // owner-bound consent, Formula and independent Veritas before dispatch.
   const consequentialMutation = (
     /^device\.ui\.(?!snapshot$|observe$|read$|status$)/.test(capability) ||
-    /^device\.windows\.window\.(?:invoke|input|submit)$/.test(capability) ||
+    /^device\.windows\.window\.(?:invoke|input|submit|close)$/.test(capability) ||
     /^device\.session\.(?:input|start|stop)$/.test(capability) ||
     /^device\.process\.(?:execute|terminate)$/.test(capability) ||
-    /\.(?:write|write_binary|append_binary|edit|move|delete|install|terminate|create|execute|input|invoke|submit|tap|swipe|text|materialize)$/.test(capability)
+    /\.(?:write|write_binary|append_binary|edit|move|delete|install|terminate|create|execute|input|invoke|submit|tap|swipe|text|materialize|close)$/.test(capability)
   );
   let tier = "READ";
   if (consequentialMutation || cap.requiresHumanConsent) {
