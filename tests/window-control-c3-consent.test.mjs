@@ -33,20 +33,26 @@ function admissionFixture() {
   const registry = {
     adapters: [{
       adapterId: 'test.windows',
-      platform: 'linux',
+      platform: 'windows',
       capabilities: Object.fromEntries(windowCapabilities.map(capability =>
         [capability, { state: 'SUPPORTED', requiresHumanConsent: false }]))
     }]
   };
   const c3 = createC3AdmissionBinding({
-    deviceRegistry: new Map([['test-control-node', { platform: 'linux' }]]),
+    deviceRegistry: new Map([['pc-primary', {
+      platform: 'windows', identityVerified: true,
+      registrationState: 'TRUSTED_REGISTRY_READ',
+      identitySource: 'WINDOWS_CIM_READONLY',
+      passportAuthority: 'OWNER_SIGNED_WINDOWS_PASSPORT',
+      ownerSubject: 'fixture-owner-subject', passportSha256: 'a'.repeat(64),
+    }]]),
     registry,
     trustedIssuerRegistry: {},
     formulaPreGate: async () => true,
     veritasPreGate: async () => true,
     consentProvider: async () => null,
   });
-  return capability => c3({deviceId:'test-control-node', capability, args:{}});
+  return capability => c3({deviceId:'pc-primary', capability, args:{}});
 }
 
 test('window list and observe remain read-only in canonical C3', async () => {
@@ -82,12 +88,16 @@ test('consent provider receives real request arguments and their canonical diges
   const seen = [];
   const registry = {
     adapters: [{
-      adapterId: 'test.windows', platform: 'linux',
+      adapterId: 'test.windows', platform: 'windows',
       capabilities: { 'device.ui.tap': {state:'SUPPORTED', requiresHumanConsent:false} }
     }]
   };
   const c3 = createC3AdmissionBinding({
-    deviceRegistry:new Map([['test-control-node', {platform:'linux'}]]),
+    deviceRegistry:new Map([['pc-primary', {
+      platform:'windows', identityVerified:true, registrationState:'TRUSTED_REGISTRY_READ',
+      identitySource:'WINDOWS_CIM_READONLY', passportAuthority:'OWNER_SIGNED_WINDOWS_PASSPORT',
+      ownerSubject:'fixture-owner-subject', passportSha256:'a'.repeat(64),
+    }]]),
     registry,
     trustedIssuerRegistry:{},
     formulaPreGate:async () => true,
@@ -95,7 +105,7 @@ test('consent provider receives real request arguments and their canonical diges
     consentProvider:async request => {seen.push(request);return null;},
   });
   const args = {x:120,y:240,button:'left'};
-  assert.equal(await c3({deviceId:'test-control-node',capability:'device.ui.tap',args}),false);
+  assert.equal(await c3({deviceId:'pc-primary',capability:'device.ui.tap',args}),false);
   assert.equal(seen.length,1);
   assert.deepEqual(seen[0].args,args);
   assert.equal(seen[0].argsDigest,computeArgsDigest(args));
