@@ -18,6 +18,7 @@ on:
       - 'packages/protocol/index.mjs'
       - 'operator/c3-admission-binding.mjs'
       - 'operator/identity/pocket-id-access.mjs'
+      - 'operator/identity/runtime-owner-consent-provider.mjs'
       - 'operator/adapter-registry.json'
       - 'tests/window-control-c3-consent.test.mjs'
       - 'tests/windows-graceful-close.test.mjs'
@@ -38,4 +39,5 @@ jobs:
         with:
           node-version: '24'
       - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: node --check operator/identity/runtime-owner-consent-provider.mjs
       - run: node --test tests/window-control-c3-consent.test.mjs tests/windows-graceful-close.test.mjs tests/bridge-execution-scope.test.mjs
