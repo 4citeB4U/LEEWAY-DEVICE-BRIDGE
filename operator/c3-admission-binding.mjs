@@ -39,9 +39,15 @@ function resolveCapabilityMetadata(platform, capability, registry) {
   // Window mutation is consequential even if a registry entry omits consent.
   // Listing and observation remain read-only; invoke/input/submit require
   // owner-bound consent, Formula and independent Veritas before dispatch.
-  const windowMutation = /^device\.windows\.window\.(?:invoke|input|submit)$/.test(capability);
+  const consequentialMutation = (
+    /^device\.ui\.(?!snapshot$|observe$|read$|status$)/.test(capability) ||
+    /^device\.windows\.window\.(?:invoke|input|submit)$/.test(capability) ||
+    /^device\.session\.(?:input|start|stop)$/.test(capability) ||
+    /^device\.process\.(?:execute|terminate)$/.test(capability) ||
+    /\.(?:write|write_binary|append_binary|edit|move|delete|install|terminate|create|execute|input|invoke|submit|tap|swipe|text|materialize)$/.test(capability)
+  );
   let tier = "READ";
-  if (windowMutation || cap.requiresHumanConsent || capability.includes(".write") || capability.includes(".install") || capability.includes(".terminate") || capability.includes(".create")) {
+  if (consequentialMutation || cap.requiresHumanConsent) {
     tier = "MUTATE";
   } else if (capability.startsWith("device.ui.") || capability.includes(".execute") || capability.includes(".inference") || capability.includes(".speak")) {
     tier = "OPERATE";
@@ -149,6 +155,7 @@ export function createC3AdmissionBinding({
           deviceId,
           platform,
           capability,
+          args: { ...args },
           argsDigest,
           authorityTier
         });
