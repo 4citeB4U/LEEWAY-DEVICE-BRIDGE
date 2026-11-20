@@ -23,6 +23,7 @@ on:
       - 'tests/window-control-c3-consent.test.mjs'
       - 'tests/windows-graceful-close.test.mjs'
       - 'tests/bridge-execution-scope.test.mjs'
+      - 'tests/runtime-owner-consent-negative.test.mjs'
       - '.github/workflows/windows-graceful-close-security.yml'
   workflow_dispatch:
 permissions:
@@ -40,4 +41,4 @@ jobs:
           node-version: '24'
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: node --check operator/identity/runtime-owner-consent-provider.mjs
-      - run: node --test tests/window-control-c3-consent.test.mjs tests/windows-graceful-close.test.mjs tests/bridge-execution-scope.test.mjs
+      - run: node --test tests/window-control-c3-consent.test.mjs tests/windows-graceful-close.test.mjs tests/bridge-execution-scope.test.mjs tests/runtime-owner-consent-negative.test.mjs
