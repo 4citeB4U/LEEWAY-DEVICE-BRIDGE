@@ -11,6 +11,7 @@
 1. Confirmed that the installed ChatGPT connector still calls `https://leeway-device-bridge.vercel.app/mcp` and receives HTTP 402 `Payment required` before reaching a LeeWay service.
 2. Confirmed the existing Render service `leeway-device-bridge-mcp-qual` (`srv-dbh4vv6k1f9s73efipv0`, Ohio, free plan) was running the old ancestor `f2fac5b65da437f56a3ec7ab372e308d28372a94` from the existing integration branch.
 3. Fast-forwarded that integration branch to `b2e932a` without overwriting divergent history, then triggered Render deploy `dep-dbvql1d9fdbs73bngq70`.
+4. Paused the obsolete Vercel project `prj_rm9s0Wsg3FoMFVYi1bMpvaKo7Ulw` under its owning team. The provider update timestamp changed after the pause request; the old domains remain listed and the stale ChatGPT connector still receives HTTP 402 until its saved URL is replaced.
 
 ## Observed evidence
 
