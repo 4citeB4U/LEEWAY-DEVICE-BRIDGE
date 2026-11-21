@@ -97,8 +97,13 @@ jobs:
             apps/android/app/build/outputs/apk/debug/app-debug.apk
             apps/android/package-evidence.txt
 
+      # SECURITY HOLD: CI debug assembly and SHA verification are NOT authorized
+      # release-signing provenance. Preserve the build artifact in Actions; do
+      # not automatically publish a debug APK to public Pages on a main push.
+      # A separately reviewed, owner-approved signing + release workflow must
+      # replace this hold after package signature and installation continuity checks.
       - name: Publish latest verified Android APK to GitHub Pages
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: false # DEBUG_PUBLICATION_HOLD_OWNER_SIGNED_RELEASE_REQUIRED
         shell: bash
         run: |
           set -euo pipefail
