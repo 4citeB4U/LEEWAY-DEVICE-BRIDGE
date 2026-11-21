@@ -346,5 +346,5 @@ test("authenticated GET streams events without request body; anonymous GET fails
   assert.equal(forwarded.headers.authorization, "Bearer fixture-owner-token");
   assert.equal(forwarded.headers["mcp-session-id"], "fixture-session");
   assert.equal(result.headers.get("mcp-session-id"), "fixture-session");
-  assert.match(await result.text(), /notifications\\/progress/);
+  assert.ok((await result.text()).includes("notifications/progress"));
 });
