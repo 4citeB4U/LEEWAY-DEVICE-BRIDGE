@@ -69,7 +69,7 @@ console.log('[LeeWay][PASS] Agent access enabled:',v.agentAccessEnabled);
 console.log('[LeeWay][PASS] Authority:',v.authority);
 NODE
 
-say "GATE 2 — staging the canonical remote controller pinned to ${PINNED_SHA}."
+say "GATE 2 — staging the existing remote controller pinned to ${SOURCE_COMMIT}."
 curl -fsSL "${BASE_RAW}/clients/remote-controller/client.mjs" -o "$WORK_ROOT/client.mjs"
 curl -fsSL "${BASE_RAW}/clients/remote-controller/package.json" -o "$WORK_ROOT/package.json"
 (
