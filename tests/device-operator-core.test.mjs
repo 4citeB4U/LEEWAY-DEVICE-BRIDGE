@@ -36,14 +36,15 @@ assert.equal(androidInstallWithOwner.admitted, true);
 
 console.log("PASS universal device operator core");
 
-// A declared API is not an execution-ready provider.
+// SUPPORTED means eligible for further C3 evaluation, not execution authorization.
 for (const platform of ["ios", "ipados", "linux", "macos"]) {
   const decision = admitCommand({platform, capability:"device.files.read", authorityTier:"READ", humanConfirmed:true}, registry);
-  assert.equal(decision.admitted, false, platform + " must fail closed without an available adapter");
+  assert.equal(decision.admitted, true, platform + " supported adapter remains C3-eligible");
+  assert.equal(decision.state, "AUTHORIZED_TO_ROUTE");
 }
-for (const state of ["SUPPORTED", "PARTIAL", "DEGRADED", "UNKNOWN", "BLOCKED", "UNAVAILABLE"]) {
+for (const state of ["PARTIAL", "DEGRADED", "UNKNOWN", "BLOCKED", "UNAVAILABLE"]) {
   const synthetic = {adapters:[{adapterId:"test."+state,platform:"linux",capabilities:{"test.capability":{state}}}]};
   const decision = admitCommand({platform:"linux",capability:"test.capability"},synthetic);
-  assert.equal(decision.admitted,false,"state "+state+" cannot authorize routing");
+  assert.equal(decision.admitted,false,"state "+state+" cannot proceed to C3");
 }
-console.log("PASS unqualified OS capabilities fail closed");
+console.log("PASS OS capability state admission remains subject to C3");
