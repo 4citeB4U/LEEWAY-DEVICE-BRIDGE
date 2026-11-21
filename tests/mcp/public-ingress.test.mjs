@@ -313,3 +313,38 @@ test("owner execution scope is opt-in and cannot be inferred from discovery", as
   assert.equal(response.status, 200);
   assert.deepEqual((await response.json()).scopes_supported, [RUNTIME_READ_SCOPE, BRIDGE_READ_SCOPE, BRIDGE_EXECUTE_SCOPE]);
 });
+
+test("authenticated GET streams events without request body; anonymous GET fails closed", async t => {
+  let calls = 0;
+  let forwarded;
+  const handler = createMcpIngressHandler({
+    env,
+    fetchImpl: async (_url, init) => {
+      calls++;
+      forwarded = init;
+      return new Response('data: {"jsonrpc":"2.0","method":"notifications/progress"}\n\n', {
+        status: 200, headers: { "content-type": "text/event-stream", "mcp-session-id": "fixture-session" }
+      });
+    }
+  });
+  const base = await startServer(handler, t);
+  const anonymous = await fetch(base + "/mcp", {method:"GET", headers:{ accept:"text/event-stream" }});
+  assert.equal(anonymous.status, 401);
+  assert.equal(calls, 0);
+  const result = await fetch(base + "/mcp", {
+    method:"GET", headers:{
+      authorization:"Bearer fixture-owner-token",
+      accept:"text/event-stream",
+      "mcp-session-id":"fixture-session",
+      "mcp-protocol-version":"2025-03-26"
+    }
+  });
+  assert.equal(result.status, 200);
+  assert.equal(calls, 1);
+  assert.equal(forwarded.method, "GET");
+  assert.equal(forwarded.body, undefined);
+  assert.equal(forwarded.headers.authorization, "Bearer fixture-owner-token");
+  assert.equal(forwarded.headers["mcp-session-id"], "fixture-session");
+  assert.equal(result.headers.get("mcp-session-id"), "fixture-session");
+  assert.match(await result.text(), /notifications\\/progress/);
+});
