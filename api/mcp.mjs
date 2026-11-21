@@ -65,7 +65,7 @@ function browserCorsHeaders(origin) {
   if (!origin) return {};
   return {
     "access-control-allow-origin": origin,
-    "access-control-allow-methods": "POST, OPTIONS",
+    "access-control-allow-methods": "GET, POST, OPTIONS",
     "access-control-allow-headers": "Authorization, Content-Type, Accept, MCP-Protocol-Version, Mcp-Method, Mcp-Name, MCP-Session-Id, Last-Event-Id",
     "access-control-expose-headers": "WWW-Authenticate, MCP-Protocol-Version, MCP-Session-Id, Last-Event-Id",
     "vary": "Origin"
@@ -208,14 +208,14 @@ export function createMcpIngressHandler({ env = process.env, fetchImpl = globalT
       return reply(403, { error: "BROWSER_ORIGIN_NOT_ADMITTED" });
     }
     if (req.method === "OPTIONS") {
-      if (!origin) return reply(405, { error: "METHOD_NOT_ALLOWED" }, { allow: "POST, OPTIONS" });
+      if (!origin) return reply(405, { error: "METHOD_NOT_ALLOWED" }, { allow: "GET, POST, OPTIONS" });
       return res.writeHead(204, {
         ...corsHeaders,
         "cache-control": "no-store",
-        allow: "POST, OPTIONS"
+        allow: "GET, POST, OPTIONS"
       }).end();
     }
-    if (req.method !== "POST") {
+    if (req.method !== "GET" && req.method !== "POST") {
       return reply(405, { error: "METHOD_NOT_ALLOWED" }, { allow: "POST, OPTIONS" });
     }
 
@@ -231,18 +231,20 @@ export function createMcpIngressHandler({ env = process.env, fetchImpl = globalT
       });
     }
 
-    if (!String(readHeader(req.headers, "content-type") || "").toLowerCase().startsWith("application/json")) {
+    if (req.method === "POST" && !String(readHeader(req.headers, "content-type") || "").toLowerCase().startsWith("application/json")) {
       return reply(415, { error: "JSON_REQUIRED" });
     }
 
-    let body;
-    try {
-      body = await readRequestBody(req);
-    } catch (error) {
-      const tooLarge = error instanceof Error && error.message === "MCP_BODY_TOO_LARGE";
-      return reply(tooLarge ? 413 : 400, {
-        error: tooLarge ? "MCP_BODY_TOO_LARGE" : "MCP_BODY_INVALID"
-      });
+    let body = null;
+    if (req.method === "POST") {
+      try {
+        body = await readRequestBody(req);
+      } catch (error) {
+        const tooLarge = error instanceof Error && error.message === "MCP_BODY_TOO_LARGE";
+        return reply(tooLarge ? 413 : 400, {
+          error: tooLarge ? "MCP_BODY_TOO_LARGE" : "MCP_BODY_INVALID"
+        });
+      }
     }
 
     const upstreamConfig = resolveUpstreamUrl(env);
@@ -256,9 +258,9 @@ export function createMcpIngressHandler({ env = process.env, fetchImpl = globalT
     let upstream;
     try {
       upstream = await fetchImpl(upstreamConfig.url, {
-        method: "POST",
+        method: req.method,
         headers: forwardedRequestHeaders(req),
-        body,
+        ...(body === null ? {} : { body }),
         redirect: "error",
         signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS)
       });
@@ -271,10 +273,10 @@ export function createMcpIngressHandler({ env = process.env, fetchImpl = globalT
       return reply(502, { error: "UPSTREAM_CONTENT_TYPE_INVALID" });
     }
 
-    const mcpRequest = JSON.parse(body.toString("utf8"));
+    const mcpRequest = body === null ? null : JSON.parse(body.toString("utf8"));
     const isJson = /^application\/json(?:\s*;|$)/i.test(contentType);
     const isEventStream = /^text\/event-stream(?:\s*;|$)/i.test(contentType);
-    if (mcpRequest.method === "initialize" && upstream.status === 200 && (isJson || isEventStream)) {
+    if (mcpRequest?.method === "initialize" && upstream.status === 200 && (isJson || isEventStream)) {
       const chunks = [];
       let responseBytes = 0;
       try {
