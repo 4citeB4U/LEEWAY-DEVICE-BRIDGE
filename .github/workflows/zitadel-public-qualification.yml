@@ -1,0 +1,54 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.DEVICE.BRIDGE.IDENTITY.RECOVERY
+# TAG: LEEWAY.ZITADEL.PUBLIC_OIDC_METADATA.QUALIFICATION
+# 5WH:
+# WHAT = Check public OIDC discovery for the owner-approved canonical issuer.
+# WHY = Avoid scheduled checks and false alerts against retired Pocket ID endpoints.
+# WHO = LeeWay authenticated identity-source owner; GitHub CI is observation only.
+# WHERE = .github/workflows/zitadel-public-qualification.yml.
+# WHEN = 2026-11-21.
+# HOW = Expected issuer from approved repository variable, TLS/discovery checks.
+# LICENSE = Existing repository terms.
+name: Zitadel public OIDC metadata qualification
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "37 6 * * *"
+permissions:
+  contents: read
+jobs:
+  verify-issuer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      EXPECTED_ISSUER: ${{ vars.LEEWAY_MCP_AUTH_ISSUER }}
+    steps:
+      - name: Verify public issuer metadata only
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, os, ssl, sys, urllib.request
+          from urllib.parse import urlparse
+          issuer = os.environ.get('EXPECTED_ISSUER','').strip().rstrip('/')
+          u = urlparse(issuer)
+          if u.scheme != 'https' or not u.hostname or u.username or u.password or u.query or u.fragment or u.path not in ('','/'):
+              sys.exit('BLOCKED: configure approved LEEWAY_MCP_AUTH_ISSUER HTTPS origin in repository variables')
+          url = issuer + '/.well-known/openid-configuration'
+          try:
+              with urllib.request.urlopen(urllib.request.Request(url, headers={'Accept':'application/json'}), context=ssl.create_default_context(), timeout=12) as r:
+                  if r.status != 200:
+                      sys.exit('BLOCKED: OIDC discovery status is not 200')
+                  d = json.load(r)
+          except Exception as exc:
+              sys.exit('BLOCKED: current configured OIDC issuer metadata unavailable/untrusted: ' + type(exc).__name__)
+          if d.get('issuer') != issuer:
+              sys.exit('BLOCKED: issuer mismatch')
+          for key in ('authorization_endpoint','token_endpoint','jwks_uri'):
+              val = d.get(key,'')
+              endpoint = urlparse(val)
+              if endpoint.scheme != 'https' or not endpoint.netloc or endpoint.username or endpoint.password:
+                  sys.exit('BLOCKED: invalid '+key)
+          print('CURRENT_OIDC_PUBLIC_METADATA_PASS')
+          print('Issuer:', issuer)
+          print('Discovery only. No token, principal, owner scope, Formula or execution admission verified.')
+          PY
