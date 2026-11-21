@@ -124,6 +124,33 @@ test('original bounded forwarder preserves bearer but never forwards cookies',as
  assert.equal(observed.init.redirect,'error');
 });
 
+test('authenticated GET is forwarded for Streamable HTTP event channels',async t=>{
+ let observed;
+ const base=await fixture(t,{
+  env,
+  fetchImpl:async(url,init)=>{
+   observed={url:String(url),init};
+   return new Response('data: {"jsonrpc":"2.0","method":"notifications/progress"}\n\n',{
+    status:200,
+    headers:{'content-type':'text/event-stream','mcp-session-id':'stream-session'}
+   });
+  }
+ });
+ const response=await fetch(base+'/mcp',{
+  method:'GET',
+  headers:{authorization:'Bearer fake-owner-token',accept:'text/event-stream','mcp-protocol-version':'2025-03-26','mcp-session-id':'stream-session'}
+ });
+ assert.equal(response.status,200);
+ assert.equal(response.headers.get('content-type'),'text/event-stream');
+ assert.equal(response.headers.get('mcp-session-id'),'stream-session');
+ assert.equal(observed.url,UPSTREAM);
+ assert.equal(observed.init.method,'GET');
+ assert.equal(observed.init.body,undefined);
+ assert.equal(observed.init.headers.authorization,'Bearer fake-owner-token');
+ assert.equal(observed.init.headers['mcp-session-id'],'stream-session');
+ assert.match(await response.text(),/notifications\/progress/);
+});
+
 test('origin and unsupported methods deny public MCP ingress without upstream call',async t=>{
  let calls=0;
  const base=await fixture(t,{env,fetchImpl:async()=>{calls++;throw Error('FORBIDDEN');}});
@@ -133,7 +160,7 @@ test('origin and unsupported methods deny public MCP ingress without upstream ca
   body:'{}'
  });
  assert.equal(wrongOrigin.status,403);
- assert.equal((await fetch(base+'/mcp',{method:'GET'})).status,405);
+ assert.equal((await fetch(base+'/mcp',{method:'PUT'})).status,405);
  assert.equal((await fetch(base+'/mcp',{method:'OPTIONS'})).status,405);
  assert.equal(calls,0);
 });
@@ -148,6 +175,7 @@ test('admitted Gemini browser origin receives CORS preflight and remains bearer-
  });
  assert.equal(preflight.status,204);
  assert.equal(preflight.headers.get('access-control-allow-origin'),'https://gemini.google.com');
+ assert.match(preflight.headers.get('access-control-allow-methods')||'',/GET/);
  assert.match(preflight.headers.get('access-control-allow-methods')||'',/POST/);
  assert.match(preflight.headers.get('access-control-allow-headers')||'',/Authorization/);
   assert.match(preflight.headers.get('access-control-allow-headers')||'',/Mcp-Method/);
