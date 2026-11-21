@@ -1,0 +1,87 @@
+{
+  "schemaVersion": "leeway.device-bridge.dual-phone-recovery.evidence.v1",
+  "missionId": "LEEWAY-DUAL-PHONE-BRIDGE-RECOVERY-20261121",
+  "timestamp": "2026-11-21T16:45:19Z",
+  "branch": "repair/dual-phone-device-bridge-20261121",
+  "sourceCommit": "85791983c467653d75813aaa7669c7a40f666048",
+  "runtimeFabric": {
+    "baseUrl": "http://127.0.0.1:4011",
+    "health": "HTTP_200",
+    "enforcementManifest": "HTTP_200"
+  },
+  "samsung": {
+    "deviceId": "phone-fold6",
+    "serial": "RFCX70LNT7X",
+    "manufacturer": "samsung",
+    "model": "SM-F956U",
+    "androidVersion": "17",
+    "battery": {
+      "level": 100,
+      "health": 2,
+      "status": 5
+    },
+    "leeWayApps": [
+      {
+        "package": "industries.leeway.devicebridge",
+        "version": "0.10.0-agent-update-rc1",
+        "installed": true,
+        "enabled": true,
+        "foregroundVerified": true
+      },
+      {
+        "package": "industries.leeway.pocket",
+        "version": "1.0.0-original-eye-widget-rc59",
+        "installed": true,
+        "enabled": true
+      }
+    ],
+    "status": "PARTIAL"
+  },
+  "iphone": {
+    "deviceId": "phone-apple-iphone",
+    "udid": "00008030-000C718C0E33402E",
+    "manufacturer": "Apple, Inc.",
+    "productType": "iPhone12,1",
+    "productVersion": "27.2.1",
+    "buildVersion": "24B156",
+    "hardwareModel": "N104AP",
+    "cpuArchitecture": "arm64e",
+    "nativeLeeWayApp": {
+      "identifier": "industries.leeway.devicebridge.7K2LF3G25U",
+      "bundleName": "LeeWayDeviceBridge",
+      "bundlePath": "/private/var/containers/Bundle/Application/C1171220-977C-4B8B-B826-FB96263B8881/LeeWayDeviceBridge.app",
+      "installed": true
+    },
+    "nativeDvtScreenshot": {
+      "executed": true,
+      "file": "iphone11-native-screen.png",
+      "bytes": 19617
+    },
+    "status": "PARTIAL"
+  },
+  "tests": {
+    "physicalUsb": {
+      "command": "node --test tests/mcp/physical-usb-composition.test.mjs tests/mcp/physical-usb-c3-admission.test.mjs tests/mcp/registered-device-discovery.test.mjs",
+      "pass": 10,
+      "fail": 0
+    }
+  },
+  "blockers": [
+    "VS Code MCP client still cached stale source-hash startup state",
+    "No independently verified phone passport registry readback",
+    "Android and iPhone app service endpoints lack authenticated Digital Brain/Continuum readbacks",
+    "No Formula hardware evaluation was executed",
+    "Disconnect/reconnect test not executed",
+    "Veritas and canonical Receipt Authority not exercised"
+  ],
+  "veritas": "NOT_RUN",
+  "receiptAuthority": "RECEIPT_NOT_CREATED",
+  "learningLedger": "NOT_UPDATED",
+  "iphoneNativeScreenshotSha256": "CA2D6BAFE7FE488AEC2B9C5207C4A0634D884C81A6E681529509DF536627FF1C",
+  "rollback": [
+    "Preserve dirty worktree",
+    "No commit or production deployment",
+    "Remove external MCP host binding changes to restore previous wiring",
+    "No phone wipe, root, jailbreak, signing, or installation changes"
+  ]
+}
