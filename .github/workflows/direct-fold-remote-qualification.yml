@@ -7,10 +7,14 @@ on:
     paths:
       - ".github/workflows/direct-fold-remote-qualification.yml"
       - "clients/remote-controller/termux-one-pull.sh"
+      - "clients/remote-controller/termux-qualify.sh"
+      - "tests/termux-direct-phone-source-lock.test.mjs"
   pull_request:
     paths:
       - ".github/workflows/direct-fold-remote-qualification.yml"
       - "clients/remote-controller/termux-one-pull.sh"
+      - "clients/remote-controller/termux-qualify.sh"
+      - "tests/termux-direct-phone-source-lock.test.mjs"
   workflow_dispatch:
 
 jobs:
@@ -26,6 +30,8 @@ jobs:
         run: |
           set -euo pipefail
           bash -n clients/remote-controller/termux-one-pull.sh
+          bash -n clients/remote-controller/termux-qualify.sh
+          node --test tests/termux-direct-phone-source-lock.test.mjs
           grep -q '127.0.0.1:5323/health' clients/remote-controller/termux-one-pull.sh
           grep -q 'VERCEL_QUEUE_DURABLE_V1' clients/remote-controller/termux-one-pull.sh
           grep -q 'agent.chat' clients/remote-controller/termux-one-pull.sh
