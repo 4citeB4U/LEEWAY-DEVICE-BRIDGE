@@ -79,7 +79,11 @@ test('MCP configuration preserves the strict remote-relay boundary', async () =>
   const source = await fs.readFile(new URL('../../apps/desktop/mcp-server.mjs', import.meta.url), 'utf8');
   assert.match(source, /REMOTE_RELAY_BINDING_REQUIRED/);
   assert.match(source, /LOCAL_DESKTOP_WORKSPACE_REQUIRED/);
-  assert.match(source, /\['pc-primary', 'pc-hp-secondary'\]/);
+  // A remote relay boundary must not make two workstation IDs the only permitted identities.
+  assert.doesNotMatch(source, /\['pc-primary', 'pc-hp-secondary'\]/);
+  assert.match(source, /record\.identityVerified === true/);
+  assert.match(source, /record\.passportAuthority === 'OWNER_SIGNED_WINDOWS_PASSPORT'/);
+  assert.match(source, /record\.deviceId === undefined \|\| record\.deviceId === deviceId/);
 });
 
 test('workstation daemon uses the relay execution role and is directly launchable', async () => {
