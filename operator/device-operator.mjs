@@ -46,7 +46,9 @@ export function admitCommand({ platform, capability, authorityTier = "READ", hum
   const adapter = adapterForPlatform(platform, registry);
   const claim = adapter.capabilities?.[capability];
   if (!claim) return { admitted:false, state:"BLOCKED", reason:"CAPABILITY_NOT_DECLARED", adapterId:adapter.adapterId };
-  if (["BLOCKED","UNAVAILABLE","UNKNOWN"].includes(claim.state)) {
+  // SUPPORTED is eligible for additional C3/Formula/Veritas qualification,
+  // not proof of execution. PARTIAL and DEGRADED fail closed.
+  if (!["SUPPORTED", "AVAILABLE", "AUTHORIZED", "ACTIVE", "HEALTHY", "VERIFIED"].includes(claim.state)) {
     return { admitted:false, state:"BLOCKED", reason:"CAPABILITY_NOT_AVAILABLE", adapterId:adapter.adapterId, capabilityState:claim.state };
   }
   if (CONSEQUENTIAL.has(authorityTier) && !humanConfirmed) {

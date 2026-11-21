@@ -165,7 +165,7 @@ export function verifyWindowsPcPrimaryPassport({
   if (passport.schemaVersion !== '1.0.0' ||
       passport.authority !== WINDOWS_PASSPORT_AUTHORITY ||
       passport.platform !== WINDOWS_PLATFORM ||
-      passport.deviceId !== WINDOWS_DEVICE_ID ||
+      typeof passport.deviceId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(passport.deviceId) ||
       typeof passport.ownerSubject !== 'string' ||
       typeof passport.keyId !== 'string' ||
       typeof passport.signature !== 'string') {
@@ -233,7 +233,7 @@ export function verifyWindowsPcPrimaryPassport({
 }
 
 /**
- * Read-only adapter for the owner-enrolled primary Windows workstation.
+ * Read-only adapter for an owner-enrolled Windows operating-system instance.
  * It exposes only health/info and requires fresh host evidence on every call.
  */
 export class WindowsPcPrimaryAdapter {
@@ -241,15 +241,15 @@ export class WindowsPcPrimaryAdapter {
     passport,
     ownerSubject,
     trustRegistry,
-    deviceId = WINDOWS_DEVICE_ID,
+    deviceId = passport?.deviceId,
     hostPlatform = process.platform,
     probe = readWindowsHostIdentity,
     clock = Date.now,
     timeoutMs = 15000,
   } = {}) {
-    if (deviceId !== WINDOWS_DEVICE_ID) throw new Error('WINDOWS_PC_PRIMARY_DEVICE_REQUIRED');
-    if (hostPlatform !== 'win32') throw new Error('WINDOWS_HOST_REQUIRED');
     if (!passport) throw new Error('WINDOWS_PASSPORT_REQUIRED');
+    if (typeof deviceId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(deviceId) || passport?.deviceId !== deviceId) throw new Error('WINDOWS_PASSPORT_DEVICE_MISMATCH');
+    if (hostPlatform !== 'win32') throw new Error('WINDOWS_HOST_REQUIRED');
     if (typeof ownerSubject !== 'string' || ownerSubject.length === 0) throw new Error('WINDOWS_OWNER_SUBJECT_REQUIRED');
     if (!trustRecordFor(trustRegistry, passport.keyId)) throw new Error('WINDOWS_PASSPORT_ISSUER_UNTRUSTED');
     this.passport = passport;
@@ -312,7 +312,7 @@ export class WindowsPcPrimaryAdapter {
  * creates identity evidence from a configured device name.
  */
 export function createTrustedWindowsRegistryRecord(observation) {
-  if (!observation || observation.deviceId !== WINDOWS_DEVICE_ID ||
+  if (!observation || typeof observation.deviceId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(observation.deviceId) ||
       observation.platform !== WINDOWS_PLATFORM || observation.identityVerified !== true ||
       observation.registrationState !== WINDOWS_REGISTRATION_STATE ||
       observation.identitySource !== WINDOWS_IDENTITY_SOURCE ||

@@ -246,4 +246,25 @@ test('Windows adapter refuses mutation, missing passport, wrong host and bad iss
   await assert.rejects(verifiedAdapter().execute('device.files.write'), /CAPABILITY_UNAVAILABLE/);
 });
 
+test('non-primary Windows instance uses its own signed passport without weakening host evidence', async () => {
+  const secondaryPassport = signedPassport({ deviceId: 'windows-secondary-fixture' });
+  const adapter = new WindowsPcPrimaryAdapter({
+    passport: secondaryPassport, ownerSubject: OWNER, trustRegistry,
+    hostPlatform: 'win32', probe: async () => observed, clock: () => NOW
+  });
+  const info = await adapter.execute('device.info');
+  assert.equal(info.deviceId, 'windows-secondary-fixture');
+  assert.equal(info.identityVerified, true);
+  assert.equal(createTrustedWindowsRegistryRecord(info).identityVerified, true);
+  assert.throws(() => new WindowsPcPrimaryAdapter({
+    passport: secondaryPassport, deviceId: 'pc-primary', ownerSubject: OWNER,
+    trustRegistry, hostPlatform: 'win32'
+  }), /WINDOWS_PASSPORT_DEVICE_MISMATCH/);
+  await assert.rejects(new WindowsPcPrimaryAdapter({
+    passport: signedPassport({ deviceId: 'windows-secondary-fixture', computerUuid: 'altered-hardware' }),
+    ownerSubject: OWNER, trustRegistry, hostPlatform: 'win32',
+    probe: async () => observed, clock: () => NOW
+  }).execute('device.info'), /WINDOWS_PASSPORT_HOST_MISMATCH/);
+});
+
 console.log('PASS source-bound Windows pc-primary identity, trusted registration and fail-closed denial tests');

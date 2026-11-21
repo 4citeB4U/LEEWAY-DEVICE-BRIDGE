@@ -133,7 +133,9 @@ test('origin and unsupported methods deny public MCP ingress without upstream ca
   body:'{}'
  });
  assert.equal(wrongOrigin.status,403);
- assert.equal((await fetch(base+'/mcp',{method:'GET'})).status,405);
+ // GET is a permitted event stream method but anonymous use remains denied.
+ assert.equal((await fetch(base+'/mcp',{method:'GET'})).status,401);
+ assert.equal((await fetch(base+'/mcp',{method:'PUT'})).status,405);
  assert.equal((await fetch(base+'/mcp',{method:'OPTIONS'})).status,405);
  assert.equal(calls,0);
 });
