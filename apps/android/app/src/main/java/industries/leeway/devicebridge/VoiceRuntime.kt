@@ -32,10 +32,15 @@ object VoiceRuntime {
     private const val MAX_RESPONSE_BYTES = 32 * 1024
     @Volatile private var lastStatus = unavailable(VOICE_UNAVAILABLE).toString()
 
-    // UI health remains nonblocking. It is a cached observation, not a fresh
-    // probe or acoustic attestation. The existing relay command uses initialize.
+    // UI remains nonblocking, but an authorized remote health call executes on
+    // a worker and should observe the existing phone-local Voice host now.
+    // Neither observation is acoustic playback or independent C3 proof.
     fun status(context: Context): JSONObject =
-        JSONObject(lastStatus).put("readback", "CACHED_NOT_LIVE_PROBED")
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            JSONObject(lastStatus).put("readback", "CACHED_NOT_LIVE_PROBED")
+        } else {
+            initialize(context)
+        }
 
     fun initialize(context: Context): JSONObject {
         if (Looper.myLooper() == Looper.getMainLooper()) {
