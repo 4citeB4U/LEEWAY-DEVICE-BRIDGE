@@ -83,7 +83,9 @@ function trustedRegistryRecord(deviceRegistry, deviceId) {
 
 function hasSourceBoundWindowsIdentity(deviceId, record) {
   if (record?.platform !== 'windows') return true;
-  return ['pc-primary', 'pc-hp-secondary'].includes(deviceId) &&
+  return typeof deviceId === 'string' && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(deviceId) &&
+    (record.id === undefined || record.id === deviceId) &&
+    (record.deviceId === undefined || record.deviceId === deviceId) &&
     record.identityVerified === true &&
     record.registrationState === 'TRUSTED_REGISTRY_READ' &&
     record.identitySource === 'WINDOWS_CIM_READONLY' &&
