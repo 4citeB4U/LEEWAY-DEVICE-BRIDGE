@@ -69,3 +69,32 @@ test('legacy configured IDs are not synthesized into the production admission re
 
   assert.equal(await admission({ deviceId: 'adapter-only', capability: 'device.health', args: {} }), false);
 });
+
+test('any separately enrolled Windows adapter is discoverable without a primary-PC alias', async t => {
+  const signedFields = id => ({
+    id, deviceId:id, platform:'windows',identityVerified:true,
+    registrationState:'TRUSTED_REGISTRY_READ',
+    identitySource:'WINDOWS_CIM_READONLY',
+    passportAuthority:'OWNER_SIGNED_WINDOWS_PASSPORT',
+    ownerSubject:'owner-fixture-subject-verified',
+    passportSha256:'b'.repeat(64)
+  });
+  const bridge = new Bridge([
+    {id:'windows-custom-01',grants:['device.health'],adapter:{discover:async()=>['device.health'],execute:async()=>({})}},
+    {id:'windows-untrusted-02',grants:['device.health'],adapter:{discover:async()=>['device.health'],execute:async()=>({})}},
+    {id:'windows-mismatch-03',grants:['device.health'],adapter:{discover:async()=>['device.health'],execute:async()=>({})}},
+    {id:'android-enrolled-01',grants:['device.health'],adapter:{discover:async()=>['device.health'],execute:async()=>({})}}
+  ],{
+    admission:async()=>false,receiptSink:async()=>{},
+    deviceRegistry:new Map([
+      ['windows-custom-01',signedFields('windows-custom-01')],
+      ['windows-untrusted-02',{...signedFields('windows-untrusted-02'),identityVerified:false}],
+      ['windows-mismatch-03',{...signedFields('windows-mismatch-03'),deviceId:'wrong-identity'}],
+      ['android-enrolled-01',{id:'android-enrolled-01',platform:'android',registrationState:'REGISTERED'}]
+    ])
+  });
+  const result=await readDevices(t,bridge);
+  assert.deepEqual(result.devices,['windows-custom-01','android-enrolled-01']);
+  assert.equal(result.registrationState,'TRUSTED_REGISTRY_READ');
+  assert.equal(result.reachability,'NOT_PROBED');
+});
