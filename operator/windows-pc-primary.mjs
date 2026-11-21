@@ -247,9 +247,9 @@ export class WindowsPcPrimaryAdapter {
     clock = Date.now,
     timeoutMs = 15000,
   } = {}) {
+    if (!passport) throw new Error('WINDOWS_PASSPORT_REQUIRED');
     if (typeof deviceId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(deviceId) || passport?.deviceId !== deviceId) throw new Error('WINDOWS_PASSPORT_DEVICE_MISMATCH');
     if (hostPlatform !== 'win32') throw new Error('WINDOWS_HOST_REQUIRED');
-    if (!passport) throw new Error('WINDOWS_PASSPORT_REQUIRED');
     if (typeof ownerSubject !== 'string' || ownerSubject.length === 0) throw new Error('WINDOWS_OWNER_SUBJECT_REQUIRED');
     if (!trustRecordFor(trustRegistry, passport.keyId)) throw new Error('WINDOWS_PASSPORT_ISSUER_UNTRUSTED');
     this.passport = passport;
