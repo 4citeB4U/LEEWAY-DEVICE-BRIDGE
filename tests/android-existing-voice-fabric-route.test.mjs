@@ -42,6 +42,10 @@ test('Device Bridge phone voice routes to the same already-running original Voic
  assert.match(voice,/connection\.instanceFollowRedirects = false/);
  assert.match(voice,/MAX_RESPONSE_BYTES = 32 \* 1024/);
  assert.match(voice,/Looper\.myLooper\(\) == Looper\.getMainLooper\(\)/);
+ assert.match(voice,/fun status\(context: Context\): JSONObject =/);
+ assert.match(voice,/JSONObject\(lastStatus\)\.put\("readback", "CACHED_NOT_LIVE_PROBED"\)/);
+ assert.match(voice,/else \{\s*initialize\(context\)\s*\}/);
+
  assert.match(voice,/put\("playbackVerified", false\)/);
  assert.match(voice,/put\("spoken", false\)/);
  assert.match(voice,/fallbackAllowed", false/);
