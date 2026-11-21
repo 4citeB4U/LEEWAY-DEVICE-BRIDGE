@@ -52,7 +52,7 @@ function resolveCapabilityMetadata(platform, capability, registry) {
 
 function hasSourceBoundWindowsIdentity(deviceId, device) {
   if (device?.platform !== 'windows') return true;
-  return deviceId === 'pc-primary' &&
+  return typeof deviceId === 'string' && deviceId.length > 0 && deviceId.length <= 128 &&
     device.identityVerified === true &&
     device.registrationState === 'TRUSTED_REGISTRY_READ' &&
     device.identitySource === 'WINDOWS_CIM_READONLY' &&
@@ -118,8 +118,8 @@ export function createC3AdmissionBinding({
       return false;
     }
 
-    // Windows pc-primary may enter C3 only after the trusted host registry
-    // carries a fresh adapter observation. A configured ID, passport-shaped
+    // Any Windows instance may enter C3 only after the trusted host registry
+    // carries its own fresh adapter observation. A configured ID, passport-shaped
     // object, or caller claim cannot satisfy this boundary.
     if (!hasSourceBoundWindowsIdentity(deviceId, device)) return false;
 
