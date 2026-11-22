@@ -1,0 +1,52 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.DEVICE_BRIDGE.EXTENSION.CI
+# TAG: LEEWAY.EXTENSION.V2.SOURCE.CI
+# 5WH:
+# WHAT = Validate and package the unsigned Extension Manifesto V2 browser source.
+# WHY = Separate source integrity from physical native-host/browser/signing qualification.
+# WHO = Creator-authorized Device Bridge contributors.
+# WHERE = .github/workflows/extension-v2-source.yml.
+# WHEN = 2026-11-16.
+# HOW = Node syntax/negative tests, Python deterministic packaging, scoped artifact upload.
+# LICENSE = Existing repository terms; no new license asserted.
+name: Extension V2 source validation
+on:
+  pull_request:
+    paths:
+      - 'apps/extension/**'
+      - 'tests/extension-v2.test.mjs'
+      - 'scripts/package-extension-v2.py'
+      - '.github/workflows/extension-v2-source.yml'
+  push:
+    paths:
+      - 'apps/extension/**'
+      - 'tests/extension-v2.test.mjs'
+      - 'scripts/package-extension-v2.py'
+      - '.github/workflows/extension-v2-source.yml'
+permissions:
+  contents: read
+jobs:
+  validate:
+    name: Unsigned source / negative security checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Syntax checks
+        run: |
+          for f in apps/extension/*.js; do node --check "$f"; done
+          node --check tests/extension-v2.test.mjs
+      - name: Boundaries and negative tests
+        run: node --test tests/extension-v2.test.mjs
+      - name: Produce unsigned browser packages
+        run: python scripts/package-extension-v2.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: extension-v2-unsigned-source
+          path: dist/*unsigned.zip
+          if-no-files-found: error
