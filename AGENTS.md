@@ -4,12 +4,18 @@ Authority: Creator/Human Authority > LeeWay Standards > Root of Trust > Runtime 
 
 Canonical repository: 4citeB4U/LEEWAY-DEVICE-BRIDGE.
 
+Read the root `MEMORY.md` before substantive work. It is the uniform LeeWay memory, continuity, onboarding, Agent Lee voice, and engineering-loop contract identified as `LEEWAY.MEMORY.AUTHORITY`. Memory receipts, summaries, indexes, and databases are subordinate implementations and must carry provenance, trust state, Formula state, Veritas state, receipt state, and immutable hashes when available. A missing or hash-divergent contract is `MEMORY_AUTHORITY = BLOCKED`.
+
 Use LeeWay Agent Skills as behavioral authority. For substantive work:
 Continuity → Context Engineering → Formula Governance → Agent Operating Loop → Universal Capability Kernel → focal execution → Veritas → receipt → LeeWay delivery.
 
 ## Completion law
 
-Investigate → Diagnose → Plan → Implement → Test → Validate → Repair → Retest → Verify → Evidence.
+Investigate → Diagnose → Plan → Implement → Test → Validate → Repair → Retest → Verify → Evidence → Checkpoint → Continue.
+
+Canonical 12-stage form:
+
+`INVESTIGATE → DIAGNOSE → PLAN → IMPLEMENT → TEST → VALIDATE → REPAIR → RETEST → VERIFY → EVIDENCE → CHECKPOINT → CONTINUE`
 
 At material transitions ask:
 - What are we not discovering?

@@ -1,5 +1,19 @@
 # LeeWay Universal Device Operator
 
+## Memory contract binding
+
+Before applying this operator contract, load the active root `MEMORY.md`
+(`LEEWAY.MEMORY.AUTHORITY`, version `1.0.0`) and the applicable root
+`AGENTS.md`. `MEMORY.md` is normative; this document is subordinate guidance.
+Use the exact 12-stage sequence:
+
+`INVESTIGATE → DIAGNOSE → PLAN → IMPLEMENT → TEST → VALIDATE → REPAIR → RETEST → VERIFY → EVIDENCE → CHECKPOINT → CONTINUE`
+
+If `MEMORY.md` is missing, altered, unapproved, or not tied to the current
+session receipt, set `MEMORY_AUTHORITY = BLOCKED` and perform bounded diagnosis
+only. This document cannot create another LeeWay identity, Formula, Veritas,
+Receipt Authority, or memory truth source.
+
 ## 5WH identity
 
 **Who:** Agent Lee and other authorized LeeWay clients through the canonical Device Bridge.  
