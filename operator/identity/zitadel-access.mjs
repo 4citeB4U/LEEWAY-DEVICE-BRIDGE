@@ -77,7 +77,7 @@ function hasPermission(claims, permission) {
  * No fallback to session cookies, ID tokens, unsigned tokens, or unqualified scopes.
  * Caller must supply resource + approved owner sub from actual enrollment.
  */
-export function createZitadelAuthenticator({ issuer, resource, ownerSubject, permission = 'device.bridge.read', tokenAudiences = [], fetchImpl = fetch, now = () => Date.now() } = {}) {
+export function createZitadelAuthenticator({ issuer, resource, ownerSubject, permission = 'device.bridge.read', tokenAudiences = [], fetchImpl = fetch, now = () => Date.now(), onDeny = null } = {}) {
   const expectedIssuer = requireHttps(issuer, 'ISSUER');
   const expectedResource = requireHttps(resource, 'RESOURCE');
   const acceptedAudiences = new Set([expectedResource, ...normalizeTokenAudiences(tokenAudiences)]);
@@ -85,33 +85,42 @@ export function createZitadelAuthenticator({ issuer, resource, ownerSubject, per
   if (!/^[a-z][a-z0-9._:-]{2,127}$/.test(permission)) throw Error('PERMISSION_REQUIRED');
   const discoveryUrl = expectedIssuer + '/.well-known/openid-configuration';
   let keyCache = { until: 0, keys: [] };
+  // Opt-in operational diagnostics expose only fixed rejection categories.
+  // Never log bearer tokens, JWT content, owner IDs, issuer URLs, or key bytes.
+  const deny = code => {
+    if (typeof onDeny === 'function') {
+      try { onDeny(code); } catch { /* Denial callbacks cannot alter authorization. */ }
+    }
+    return false;
+  };
   return async function authenticate(req) {
     const token = bearer(req);
-    if (!token || token.length > 16384) return false;
+    if (!token || token.length > 16384) return deny('MISSING_OR_OVERSIZED_BEARER');
     try {
       const parts = token.split('.');
-      if (parts.length !== 3) return false;
+      if (parts.length !== 3) return deny('JWT_SEGMENTS_INVALID');
       const protectedHeader = parsePart(parts[0]);
       const claims = parsePart(parts[1]);
-      if (!['RS256','ES256'].includes(protectedHeader.alg) || !protectedHeader.kid || protectedHeader.typ === 'JWT+UNSIGNED') return false;
-      if (claims.iss !== expectedIssuer || claims.sub !== ownerSubject) return false;
+      if (!['RS256','ES256'].includes(protectedHeader.alg) || !protectedHeader.kid || protectedHeader.typ === 'JWT+UNSIGNED') return deny('JWT_HEADER_OR_ALGORITHM_INVALID');
+      if (claims.iss !== expectedIssuer) return deny('JWT_ISSUER_MISMATCH');
+      if (claims.sub !== ownerSubject) return deny('JWT_OWNER_MISMATCH');
       const audiences = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
-      if (!audiences.some(audience => acceptedAudiences.has(audience))) return false;
+      if (!audiences.some(audience => acceptedAudiences.has(audience))) return deny('JWT_AUDIENCE_MISMATCH');
       const seconds = Math.floor(now() / 1000);
-      if (!Number.isSafeInteger(claims.exp) || claims.exp <= seconds || !Number.isSafeInteger(claims.iat) || claims.iat > seconds + 30) return false;
-      if (claims.nbf !== undefined && (!Number.isSafeInteger(claims.nbf) || claims.nbf > seconds + 30)) return false;
-      if (!hasPermission(claims, permission)) return false;
+      if (!Number.isSafeInteger(claims.exp) || claims.exp <= seconds || !Number.isSafeInteger(claims.iat) || claims.iat > seconds + 30) return deny('JWT_TIME_CLAIMS_INVALID');
+      if (claims.nbf !== undefined && (!Number.isSafeInteger(claims.nbf) || claims.nbf > seconds + 30)) return deny('JWT_NOT_BEFORE_INVALID');
+      if (!hasPermission(claims, permission)) return deny('JWT_READ_PERMISSION_MISSING');
       if (keyCache.until <= now()) {
         const discoveryResponse = await fetchImpl(discoveryUrl, { signal: AbortSignal.timeout(5000), redirect: 'error' });
-        if (!discoveryResponse.ok) return false;
+        if (!discoveryResponse.ok) return deny('OIDC_DISCOVERY_HTTP_REJECTED');
         const doc = await discoveryResponse.json();
-        if (doc.issuer !== expectedIssuer) return false;
+        if (doc.issuer !== expectedIssuer) return deny('OIDC_DISCOVERY_ISSUER_MISMATCH');
         const jwksUrl = new URL(doc.jwks_uri);
-        if (jwksUrl.protocol !== 'https:' || jwksUrl.origin !== new URL(expectedIssuer).origin || jwksUrl.username || jwksUrl.password) return false;
+        if (jwksUrl.protocol !== 'https:' || jwksUrl.origin !== new URL(expectedIssuer).origin || jwksUrl.username || jwksUrl.password) return deny('JWKS_ORIGIN_INVALID');
         const keysResponse = await fetchImpl(jwksUrl, { signal: AbortSignal.timeout(5000), redirect: 'error' });
-        if (!keysResponse.ok) return false;
+        if (!keysResponse.ok) return deny('JWKS_HTTP_REJECTED');
         const document = await keysResponse.json();
-        if (!Array.isArray(document.keys) || document.keys.length > 32) return false;
+        if (!Array.isArray(document.keys) || document.keys.length > 32) return deny('JWKS_KEY_SET_INVALID');
         keyCache = { until: now() + 5 * 60 * 1000, keys: document.keys };
       }
       // Runtime Fabric already admits exact RS256 or ES256 Zitadel JWTs.
@@ -123,15 +132,16 @@ export function createZitadelAuthenticator({ issuer, resource, ownerSubject, per
         && (protectedHeader.alg === 'RS256'
           ? k.kty === 'RSA'
           : k.kty === 'EC' && k.crv === 'P-256'));
-      if (matched.length !== 1) return false;
+      if (matched.length !== 1) return deny('JWKS_MATCHING_SIGNING_KEY_MISSING');
       const key = createPublicKey({ key: matched[0], format: 'jwk' });
       const message = Buffer.from(parts[0] + '.' + parts[1]);
       const signature = Buffer.from(parts[2], 'base64url');
-      return protectedHeader.alg === 'RS256'
+      const verified = protectedHeader.alg === 'RS256'
         ? verifySignature('RSA-SHA256', message, key, signature)
         : verifySignature('sha256', message, { key, dsaEncoding: 'ieee-p1363' }, signature);
+      return verified || deny('JWT_SIGNATURE_INVALID');
     } catch {
-      return false;
+      return deny('JWT_VERIFICATION_EXCEPTION');
     }
   };
 }
