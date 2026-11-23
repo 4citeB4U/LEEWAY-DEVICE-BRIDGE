@@ -13,6 +13,11 @@ LICENSE: MIT
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {startZitadelMcp,resolveZitadelDiscoveryStartup} from '../../operator/identity/start-zitadel-mcp.mjs';
+import { existsSync } from 'node:fs';
+import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { createServer as createNetServer } from 'node:net';
 test('public interface refused before any Bridge provider composition',async()=>{
  await assert.rejects(startZitadelMcp({host:'0.0.0.0',port:4272}),/PUBLIC_HTTP_BIND_DENIED/);
 });
@@ -58,4 +63,45 @@ test('Zitadel discovery CLI refuses unconfigured, legacy or unqualified identity
  }
  assert.throws(()=>resolveZitadelDiscoveryStartup({...env,LEEWAY_MCP_AUDIENCE:'https://bridge.example.test/api/device-relay/mcp'}),/NATIVE_BRIDGE_OIDC_RESOURCE_INVALID/);
  assert.throws(()=>resolveZitadelDiscoveryStartup({...env,LEEWAY_MCP_OWNER_SUB:'x'}),/NATIVE_BRIDGE_OWNER_SUBJECT_INVALID/);
+});
+
+test('legacy Pocket ID native MCP entrypoints are absent from the release candidate',()=>{
+ for(const path of [
+  '../../operator/identity/start-pocket-id-mcp.mjs',
+  '../../operator/identity/start-universal-pocket-id-mcp.mjs',
+  '../../operator/identity/create-pocket-id-mcp-server.mjs',
+  '../../operator/identity/create-pocket-id-universal-handler.mjs',
+  '../../operator/identity/pocket-id-access.mjs',
+ ]){
+  assert.equal(existsSync(new URL(path,import.meta.url)),false,'legacy startup remains '+path);
+ }
+});
+
+test('OS-neutral Zitadel discovery starts only on loopback and refuses unauthenticated MCP',async t=>{
+ const root=await mkdtemp(join(tmpdir(),'leeway-zitadel-native-'));
+ t.after(()=>rm(root,{recursive:true,force:true}));
+ const configPath=join(root,'bridge.json');
+ await writeFile(configPath,JSON.stringify({devices:[],receipts:'receipts/observation.jsonl'}));
+ const reserve=createNetServer();
+ await new Promise((resolve,reject)=>{reserve.once('error',reject);reserve.listen(0,'127.0.0.1',resolve)});
+ const port=reserve.address().port;
+ await new Promise(resolve=>reserve.close(resolve));
+ const options=resolveZitadelDiscoveryStartup({...env,
+  LEEWAY_DEVICE_BRIDGE_CONFIG:configPath,
+  LEEWAY_MCP_LOCAL_PORT:String(port),
+ });
+ const server=await startZitadelMcp(options);
+ t.after(async()=>{
+  server.closeAllConnections();
+  await new Promise(resolve=>server.close(resolve));
+ });
+ assert.equal(server.address().address,'127.0.0.1');
+ assert.equal(server.address().port,port);
+ const response=await fetch('http://127.0.0.1:'+port+'/mcp',{
+  method:'POST',headers:{'content-type':'application/json'},
+  body:JSON.stringify({jsonrpc:'2.0',id:1,method:'initialize',
+   params:{protocolVersion:'2025-03-26',capabilities:{},clientInfo:{name:'fixture',version:'1'}}})
+ });
+ assert.ok([401,403].includes(response.status),'unauthenticated MCP must fail closed');
+ await response.body?.cancel();
 });
