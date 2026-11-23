@@ -76,3 +76,48 @@ test('Zitadel verifier rejects missing owner enrollment, insecure issuer and ins
   assert.throws(() => createZitadelAuthenticator({ issuer: 'https://identity.example.test', resource: 'http://bridge.example.test/mcp', ownerSubject: 'owner' }), /RESOURCE_HTTPS_REQUIRED/);
   assert.throws(() => createZitadelAuthenticator({ issuer: 'https://identity.example.test', resource: 'https://bridge.example.test/mcp' }), /OWNER_SUBJECT_REQUIRED/);
 });
+
+test('Zitadel ES256 owner tokens match Runtime Fabric algorithm policy without bypassing strict owner, audience or scope', async () => {
+  const { publicKey, privateKey } = generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
+  const issuer = 'https://zitadel-signing.example.test';
+  const resource = 'https://leeway-resource.example.test/mcp';
+  const now = 1792987200000;
+  const acceptedProjectAudience = '397622361785898800';
+  const signingJwk = { ...publicKey.export({format:'jwk'}), kid:'zitadel-ec-01', alg:'ES256', use:'sig' };
+  const fetchImpl = async url => ({
+    ok:true, json:async()=>String(url).endsWith('openid-configuration')
+      ? {issuer,jwks_uri:issuer+'/jwks'}
+      : {keys:[signingJwk]}
+  });
+  const auth = createZitadelAuthenticator({issuer,resource,ownerSubject:'397621082842543343',
+    tokenAudiences:[acceptedProjectAudience],fetchImpl,now:()=>now});
+  const encode = data=>Buffer.from(JSON.stringify(data)).toString('base64url');
+  const signedToken = (claimsExtra={}, headerExtra={})=>{
+    const header={kid:'zitadel-ec-01',alg:'ES256',typ:'at+jwt',...headerExtra};
+    const payload={iss:issuer,sub:'397621082842543343',aud:acceptedProjectAudience,
+      scope:'openid device.bridge.read',iat:now/1000-20,exp:now/1000+120,...claimsExtra};
+    const data=encode(header)+'.'+encode(payload);
+    return data+'.'+sign('sha256',Buffer.from(data),{key:privateKey,dsaEncoding:'ieee-p1363'}).toString('base64url');
+  };
+  const req=t=>({headers:{authorization:'Bearer '+t}});
+  assert.equal(await auth(req(signedToken())),true);
+  assert.equal(await auth(req(signedToken({aud:'397622361785898801'}))),false);
+  assert.equal(await auth(req(signedToken({sub:'wrong-owner'}))),false);
+  assert.equal(await auth(req(signedToken({scope:'openid'}))),false);
+  assert.equal(await auth(req(signedToken({exp:now/1000-1}))),false);
+  assert.equal(await auth(req(signedToken({}, {alg:'HS256'}))),false);
+  assert.equal(await auth(req(signedToken({}, {alg:'RS256'}))),false);
+  const forged=signedToken().split('.');
+  forged[1]=encode({iss:issuer,sub:'397621082842543343',aud:acceptedProjectAudience,
+    scope:'device.bridge.read',iat:now/1000,exp:now/1000+300});
+  assert.equal(await auth(req(forged.join('.'))),false);
+
+  const { publicKey:wrongCurve } = generateKeyPairSync('ec',{namedCurve:'secp384r1'});
+  const wrongCurveJwk={...wrongCurve.export({format:'jwk'}),kid:'zitadel-ec-01',alg:'ES256',use:'sig'};
+  const wrongCurveAuth=createZitadelAuthenticator({issuer,resource,ownerSubject:'397621082842543343',
+    tokenAudiences:[acceptedProjectAudience],
+    fetchImpl:async url=>({ok:true,json:async()=>String(url).endsWith('openid-configuration')
+      ? {issuer,jwks_uri:issuer+'/jwks'}:{keys:[wrongCurveJwk]}}),
+    now:()=>now});
+  assert.equal(await wrongCurveAuth(req(signedToken())),false);
+});
