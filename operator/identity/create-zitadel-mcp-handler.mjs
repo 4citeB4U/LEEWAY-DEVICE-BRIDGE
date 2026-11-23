@@ -25,19 +25,20 @@ export const DEVICE_BRIDGE_EXECUTE_PERMISSION = 'device.bridge.execute';
 export function createZitadelMcpHandler({
   issuer, resource, ownerSubject, permission = 'device.bridge.read',
   fetchImpl, tokenAudiences = [], resolveBridge, resolveComplianceCardProvider = null, allowedHosts, allowedOrigins = [],
-  executionEnabled = false
+  executionEnabled = false, onDeny = null
 } = {}) {
   if (typeof resolveBridge !== 'function') throw Error('TRUSTED_BRIDGE_RESOLVER_REQUIRED');
+  if (onDeny !== null && typeof onDeny !== 'function') throw Error('TRUSTED_BRIDGE_DENIAL_CALLBACK_INVALID');
   if (typeof executionEnabled !== 'boolean' || permission === DEVICE_BRIDGE_EXECUTE_PERMISSION) {
     throw Error('INVALID_MCP_TOOL_SCOPE_CONFIGURATION');
   }
   const readAuthenticator = createZitadelAuthenticator({
-    issuer, resource, ownerSubject, permission, tokenAudiences, fetchImpl
+    issuer, resource, ownerSubject, permission, tokenAudiences, fetchImpl, onDeny
   });
   const executeAuthenticator = executionEnabled
     ? createZitadelAuthenticator({
         issuer, resource, ownerSubject,
-        permission: DEVICE_BRIDGE_EXECUTE_PERMISSION, tokenAudiences, fetchImpl
+        permission: DEVICE_BRIDGE_EXECUTE_PERMISSION, tokenAudiences, fetchImpl, onDeny
       })
     : null;
 
