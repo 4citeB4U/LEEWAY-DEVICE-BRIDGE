@@ -4,7 +4,7 @@ TAG: LEEWAY.MCP.OWNER.SCOPED.EXECUTION.TEST.V1
 WHO: LeeWay Industries / authorized test engineers
 WHAT: Test signed read-vs-execute scopes and canonical command admission over real MCP HTTP
 WHEN: 2026-10-27
-WHERE: tests/mcp/pocket-id-owner-execution.test.mjs
+WHERE: tests/mcp/zitadel-owner-execution.test.mjs
 WHY: Prevent a read-only access token or untrusted startup from granting native execution
 HOW: Ephemeral RSA test issuer, real SDK clients, deny-by-default Bridge, no physical device writes
 AUTHORITY: TEST_ONLY; no production issuer enrollment, Veritas receipt or permission grant
@@ -17,8 +17,8 @@ import { generateKeyPairSync, sign } from 'node:crypto';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { Bridge } from '../../packages/protocol/index.mjs';
-import { createPocketIdUniversalHandler } from '../../operator/identity/create-pocket-id-universal-handler.mjs';
-import { startUniversalPocketIdMcp } from '../../operator/identity/start-universal-pocket-id-mcp.mjs';
+import { createZitadelMcpHandler } from '../../operator/identity/create-zitadel-mcp-handler.mjs';
+import { startZitadelMcp } from '../../operator/identity/start-zitadel-mcp.mjs';
 
 function signedOwnerFixture() {
   const issuer = 'https://id.qualified-example.test';
@@ -65,7 +65,7 @@ async function harness(t, { executionEnabled }) {
   const server = createServer();
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const url = new URL('http://127.0.0.1:' + server.address().port + '/mcp');
-  server.on('request', createPocketIdUniversalHandler({
+  server.on('request', createZitadelMcpHandler({
     ...auth, executionEnabled, allowedHosts: [url.host],
     resolveBridge: async principal => principal?.subject === auth.ownerSubject ? bridge : null
   }));
@@ -86,7 +86,7 @@ async function harness(t, { executionEnabled }) {
 }
 const decoded = value => JSON.parse(value.content[0].text);
 
-test('owner Pocket ID scopes do not elevate discovery credentials', async t => {
+test('owner Zitadel scopes do not elevate discovery credentials', async t => {
   const f = await harness(t, { executionEnabled: true });
   const read = await f.connect(f.auth.token('device.bridge.read'));
   const execute = await f.connect(f.auth.token('device.bridge.execute'));
@@ -130,15 +130,15 @@ test('wrong owner and unsigned permissions cannot authenticate', async t => {
 });
 test('startup refuses command exposure without verified host-injected Runtime composition', async () => {
   await assert.rejects(
-    startUniversalPocketIdMcp({ enableExecution: true, port: 4272 }),
+    startZitadelMcp({ enableExecution: true, port: 4272 }),
     /TRUSTED_RUNTIME_COMPOSITION_REQUIRED/
   );
   await assert.rejects(
-    startUniversalPocketIdMcp({ enableExecution: 'true', port: 4272 }),
+    startZitadelMcp({ enableExecution: 'true', port: 4272 }),
     /INVALID_MCP_EXECUTION_MODE/
   );
   await assert.rejects(
-    startUniversalPocketIdMcp({
+    startZitadelMcp({
       enableExecution: true,
       port: 4272,
       runtimeInput: {
@@ -150,7 +150,7 @@ test('startup refuses command exposure without verified host-injected Runtime co
     /TRUSTED_COMPLIANCE_CARD_COMPOSITION_REQUIRED/
   );
   await assert.rejects(
-    startUniversalPocketIdMcp({
+    startZitadelMcp({
       enableExecution: true,
       port: 4272,
       runtimeInput: {

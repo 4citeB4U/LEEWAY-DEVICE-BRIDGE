@@ -1,10 +1,10 @@
 /* LEEWAY HEADER — DO NOT REMOVE
 REGION: LEEWAY.DEVICE.BRIDGE.IDENTITY.TEST
-TAG: LEEWAY.POCKET_ID.UNIVERSAL.DISCOVERY.TEST
+TAG: LEEWAY.ZITADEL.UNIVERSAL.DISCOVERY.TEST
 WHO: LeeWay Industries
-WHAT: Universal MCP Pocket ID discovery-only tool policy
+WHAT: Universal MCP Zitadel discovery-only tool policy
 WHEN: 2026-10-26
-WHERE: tests/mcp/pocket-id-universal-handler.test.mjs
+WHERE: tests/mcp/zitadel-universal-handler.test.mjs
 WHY: A read-only OAuth scope must never publish the Device Bridge mutation tools
 HOW: Node built-in tests, explicit test-only principal and Bridge
 AUTHORITY: Test-only, not production JWT enrollment
@@ -15,9 +15,9 @@ import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {Bridge} from '../../packages/protocol/index.mjs';
 import {createRemoteMcpHandler} from '../../apps/desktop/mcp-http.mjs';
-import {createPocketIdUniversalHandler} from '../../operator/identity/create-pocket-id-universal-handler.mjs';
-test('Pocket ID universal factory rejects missing principal-scoped Bridge resolver',()=>{
- assert.throws(()=>createPocketIdUniversalHandler({issuer:'https://id.example.org',resource:'https://mcp.example.org/mcp',ownerSubject:'owner'}),/TRUSTED_BRIDGE_RESOLVER_REQUIRED/);
+import {createZitadelMcpHandler} from '../../operator/identity/create-zitadel-mcp-handler.mjs';
+test('Zitadel universal factory rejects missing principal-scoped Bridge resolver',()=>{
+ assert.throws(()=>createZitadelMcpHandler({issuer:'https://id.example.org',resource:'https://mcp.example.org/mcp',ownerSubject:'owner'}),/TRUSTED_BRIDGE_RESOLVER_REQUIRED/);
 });
 test('discoveryOnly HTTP ingress uses canonical tool factory without advertising device mutation',async t=>{
  const server=createServer();

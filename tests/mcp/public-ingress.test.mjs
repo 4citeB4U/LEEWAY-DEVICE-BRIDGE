@@ -27,7 +27,7 @@ import {
   resolvePublicMcpResourceConfig
 } from "../../operator/identity/public-mcp-resource-config.mjs";
 
-const ISSUER = "https://pocket-id.example:10000";
+const ISSUER = "https://zitadel.example:10000";
 const RESOURCE = "https://bridge.example/mcp";
 const UPSTREAM = "https://runtime-fabric.example/mcp";
 const env = {
