@@ -147,3 +147,28 @@ test('redacted exception-stage diagnostic classifies decoding and OIDC fetch wit
  assert.equal(events.pop(),'JWT_VERIFICATION_EXCEPTION_OIDC_DISCOVERY_FETCH');
  assert.equal(JSON.stringify(events).includes(value),false);
 });
+
+test('signed Zitadel access token with role-rich claims exceeding 8 KiB stays within 16 KiB bearer cap', async ()=>{
+ const {publicKey,privateKey}=generateKeyPairSync('rsa',{modulusLength:2048});
+ const issuer='https://zitadel-large-claims.example.test';
+ const resource='https://gateway.example.test/mcp';
+ const now=1792987200000;
+ const fetchImpl=async url=>({ok:true,json:async()=>String(url).endsWith('openid-configuration')
+  ? {issuer,jwks_uri:issuer+'/keys'}
+  : {keys:[{...publicKey.export({format:'jwk'}),kid:'role-rich-rsa',alg:'RS256',use:'sig'}]}});
+ const auth=createZitadelAuthenticator({issuer,resource,ownerSubject:'owner-subject-123',
+   fetchImpl,now:()=>now});
+ const enc=v=>Buffer.from(JSON.stringify(v)).toString('base64url');
+ const header=enc({alg:'RS256',kid:'role-rich-rsa',typ:'at+jwt'});
+ const payload=enc({iss:issuer,sub:'owner-subject-123',aud:resource,
+  scope:'device.bridge.read',iat:now/1000-2,exp:now/1000+300,
+  extraZitadelRoleMetadata:'x'.repeat(6800)});
+ assert.ok(payload.length>8192,'fixture exercises previous per-part 8192 rejection');
+ const data=header+'.'+payload;
+ const token=data+'.'+sign('RSA-SHA256',Buffer.from(data),privateKey).toString('base64url');
+ assert.ok(token.length<16384);
+ const req=value=>({headers:{authorization:'Bearer '+value}});
+ assert.equal(await auth(req(token)),true);
+ assert.equal(await auth(req(token+'x'.repeat(16384))),false,'total token cap stays enforced');
+ assert.equal(await auth(req('broken.header.claims')),false,'malformed JWT remains denied');
+});
