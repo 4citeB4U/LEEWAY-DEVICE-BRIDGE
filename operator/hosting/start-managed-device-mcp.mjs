@@ -57,12 +57,12 @@ export function resolveManagedDeviceMcpConfig(env = process.env) {
   });
 }
 
-export function createManagedDeviceMcpServer({ config, bridge, fetchImpl } = {}) {
+export function createManagedDeviceMcpServer({ config, bridge, fetchImpl, onDeny = null } = {}) {
   if (!config || !bridge) throw Error('MANAGED_BRIDGE_CONFIGURATION_REQUIRED');
   const handler = createZitadelMcpHandler({
     issuer:config.issuer, resource:config.resource,
     ownerSubject:config.ownerSubject, tokenAudiences:config.tokenAudiences,
-    fetchImpl, executionEnabled:false,
+    fetchImpl, executionEnabled:false, onDeny,
     resolveBridge:async principal=>principal?.subject === config.ownerSubject ? bridge : null,
     allowedHosts:[config.allowedHost], allowedOrigins:[],
   });
@@ -165,7 +165,12 @@ export async function startManagedDeviceMcp({env=process.env,fetchImpl=globalThi
   // A config lists adapters, not trusted enrollment. Runtime admission is
   // intentionally absent. This service MUST NOT grant device execution.
   const bridge = await createConfiguredBridge(config.configPath);
-  const server = createManagedDeviceMcpServer({config,bridge,fetchImpl});
+  // Opt-in codes only; no bearer token, claim, subject, issuer or key logged.
+  const onDeny = env.LEEWAY_BRIDGE_AUTH_DIAGNOSTICS === 'SAFE_CODES'
+    ? code=>log(JSON.stringify({service:'leeway-managed-device-mcp',
+        event:'ZITADEL_AUTH_DENIED',reasonCode:code}))
+    : null;
+  const server = createManagedDeviceMcpServer({config,bridge,fetchImpl,onDeny});
   await new Promise((resolve,reject)=>{
     server.once('error',reject);
     server.listen(config.port,'0.0.0.0',resolve);
