@@ -18,6 +18,7 @@ import { mkdtemp,writeFile,rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createServer as createTcp } from 'node:net';
+import { request as httpRequest } from 'node:http';
 import { resolveManagedDeviceMcpConfig,startManagedDeviceMcp } from '../../operator/hosting/start-managed-device-mcp.mjs';
 
 const base=Object.freeze({
@@ -89,14 +90,20 @@ test('real managed Node HTTP listener serves honest health, denies other paths, 
  assert.equal((await fetch(origin+'/not-a-device')).status,404);
  const payload={jsonrpc:'2.0',id:1,method:'initialize',
   params:{protocolVersion:'2025-03-26',clientInfo:{name:'untrusted',version:'1'},capabilities:{}}};
- const anonymous=await fetch(origin+'/mcp',{method:'POST',
-  headers:{'Content-Type':'application/json','Host':'leeway-native.example.test'},
-  body:JSON.stringify(payload)});
+ const postWithHost=host=>new Promise((resolve,reject)=>{
+  const data=JSON.stringify(payload);
+  const req=httpRequest({hostname:'127.0.0.1',port,path:'/mcp',method:'POST',
+   headers:{Host:host,'Content-Type':'application/json','Content-Length':Buffer.byteLength(data)}},res=>{
+    const chunks=[];res.on('data',part=>chunks.push(part));
+    res.on('end',()=>resolve({status:res.statusCode,body:JSON.parse(Buffer.concat(chunks).toString('utf8'))}));
+  });
+  req.on('error',reject);
+  req.end(data);
+ });
+ const anonymous=await postWithHost('leeway-native.example.test');
  assert.equal(anonymous.status,401);
- assert.equal((await anonymous.json()).error,'MCP_AUTHENTICATION_REQUIRED');
- const invalidHost=await fetch(origin+'/mcp',{method:'POST',
-  headers:{'Content-Type':'application/json','Host':'other.example.test'},
-  body:JSON.stringify(payload)});
+ assert.equal(anonymous.body.error,'MCP_AUTHENTICATION_REQUIRED');
+ const invalidHost=await postWithHost('other.example.test');
  assert.equal(invalidHost.status,403);
- assert.equal((await invalidHost.json()).error,'MCP_ORIGIN_OR_HOST_DENIED');
+ assert.equal(invalidHost.body.error,'MCP_ORIGIN_OR_HOST_DENIED');
 });
