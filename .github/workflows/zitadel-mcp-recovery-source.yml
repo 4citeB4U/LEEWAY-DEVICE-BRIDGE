@@ -6,6 +6,7 @@ on:
       - "operator/identity/**"
       - "operator/hosting/start-managed-device-mcp.mjs"
       - "tests/mcp/zitadel-*.test.mjs"
+      - "scripts/qualify-managed-native-https.mjs"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/zitadel-mcp-recovery-source.yml"
@@ -42,3 +43,6 @@ jobs:
       - name: Full MCP regression (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: npm run test:mcp
+      - name: Read-only public Render Native Bridge HTTPS acceptance (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: node scripts/qualify-managed-native-https.mjs
