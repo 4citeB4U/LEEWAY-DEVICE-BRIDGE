@@ -72,6 +72,7 @@ test('legacy Pocket ID native MCP entrypoints are absent from the release candid
   '../../operator/identity/create-pocket-id-mcp-server.mjs',
   '../../operator/identity/create-pocket-id-universal-handler.mjs',
   '../../operator/identity/pocket-id-access.mjs',
+  '../../operator/identity/pocket-id.compose.yml',
  ]){
   assert.equal(existsSync(new URL(path,import.meta.url)),false,'legacy startup remains '+path);
  }
