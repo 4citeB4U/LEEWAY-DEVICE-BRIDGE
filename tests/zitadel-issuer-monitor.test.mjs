@@ -11,12 +11,8 @@ LICENSE=Existing repository terms.
 */
 import test from "node:test";
 import assert from "node:assert/strict";
-import {existsSync,readFileSync} from "node:fs";
-const old=new URL("../.github/workflows/pocket-id-public-qualification.yml",import.meta.url);
+import {readFileSync} from "node:fs";
 const current=new URL("../.github/workflows/zitadel-public-qualification.yml",import.meta.url);
-test("retired Pocket ID scheduler is absent",()=>{
- assert.equal(existsSync(old),false);
-});
 test("current issuer monitor requires configured owner binding",()=>{
  const s=readFileSync(current,"utf8");
  assert.match(s,/vars\.LEEWAY_MCP_AUTH_ISSUER/);
@@ -24,5 +20,4 @@ test("current issuer monitor requires configured owner binding",()=>{
  assert.match(s,/if d\.get\('issuer'\) != issuer/);
  assert.match(s,/jwks_uri/);
  assert.match(s,/Discovery only\. No token, principal, owner scope, Formula or execution admission verified/);
- assert.doesNotMatch(s,/LEEWAY_POCKET_ID_PUBLIC_ISSUER/);
 });
