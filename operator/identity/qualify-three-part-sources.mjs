@@ -78,7 +78,7 @@ export function inspectThreePartSources({ managedIngress, continuumTopology } = 
     logicalCells: [...cells.values()].map(item => ({ id: item.id, sourceReportedState: item.state, liveVerified: false })),
     blockers: [
       'PUBLIC_MANAGED_INGRESS_DEPLOYMENT_NOT_PROVEN',
-      'POCKET_ID_OWNER_AUTHENTICATION_NOT_PROVEN',
+      'ZITADEL_OWNER_AUTHENTICATION_NOT_PROVEN',
       'QUALIFIED_RUNTIME_FABRIC_UPSTREAM_NOT_PROVEN',
       'ORIGINAL_CONTINUUM_PROVIDER_READBACK_NOT_PROVEN',
       'DATABASE_AND_STORAGE_LIVE_BINDINGS_NOT_PROVEN',
