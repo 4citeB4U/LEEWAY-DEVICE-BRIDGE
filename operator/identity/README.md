@@ -5,7 +5,7 @@ LEEWAY HEADER — DO NOT REMOVE
 REGION: LEEWAY.DEVICE.BRIDGE.IDENTITY
 TAG: LEEWAY.ZITADEL.SOLE_IDENTITY_MCP_STARTUP.V1
 WHAT: Keep one Zitadel OIDC authority while running an OS-neutral Device Bridge MCP.
-WHY: Retire Pocket ID startup and remove Windows identity fabrication.
+WHY: Retire retired identity service startup and remove Windows identity fabrication.
 WHO: Creator-approved Device Bridge and Runtime Fabric operators.
 WHERE: operator/identity/README.md.
 WHEN: 2026-11-23.
@@ -15,7 +15,7 @@ LICENSE: Repository terms unchanged.
 -->
 
 Zitadel is the only supported OIDC authority for the active LeeWay Device Bridge
-MCP. The retired Pocket ID startup/authorization modules are not runtime
+MCP. The retired retired identity service startup/authorization modules are not runtime
 dependencies and must not be launched. Historical source remains in Git history.
 
 ## OS-neutral service ownership
