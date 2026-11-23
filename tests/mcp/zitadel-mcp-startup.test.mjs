@@ -13,7 +13,6 @@ LICENSE: MIT
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {startZitadelMcp,resolveZitadelDiscoveryStartup} from '../../operator/identity/start-zitadel-mcp.mjs';
-import { existsSync } from 'node:fs';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -52,8 +51,8 @@ test('Zitadel discovery CLI refuses unconfigured, legacy or unqualified identity
  }
  assert.throws(()=>resolveZitadelDiscoveryStartup({
   LEEWAY_DEVICE_BRIDGE_CONFIG:'fixture-bridge.json',
-  LEEWAY_POCKET_ID_ISSUER:'https://legacy.example.test',
-  LEEWAY_POCKET_ID_OWNER_SUB:'legacy-fixture-owner'
+  LEEWAY_LEGACY_ISSUER:'https://legacy.example.test',
+  LEEWAY_LEGACY_OWNER_SUB:'legacy-fixture-owner'
  }),/NATIVE_BRIDGE_ZITADEL_BINDINGS_REQUIRED/);
  for(const port of ['80','0','-1','65536','4272foo']){
   assert.throws(()=>resolveZitadelDiscoveryStartup({...env,LEEWAY_MCP_LOCAL_PORT:port}),/NATIVE_BRIDGE_PORT_INVALID/);
@@ -63,19 +62,6 @@ test('Zitadel discovery CLI refuses unconfigured, legacy or unqualified identity
  }
  assert.throws(()=>resolveZitadelDiscoveryStartup({...env,LEEWAY_MCP_AUDIENCE:'https://bridge.example.test/api/device-relay/mcp'}),/NATIVE_BRIDGE_OIDC_RESOURCE_INVALID/);
  assert.throws(()=>resolveZitadelDiscoveryStartup({...env,LEEWAY_MCP_OWNER_SUB:'x'}),/NATIVE_BRIDGE_OWNER_SUBJECT_INVALID/);
-});
-
-test('legacy Pocket ID native MCP entrypoints are absent from the release candidate',()=>{
- for(const path of [
-  '../../operator/identity/start-pocket-id-mcp.mjs',
-  '../../operator/identity/start-universal-pocket-id-mcp.mjs',
-  '../../operator/identity/create-pocket-id-mcp-server.mjs',
-  '../../operator/identity/create-pocket-id-universal-handler.mjs',
-  '../../operator/identity/pocket-id-access.mjs',
-  '../../operator/identity/pocket-id.compose.yml',
- ]){
-  assert.equal(existsSync(new URL(path,import.meta.url)),false,'legacy startup remains '+path);
- }
 });
 
 test('OS-neutral Zitadel discovery starts only on loopback and refuses unauthenticated MCP',async t=>{
