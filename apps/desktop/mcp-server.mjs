@@ -15,6 +15,7 @@ import {
 import { RelayAdapter } from '../../packages/agent-relay/index.mjs';
 import { DesktopAdapter } from './adapter.mjs';
 import { PhysicalAndroidAdapter, PhysicalAppleAdapter } from '../../operator/physical-adapters.mjs';
+import { deviceOSDescriptor } from '../../operator/device-os-family.mjs';
 import { createC3AdmissionBinding } from '../../operator/c3-admission-binding.mjs';
 import {
   requireHostInjectedC3Composition,
@@ -122,8 +123,19 @@ export function createServer(bridge, { discoveryOnly = false, readOnlyCapabiliti
     const devices = trustedRegistryEntries(deviceRegistry)
       .filter(([id]) => hasTrustedDeviceRegistration(deviceRegistry, bridge, id))
       .map(([id]) => id);
+    // Existing ID roster stays unchanged for older Runtime clients. This
+    // additive metadata identifies operating systems without probing offline
+    // devices or deriving authority from user-supplied configuration.
+    const devicePlatforms = devices.map(deviceId =>
+      deviceOSDescriptor({
+        deviceId,
+        record: trustedRegistryRecord(deviceRegistry, deviceId),
+        configuredAdapter: bridge.devices.get(deviceId),
+      })
+    ).filter(Boolean);
     return result({
       devices,
+      devicePlatforms,
       registrationState: !registryBound ? 'REGISTRATION_AUTHORITY_UNBOUND' : (devices.length ? 'TRUSTED_REGISTRY_READ' : 'NO_REGISTERED_ADAPTERS'),
       registrationAuthority: registryBound ? 'TRUSTED_RUNTIME_DEVICE_REGISTRY' : null,
       reachability: 'NOT_PROBED',
@@ -134,8 +146,15 @@ export function createServer(bridge, { discoveryOnly = false, readOnlyCapabiliti
       const discovery = await bridge.discover(deviceId);
       const record = trustedRegistryRecord(deviceRegistry, deviceId);
       const identityVerified = hasTrustedDeviceRegistration(deviceRegistry, bridge, deviceId);
+      const descriptor = identityVerified
+        ? deviceOSDescriptor({ deviceId, record, configuredAdapter: bridge.devices.get(deviceId) })
+        : null;
       return result({
         ...discovery,
+        osFamily: descriptor?.osFamily ?? null,
+        platform: descriptor?.platform ?? null,
+        adapterType: descriptor?.adapterType ?? null,
+        reachability: 'NOT_PROBED',
         registrationState: identityVerified ? 'REGISTERED_IN_TRUSTED_RUNTIME' : 'NOT_IN_TRUSTED_RUNTIME_REGISTRY',
         identityVerified,
         identitySource: identityVerified ? record.identitySource : null,
