@@ -34,7 +34,7 @@ test('managed startup requires explicit Zitadel issuer, authorized public host, 
  assert.equal(c.port,4278);
  assert.equal(c.allowedHost,'leeway-native.example.test');
  assert.equal(c.executionEnabled,false);
- assert.equal(c.issuer,base.LEEWAY_MCP_AUTH_ISSUER+'/');
+ assert.equal(c.issuer,base.LEEWAY_MCP_AUTH_ISSUER);
  assert.equal(c.resource,base.LEEWAY_MCP_AUDIENCE);
  assert.equal(Object.isFrozen(c),true);
  assert.deepEqual(c.tokenAudiences,[]);
