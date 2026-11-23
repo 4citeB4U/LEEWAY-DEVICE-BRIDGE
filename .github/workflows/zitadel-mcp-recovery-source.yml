@@ -1,0 +1,41 @@
+name: Zitadel-only MCP recovery source
+
+on:
+  pull_request:
+    paths:
+      - "operator/identity/**"
+      - "tests/mcp/zitadel-*.test.mjs"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/zitadel-mcp-recovery-source.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  zitadel-oidc-mcp:
+    name: Zitadel MCP source / ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install workspace without scripts
+        run: npm ci --ignore-scripts
+      - name: Check strict Zitadel startup and authenticated source
+        run: |
+          node --check operator/identity/zitadel-access.mjs
+          node --check operator/identity/create-zitadel-mcp-handler.mjs
+          node --check operator/identity/start-zitadel-mcp.mjs
+      - name: Verify Zitadel JWT, scopes, local listener and absent legacy startup
+        run: node --test tests/mcp/zitadel-access.test.mjs tests/mcp/zitadel-universal-handler.test.mjs tests/mcp/zitadel-owner-execution.test.mjs tests/mcp/zitadel-mcp-startup.test.mjs
+      - name: Full MCP regression (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: npm run test:mcp
