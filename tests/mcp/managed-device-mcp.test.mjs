@@ -19,6 +19,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createServer as createTcp } from 'node:net';
 import { request as httpRequest } from 'node:http';
+import { generateKeyPairSync, sign } from 'node:crypto';
 import { resolveManagedDeviceMcpConfig,startManagedDeviceMcp } from '../../operator/hosting/start-managed-device-mcp.mjs';
 
 const base=Object.freeze({
@@ -106,4 +107,61 @@ test('real managed Node HTTP listener serves honest health, denies other paths, 
  const invalidHost=await postWithHost('other.example.test');
  assert.equal(invalidHost.status,403);
  assert.equal(invalidHost.body.error,'MCP_ORIGIN_OR_HOST_DENIED');
+});
+
+test('real signed Zitadel owner token authenticates managed MCP and discovers only the genuine empty registry',async t=>{
+ const root=await mkdtemp(join(tmpdir(),'leeway-managed-authorized-test-'));
+ t.after(()=>rm(root,{recursive:true,force:true}));
+ const config=join(root,'bridge.json');
+ await writeFile(config,JSON.stringify({devices:[],receipts:'receipts/observation.jsonl'}));
+ const tcp=createTcp();
+ await new Promise((resolve,reject)=>{tcp.once('error',reject);tcp.listen(0,'127.0.0.1',resolve)});
+ const port=tcp.address().port;
+ await new Promise(resolve=>tcp.close(resolve));
+ const {publicKey,privateKey}=generateKeyPairSync('rsa',{modulusLength:2048});
+ const jwk={...publicKey.export({format:'jwk'}),kid:'test-owner-signing-key',use:'sig',alg:'RS256'};
+ const issuer=base.LEEWAY_MCP_AUTH_ISSUER;
+ const fetchImpl=async url=>{
+  if(String(url)===issuer+'/.well-known/openid-configuration')return Response.json({
+   issuer,jwks_uri:issuer+'/keys'
+  });
+  if(String(url)===issuer+'/keys')return Response.json({keys:[jwk]});
+  throw Error('UNEXPECTED_ZITADEL_DISCOVERY_REQUEST');
+ };
+ const server=await startManagedDeviceMcp({env:{...base,PORT:String(port),LEEWAY_DEVICE_BRIDGE_CONFIG:config},
+  log:()=>{},fetchImpl});
+ t.after(async()=>{server.closeAllConnections();await new Promise(resolve=>server.close(resolve))});
+ const now=Math.floor(Date.now()/1000);
+ const header=Buffer.from(JSON.stringify({alg:'RS256',kid:jwk.kid,typ:'JWT'})).toString('base64url');
+ const claims=Buffer.from(JSON.stringify({
+  iss:issuer,sub:base.LEEWAY_MCP_OWNER_SUB,aud:base.LEEWAY_MCP_AUDIENCE,
+  iat:now,exp:now+300,scope:'device.bridge.read'
+ })).toString('base64url');
+ const signingInput=header+'.'+claims;
+ const token=sign('RSA-SHA256',Buffer.from(signingInput),privateKey).toString('base64url');
+ const post=(name,params,id)=>new Promise((resolve,reject)=>{
+  const body=JSON.stringify({jsonrpc:'2.0',id,method:name,params});
+  const req=httpRequest({hostname:'127.0.0.1',port,path:'/mcp',method:'POST',headers:{
+   Host:'leeway-native.example.test',Authorization:'Bearer '+signingInput+'.'+token,
+   'Content-Type':'application/json','Accept':'application/json, text/event-stream',
+   'Content-Length':Buffer.byteLength(body)
+  }},res=>{
+   const chunks=[];res.on('data',part=>chunks.push(part));
+   res.on('end',()=>{const raw=Buffer.concat(chunks).toString('utf8');
+    try {resolve({status:res.statusCode,data:JSON.parse(raw)})}
+    catch {reject(Error('MCP_RESPONSE_INVALID '+raw.slice(0,160)))}
+   });
+  });req.on('error',reject);req.end(body);
+ });
+ const init=await post('initialize',{protocolVersion:'2025-03-26',
+  capabilities:{},clientInfo:{name:'signed-fixture',version:'1'}},1);
+ assert.equal(init.status,200);
+ assert.equal(init.data.result?.serverInfo?.name,'leeway-device-bridge');
+ const result=await post('tools/call',{name:'bridge_devices',arguments:{}},2);
+ assert.equal(result.status,200);
+ const content=JSON.parse(result.data.result?.content?.[0]?.text||'null');
+ assert.deepEqual(content.devices,[]);
+ assert.equal(content.registrationState,'REGISTRATION_AUTHORITY_UNBOUND');
+ assert.equal(content.registrationAuthority,null);
+ assert.equal(content.reachability,'NOT_PROBED');
 });
