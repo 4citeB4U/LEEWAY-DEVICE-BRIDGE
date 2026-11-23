@@ -7,7 +7,7 @@ WHAT: Strict Zitadel owner-delegated API JWT verifier for LeeWay MCP
 WHY: Bind the caller to signed issuer, resource, owner and permission
 WHERE: operator/identity/zitadel-access.mjs
 WHEN: 2026-10-26
-HOW: Verified OIDC metadata + issuer JWKS + RS256 crypto + strict claim gates
+HOW: Verified OIDC metadata + issuer JWKS + RS256/ES256 crypto + strict claim gates
 AUTHORITY: No device command approval; this only qualifies read-only MCP discovery.
 LICENSE: MIT
 */
@@ -93,7 +93,7 @@ export function createZitadelAuthenticator({ issuer, resource, ownerSubject, per
       if (parts.length !== 3) return false;
       const protectedHeader = parsePart(parts[0]);
       const claims = parsePart(parts[1]);
-      if (protectedHeader.alg !== 'RS256' || !protectedHeader.kid || protectedHeader.typ === 'JWT+UNSIGNED') return false;
+      if (!['RS256','ES256'].includes(protectedHeader.alg) || !protectedHeader.kid || protectedHeader.typ === 'JWT+UNSIGNED') return false;
       if (claims.iss !== expectedIssuer || claims.sub !== ownerSubject) return false;
       const audiences = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
       if (!audiences.some(audience => acceptedAudiences.has(audience))) return false;
@@ -114,10 +114,22 @@ export function createZitadelAuthenticator({ issuer, resource, ownerSubject, per
         if (!Array.isArray(document.keys) || document.keys.length > 32) return false;
         keyCache = { until: now() + 5 * 60 * 1000, keys: document.keys };
       }
-      const matched = keyCache.keys.filter(k => k.kid === protectedHeader.kid && k.kty === 'RSA' && (!k.alg || k.alg === 'RS256') && (!k.use || k.use === 'sig'));
+      // Runtime Fabric already admits exact RS256 or ES256 Zitadel JWTs.
+      // Enforce matching JWKS key type/curve and JOSE signature encoding.
+      // This is authentication only; it confers no C3 device execution.
+      const matched = keyCache.keys.filter(k => k.kid === protectedHeader.kid
+        && (!k.alg || k.alg === protectedHeader.alg)
+        && (!k.use || k.use === 'sig')
+        && (protectedHeader.alg === 'RS256'
+          ? k.kty === 'RSA'
+          : k.kty === 'EC' && k.crv === 'P-256'));
       if (matched.length !== 1) return false;
       const key = createPublicKey({ key: matched[0], format: 'jwk' });
-      return verifySignature('RSA-SHA256', Buffer.from(parts[0] + '.' + parts[1]), key, Buffer.from(parts[2], 'base64url'));
+      const message = Buffer.from(parts[0] + '.' + parts[1]);
+      const signature = Buffer.from(parts[2], 'base64url');
+      return protectedHeader.alg === 'RS256'
+        ? verifySignature('RSA-SHA256', message, key, signature)
+        : verifySignature('sha256', message, { key, dsaEncoding: 'ieee-p1363' }, signature);
     } catch {
       return false;
     }
