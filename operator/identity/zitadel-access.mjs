@@ -27,8 +27,8 @@ function normalizeTokenAudiences(values) {
     .filter(value => /^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$/.test(value)));
 }
 
-function parsePart(part) {
-  if (!/^[A-Za-z0-9_-]+$/.test(part) || part.length > 8192) throw Error('MALFORMED_JWT');
+function parsePart(part, maxPartLength = 8192) {
+  if (!/^[A-Za-z0-9_-]+$/.test(part) || part.length > maxPartLength) throw Error('MALFORMED_JWT');
   const bytes = Buffer.from(part, 'base64url');
   if (bytes.toString('base64url') !== part) throw Error('MALFORMED_JWT');
   return JSON.parse(bytes.toString('utf8'));
@@ -103,7 +103,10 @@ export function createZitadelAuthenticator({ issuer, resource, ownerSubject, per
       stage = 'JWT_HEADER_DECODE';
       const protectedHeader = parsePart(parts[0]);
       stage = 'JWT_CLAIMS_DECODE';
-      const claims = parsePart(parts[1]);
+      // Match the outer 16 KiB bearer cap for signed Zitadel claims, which
+      // may contain multiple role grants. Keep the JOSE header separately
+      // capped at 8 KiB. This changes no signature or permission gate.
+      const claims = parsePart(parts[1], 16384);
       stage = 'JWT_CLAIM_POLICY';
       if (!['RS256','ES256'].includes(protectedHeader.alg) || !protectedHeader.kid || protectedHeader.typ === 'JWT+UNSIGNED') return deny('JWT_HEADER_OR_ALGORITHM_INVALID');
       if (claims.iss !== expectedIssuer) return deny('JWT_ISSUER_MISMATCH');
