@@ -121,3 +121,29 @@ test('Zitadel ES256 owner tokens match Runtime Fabric algorithm policy without b
     now:()=>now});
   assert.equal(await wrongCurveAuth(req(signedToken())),false);
 });
+
+test('redacted exception-stage diagnostic classifies decoding and OIDC fetch without leaking claims', async ()=>{
+ const events=[];
+ const issuer='https://auth.example.test';
+ const resource='https://bridge.example.test/mcp';
+ const now=1792987200000;
+ const auth=createZitadelAuthenticator({issuer,resource,ownerSubject:'owner-subject-123',
+   now:()=>now,fetchImpl:async()=>{throw Error('internal upstream secret detail');},
+   onDeny:reason=>events.push(reason)});
+ const req=token=>({headers:{authorization:'Bearer '+token}});
+ const badHeader=Buffer.from('{malformed').toString('base64url');
+ const other=Buffer.from('{}').toString('base64url');
+ assert.equal(await auth(req(badHeader+'.'+other+'.sig')),false);
+ assert.equal(events.pop(),'JWT_VERIFICATION_EXCEPTION_JWT_HEADER_DECODE');
+
+ const {privateKey}=generateKeyPairSync('rsa',{modulusLength:2048});
+ const encode=x=>Buffer.from(JSON.stringify(x)).toString('base64url');
+ const data=encode({alg:'RS256',kid:'test-kid'})+'.'+encode({
+   iss:issuer,sub:'owner-subject-123',aud:resource,scope:'device.bridge.read',
+   iat:now/1000-5,exp:now/1000+100
+ });
+ const value=data+'.'+sign('RSA-SHA256',Buffer.from(data),privateKey).toString('base64url');
+ assert.equal(await auth(req(value)),false);
+ assert.equal(events.pop(),'JWT_VERIFICATION_EXCEPTION_OIDC_DISCOVERY_FETCH');
+ assert.equal(JSON.stringify(events).includes(value),false);
+});
