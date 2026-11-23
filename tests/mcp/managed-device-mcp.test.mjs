@@ -196,3 +196,36 @@ test('Render Free owner-unbound bootstrap advertises no enrolled device or false
  assert.equal((await denied.json()).error,'MANAGED_BRIDGE_CONFIGURATION_UNBOUND');
  assert.equal((await fetch(baseUrl+'/bridge_devices')).status,404);
 });
+
+test('safe opt-in owner JWT rejection diagnostics never print token or enable execution',async t=>{
+ const root=await mkdtemp(join(tmpdir(),'leeway-safe-auth-log-'));
+ t.after(()=>rm(root,{recursive:true,force:true}));
+ const conf=join(root,'bridge.json');
+ await writeFile(conf,JSON.stringify({devices:[],receipts:'receipts/observations.jsonl'}));
+ const tcp=createTcp();
+ await new Promise((resolve,reject)=>{tcp.once('error',reject);tcp.listen(0,'127.0.0.1',resolve)});
+ const port=tcp.address().port;
+ await new Promise(resolve=>tcp.close(resolve));
+ const messages=[];
+ const server=await startManagedDeviceMcp({env:{...base,PORT:String(port),
+  LEEWAY_DEVICE_BRIDGE_CONFIG:conf,LEEWAY_BRIDGE_AUTH_DIAGNOSTICS:'SAFE_CODES'},
+  log:line=>messages.push(line)});
+ t.after(async()=>{server.closeAllConnections();await new Promise(resolve=>server.close(resolve))});
+ const raw='not-a-jwt-secret-marker';
+ const data=JSON.stringify({jsonrpc:'2.0',id:1,method:'initialize',params:{}});
+ const response=await new Promise((resolve,reject)=>{
+  const req=httpRequest({hostname:'127.0.0.1',port,path:'/mcp',method:'POST',
+   headers:{Host:'leeway-native.example.test',Authorization:'Bearer '+raw,
+    'Content-Type':'application/json','Content-Length':Buffer.byteLength(data)}},res=>{
+      const chunks=[];res.on('data',v=>chunks.push(v));
+      res.on('end',()=>resolve({status:res.statusCode,body:Buffer.concat(chunks).toString('utf8')}));
+   });req.on('error',reject);req.end(data);
+ });
+ assert.equal(response.status,401);
+ assert.equal(JSON.parse(response.body).error,'MCP_AUTHENTICATION_REQUIRED');
+ const audit=messages.map(m=>JSON.parse(m)).filter(m=>m.event==='ZITADEL_AUTH_DENIED');
+ assert.deepEqual(audit.map(m=>m.reasonCode),['JWT_SEGMENTS_INVALID']);
+ assert.equal(messages.join('\n').includes(raw),false);
+ assert.equal(messages.join('\n').includes(base.LEEWAY_MCP_OWNER_SUB),false);
+ assert.equal(messages.join('\n').includes(base.LEEWAY_MCP_AUTH_ISSUER),false);
+});
