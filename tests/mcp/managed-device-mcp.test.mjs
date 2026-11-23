@@ -20,7 +20,7 @@ import { join } from 'node:path';
 import { createServer as createTcp } from 'node:net';
 import { request as httpRequest } from 'node:http';
 import { generateKeyPairSync, sign } from 'node:crypto';
-import { resolveManagedDeviceMcpConfig,startManagedDeviceMcp } from '../../operator/hosting/start-managed-device-mcp.mjs';
+import { resolveManagedDeviceMcpConfig,startManagedDeviceMcp,unboundManagedBindings } from '../../operator/hosting/start-managed-device-mcp.mjs';
 
 const base=Object.freeze({
  PORT:'4278',
@@ -164,4 +164,35 @@ test('real signed Zitadel owner token authenticates managed MCP and discovers on
  assert.equal(content.registrationState,'REGISTRATION_AUTHORITY_UNBOUND');
  assert.equal(content.registrationAuthority,null);
  assert.equal(content.reachability,'NOT_PROBED');
+});
+
+test('Render Free owner-unbound bootstrap advertises no enrolled device or false readiness',async t=>{
+ const tcp=createTcp();
+ await new Promise((resolve,reject)=>{tcp.once('error',reject);tcp.listen(0,'127.0.0.1',resolve)});
+ const port=tcp.address().port;
+ await new Promise(resolve=>tcp.close(resolve));
+ const env={PORT:String(port),LEEWAY_DEVICE_BRIDGE_CONFIG:'nonexistent-config.json'};
+ assert.deepEqual(unboundManagedBindings(env),[
+  'LEEWAY_MCP_AUTH_ISSUER','LEEWAY_MCP_AUDIENCE',
+  'LEEWAY_MANAGED_DEVICE_BRIDGE_URL','LEEWAY_MCP_OWNER_SUB'
+ ]);
+ const server=await startManagedDeviceMcp({env,log:()=>{}});
+ t.after(async()=>{server.closeAllConnections();await new Promise(resolve=>server.close(resolve))});
+ const baseUrl='http://127.0.0.1:'+port;
+ const health=await fetch(baseUrl+'/healthz');
+ assert.equal(health.status,200);
+ const body=await health.json();
+ assert.equal(body.status,'BOOTSTRAP_ONLY');
+ assert.equal(body.identity,'UNBOUND');
+ assert.equal(body.runtimeBridge,'NOT_CONSTRUCTED');
+ assert.equal(body.deviceReachability,'NOT_PROBED');
+ assert.equal(body.execution,'NOT_AUTHORIZED');
+ assert.equal(body.productionAdmission,'NOT_GRANTED');
+ assert.equal((await fetch(baseUrl+'/readyz')).status,503);
+ const denied=await fetch(baseUrl+'/mcp',{method:'POST',
+   headers:{authorization:'Bearer forged','content-type':'application/json'},
+   body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/list',params:{}})});
+ assert.equal(denied.status,503);
+ assert.equal((await denied.json()).error,'MANAGED_BRIDGE_CONFIGURATION_UNBOUND');
+ assert.equal((await fetch(baseUrl+'/bridge_devices')).status,404);
 });
