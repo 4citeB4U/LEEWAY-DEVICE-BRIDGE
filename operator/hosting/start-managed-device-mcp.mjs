@@ -90,7 +90,77 @@ export function createManagedDeviceMcpServer({ config, bridge, fetchImpl } = {})
   });
 }
 
+// Owner-private identity bindings cannot be retrieved from the managed hosting
+// provider's redacted variable API. Provisioning never authorizes a fallback
+// issuer, default owner subject, or synthetic enrolled device.
+const REQUIRED_MANAGED_BINDINGS = Object.freeze([
+  'LEEWAY_DEVICE_BRIDGE_CONFIG',
+  'LEEWAY_MCP_AUTH_ISSUER',
+  'LEEWAY_MCP_AUDIENCE',
+  'LEEWAY_MANAGED_DEVICE_BRIDGE_URL',
+  'LEEWAY_MCP_OWNER_SUB'
+]);
+
+function configuredManagedPort(env) {
+  const value = String(env.PORT || '').trim();
+  if (!/^[0-9]{4,5}$/.test(value) || Number(value)<1024 ||
+      Number(value)>65535) throw Error('MANAGED_BRIDGE_PORT_INVALID');
+  return Number(value);
+}
+
+export function unboundManagedBindings(env=process.env) {
+  return Object.freeze(REQUIRED_MANAGED_BINDINGS.filter(
+    name=>!String(env[name] || '').trim()));
+}
+
+export function createUnboundManagedDeviceMcpServer({missing=[]}={}) {
+  const required = [...missing];
+  return http.createServer((req,res)=>{
+    res.setHeader('X-Content-Type-Options','nosniff');
+    res.setHeader('Cache-Control','no-store');
+    res.setHeader('Content-Type','application/json');
+    const path = req.url || '/';
+    if (path === '/healthz' && (req.method==='GET'||req.method==='HEAD')) {
+      res.writeHead(200);
+      res.end(req.method==='HEAD'?'':JSON.stringify({
+        service:'leeway-managed-device-mcp',status:'BOOTSTRAP_ONLY',
+        identity:'UNBOUND',runtimeBridge:'NOT_CONSTRUCTED',deviceRegistry:'REGISTRATION_AUTHORITY_UNBOUND',
+        deviceReachability:'NOT_PROBED',execution:'NOT_AUTHORIZED',
+        formula:'NOT_PROBED',independentVeritas:'NOT_PROBED',receiptAdmission:'NOT_PROBED',
+        productionAdmission:'NOT_GRANTED',missingConfiguration:required
+      }));
+      return;
+    }
+    if (path === '/readyz' || path === '/mcp') {
+      res.writeHead(503);
+      res.end(JSON.stringify({error:'MANAGED_BRIDGE_CONFIGURATION_UNBOUND'}));
+      return;
+    }
+    res.writeHead(404);
+    res.end(JSON.stringify({error:'NOT_FOUND'}));
+  });
+}
+
+/**
+ * Render Free may create the public hostname before Zitadel's exact owner
+ * subject is securely bound. The bootstrap returns liveness only and denies
+ * every MCP request until all five explicit bindings are present. No
+ * untrusted request can elevate the bootstrap mode.
+ */
 export async function startManagedDeviceMcp({env=process.env,fetchImpl=globalThis.fetch,log=console.error}={}) {
+  const port = configuredManagedPort(env);
+  const missing = unboundManagedBindings(env);
+  if (missing.length) {
+    const server = createUnboundManagedDeviceMcpServer({missing});
+    await new Promise((resolve,reject)=>{
+      server.once('error',reject);
+      server.listen(port,'0.0.0.0',resolve);
+    });
+    log(JSON.stringify({service:'leeway-managed-device-mcp',
+      status:'BOOTSTRAP_ONLY',port,missingConfiguration:missing,
+      productionAdmission:'NOT_GRANTED'}));
+    return server;
+  }
   const config = resolveManagedDeviceMcpConfig(env);
   // A config lists adapters, not trusted enrollment. Runtime admission is
   // intentionally absent. This service MUST NOT grant device execution.
