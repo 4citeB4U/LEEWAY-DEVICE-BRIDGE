@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "operator/identity/**"
+      - "operator/hosting/start-managed-device-mcp.mjs"
       - "tests/mcp/zitadel-*.test.mjs"
       - "package.json"
       - "package-lock.json"
@@ -36,6 +37,8 @@ jobs:
           node --check operator/identity/start-zitadel-mcp.mjs
       - name: Verify Zitadel JWT, scopes, local listener and absent legacy startup
         run: node --test tests/mcp/zitadel-access.test.mjs tests/mcp/zitadel-universal-handler.test.mjs tests/mcp/zitadel-owner-execution.test.mjs tests/mcp/zitadel-mcp-startup.test.mjs
+      - name: Verify managed OS-independent native Bridge discovery host
+        run: node --test tests/mcp/managed-device-mcp.test.mjs
       - name: Full MCP regression (Ubuntu)
         if: matrix.os == 'ubuntu-latest'
         run: npm run test:mcp
