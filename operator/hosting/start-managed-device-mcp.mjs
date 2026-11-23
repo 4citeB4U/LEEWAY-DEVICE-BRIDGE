@@ -50,7 +50,7 @@ export function resolveManagedDeviceMcpConfig(env = process.env) {
     throw Error('MANAGED_BRIDGE_TOKEN_AUDIENCE_INVALID');
   }
   return Object.freeze({
-    configPath, issuer:issuer.toString(), resource:resource.toString(),
+    configPath, issuer:String(env.LEEWAY_MCP_AUTH_ISSUER).trim(), resource:resource.toString(),
     publicUrl:publicUrl.toString(), ownerSubject, port:Number(portValue),
     allowedHost:publicUrl.host, tokenAudiences:Object.freeze(tokenAudiences),
     executionEnabled:false,
