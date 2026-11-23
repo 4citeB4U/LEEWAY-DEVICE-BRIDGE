@@ -96,11 +96,15 @@ export function createZitadelAuthenticator({ issuer, resource, ownerSubject, per
   return async function authenticate(req) {
     const token = bearer(req);
     if (!token || token.length > 16384) return deny('MISSING_OR_OVERSIZED_BEARER');
+    let stage = 'JWT_SEGMENTS';
     try {
       const parts = token.split('.');
       if (parts.length !== 3) return deny('JWT_SEGMENTS_INVALID');
+      stage = 'JWT_HEADER_DECODE';
       const protectedHeader = parsePart(parts[0]);
+      stage = 'JWT_CLAIMS_DECODE';
       const claims = parsePart(parts[1]);
+      stage = 'JWT_CLAIM_POLICY';
       if (!['RS256','ES256'].includes(protectedHeader.alg) || !protectedHeader.kid || protectedHeader.typ === 'JWT+UNSIGNED') return deny('JWT_HEADER_OR_ALGORITHM_INVALID');
       if (claims.iss !== expectedIssuer) return deny('JWT_ISSUER_MISMATCH');
       if (claims.sub !== ownerSubject) return deny('JWT_OWNER_MISMATCH');
@@ -111,14 +115,19 @@ export function createZitadelAuthenticator({ issuer, resource, ownerSubject, per
       if (claims.nbf !== undefined && (!Number.isSafeInteger(claims.nbf) || claims.nbf > seconds + 30)) return deny('JWT_NOT_BEFORE_INVALID');
       if (!hasPermission(claims, permission)) return deny('JWT_READ_PERMISSION_MISSING');
       if (keyCache.until <= now()) {
+        stage = 'OIDC_DISCOVERY_FETCH';
         const discoveryResponse = await fetchImpl(discoveryUrl, { signal: AbortSignal.timeout(5000), redirect: 'error' });
         if (!discoveryResponse.ok) return deny('OIDC_DISCOVERY_HTTP_REJECTED');
+        stage = 'OIDC_DISCOVERY_JSON';
         const doc = await discoveryResponse.json();
         if (doc.issuer !== expectedIssuer) return deny('OIDC_DISCOVERY_ISSUER_MISMATCH');
+        stage = 'JWKS_URL_PARSE';
         const jwksUrl = new URL(doc.jwks_uri);
         if (jwksUrl.protocol !== 'https:' || jwksUrl.origin !== new URL(expectedIssuer).origin || jwksUrl.username || jwksUrl.password) return deny('JWKS_ORIGIN_INVALID');
+        stage = 'JWKS_FETCH';
         const keysResponse = await fetchImpl(jwksUrl, { signal: AbortSignal.timeout(5000), redirect: 'error' });
         if (!keysResponse.ok) return deny('JWKS_HTTP_REJECTED');
+        stage = 'JWKS_JSON';
         const document = await keysResponse.json();
         if (!Array.isArray(document.keys) || document.keys.length > 32) return deny('JWKS_KEY_SET_INVALID');
         keyCache = { until: now() + 5 * 60 * 1000, keys: document.keys };
@@ -126,6 +135,7 @@ export function createZitadelAuthenticator({ issuer, resource, ownerSubject, per
       // Runtime Fabric already admits exact RS256 or ES256 Zitadel JWTs.
       // Enforce matching JWKS key type/curve and JOSE signature encoding.
       // This is authentication only; it confers no C3 device execution.
+      stage = 'JWKS_MATCH';
       const matched = keyCache.keys.filter(k => k.kid === protectedHeader.kid
         && (!k.alg || k.alg === protectedHeader.alg)
         && (!k.use || k.use === 'sig')
@@ -133,15 +143,17 @@ export function createZitadelAuthenticator({ issuer, resource, ownerSubject, per
           ? k.kty === 'RSA'
           : k.kty === 'EC' && k.crv === 'P-256'));
       if (matched.length !== 1) return deny('JWKS_MATCHING_SIGNING_KEY_MISSING');
+      stage = 'PUBLIC_KEY_IMPORT';
       const key = createPublicKey({ key: matched[0], format: 'jwk' });
       const message = Buffer.from(parts[0] + '.' + parts[1]);
       const signature = Buffer.from(parts[2], 'base64url');
+      stage = 'SIGNATURE_VERIFY';
       const verified = protectedHeader.alg === 'RS256'
         ? verifySignature('RSA-SHA256', message, key, signature)
         : verifySignature('sha256', message, { key, dsaEncoding: 'ieee-p1363' }, signature);
       return verified || deny('JWT_SIGNATURE_INVALID');
     } catch {
-      return deny('JWT_VERIFICATION_EXCEPTION');
+      return deny('JWT_VERIFICATION_EXCEPTION_' + stage);
     }
   };
 }
