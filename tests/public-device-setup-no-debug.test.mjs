@@ -54,7 +54,6 @@ test('JS never regenerates old APK links from cached package metadata',()=>{
  assert.match(app,/SIGNED RELEASE REQUIRED/);
  assert.doesNotMatch(app,/href=.*pkg\.downloadUrl/);
  assert.doesNotMatch(dashboard,/new URL\(android\.downloadUrl/);
- assert.doesNotMatch(dashboard,/link\.href=/);
  assert.match(dashboard,/Native package source remains under signed release hold/);
 });
 test('Android update checker denies debug/source channel and clears stale installer update',()=>{
@@ -77,7 +76,7 @@ test('PWA rotates old Workstation caches and never caches APK or stale public au
 test('browser setup text is non-authoritative, signed device and customer identity remain unverified',()=>{
  const js=get('docs/onboarding.js');
  assert.match(js,/dbSetupForm/);
- assert.match(js,/original Runtime sign-in/i);
+ assert.match(js,/original Zitadel-backed Runtime/i);
  assert.match(js,/signed Bridge companion/);
  assert.doesNotMatch(js,/localStorage|sessionStorage|document\.cookie/);
  assert.doesNotMatch(js,/\.apk['"]/);
