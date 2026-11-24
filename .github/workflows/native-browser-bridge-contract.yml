@@ -33,5 +33,7 @@ jobs:
           node --check operator/browser/native-bridge-session.mjs
           node --check operator/browser/native-message-transport.mjs
           node --check operator/browser/native-host-manifest.mjs
+          node --check operator/browser/native-device-target.mjs
+          node --check operator/browser/native-browser-install-plan.mjs
           node --check operator/browser/start-native-browser-host.mjs
           node --test tests/browser/*.test.mjs
