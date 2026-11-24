@@ -205,7 +205,9 @@ export default function App() {
       <OnboardingPage
         role={session.role ?? 'customer'}
         displayName={session.displayName}
-        onComplete={(name) => session.completeOnboarding(name)}
+        onComplete={session.completeOnboarding}
+        saving={session.onboardingSaving}
+        error={session.onboardingError}
         onSignOut={session.signOut}
       />
     );
