@@ -16,19 +16,27 @@ async function resolvePackage(profile){
   return {manifest,pkg:manifest.packages.find(p=>p.platform===platform)||null};
 }
 function renderPackage(manifest,pkg){
-  if(!pkg){
-    $("#packageState").textContent="NO ROUTE";
-    $("#packageCard").innerHTML=`<h3>No verified Android package published</h3><p class="package-meta">GitHub Pages will expose a package only after size, SHA-256 and runtime qualification pass.</p>`;
-    return;
-  }
-  $("#packageState").textContent=pkg.status;
-  const measured=pkg.sizeBytes==null?"Not measured":`${pkg.sizeBytes} bytes`;
-  const action=pkg.downloadUrl
-    ? `<a class="action" href="${esc(pkg.downloadUrl)}" download>Download & update LeeWay Device Bridge ${esc(pkg.versionName||"")}</a>`
-    : `<button id="handoffBtn" class="action">Package build required</button>`;
-  $("#packageCard").innerHTML=`<h3>${esc(pkg.label)}</h3><p class="package-meta">Release: ${esc(pkg.versionName||"Unknown")} · Status: ${esc(pkg.status)}<br>Published from GitHub Pages · SHA-256: ${esc(pkg.sha256||"Not published")}</p>${action}<p class="package-meta"><strong>Update:</strong> install the published Android package over the current one. If Android reports a signature conflict, stop and use the platform’s controlled migration path; do not erase app data.</p>`;
+  const state=$("#packageState"),card=$("#packageCard");
+  if(!state||!card)return;
+  // Public GitHub Pages is a non-authoritative onboarding display. A
+  // development APK or manifest-declared URL is NEVER a customer release.
+  // Signed native installers require original Runtime account/invitation
+  // admission, verified architecture and owner-confirmed package signing.
+  state.textContent="NATIVE RELEASE NOT ADMITTED";
+  card.replaceChildren();
+  const title=document.createElement("h3");
+  title.textContent="Device Bridge enrollment comes before a native installer";
+  const detail=document.createElement("p");
+  detail.className="package-meta";
+  detail.textContent=pkg?.channel==="development"
+    ?"This source currently lists an Android debug build. It is a developer artifact, not a signed customer package. No download or update is offered."
+    :"Complete original LeeWay sign-in, invitation verification and device-specific native signing qualification before a package can be released.";
+  const link=document.createElement("a");
+  link.className="action secondary";
+  link.href="#bridgeSetup";
+  link.textContent="Review secure device setup";
+  card.append(title,detail,link);
 }
-
 async function showPublishedAndroidPackage(){
   try{
     const manifest=await fetch("./package-manifest.json",{cache:"no-store"}).then(r=>r.json());
