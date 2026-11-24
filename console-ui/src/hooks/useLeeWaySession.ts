@@ -125,11 +125,77 @@ export function useLeeWaySession() {
   }, []);
 
   /** Called by the separate onboarding page after the owner completes setup. */
-  const completeOnboarding = useCallback((displayName: string) => {
-    setSession((current) => current && current.authenticated
-      ? { ...current, onboarded: true, displayName: displayName.slice(0, 120) }
-      : current);
-  }, []);
+  const [onboardingError, setOnboardingError] = useState<string | null>(null);
+  const [onboardingSaving, setOnboardingSaving] = useState(false);
+
+  /**
+   * Only the original Runtime may make onboarding durable. A browser-local label
+   * is never proof of completion. The POST must be CSRF-protected server-side,
+   * owner-scoped, idempotent, and independently read back from the session API.
+   */
+  const completeOnboarding = useCallback(async (input: {
+    displayName: string; workspaceName: string; deviceLanes: string[];
+  }): Promise<boolean> => {
+    const writeUrl = approvedUrl(endpoints.onboarding);
+    const readUrl = approvedUrl(endpoints.session);
+    // Cross-origin credentialed onboarding is not an allowed public UI contract.
+    if (!writeUrl || !readUrl ||
+        new URL(writeUrl).origin !== window.location.origin ||
+        new URL(readUrl).origin !== window.location.origin) {
+      setOnboardingError('LeeWay Runtime onboarding is not configured.');
+      return false;
+    }
+    if (!session?.authenticated || session.onboarded ||
+        input.displayName.trim().length < 2 || input.workspaceName.trim().length < 2 ||
+        input.deviceLanes.length < 1) {
+      setOnboardingError('Verified sign-in and complete setup details are required.');
+      return false;
+    }
+    setOnboardingSaving(true);
+    setOnboardingError(null);
+    try {
+      const response = await fetch(writeUrl, {
+        method: 'POST',
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json',
+                   'X-LeeWay-Request': 'onboarding' },
+        body: JSON.stringify({
+          displayName: input.displayName.trim().slice(0, 120),
+          workspaceName: input.workspaceName.trim().slice(0, 120),
+          deviceLanes: input.deviceLanes,
+        }),
+      });
+      if (!response.ok) throw new Error('ONBOARDING_WRITE_DENIED');
+      const persisted: unknown = await response.json();
+      if (!persisted || typeof persisted !== 'object' ||
+          !('onboarded' in persisted) || persisted.onboarded !== true) {
+        throw new Error('ONBOARDING_WRITE_UNVERIFIED');
+      }
+      const readback = await fetch(readUrl, {
+        method: 'GET', credentials: 'same-origin', cache: 'no-store',
+        headers: { Accept: 'application/json' },
+      });
+      if (!readback.ok) throw new Error('ONBOARDING_READBACK_DENIED');
+      const confirmed: unknown = await readback.json();
+      if (!confirmed || typeof confirmed !== 'object' ||
+          !('authenticated' in confirmed) || confirmed.authenticated !== true ||
+          !('onboarded' in confirmed) || confirmed.onboarded !== true ||
+          !('role' in confirmed) || confirmed.role !== session.role) {
+        throw new Error('ONBOARDING_READBACK_UNVERIFIED');
+      }
+      const record = confirmed as Record<string, unknown>;
+      setSession({ ...session, onboarded: true,
+        displayName: typeof record.displayName === 'string'
+          ? record.displayName.slice(0, 120) : input.displayName.trim().slice(0, 120) });
+      return true;
+    } catch {
+      setOnboardingError('LeeWay Runtime did not confirm your setup. Nothing was marked complete.');
+      return false;
+    } finally {
+      setOnboardingSaving(false);
+    }
+  }, [session]);
 
   /** Explicit sign-out returns to the gate; no silent re-authentication follows. */
   const signOut = useCallback(() => {
@@ -144,6 +210,8 @@ export function useLeeWaySession() {
     displayName: session?.displayName ?? undefined,
     signIn,
     completeOnboarding,
+    onboardingError,
+    onboardingSaving,
     signOut,
     endpoints,
   };
