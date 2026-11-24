@@ -338,21 +338,57 @@ export const PlatformWorkstations: React.FC<PlatformWorkstationsProps> = ({
                   )}
 
                   {lane.id === 'android' && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onActionLog(
-                          'Verified Android RC1 extension package digest; owner install required without data wipe',
-                          'warning',
-                          'Android Lane',
-                        );
-                      }}
-                      className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-200 hover:bg-slate-800 text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-                    >
-                      <Download className="w-3.5 h-3.5 text-amber-400" />
-                      Download Extension
-                    </button>
+                    <>
+                      <a
+                        href="/LEEWAY-DEVICE-BRIDGE/docs/downloads/leeway-device-bridge-android-latest-debug.apk"
+                        download
+                        onClick={() => onActionLog(
+                          'Android debug APK requested. This is a developer test build, not a production-signed customer installer.',
+                          'warning', 'Android Lane'
+                        )}
+                        className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 border border-amber-700/60 text-amber-100 hover:bg-slate-800 text-xs font-medium transition-colors shrink-0"
+                      >
+                        <Download className="w-3.5 h-3.5 text-amber-400" />
+                        Download test APK (debug)
+                      </a>
+                      <p className="text-[11px] text-amber-200">
+                        Development build only. Android may warn about unknown or untrusted apps. Do not bypass a malware warning or uninstall an existing installation to force an update.
+                      </p>
+                    </>
                   )}
+
+                  {lane.id === 'apple' && (
+                    <>
+                      <a
+                        href="https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/download/apple-latest/LeeWayDeviceBridge-unsigned.ipa"
+                        onClick={() => onActionLog(
+                          'Opening the verified Apple unsigned IPA artifact. Owner-controlled signing is required before installation.',
+                          'warning', 'Apple Lane'
+                        )}
+                        className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 border border-amber-700/60 text-amber-100 hover:bg-slate-800 text-xs font-medium transition-colors shrink-0"
+                      >
+                        <Download className="w-3.5 h-3.5 text-amber-400" />
+                        Download unsigned IPA (developer)
+                      </a>
+                      <p className="text-[11px] text-amber-200">
+                        This is an unsigned developer artifact, not an iPhone-installable release. Signing and owner-approved installation are required. Mac installation requires a separate macOS package.
+                      </p>
+                    </>
+                  )}
+
+                  {(lane.id === 'windows' || lane.id === 'linux') && (
+                    <p className="text-[11px] text-amber-200">
+                      No published signed native {lane.id === 'windows' ? 'Windows installer' : 'Linux package'} has been qualified. The LeeWay web app remains accessible; do not substitute a source repository for an installer.
+                    </p>
+                  )}
+
+                  <a
+                    href="https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/"
+                    className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-cyan-100 hover:bg-slate-800 text-xs font-medium transition-colors"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    Open LeeWay web app
+                  </a>
 
                   {(lane.id === 'windows' || lane.id === 'linux') && (
                     <button
