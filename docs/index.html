@@ -71,6 +71,17 @@ WHERE: docs/index.html; WHEN: 2026-11-24; HOW: Browser hints and explicit owner 
     </div><small>On Android and Apple mobile, device enrollment uses the original OS companion. A desktop Chrome extension cannot be installed into Android Chrome.</small></fieldset>
     <button class="leeway-primary" type="submit">Review secure setup</button>
   </form>
+  <section id="dbAppleSetup" class="leeway-apple-setup" aria-labelledby="dbAppleTitle" hidden>
+    <h2 id="dbAppleTitle">Apple device · LeeWay Bridge setup</h2>
+    <p>Stay on this LeeWay Device Bridge page. Use the Apple Home Screen app for browser access; an actual native Bridge device enrollment still needs the original authenticated Runtime and a properly signed Apple companion. GitHub is not your customer setup screen.</p>
+    <div class="leeway-apple-actions">
+      <button type="button" id="dbAppleHomeInstall" class="leeway-primary">Set up LeeWay on Apple Home Screen</button>
+      <button type="button" id="dbAppleBridgeStatus" class="leeway-secondary">Check Apple native Bridge requirements</button>
+    </div>
+    <div id="dbAppleSetupInstructions" class="leeway-apple-instructions" role="status" aria-live="polite">
+      Choose an Apple setup action. The Home Screen app does not certify an enrolled native Device Bridge.
+    </div>
+  </section>
   <div class="leeway-setup-result" id="dbSetupResult" role="status" aria-live="polite"><strong>Start with your LeeWay account.</strong><p>The Creator and invited customers use the same setup. Account admission, companion release and device enrollment are not verified by this website.</p></div>
   <p class="leeway-release-hold">Protected installation is on release hold. No Android debug APK or unsigned Apple package is a production Device Bridge installer. An original Runtime sign-in and signed, approved native release are required.</p>
 </section>
@@ -135,9 +146,9 @@ WHERE: docs/index.html; WHEN: 2026-11-24; HOW: Browser hints and explicit owner 
 
   <section class="platform-grid" aria-label="LeeWay platform lanes">
     <article class="platform-card apple-card" id="appleLane">
-      <p class="kicker">APPLE · IPHONE / IPAD / MAC</p><h2>Apple workspace and native Metal</h2>
-      <p>Use the Home Screen app as the daily LeeWay front door. Use the native IPA only when direct Metal service is required.</p>
-      <div class="card-actions"><a class="action" href="https://github.com/codespaces/new?hide_repo_select=true&amp;repo=1380304068" target="_blank" rel="noopener">OPEN APPLE WORKSTATION</a><a class="action secondary" href="https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/tag/apple-latest" target="_blank" rel="noopener">OPEN APPLE PACKAGE</a></div>
+      <p class="kicker">APPLE · IPHONE / IPAD / MAC</p><h2>Apple Device Bridge setup</h2>
+      <p>Begin with LeeWay account sign-in and this device’s enrollment. The Apple Home Screen web app uses this page directly; native Bridge execution needs the original Apple-signed companion.</p>
+      <div class="card-actions"><a class="action" href="#dbOnboarding">Return to secure Apple setup</a><a class="action secondary" href="#dbAppleSetup">Use LeeWay on Apple</a></div>
       <div class="card-links"><a href="#appleRuntime">Apple controls</a><a href="./APPLE-DIRECT-ILOADER-DELIVERY.md">Direct iLoader update</a><a href="./ILOADER-PERSISTENCE.md">iLoader saved setup</a></div>
     </article>
     <article class="platform-card" id="androidLane">
@@ -162,10 +173,10 @@ WHERE: docs/index.html; WHEN: 2026-11-24; HOW: Browser hints and explicit owner 
 
   <section class="panel" id="appleRuntime">
     <div class="panel-head"><div><p class="kicker">APPLE CONTROLS</p><h2>Use LeeWay on this Apple device</h2></div><span id="pwaState" class="badge">CHECKING</span></div>
-    <ol class="plain-steps"><li><strong>Daily LeeWay:</strong> launch the LeeWay icon from the iPhone Home Screen.</li><li><strong>Apple workstation:</strong> use <strong>OPEN APPLE WORKSTATION</strong> above when you need the editor, terminal, Git, or GitHub.</li><li><strong>Native Metal app:</strong> use <strong>OPEN APPLE PACKAGE</strong>, download the current IPA from GitHub, then import it through the existing iLoader installation.</li></ol>
+    <ol class="plain-steps"><li><strong>Account first:</strong> start from the Device Bridge setup form above; the Creator and invited users must authenticate through original Runtime/Zitadel.</li><li><strong>Home Screen:</strong> in Safari, use Share → Add to Home Screen for LeeWay Bridge web access. This does not enroll the device.</li><li><strong>Native Bridge:</strong> approve and install only the signed Apple companion through a qualified Apple distribution route; the unsigned developer IPA is not a customer installer.</li><li><strong>Tablet:</strong> after signed-in Runtime/Bridge authorization, open your assigned Agent Virtual Tablet with role-specific permissions.</li></ol>
     <div class="card-actions"><button class="action" id="installPwaBtn">SHOW APPLE APP STATUS</button><button class="action secondary" id="launchPwaBtn">REFRESH LEEWAY</button><button class="action secondary" id="beginAppleQualification">CHECK APPLE BROWSER</button></div>
     <p id="pwaOutput" class="status-copy">Checking Apple Home Screen installation…</p>
-    <div class="native-callout"><strong>Native Metal delivery:</strong> iLoader is the active Apple package installer. Keep <strong>Save Credentials</strong> checked, preserve the existing certificate and pairing record, and use <a href="./ILOADER-PERSISTENCE.md">the saved-setup guide</a>.</div>
+    <div class="native-callout"><strong>Apple companion release:</strong> a previously enrolled device may have an owner-controlled developer signing route. That is separate from the public customer setup and is not an approved universal Apple installer. Preserve working device pairing and app data.</div>
   </section>
 
   <section class="panel" id="appleBrowserAdapter">
