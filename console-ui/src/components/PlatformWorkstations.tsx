@@ -338,7 +338,8 @@ export const PlatformWorkstations: React.FC<PlatformWorkstationsProps> = ({
                   )}
 
                   {lane.id === 'android' && (
-                    <>
+                    <details className="rounded-lg border border-amber-900/60 p-2.5 text-xs text-amber-100">
+                      <summary className="cursor-pointer font-semibold">Developer testing package (not customer install)</summary>
                       <a
                         href="/LEEWAY-DEVICE-BRIDGE/docs/downloads/leeway-device-bridge-android-latest-debug.apk"
                         download
@@ -354,11 +355,13 @@ export const PlatformWorkstations: React.FC<PlatformWorkstationsProps> = ({
                       <p className="text-[11px] text-amber-200">
                         Development build only. Android may warn about unknown or untrusted apps. Do not bypass a malware warning or uninstall an existing installation to force an update.
                       </p>
-                    </>
+                    </details>
                   )}
 
                   {lane.id === 'apple' && (
                     <>
+                      <details className="rounded-lg border border-amber-900/60 p-2.5 text-xs text-amber-100">
+                      <summary className="cursor-pointer font-semibold">Unsigned native IPA for developer signing only</summary>
                       <a
                         href="https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/download/apple-latest/LeeWayDeviceBridge-unsigned.ipa"
                         onClick={() => onActionLog(
@@ -373,6 +376,7 @@ export const PlatformWorkstations: React.FC<PlatformWorkstationsProps> = ({
                       <p className="text-[11px] text-amber-200">
                         This is an unsigned developer artifact, not an iPhone-installable release. Signing and owner-approved installation are required. Mac installation requires a separate macOS package.
                       </p>
+                      </details>
                       <div className="rounded-lg border border-cyan-700/40 bg-cyan-950/20 p-2.5 text-[11px] text-cyan-100 space-y-1">
                         <strong className="block text-xs">Install LeeWay as a browser app — no Apple Developer membership required</strong>
                         <p>iPhone or iPad: open the LeeWay web app in Safari, tap Share, then Add to Home Screen and select Open as Web App when available.</p>
