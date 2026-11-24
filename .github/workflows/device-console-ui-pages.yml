@@ -77,6 +77,14 @@ jobs:
           set -euo pipefail
           test -f docs/downloads/leeway-device-bridge-android-latest.json
           test -f docs/downloads/leeway-device-bridge-android-latest-debug.apk
+          # Publish actual PWA icon binaries with the new React web shell.
+          mkdir -p console-ui/dist/icons
+          cp docs/icons/leeway-official-logo-192.png console-ui/dist/icons/
+          cp docs/icons/leeway-official-logo-512.png console-ui/dist/icons/
+          test -f console-ui/dist/manifest.webmanifest
+          test -f console-ui/dist/sw.js
+          test -f console-ui/dist/icons/leeway-official-logo-192.png
+          test -f console-ui/dist/icons/leeway-official-logo-512.png
           test -f docs/package-manifest.json
           test -f docs/llm-entrypoint.json
           mkdir -p console-ui/dist/docs/downloads
