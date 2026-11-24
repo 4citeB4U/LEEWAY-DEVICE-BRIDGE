@@ -1,0 +1,102 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.DEVICE.BRIDGE.CI.PAGES
+# TAG: LEEWAY.DEVICE.CONSOLE.UI.PAGES.PROMOTION.V1
+# WHO: LeeWay Industries
+# WHAT: Build the canonical React console UI and publish it in place to GitHub Pages
+# WHEN: 2026-11-24
+# WHERE: .github/workflows/device-console-ui-pages.yml
+# WHY: Replace the legacy console entry experience without deleting native, contract,
+#      workflow, security or transport source.
+# HOW: Vite base /LEEWAY-DEVICE-BRIDGE/ at the site root; legacy /docs/downloads/ APK
+#      URLs are preserved by copying them into the published artifact.
+# AUTHORITY: Source CI only. Publishing does NOT approve Gate 1 signer, live device
+#      transport, native execution, customer registration or CRM/ERP integration.
+# LICENSE: MIT
+name: Device Console UI Pages Promotion
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'console-ui/**'
+      - '.github/workflows/device-console-ui-pages.yml'
+      - 'tests/console-ui-promotion.test.mjs'
+      - 'docs/downloads/**'
+  pull_request:
+    paths:
+      - 'console-ui/**'
+      - '.github/workflows/device-console-ui-pages.yml'
+      - 'tests/console-ui-promotion.test.mjs'
+      - 'docs/downloads/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: leeway-device-console-ui-pages
+  cancel-in-progress: false
+
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: console-ui/package-lock.json
+      - name: Confirm no development session stub is enabled in production
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${LEEWAY_DEV_STUB_SESSION:-}" = "1" ]; then
+            echo "DEV_STUB_MUST_NOT_BE_ENABLED_IN_PRODUCTION" >&2
+            exit 1
+          fi
+          echo "dev stub disabled: PASS"
+      - name: Install React console UI
+        working-directory: console-ui
+        run: npm ci --no-audit --no-fund
+      - name: Lint React console UI
+        working-directory: console-ui
+        run: npm run lint
+      - name: Build React console UI with published base
+        working-directory: console-ui
+        env:
+          LEEWAY_PAGES_BASE: /LEEWAY-DEVICE-BRIDGE/
+        run: npm run build
+      - name: Preserve legacy device APK download URLs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f docs/downloads/leeway-device-bridge-android-latest.json
+          test -f docs/downloads/leeway-device-bridge-android-latest-debug.apk
+          mkdir -p console-ui/dist/docs/downloads
+          cp docs/downloads/leeway-device-bridge-android-latest.json console-ui/dist/docs/downloads/
+          cp docs/downloads/leeway-device-bridge-android-latest-debug.apk console-ui/dist/docs/downloads/
+          test -f console-ui/dist/docs/downloads/leeway-device-bridge-android-latest.json
+          echo "legacy /docs/downloads/ preserved: PASS"
+      - name: Deployment contract tests
+        run: node --test tests/console-ui-promotion.test.mjs
+      - name: Upload qualified Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: console-ui/dist
+
+  publish:
+    needs: qualify
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
