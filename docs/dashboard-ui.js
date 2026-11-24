@@ -176,18 +176,9 @@ qa(".db-control").forEach(button=>{
   });
 });
 async function verifyDownloads(){
-  try{
-    const res=await fetch("./package-manifest.json",{cache:"no-store",signal:AbortSignal.timeout(8000)});
-    if(!res.ok)throw new Error("Package manifest HTTP "+res.status);
-    const manifest=await res.json();
-    const android=manifest.packages?.find(item=>item.platform==="android");
-    const tile=qa(".db-download-tile")[3];
-    if(android?.downloadUrl&&android?.sha256&&android?.sizeBytes&&tile){
-      const link=q("a",tile);link.href=new URL(android.downloadUrl,location.href).href;
-      link.title="Native Android extension "+(android.versionName||"")+"; SHA-256: "+android.sha256;
-      eventLog("Published Android extension manifest read; full workstation bundle not asserted");
-    }
-  }catch(error){eventLog("Package manifest unavailable: "+String(error.message||error))}
+  // Never reinsert the old Android debug download link from public metadata.
+  // Package evidence is not original Runtime admission or owner-signed release.
+  eventLog("Native package source remains under signed release hold; no public debug APK installer");
 }
 
 
