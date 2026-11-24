@@ -83,6 +83,9 @@ test('Pages publishing path preserves legacy APK URLs', () => {
   assert.match(wf, /console-ui\/dist\/docs\/downloads/, 'legacy URL subdirectory preserved');
   assert.ok(exists('docs/downloads/leeway-device-bridge-android-latest.json'));
   assert.ok(exists('docs/downloads/leeway-device-bridge-android-latest-debug.apk'));
+  assert.match(wf, /docs\/package-manifest\.json/, 'package update manifest copied');
+  assert.match(wf, /docs\/llm-entrypoint\.json/, 'LLM entrypoint retained');
+  assert.match(wf, /console-ui\/dist\/docs\/index\.html/, 'legacy docs entry redirects to new UI');
 });
 
 test('no unapproved third-party model service or API-key dependency', () => {
