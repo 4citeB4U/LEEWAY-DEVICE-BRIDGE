@@ -21,11 +21,11 @@ permissions:
 
 jobs:
   publish:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.head_branch == 'main' &&
-       github.event.workflow_run.head_repository.full_name == github.repository)
+    # UNSIGNED_APPLE_PUBLICATION_HOLD: source/build evidence is not a
+    # Creator-approved signed native release. Preserve original workflow
+    # source and historical developer iLoader release; never re-publish
+    # unsigned IPA as a customer update on main or manual dispatch.
+    if: false
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
@@ -84,9 +84,12 @@ jobs:
           manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
           package = next(item for item in manifest["packages"] if item["platform"] == "ios")
           package.update({
-              "status": "QUALIFIED_ARTIFACT_OWNER_INSTALL_REQUIRED",
+              "status": "UNSIGNED_ARTIFACT_NOT_APPROVED_FOR_PUBLIC_INSTALL",
+              "channel": "development",
+              "releaseSigning": "NOT_VERIFIED",
+              "customerInstallApproved": False,
               "source": "github-release",
-              "downloadUrl": os.environ["IPA_URL"],
+              "downloadUrl": None,
               "releaseUrl": os.environ["RELEASE_URL"],
               "metadataUrl": os.environ["PACKAGE_MANIFEST_URL"],
               "sha256": digest,
@@ -99,7 +102,7 @@ jobs:
                   "sourceRevision": package_manifest["sourceRevision"],
                   "ipaSizeBytes": ipa_path.stat().st_size,
                   "ipaSha256": digest,
-                  "note": "GitHub publishes the unsigned IPA; the owner-controlled iLoader route signs and installs it over USB."
+                  "note": "Historical unsigned Apple development artifact only. No public signed customer package or physically enrolled device is certified."
               }
           })
           manifest["updatedAtUtc"] = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
