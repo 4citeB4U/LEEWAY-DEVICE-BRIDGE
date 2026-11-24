@@ -15,6 +15,8 @@ test('Android release is explicit stable owner-controlled signing, not debug',()
   assert.match(workflow,/assembleRelease/);
   assert.match(workflow,/apksigner/);
   assert.match(workflow,/OWNER_APPROVED_ANDROID_RELEASE_KEY_UNBOUND/);
+  assert.match(workflow,/OWNER_SIGNER_FINGERPRINT_MISMATCH/);
+  assert.match(workflow,/LEEWAY_ANDROID_RELEASE_CERT_SHA256/);
   assert.doesNotMatch(workflow,/gh release (upload|create)|softprops\/action-gh-release/);
   assert.ok(existsSync(new URL('../tests/android-public-debug-release-hold.test.mjs', import.meta.url)));
 });
