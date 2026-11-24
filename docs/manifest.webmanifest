@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "LeeWay Device-Neutral Workstation",
-  "short_name": "LeeWay Workstation",
-  "description": "Device-neutral LeeWay workstation shell for discovery, diagnostics, browser-safe Apple development, and optional native capability adapters.",
+  "name": "LeeWay Device Bridge — Setup and Tablet Access",
+  "short_name": "LeeWay Bridge",
+  "description": "LeeWay Device Bridge onboarding and browser-based status. Native device enrollment and the Agent Virtual Tablet require authorized original Runtime sessions and approved OS companions.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
