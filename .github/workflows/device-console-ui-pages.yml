@@ -77,11 +77,21 @@ jobs:
           set -euo pipefail
           test -f docs/downloads/leeway-device-bridge-android-latest.json
           test -f docs/downloads/leeway-device-bridge-android-latest-debug.apk
+          test -f docs/package-manifest.json
+          test -f docs/llm-entrypoint.json
           mkdir -p console-ui/dist/docs/downloads
           cp docs/downloads/leeway-device-bridge-android-latest.json console-ui/dist/docs/downloads/
           cp docs/downloads/leeway-device-bridge-android-latest-debug.apk console-ui/dist/docs/downloads/
+          cp docs/package-manifest.json console-ui/dist/docs/package-manifest.json
+          cp docs/llm-entrypoint.json console-ui/dist/docs/llm-entrypoint.json
+          # The legacy /docs/ entry must resolve to the NEW root UI, not a second old console.
+          printf '%s\n' '<!doctype html><html lang="en"><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=../"><title>LeeWay Device Bridge</title><a href="../">Open the new LeeWay Device Bridge</a></html>' > console-ui/dist/docs/index.html
           test -f console-ui/dist/docs/downloads/leeway-device-bridge-android-latest.json
-          echo "legacy /docs/downloads/ preserved: PASS"
+          test -f console-ui/dist/docs/package-manifest.json
+          test -f console-ui/dist/docs/llm-entrypoint.json
+          grep -q 'url=../' console-ui/dist/docs/index.html
+          node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('console-ui/dist/docs/package-manifest.json','utf8'));if(!m.packages||!m.platformRoutes)process.exit(1)"
+          echo "legacy manifest/download/LLM discovery URLs preserved, old console redirected to new UI: PASS"
       - name: Deployment contract tests
         run: node --test tests/console-ui-promotion.test.mjs
       - name: Upload qualified Pages artifact
