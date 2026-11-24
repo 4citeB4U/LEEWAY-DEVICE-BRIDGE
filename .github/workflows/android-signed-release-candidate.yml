@@ -32,11 +32,12 @@ jobs:
           LEEWAY_ANDROID_RELEASE_STORE_PASSWORD: ${{ secrets.LEEWAY_ANDROID_RELEASE_STORE_PASSWORD }}
           LEEWAY_ANDROID_RELEASE_KEY_ALIAS: ${{ secrets.LEEWAY_ANDROID_RELEASE_KEY_ALIAS }}
           LEEWAY_ANDROID_RELEASE_KEY_PASSWORD: ${{ secrets.LEEWAY_ANDROID_RELEASE_KEY_PASSWORD }}
+          LEEWAY_ANDROID_RELEASE_CERT_SHA256: ${{ vars.LEEWAY_ANDROID_RELEASE_CERT_SHA256 }}
         shell: bash
         run: |
           set -euo pipefail
           # Fail before Gradle when the owner has not bound their original release identity.
-          for variable in LEEWAY_ANDROID_RELEASE_KEYSTORE_B64 LEEWAY_ANDROID_RELEASE_STORE_PASSWORD LEEWAY_ANDROID_RELEASE_KEY_ALIAS LEEWAY_ANDROID_RELEASE_KEY_PASSWORD; do
+          for variable in LEEWAY_ANDROID_RELEASE_KEYSTORE_B64 LEEWAY_ANDROID_RELEASE_STORE_PASSWORD LEEWAY_ANDROID_RELEASE_KEY_ALIAS LEEWAY_ANDROID_RELEASE_KEY_PASSWORD LEEWAY_ANDROID_RELEASE_CERT_SHA256; do
             test -n "${!variable}" || { echo "OWNER_APPROVED_ANDROID_RELEASE_KEY_UNBOUND: $variable"; exit 1; }
           done
       - name: Prepare Android SDK
@@ -51,6 +52,7 @@ jobs:
           LEEWAY_ANDROID_RELEASE_STORE_PASSWORD: ${{ secrets.LEEWAY_ANDROID_RELEASE_STORE_PASSWORD }}
           LEEWAY_ANDROID_RELEASE_KEY_ALIAS: ${{ secrets.LEEWAY_ANDROID_RELEASE_KEY_ALIAS }}
           LEEWAY_ANDROID_RELEASE_KEY_PASSWORD: ${{ secrets.LEEWAY_ANDROID_RELEASE_KEY_PASSWORD }}
+          LEEWAY_ANDROID_RELEASE_CERT_SHA256: ${{ vars.LEEWAY_ANDROID_RELEASE_CERT_SHA256 }}
         shell: bash
         run: |
           set -euo pipefail
@@ -68,6 +70,14 @@ jobs:
           APKSIGNER="$SDK_ROOT/build-tools/35.0.0/apksigner"
           AAPT="$SDK_ROOT/build-tools/35.0.0/aapt"
           "$APKSIGNER" verify --verbose --print-certs "$APK" > "$GITHUB_WORKSPACE/android-signature-evidence.txt"
+          EXPECTED_SHA="$(printf '%s' "$LEEWAY_ANDROID_RELEASE_CERT_SHA256" | tr '[:upper:]' '[:lower:]' | tr -d ':')"
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{64}$ ]] || { echo 'OWNER_SIGNER_FINGERPRINT_INVALID'; exit 1; }
+          ACTUAL_SHA="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' "$GITHUB_WORKSPACE/android-signature-evidence.txt" | head -n1 | tr '[:upper:]' '[:lower:]' | tr -d ':')"
+          test -n "$ACTUAL_SHA"
+          if [ "$ACTUAL_SHA" != "$EXPECTED_SHA" ]; then
+            echo 'OWNER_SIGNER_FINGERPRINT_MISMATCH'; exit 1
+          fi
+          echo 'OWNER_APPROVED_SIGNER_CERTIFICATE_MATCH' >> "$GITHUB_WORKSPACE/android-signature-evidence.txt"
           "$AAPT" dump badging "$APK" > "$RUNNER_TEMP/leeway-badging.txt"
           "$AAPT" dump permissions "$APK" > "$GITHUB_WORKSPACE/android-permission-evidence.txt"
           # Both platform/signer integrity and sensitive permissions must be
