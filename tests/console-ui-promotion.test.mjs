@@ -146,3 +146,21 @@ test('onboarding completion requires Runtime write and readback', () => {
   assert.match(env, /VITE_LEEWAY_ONBOARDING_URL=/);
   assert.match(env, /VITE_LEEWAY_API_ORIGIN=/);
 });
+
+test('real package links and explicit native signing status prevent false downloads', () => {
+  const ui = read('console-ui/src/components/PlatformWorkstations.tsx');
+  const lanes = read('console-ui/src/data/bridgeData.ts');
+  assert.match(ui, /leeway-device-bridge-android-latest-debug\.apk/);
+  assert.match(ui, /Download test APK \(debug\)/);
+  assert.match(ui, /LeeWayDeviceBridge-unsigned\.ipa/);
+  assert.match(ui, /Download unsigned IPA \(developer\)/);
+  assert.match(ui, /No published signed native/);
+  assert.match(lanes, /Unsigned IPA · Install not qualified/);
+  assert.match(lanes, /Debug APK · Production signing unverified/);
+  assert.match(lanes, /Native Linux installer not published/);
+  assert.doesNotMatch(lanes, /Apple Package: Qualified/);
+  const manifest = JSON.parse(read('docs/package-manifest.json'));
+  assert.equal(manifest.packages.find(p => p.platform === 'android').channel, 'development');
+  assert.match(manifest.packages.find(p => p.platform === 'android').downloadUrl, /-debug\.apk$/);
+  assert.match(manifest.packages.find(p => p.platform === 'ios').downloadUrl, /unsigned\.ipa$/);
+});
