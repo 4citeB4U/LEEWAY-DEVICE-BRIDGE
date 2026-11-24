@@ -22,6 +22,7 @@ export const endpoints = {
   invitation: env.VITE_LEEWAY_INVITATION_URL as string | undefined,
   pairing: env.VITE_LEEWAY_DEVICE_PAIR_URL as string | undefined,
   session: env.VITE_LEEWAY_SESSION_URL as string | undefined,
+  apiOrigin: env.VITE_LEEWAY_API_ORIGIN as string | undefined,
   tablet: env.VITE_LEEWAY_TABLET_URL as string | undefined,
   onboarding: env.VITE_LEEWAY_ONBOARDING_URL as string | undefined,
 };
@@ -34,6 +35,19 @@ export function approvedUrl(input?: string): string | null {
     if (url.origin === window.location.origin || url.protocol === 'https:') return url.href;
   } catch { /* no valid target */ }
   return null;
+}
+
+/** Pin credentialed requests to one explicitly configured Runtime origin. */
+function approvedRuntimeUrl(input?: string): string | null {
+  const url = approvedUrl(input);
+  if (!url) return null;
+  try {
+    const origin = new URL(endpoints.apiOrigin || '').origin;
+    const target = new URL(url);
+    return target.protocol === 'https:' && origin === target.origin ? target.href : null;
+  } catch {
+    return null;
+  }
 }
 
 function sleep(ms: number): Promise<void> {
@@ -83,7 +97,7 @@ export function useLeeWaySession() {
    * is never trusted as an authorization decision.
    */
   const signIn = useCallback(async (kind: SessionRole = 'creator'): Promise<boolean> => {
-    const endpoint = approvedUrl(endpoints.session);
+    const endpoint = approvedRuntimeUrl(endpoints.session);
     if (!endpoint) {
       setSession(null);
       setStatus('unverified');
@@ -136,12 +150,11 @@ export function useLeeWaySession() {
   const completeOnboarding = useCallback(async (input: {
     displayName: string; workspaceName: string; deviceLanes: string[];
   }): Promise<boolean> => {
-    const writeUrl = approvedUrl(endpoints.onboarding);
-    const readUrl = approvedUrl(endpoints.session);
-    // Cross-origin credentialed onboarding is not an allowed public UI contract.
-    if (!writeUrl || !readUrl ||
-        new URL(writeUrl).origin !== window.location.origin ||
-        new URL(readUrl).origin !== window.location.origin) {
+    const writeUrl = approvedRuntimeUrl(endpoints.onboarding);
+    const readUrl = approvedRuntimeUrl(endpoints.session);
+    // Cross-origin is permitted ONLY for a pinned Runtime HTTPS origin.
+    // The server must authorize this exact Pages origin in credentialed CORS.
+    if (!writeUrl || !readUrl) {
       setOnboardingError('LeeWay Runtime onboarding is not configured.');
       return false;
     }
@@ -154,12 +167,26 @@ export function useLeeWaySession() {
     setOnboardingSaving(true);
     setOnboardingError(null);
     try {
+      // Runtime must reject cross-site state changes without a session-bound CSRF proof.
+      // Fetch a one-time CSRF token from the verified Runtime session, not from UI input.
+      const before = await fetch(readUrl, { credentials: 'include', cache: 'no-store',
+        headers: { Accept: 'application/json' } });
+      if (!before.ok) throw new Error('ONBOARDING_SESSION_UNAVAILABLE');
+      const sessionProof: unknown = await before.json();
+      if (!sessionProof || typeof sessionProof !== 'object' ||
+          !('authenticated' in sessionProof) || sessionProof.authenticated !== true ||
+          !('role' in sessionProof) || sessionProof.role !== session.role ||
+          !('csrfToken' in sessionProof) || typeof sessionProof.csrfToken !== 'string' ||
+          !/^[A-Za-z0-9_-]{24,256}$/.test(sessionProof.csrfToken)) {
+        throw new Error('ONBOARDING_CSRF_UNAVAILABLE');
+      }
       const response = await fetch(writeUrl, {
         method: 'POST',
-        credentials: 'same-origin',
+        credentials: 'include',
         cache: 'no-store',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json',
-                   'X-LeeWay-Request': 'onboarding' },
+                   'X-LeeWay-Request': 'onboarding',
+                   'X-LeeWay-CSRF': sessionProof.csrfToken },
         body: JSON.stringify({
           displayName: input.displayName.trim().slice(0, 120),
           workspaceName: input.workspaceName.trim().slice(0, 120),
@@ -173,7 +200,7 @@ export function useLeeWaySession() {
         throw new Error('ONBOARDING_WRITE_UNVERIFIED');
       }
       const readback = await fetch(readUrl, {
-        method: 'GET', credentials: 'same-origin', cache: 'no-store',
+        method: 'GET', credentials: 'include', cache: 'no-store',
         headers: { Accept: 'application/json' },
       });
       if (!readback.ok) throw new Error('ONBOARDING_READBACK_DENIED');
