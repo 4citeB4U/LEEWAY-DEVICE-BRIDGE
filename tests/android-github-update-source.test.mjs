@@ -21,7 +21,15 @@ assert.match(activity, /PackageInstallBroker\.installFromUrl/);
 assert.match(activity, /SHOW_UPDATE/);
 assert.match(relay, /GitHubUpdateChecker\.check/);
 assert.match(broker, /silentInstall", false/);
-assert.match(workflow, /docs\/package-manifest\.json/);
-assert.match(workflow, /sourceRunId/);
+// The native updater stays intact; only original Runtime and the approved
+// signer may publish a customer release, not a measured debug APK.
+const manifest = JSON.parse(fs.readFileSync("docs/package-manifest.json", "utf8"));
+const android = manifest.packages.find(item => item.platform === "android");
+assert.equal(android.channel, "development");
+assert.equal(android.downloadUrl, null);
+assert.equal(android.status, "DEVELOPMENT_ONLY_NOT_PUBLIC_RELEASE");
+assert.match(workflow, /actions\/upload-artifact@v4/);
+assert.match(workflow, /Protect public onboarding from developer APK links/);
+assert.doesNotMatch(workflow, /git push origin HEAD:main/);
 
 console.log("PASS Android GitHub owner-confirmed update source contract");
