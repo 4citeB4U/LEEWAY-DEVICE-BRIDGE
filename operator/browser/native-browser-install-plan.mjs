@@ -12,7 +12,7 @@ HOW = Host-injected OS/browser inventory and current official signed release cat
 LICENSE = Original repository terms; no new signer or production admission.
 */
 const osFamilies=new Set(['Windows','Linux','Android','Apple']);
-const browsers=new Set(['chrome','edge','firefox','safari']);
+const browsers=new Set(['chrome','edge','firefox','safari','other']);
 const desktop=new Set(['Windows','Linux']);
 function denied(reason){throw Error('LEEWAY_NATIVE_SETUP_'+reason)}
 export async function planOriginalNativeBrowserSetup({
@@ -57,7 +57,8 @@ export async function planOriginalNativeBrowserSetup({
  })];
  for(const browser of selectedBrowsers){
    let availability='BROWSER_NOT_INSTALLED';
-   if(installedMap.get(browser)){
+   if(browser==='other')availability='OTHER_BROWSER_NATIVE_HOST_NOT_QUALIFIED';
+   else if(installedMap.get(browser)){
      if(os.family==='Android')
        availability='ANDROID_NATIVE_COMPANION_REQUIRED';
      else if(os.family==='Apple'&&os.form!=='desktop')
