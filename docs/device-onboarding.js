@@ -14,53 +14,84 @@ LICENSE = Existing repository terms.
 import {browserHint,allowedFormFactors,allowedBrowsers,planDeviceBridgeOnboarding} from './device-onboarding-policy.mjs';
 const form=document.getElementById('bridgeOnboardingForm');
 const status=document.getElementById('bridgeOnboardStatus');
+const platformSelect=document.getElementById('bridgePlatform');
 const deviceSelect=document.getElementById('bridgeDeviceForm');
+const applePanel=document.getElementById('bridgeAppleInstructions');
+const appleHelp=document.getElementById('bridgeApplePwaHelp');
+const applePwaSteps=document.getElementById('bridgeApplePwaSteps');
 const browserFields=document.getElementById('bridgeBrowserOptions');
 const platformHint=document.getElementById('bridgePlatformHint');
 const result=document.getElementById('bridgeOnboardSteps');
 const hint=browserHint(navigator.userAgent,navigator.maxTouchPoints);
+const selection=()=>platformSelect?.value||hint.family;
+const selectedDeviceHint=()=>Object.freeze({...hint,family:selection(),hintOnly:true,
+ authority:'USER_SELECTED_PLATFORM_NOT_NATIVE_VERIFIED'});
 const label=(browser)=>({chrome:'Chrome',edge:'Microsoft Edge',firefox:'Firefox',safari:'Safari',other:'Other browser'})[browser]||browser;
 const chosenRadio=name=>form.querySelector('input[name="'+name+'"]:checked')?.value||null;
 const txt=(tag,value)=>{const e=document.createElement(tag);e.textContent=value;return e};
 function choices(){
+ const family=selection();
  deviceSelect.replaceChildren();
- for(const family of allowedFormFactors(hint.family)){
-  const text=family==='foldable'?'Foldable Android phone':family==='tablet'?'Tablet':
-    family==='phone'?'Phone':'Desktop / laptop';
+ for(const form of allowedFormFactors(family)){
+  const name=form==='foldable'?'Foldable Android phone':form==='tablet'?'Tablet':
+    form==='phone'?'Phone':'Desktop / laptop';
   const option=document.createElement('option');
-  option.value=family;option.textContent=text;
+  option.value=form;option.textContent=name;
   deviceSelect.append(option);
  }
- deviceSelect.value=allowedFormFactors(hint.family).includes(hint.form)?hint.form:
-   allowedFormFactors(hint.family)[0]||'';
+ deviceSelect.value=family===hint.family&&allowedFormFactors(family).includes(hint.form)
+   ?hint.form:availableForm(family);
+ syncBrowserChoices(false);
+ if(applePanel)applePanel.hidden=family!=='Apple';
+}
+function availableForm(family){
+ return family==='Apple'||family==='Android'?'phone':'desktop';
+}
+function syncBrowserChoices(preserve=true){
+ const family=selection();
+ const previous=new Set(preserve?[...browserFields.querySelectorAll('input:checked')].map(x=>x.value):[]);
  browserFields.replaceChildren();
- for(const browser of allowedBrowsers(hint.family,deviceSelect.value)){
+ for(const browser of allowedBrowsers(family,deviceSelect.value)){
   const item=txt('label','');
   const input=document.createElement('input');
   input.type='checkbox';input.name='browserChoices';input.value=browser;
-  input.checked=browser===hint.browser;
+  input.checked=preserve?previous.has(browser):
+    family===hint.family?browser===hint.browser:
+    browser===(family==='Apple'?'safari':'chrome');
   item.append(input,document.createTextNode(' '+label(browser)));
   browserFields.append(item);
  }
 }
-if(form&&status&&deviceSelect&&browserFields&&platformHint&&result){
+function choosePlatform(family,{showAppleHelp=false}={}){
+ if(!['Windows','Linux','Android','Apple'].includes(family))return;
+ platformSelect.value=family;
+ choices();
+ result.hidden=true;
+ result.replaceChildren();
+ status.textContent='Preparing '+family+' device setup. This is a device choice, not verified hardware or account enrollment.';
+ if(showAppleHelp&&applePanel)applePanel.hidden=false;
+ if(showAppleHelp&&applePwaSteps)applePwaSteps.hidden=false;
+ document.getElementById('bridgeSetup')?.scrollIntoView({behavior:'smooth',block:'start'});
+}
+if(form&&status&&platformSelect&&deviceSelect&&browserFields&&platformHint&&result){
  platformHint.textContent=hint.family==='Unknown'?
    'This browser does not identify a qualified LeeWay operating system. Native package selection is blocked.':
    'This browser appears to be '+hint.family+' · '+hint.form+' · '+label(hint.browser)+
    '. Confirm the actual device below. Exact device model and installed browsers are checked only by the original signed companion.';
+ platformSelect.value=['Windows','Linux','Android','Apple'].includes(hint.family)?hint.family:'Android';
  choices();
- deviceSelect.addEventListener('change',()=>{
-  const selected=new Set([...browserFields.querySelectorAll('input:checked')].map(x=>x.value));
-  browserFields.replaceChildren();
-  for(const browser of allowedBrowsers(hint.family,deviceSelect.value)){
-   const item=txt('label','');
-   const input=document.createElement('input');
-   input.type='checkbox';input.name='browserChoices';input.value=browser;
-   input.checked=selected.has(browser);
-   item.append(input,document.createTextNode(' '+label(browser)));
-   browserFields.append(item);
-  }
+ platformSelect.addEventListener('change',choices);
+ deviceSelect.addEventListener('change',()=>syncBrowserChoices());
+ for(const a of document.querySelectorAll('a[data-setup-platform]')){
+  a.addEventListener('click',event=>{
+   event.preventDefault();
+   choosePlatform(a.dataset.setupPlatform,{showAppleHelp:a.dataset.appleHelp==='true'});
+  });
+ }
+ appleHelp?.addEventListener('click',()=>{
+  if(applePwaSteps)applePwaSteps.hidden=!applePwaSteps.hidden;
  });
+
  form.addEventListener('submit',event=>{
   event.preventDefault();
   result.hidden=false;
@@ -68,7 +99,7 @@ if(form&&status&&deviceSelect&&browserFields&&platformHint&&result){
   let plan;
   try{
    plan=planDeviceBridgeOnboarding({
-    detected:hint,deviceForm:deviceSelect.value,
+    detected:selectedDeviceHint(),deviceForm:deviceSelect.value,
     deviceRelation:chosenRadio('deviceRelation'),
     leeWayAccount:chosenRadio('leeWayAccount'),
     github:chosenRadio('github'),
