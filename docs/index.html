@@ -47,7 +47,13 @@ LICENSE: MIT
    <label><input type="radio" name="leeWayAccount" value="new" required> No — join with a Creator invitation</label>
    <p>Only original Zitadel/Runtime can verify invitations, sign-in and customer permissions. Do not enter passwords here.</p>
   </fieldset>
-  <fieldset><legend>3. What device do you have?</legend><label for="bridgeDeviceForm">Device class</label>
+  <fieldset><legend>3. What device do you have?</legend>
+   <label for="bridgePlatform">Operating system</label>
+   <select id="bridgePlatform" name="platform" required>
+     <option value="Android">Android</option><option value="Apple">Apple</option>
+     <option value="Windows">Windows</option><option value="Linux">Linux</option>
+   </select>
+   <label for="bridgeDeviceForm">Device class</label>
    <select id="bridgeDeviceForm" name="deviceForm" required></select>
    <p>Exact model, OS version, architecture and package compatibility must be verified by the signed native companion.</p>
   </fieldset>
@@ -62,6 +68,22 @@ LICENSE: MIT
   <button class="db-setup-action" type="submit">Review secure Device Bridge setup</button>
  </form>
  <p id="bridgeOnboardStatus" class="db-onboard-status" role="status">No package has been downloaded or installed. Original Zitadel/Runtime registration must succeed before a signed native installer is offered.</p>
+ <section id="bridgeAppleInstructions" hidden class="db-apple-setup" aria-label="Apple device installation and enrollment requirements">
+  <h2>Apple Device Bridge · iPhone, iPad or Mac</h2>
+  <p>Apple's iPhone/iPad native Bridge runs through the original qualified Apple app/extension and individual device enrollment. A GitHub IPA download is not a complete setup and cannot silently install on your phone.</p>
+  <ol>
+   <li>Verify your LeeWay invitation or sign in to the original Zitadel account.</li>
+   <li>On iPhone/iPad, prepare the original Apple native companion using its approved signing and device installation channel. On Mac, verify the original desktop host and browser extension.</li>
+   <li>Complete owner-approved pairing, original Runtime authorization and signed device passport readback.</li>
+   <li>Open your existing Agent Virtual Tablet from the approved extension or companion. Creator and customer views remain separate.</li>
+  </ol>
+  <p id="bridgeAppleInstallStatus" class="db-setup-blocked">Apple native signing, device enrollment and original Runtime connection have NOT been live verified on this setup page. No installation is offered.</p>
+  <button id="bridgeApplePwaHelp" type="button" class="db-setup-action">Show optional Apple Home Screen display instructions</button>
+  <div id="bridgeApplePwaSteps" hidden class="db-apple-pwa-steps" role="status">
+   <p><strong>Optional browser display only:</strong> On iPhone or iPad, open this LeeWay Device Bridge page in Safari, tap Share, then choose Add to Home Screen. Launch the icon from your Home Screen. This does not install the native Device Bridge, enroll the phone or grant a device capability.</p>
+   <p>On a Mac, use the browser's supported Add to Dock / Install app option where available. Native Mac permissions and messaging must still be separately approved.</p>
+  </div>
+ </section>
  <section id="bridgeOnboardSteps" hidden class="db-onboard-steps" aria-live="polite"></section>
  <p class="db-onboard-note">Public developer-debug APKs and unverified browser extensions are not customer installation options. Technical diagnostics are under Advanced Device Bridge Console.</p>
 </section>
@@ -136,8 +158,8 @@ LICENSE: MIT
   <section class="platform-grid" aria-label="LeeWay platform lanes">
     <article class="platform-card apple-card" id="appleLane">
       <p class="kicker">APPLE · IPHONE / IPAD / MAC</p><h2>Apple workspace and native Metal</h2>
-      <p>Use the Home Screen app as the daily LeeWay front door. Use the native IPA only when direct Metal service is required.</p>
-      <div class="card-actions"><a class="action" href="https://github.com/codespaces/new?hide_repo_select=true&amp;repo=1380304068" target="_blank" rel="noopener">OPEN APPLE WORKSTATION</a><a class="action secondary" href="https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/tag/apple-latest" target="_blank" rel="noopener">OPEN APPLE PACKAGE</a></div>
+      <p>Register your Apple phone, tablet or Mac with the original account and qualified native Bridge. An unsigned IPA link is not onboarding. The browser Home Screen icon is only a display shortcut.</p>
+      <div class="card-actions"><a class="action" href="#bridgeSetup" data-setup-platform="Apple">BEGIN APPLE DEVICE BRIDGE SETUP</a><a class="action secondary" href="#bridgeAppleInstructions" data-setup-platform="Apple" data-apple-help="true">APPLE INSTALL REQUIREMENTS</a></div>
       <div class="card-links"><a href="#appleRuntime">Apple controls</a><a href="./APPLE-DIRECT-ILOADER-DELIVERY.md">Direct iLoader update</a><a href="./ILOADER-PERSISTENCE.md">iLoader saved setup</a></div>
     </article>
     <article class="platform-card" id="androidLane">
@@ -162,7 +184,7 @@ LICENSE: MIT
 
   <section class="panel" id="appleRuntime">
     <div class="panel-head"><div><p class="kicker">APPLE CONTROLS</p><h2>Use LeeWay on this Apple device</h2></div><span id="pwaState" class="badge">CHECKING</span></div>
-    <ol class="plain-steps"><li><strong>Daily LeeWay:</strong> launch the LeeWay icon from the iPhone Home Screen.</li><li><strong>Apple workstation:</strong> use <strong>OPEN APPLE WORKSTATION</strong> above when you need the editor, terminal, Git, or GitHub.</li><li><strong>Native Metal app:</strong> use <strong>OPEN APPLE PACKAGE</strong>, download the current IPA from GitHub, then import it through the existing iLoader installation.</li></ol>
+    <ol class="plain-steps"><li><strong>Daily LeeWay:</strong> launch the LeeWay icon from the iPhone Home Screen.</li><li><strong>Apple desktop:</strong> choose Apple → Desktop / laptop in the setup above. Developer tools and GitHub are separate, optional workspaces.</li><li><strong>Native Bridge:</strong> begin with <a href="#bridgeSetup" data-setup-platform="Apple">Apple Device Bridge setup</a>. Owner-approved signing, installation and a verified device passport are required. No direct GitHub IPA is offered as setup.</li></ol>
     <div class="card-actions"><button class="action" id="installPwaBtn">SHOW APPLE APP STATUS</button><button class="action secondary" id="launchPwaBtn">REFRESH LEEWAY</button><button class="action secondary" id="beginAppleQualification">CHECK APPLE BROWSER</button></div>
     <p id="pwaOutput" class="status-copy">Checking Apple Home Screen installation…</p>
     <div class="native-callout"><strong>Native Metal delivery:</strong> iLoader is the active Apple package installer. Keep <strong>Save Credentials</strong> checked, preserve the existing certificate and pairing record, and use <a href="./ILOADER-PERSISTENCE.md">the saved-setup guide</a>.</div>
