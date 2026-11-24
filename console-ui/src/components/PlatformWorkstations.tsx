@@ -373,6 +373,12 @@ export const PlatformWorkstations: React.FC<PlatformWorkstationsProps> = ({
                       <p className="text-[11px] text-amber-200">
                         This is an unsigned developer artifact, not an iPhone-installable release. Signing and owner-approved installation are required. Mac installation requires a separate macOS package.
                       </p>
+                      <div className="rounded-lg border border-cyan-700/40 bg-cyan-950/20 p-2.5 text-[11px] text-cyan-100 space-y-1">
+                        <strong className="block text-xs">Install LeeWay as a browser app — no Apple Developer membership required</strong>
+                        <p>iPhone or iPad: open the LeeWay web app in Safari, tap Share, then Add to Home Screen and select Open as Web App when available.</p>
+                        <p>Mac: open the site in Safari and use File → Add to Dock where supported.</p>
+                        <p>This installs the web interface, not the native Metal/camera/device adapter. Native hardware capabilities require a separately qualified signed app.</p>
+                      </div>
                     </>
                   )}
 
