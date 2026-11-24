@@ -51,7 +51,7 @@ test('Safari iPhone opens same-page Home Screen steps, not GitHub or unsigned IP
  assert.match(view.instructions(),/Add to Home Screen/);
  assert.doesNotMatch(view.instructions(),/github\.com|unsigned\.ipa|codespaces/i);
  view.nodes.dbAppleBridgeStatus.trigger('click');
- assert.match(view.instructions(),/signed Apple companion|signed native/i);
+ assert.match(view.instructions(),/signed Apple installer|signed release/i);
  assert.doesNotMatch(view.instructions(),/github\.com\/releases/i);
 });
 test('iPad opens Apple route, changing to Android hides it',()=>{
