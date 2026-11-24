@@ -128,3 +128,18 @@ test('contact email remains an unverified reference, not an active link', () => 
   assert.doesNotMatch(contact, /mailto:/, 'no active mail link');
   assert.ok(!exists('console-ui/.env'), 'no unverified address shipped in env');
 });
+
+test('onboarding completion requires Runtime write and readback', () => {
+  const hook = read('console-ui/src/hooks/useLeeWaySession.ts');
+  const page = read('console-ui/src/components/OnboardingPage.tsx');
+  const env = read('console-ui/.env.example');
+  assert.match(hook, /ONBOARDING_WRITE_DENIED/);
+  assert.match(hook, /ONBOARDING_READBACK_UNVERIFIED/);
+  assert.match(hook, /method: 'POST'/);
+  assert.match(hook, /credentials: 'same-origin'/);
+  assert.match(hook, /setSession\(\{ \.\.\.session, onboarded: true/);
+  assert.doesNotMatch(hook, /setSession\(\(current\) => current && current\.authenticated[\s\S]*?onboarded: true/);
+  assert.match(page, /saving: boolean/);
+  assert.match(page, /error: string \| null/);
+  assert.match(env, /VITE_LEEWAY_ONBOARDING_URL=/);
+});
