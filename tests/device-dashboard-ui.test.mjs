@@ -33,7 +33,11 @@ test("no invented remote execution, devices or package bundle",()=>{
   assert.ok((page.match(/class="db-control" type="button"/g)||[]).length>=12);
   assert.match(js,/capabilityMap/);
   assert.match(page,/id="dbControlDetails"/);
-  assert.match(page,/bundle not yet verified/);
+  // Public Device Bridge onboarding comes first; no debug release button.
+  assert.match(page,/id="bridgeSetup"/);
+  assert.match(page,/No package has been downloaded or installed/);
+  assert.match(page,/id="dbAdvanced"/);
+  assert.doesNotMatch(page,/<a[^>]+\.apk[^>]*>/);
   assert.match(page,/id="dbInventoryRows"/);
   assert.match(js,/navigator\.hardwareConcurrency/);
   assert.match(js,/navigator\.storage\.estimate/);

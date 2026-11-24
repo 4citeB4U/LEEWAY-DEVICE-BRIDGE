@@ -16,19 +16,27 @@ async function resolvePackage(profile){
   return {manifest,pkg:manifest.packages.find(p=>p.platform===platform)||null};
 }
 function renderPackage(manifest,pkg){
-  if(!pkg){
-    $("#packageState").textContent="NO ROUTE";
-    $("#packageCard").innerHTML=`<h3>No verified Android package published</h3><p class="package-meta">GitHub Pages will expose a package only after size, SHA-256 and runtime qualification pass.</p>`;
-    return;
-  }
-  $("#packageState").textContent=pkg.status;
-  const measured=pkg.sizeBytes==null?"Not measured":`${pkg.sizeBytes} bytes`;
-  const action=pkg.downloadUrl
-    ? `<a class="action" href="${esc(pkg.downloadUrl)}" download>Download & update LeeWay Device Bridge ${esc(pkg.versionName||"")}</a>`
-    : `<button id="handoffBtn" class="action">Package build required</button>`;
-  $("#packageCard").innerHTML=`<h3>${esc(pkg.label)}</h3><p class="package-meta">Release: ${esc(pkg.versionName||"Unknown")} · Status: ${esc(pkg.status)}<br>Published from GitHub Pages · SHA-256: ${esc(pkg.sha256||"Not published")}</p>${action}<p class="package-meta"><strong>Update:</strong> install the published Android package over the current one. If Android reports a signature conflict, stop and use the platform’s controlled migration path; do not erase app data.</p>`;
+  const state=$("#packageState"),card=$("#packageCard");
+  if(!state||!card)return;
+  // Public GitHub Pages is a non-authoritative onboarding display. A
+  // development APK or manifest-declared URL is NEVER a customer release.
+  // Signed native installers require original Runtime account/invitation
+  // admission, verified architecture and owner-confirmed package signing.
+  state.textContent="NATIVE RELEASE NOT ADMITTED";
+  card.replaceChildren();
+  const title=document.createElement("h3");
+  title.textContent="Device Bridge enrollment comes before a native installer";
+  const detail=document.createElement("p");
+  detail.className="package-meta";
+  detail.textContent=pkg?.channel==="development"
+    ?"This source currently lists an Android debug build. It is a developer artifact, not a signed customer package. No download or update is offered."
+    :"Complete original LeeWay sign-in, invitation verification and device-specific native signing qualification before a package can be released.";
+  const link=document.createElement("a");
+  link.className="action secondary";
+  link.href="#bridgeSetup";
+  link.textContent="Review secure device setup";
+  card.append(title,detail,link);
 }
-
 async function showPublishedAndroidPackage(){
   try{
     const manifest=await fetch("./package-manifest.json",{cache:"no-store"}).then(r=>r.json());
@@ -109,37 +117,37 @@ const pwaState=message=>{const el=$("#pwaState");if(el)el.textContent=message;};
 const pwaOut=message=>{const el=$("#pwaOutput");if(el)el.textContent=message;};
 const isStandalone=()=>window.matchMedia?.("(display-mode: standalone)")?.matches||window.navigator.standalone===true;
 const showAppleInstallHelp=()=>{
-  const help=$("#appleInstallSteps");
-  if(help){help.open=true;help.scrollIntoView({behavior:"smooth",block:"center"});}
+  const help=$("#bridgeAppleInstructions");
+  if(help){help.hidden=false;help.scrollIntoView({behavior:"smooth",block:"center"});} const steps=$("#bridgeApplePwaSteps");if(steps)steps.hidden=false;
   if(isStandalone()){
     pwaState("INSTALLED");
-    pwaOut("LeeWay is already installed. Launch and use it from the LeeWay Home Screen icon. There is no additional Apple download.");
+    pwaOut("LeeWay Device Bridge is opened as a Home Screen browser shortcut. This does NOT prove Apple native Bridge installation or device enrollment.");
     return;
   }
   pwaState("SAFARI: ADD TO HOME");
-  pwaOut("Safari does not let a web page open Apple's Add to Home Screen control. Tap Safari Share, choose Add to Home Screen, then tap Add. Do not download the Android APK.");
+  pwaOut("Safari: optionally tap Share, then Add to Home Screen for a browser display shortcut. It does not enroll Apple Device Bridge or grant native device access.");
 };
 
 function refreshPwaInstallState(){
   if(isStandalone()){
     pwaState("INSTALLED");
-    pwaOut("LeeWay is running as an installed Home Screen app. There is no additional Apple download.");
+    pwaOut("LeeWay Device Bridge is opened from a Home Screen display shortcut. Native Apple enrollment and Runtime identity are separate.");
     const btn=$("#installPwaBtn");if(btn){btn.disabled=false;btn.textContent="LEEWAY APP INSTALLED — SHOW STATUS";}
     return;
   }
   if(isAppleMobile()){
     pwaState("SAFARI: ADD TO HOME");
-    pwaOut("Apple iPhone installation: tap Safari Share, choose Add to Home Screen, then tap Add. Do not download the Android APK.");
+    pwaOut("iPhone/iPad display shortcut: in Safari tap Share, then Add to Home Screen. Native Device Bridge installation and Runtime authorization are separate.");
     const btn=$("#installPwaBtn");if(btn)btn.textContent="SHOW APPLE INSTALL STEPS";
     return;
   }
   if(deferredInstallPrompt){
     pwaState("READY TO INSTALL");
-    pwaOut("Install the LeeWay Device-Neutral Workstation directly from this browser.");
+    pwaOut("Install only the Device Bridge display shortcut from this browser. This cannot install a native capability adapter.");
     return;
   }
   pwaState("BROWSER INSTALL");
-  pwaOut("If this browser does not show a direct install prompt yet, use its menu and choose Install app or Add to Home screen. No APK is required for the base workstation.");
+  pwaOut("Use the browser Install app or Add to Home Screen option for a display shortcut only; signed native Device Bridge setup remains separate.");
 }
 
 addEventListener("beforeinstallprompt",event=>{
@@ -155,14 +163,14 @@ $("#installPwaBtn")?.addEventListener("click",async()=>{
   if(isAppleMobile()||isStandalone()){showAppleInstallHelp();return;}
   if(!deferredInstallPrompt){
     pwaState("USE BROWSER INSTALL");
-    pwaOut("Open the browser menu and choose Install app or Add to Home screen. This installs the LeeWay workstation without sideloading an APK.");
+    pwaOut("Open the browser menu and choose Install app or Add to Home Screen for the Bridge display shortcut; native device enrollment is separate.");
     return;
   }
   deferredInstallPrompt.prompt();
   const choice=await deferredInstallPrompt.userChoice.catch(()=>null);
   deferredInstallPrompt=null;
   pwaState(choice?.outcome==="accepted"?"INSTALL ACCEPTED":"INSTALL NOT COMPLETED");
-  pwaOut(choice?.outcome==="accepted"?"LeeWay Workstation installation was accepted.":"The workstation remains available in the browser; no APK is required.");
+  pwaOut(choice?.outcome==="accepted"?"LeeWay Device Bridge display shortcut installation was accepted; native device enrollment NOT verified.":"The Bridge page remains available in this browser; signed native installation remains a separate approval.");
 });
 $("#launchPwaBtn")?.addEventListener("click",()=>location.reload());
 refreshPwaInstallState();

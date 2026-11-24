@@ -14,6 +14,14 @@ assert.match(checker, /remoteCode <= currentCode/);
 assert.match(checker, /SHA256/);
 assert.match(checker, /PendingIntent/);
 assert.match(checker, /POST_NOTIFICATIONS/);
+assert.match(checker, /SIGNED_RELEASE_PUBLISHED/);
+assert.match(checker, /VERIFIED_OWNER_SIGNATURE/);
+assert.match(checker, /candidateUrl\.isNotBlank/);
+assert.match(checker, /candidateUrl\.contains\("-debug"/);
+assert.match(checker, /remove\(PENDING_UPDATE\)/);
+assert.match(checker, /cancel\(NOTIFICATION_ID\)/);
+assert.match(checker, /CUSTOMER_SIGNED_ANDROID_RELEASE_NOT_PUBLISHED/);
+assert.match(checker, /ORIGINAL_APPROVED_APK_SOURCE_REQUIRED/);
 assert.doesNotMatch(checker, /silentInstall|automaticInstall/);
 assert.match(activity, /CHECK GITHUB FOR UPDATES/);
 assert.match(activity, /showUpdatePrompt/);
@@ -21,7 +29,15 @@ assert.match(activity, /PackageInstallBroker\.installFromUrl/);
 assert.match(activity, /SHOW_UPDATE/);
 assert.match(relay, /GitHubUpdateChecker\.check/);
 assert.match(broker, /silentInstall", false/);
-assert.match(workflow, /docs\/package-manifest\.json/);
-assert.match(workflow, /sourceRunId/);
+// The native updater stays intact; only original Runtime and the approved
+// signer may publish a customer release, not a measured debug APK.
+const manifest = JSON.parse(fs.readFileSync("docs/package-manifest.json", "utf8"));
+const android = manifest.packages.find(item => item.platform === "android");
+assert.equal(android.channel, "development");
+assert.equal(android.downloadUrl, null);
+assert.equal(android.status, "DEVELOPMENT_ONLY_NOT_PUBLIC_RELEASE");
+assert.match(workflow, /actions\/upload-artifact@v4/);
+assert.match(workflow, /Protect public onboarding from developer APK links/);
+assert.doesNotMatch(workflow, /git push origin HEAD:main/);
 
 console.log("PASS Android GitHub owner-confirmed update source contract");

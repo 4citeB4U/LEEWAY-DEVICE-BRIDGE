@@ -21,16 +21,17 @@ async function waitFor(path,needles,{attempts=30,delayMs=10000}={}){
 
 let failed=false;
 try{
-  // PRIMARY: device-neutral workstation/PWA
+  // PRIMARY: the public device bridge starts with protected, mobile-first
+  // account onboarding. Development workstations remain under Advanced.
   await waitFor('',[
-    'LeeWay Device-Neutral Workstation',
-    'OPEN APPLE CLOUD WORKSTATION',
-    'OPEN ANDROID REMOTE WORKSTATION',
-    'GitHub Codespaces',
-    'editor, terminal, Git, Node, and GitHub CLI development environment'
+    'Set up LeeWay on this device',
+    'id="bridgeOnboardingForm"',
+    'Android phone / tablet',
+    'id="dbAdvanced"',
+    'Review secure Device Bridge setup'
   ]);
   await waitFor('manifest.webmanifest',[
-    'LeeWay Device-Neutral Workstation',
+    'LeeWay Device Bridge',
     'standalone',
     'leeway-official-logo-192.png',
     'leeway-official-logo-512.png'
@@ -40,22 +41,30 @@ try{
     console.log(JSON.stringify({icon,status:r.status,contentLength:r.headers.get('content-length')}));
     if(!r.ok)throw new Error('PWA_ICON_FAIL:'+icon+':'+r.status);
   }
-  const sw=await fetch(BASE+'sw.js',{cache:'no-store'});
-  console.log(JSON.stringify({serviceWorkerStatus:sw.status}));
-  if(!sw.ok)throw new Error('SERVICE_WORKER_FAIL:'+sw.status);
+  const sw=await waitFor('sw.js',['v20-secure-onboarding-no-debug','status: 410']);
+  console.log(JSON.stringify({serviceWorkerStatus:sw.r.status}));
 
-  // OPTIONAL: Android native extension must not block base workstation
-  const pkg=await waitFor('package-manifest.json',[
+  // The historical debug artifact is preserved in Git history and CI ONLY.
+  // Current public release discovery explicitly denies installer delivery.
+  await waitFor('package-manifest.json',[
     'android-latest-debug',
-    'QUALIFIED_ARTIFACT_OWNER_INSTALL_REQUIRED',
-    '"nativeVerification": true',
-    '"githubActionsQualification"',
-    '"state": "VERIFIED"'
+    'DEVELOPMENT_ONLY_NOT_PUBLIC_RELEASE',
+    '"downloadUrl": null',
+    '"nativeVerification": true'
   ]);
-  console.log('OPTIONAL_ANDROID_EXTENSION=AVAILABLE');
+  await waitFor('downloads/leeway-device-bridge-android-latest.json',[
+    '"downloadUrl": null',
+    'NOT_APPROVED_FOR_CUSTOMER_INSTALL'
+  ]);
+  // No debugger APK may remain in the GitHub Pages published tree.
+  const binary=await fetch(BASE+'downloads/leeway-device-bridge-android-latest-debug.apk',
+    {method:'HEAD',redirect:'error',cache:'no-store'});
+  console.log(JSON.stringify({apkStatus:binary.status}));
+  if(binary.ok)throw new Error('PUBLIC_DEVELOPER_DEBUG_APK_STILL_ACCESSIBLE');
+  console.log('ANDROID_NATIVE_RELEASE=OWNER_SIGNING_AND_ENROLLMENT_REQUIRED');
 }catch(e){
   console.error(e?.stack||e);
   failed=true;
 }
 if(failed)process.exit(1);
-console.log('LEEWAY_DEVICE_NEUTRAL_WORKSTATION_LIVE_GATE=PASS');
+console.log('LEEWAY_DEVICE_BRIDGE_PUBLIC_ONBOARDING_LIVE_GATE=PASS');

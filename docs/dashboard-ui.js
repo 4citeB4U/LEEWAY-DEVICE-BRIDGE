@@ -176,20 +176,19 @@ qa(".db-control").forEach(button=>{
   });
 });
 async function verifyDownloads(){
+  // The public directory must not transform a package-manifest debug URL into
+  // an install button. Release approval and device enrollment happen in the
+  // original Runtime/native Bridge, not a GitHub Pages read.
   try{
     const res=await fetch("./package-manifest.json",{cache:"no-store",signal:AbortSignal.timeout(8000)});
     if(!res.ok)throw new Error("Package manifest HTTP "+res.status);
     const manifest=await res.json();
     const android=manifest.packages?.find(item=>item.platform==="android");
-    const tile=qa(".db-download-tile")[3];
-    if(android?.downloadUrl&&android?.sha256&&android?.sizeBytes&&tile){
-      const link=q("a",tile);link.href=new URL(android.downloadUrl,location.href).href;
-      link.title="Native Android extension "+(android.versionName||"")+"; SHA-256: "+android.sha256;
-      eventLog("Published Android extension manifest read; full workstation bundle not asserted");
-    }
+    eventLog(android?.channel==="development"
+      ?"Android developer build is not a signed customer installer"
+      :"Package source read; public downloads remain gated by Runtime admission");
   }catch(error){eventLog("Package manifest unavailable: "+String(error.message||error))}
 }
-
 
 async function loadRegisteredProviders(){
   const target=q("#dbProviderState");if(!target)return;
