@@ -33,6 +33,17 @@ struct AppleDeviceBridgeView: View {
     var body: some View {
         NavigationStack {
             Form {
+                // Public Apple onboarding belongs to the original Bridge front
+                // door, never an implicit GitHub account or unsigned IPA link.
+                Section("LeeWay account and Agent Virtual Tablet") {
+                    LabeledContent("Account", value: "ORIGINAL RUNTIME SIGN-IN REQUIRED")
+                    LabeledContent("Native enrollment", value: "SIGNED RELEASE REQUIRED")
+                    Button("Open LeeWay Device Bridge setup") {
+                        openURL(updater.deviceBridgeSetupURL)
+                    }
+                    Text("Use the LeeWay Device Bridge page for your account and device setup. The Creator and invited customers use the same enrollment flow. A web shortcut does not prove native Bridge pairing or Tablet access.")
+                        .font(.footnote)
+                }
                 Section("LeeWay Device Bridge adapter") {
                     LabeledContent("Adapter", value: store.evidence.adapterID)
                     LabeledContent("State", value: store.evidence.state.rawValue)
@@ -107,33 +118,29 @@ struct AppleDeviceBridgeView: View {
                         if cameraBridge.isRunning { cameraBridge.stop() } else { cameraBridge.start(camera: camera) }
                     }
                 }
-                Section("GitHub update channel") {
+                Section("Apple companion qualification and updates") {
                     LabeledContent("Update state", value: updater.state)
                     LabeledContent("Installed", value: "\(updater.currentVersion) (\(updater.currentBuild))")
                     if updater.latestBuild > 0 {
-                        LabeledContent("GitHub package", value: "\(updater.latestVersion) (\(updater.latestBuild))")
-                    }
-                    if updater.latestSizeBytes > 0 {
-                        LabeledContent("Package size", value: "\(updater.latestSizeBytes / 1024 / 1024) MB")
+                        LabeledContent("Approved version", value: "\(updater.latestVersion) (\(updater.latestBuild))")
                     }
                     if let errorMessage = updater.errorMessage {
-                        Text(errorMessage).foregroundStyle(.red)
+                        Text(errorMessage).foregroundStyle(.orange)
                     }
-                    Button("Check GitHub for Updates") { updater.check() }
+                    Button("Check for an approved signed Apple Bridge update") { updater.check() }
                     if updater.updateAvailable {
-                        Button("Open GitHub Release / Download IPA") {
-                            openURL(updater.releaseURL)
-                        }
-                        Button("Copy GitHub IPA URL") {
-                            if let ipaURL = updater.latestIPAURL {
-                                UIPasteboard.general.string = ipaURL.absoluteString
-                            }
-                        }
-                        Button("Open iLoader Delivery Instructions") {
+                        Text("An approved signed update is recorded in the original manifest. Complete owner-authorized installer approval; this source check does not install or pair the app.")
+                            .font(.footnote)
+                    }
+                    DisclosureGroup("Developer-only unsigned IPA workflow (optional)") {
+                        Text("The historical GitHub IPA is an unsigned source build for explicit owner-controlled iLoader signing, not the public customer Device Bridge. No automatic replacement or hidden GitHub login is performed.")
+                            .font(.footnote)
+                        Button("Read developer iLoader delivery instructions") {
                             openURL(updater.iLoaderGuideURL)
                         }
-                        Text("GitHub supplies the IPA. Import it into the existing owner-controlled iLoader installation, which signs and installs the replacement over USB. iOS cannot replace its own signed app.")
-                            .font(.footnote)
+                        Button("Open unsigned developer package source") {
+                            openURL(updater.releaseURL)
+                        }
                     }
                 }
                 Section("Agent Lee system entry points") {
