@@ -1,0 +1,40 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.DEVICE.BRIDGE.BROWSER.NATIVE_CI
+# TAG: LEEWAY.BRIDGE_NATIVE_BROWSER_OWNER_READBACK.CI.V1
+# 5WH:
+# WHAT = Qualify canonical Native Messaging browser session, stdio framing and published-ID manifest source.
+# WHY = A browser sidebar is not an enrolled Device Bridge or original Runtime readback.
+# WHO = Creator-authorized Device Bridge source CI contributors.
+# WHERE = .github/workflows/native-browser-bridge-contract.yml.
+# WHEN = 2026-11-23.
+# HOW = Run source syntax and positive/negative injected-provider tests; no physical host or production admission.
+# LICENSE = MIT; CI grants no device execution.
+name: Device Bridge Native Browser Owner Session Source Contract
+on:
+  pull_request:
+    paths:
+      - 'operator/browser/**'
+      - 'tests/browser/**'
+      - '.github/workflows/native-browser-bridge-contract.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser-host-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and native browser contract tests
+        run: |
+          node --check operator/browser/native-bridge-session.mjs
+          node --check operator/browser/native-message-transport.mjs
+          node --check operator/browser/native-host-manifest.mjs
+          node --check operator/browser/native-device-target.mjs
+          node --check operator/browser/native-onboarding-handoff.mjs
+          node --check operator/browser/native-browser-install-plan.mjs
+          node --check operator/browser/start-native-browser-host.mjs
+          node --test tests/browser/*.test.mjs
