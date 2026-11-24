@@ -23,6 +23,10 @@ const release=()=>({
 });
 const fixture=(family,form,browsers=['chrome','edge','firefox'])=>({
  discoverOS:async()=>({family,form,observation:'ORIGINAL_OS_ADAPTER_OBSERVED'}),
+ discoverHardware:async()=>({observation:'ORIGINAL_OS_ADAPTER_OBSERVED',form,foldable:false,
+   architecture:family==='Android'?'arm64':'x64',
+   packageFormat:family==='Android'?'apk':family==='Apple'?(form==='desktop'?'pkg':'ipa'):
+     family==='Linux'?'deb':'exe',distribution:'unspecified'}),
  discoverBrowsers:async()=>browsers.map(browser=>({
    browser,installed:true,observation:'ORIGINAL_OS_ADAPTER_OBSERVED'
  })),
@@ -88,4 +92,32 @@ test('published store status without approved signature and integrity is not ins
  });
  assert.equal(p.steps[0].state,'QUALIFIED_RELEASE_NOT_AVAILABLE');
  assert.equal(p.steps[1].state,'BROWSER_EXTENSION_NOT_PUBLISHED');
+});
+
+test('native setup refuses hardware data invented by browser and requires original OS adapter',async()=>{
+ await assert.rejects(()=>planOriginalNativeBrowserSetup({
+  ...fixture('Windows','desktop'),discoverHardware:async()=>({
+    observation:'BROWSER_UA_HINT',architecture:'x64',form:'desktop',
+    packageFormat:'exe',foldable:false
+  }),selectedBrowsers:['chrome']
+ }),/DEVICE_HARDWARE_UNBOUND/);
+ await assert.rejects(()=>planOriginalNativeBrowserSetup({
+  ...fixture('Android','phone'),discoverHardware:async()=>({
+    observation:'ORIGINAL_OS_ADAPTER_OBSERVED',architecture:'x64',form:'phone',
+    packageFormat:'exe',foldable:false
+  }),selectedBrowsers:['chrome']
+ }),/DEVICE_HARDWARE_UNBOUND/);
+});
+test('native setup refuses to claim owner installer or device enrollment for Fold without signed bytes',async()=>{
+ const f=fixture('Android','phone');
+ f.discoverHardware=async()=>({
+  observation:'ORIGINAL_OS_ADAPTER_OBSERVED',form:'phone',foldable:true,
+  architecture:'arm64',packageFormat:'apk',distribution:'unspecified'
+ });
+ const result=await planOriginalNativeBrowserSetup({...f,selectedBrowsers:['chrome']});
+ assert.equal(result.deviceTarget.foldable,true);
+ assert.equal(result.deviceTarget.architecture,'arm64');
+ assert.equal(result.deviceTarget.qualifiedRelease,'NOT_QUALIFIED');
+ assert.equal(result.deviceTarget.signatureReverified,'NOT_EXECUTED');
+ assert.equal(result.steps[0].state,'QUALIFIED_RELEASE_NOT_AVAILABLE');
 });
