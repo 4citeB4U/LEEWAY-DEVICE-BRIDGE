@@ -50,3 +50,18 @@ LICENSE: Preserve existing repo terms.
  .leeway-technical{padding:8px}
 }
 @media(max-width:360px){.leeway-steps{grid-template-columns:1fr 1fr}.leeway-steps b{width:24px;height:24px}.leeway-steps li{font-size:10px}}
+
+/* Apple stays inside the original Device Bridge account-first web app.
+   Never display the Apple install helper for an Android/Windows/Linux choice. */
+.leeway-apple-setup[hidden]{display:none!important}
+.leeway-apple-setup{margin-top:18px;padding:16px;border-radius:14px;border:1px solid #467e98;background:linear-gradient(135deg,#103245,#081f30)}
+.leeway-apple-setup h2{margin:0 0 7px;font-size:clamp(1.1rem,3vw,1.5rem);line-height:1.25}
+.leeway-apple-setup p{color:#c6dce7;font-size:13px;line-height:1.55}
+.leeway-apple-actions{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+.leeway-apple-actions button{flex:1 1 230px;max-width:100%;min-height:50px;font:inherit;font-size:13px;font-weight:750;cursor:pointer;touch-action:manipulation}
+.leeway-apple-actions .leeway-primary{grid-column:auto;width:auto}
+.leeway-secondary{padding:12px;border:1px solid #8aa6bb;border-radius:11px;background:#183746;color:#ecf9ff}
+.leeway-secondary:hover{background:#235066}
+.leeway-apple-instructions{margin-top:12px;padding:12px;border:1px solid #3a7083;border-radius:10px;color:#effdff;line-height:1.5}
+.leeway-apple-instructions p{margin:9px 0}
+.leeway-apple-actions button:focus-visible{outline:3px solid #8edff5;outline-offset:3px}
