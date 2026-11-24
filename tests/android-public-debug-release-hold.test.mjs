@@ -18,9 +18,11 @@ test("debug APK continues to build and produce private workflow artifact",()=>{
  assert.match(workflow,/actions\/upload-artifact@v4/);
  assert.match(workflow,/leeway-device-bridge-debug-apk/);
 });
-test("main push cannot automatically publish debug package to public GitHub Pages",()=>{
- const step=workflow.match(/\n\s*- name: Publish latest verified Android APK to GitHub Pages\n\s*if: ([^\n]+)/);
- assert.ok(step, "must retain visible explicit publication hold");
- assert.match(step[1],/^false\b/);
- assert.match(step[1],/DEBUG_PUBLICATION_HOLD_OWNER_SIGNED_RELEASE_REQUIRED/);
+test("main push cannot publish debug package: publisher deleted, hold preserved",()=>{
+ assert.match(workflow,/SECURITY HOLD:/);
+ assert.match(workflow,/developer-only GitHub/);
+ assert.match(workflow,/Protect public onboarding from developer APK links/);
+ assert.doesNotMatch(workflow,/Publish latest verified Android APK to GitHub Pages/);
+ assert.doesNotMatch(workflow,/git push origin HEAD:main/);
+ assert.doesNotMatch(workflow,/git add docs\/downloads\/leeway-device-bridge-android-latest-debug.apk/);
 });
