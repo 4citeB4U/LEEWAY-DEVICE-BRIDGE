@@ -69,6 +69,10 @@ jobs:
           AAPT="$SDK_ROOT/build-tools/35.0.0/aapt"
           "$APKSIGNER" verify --verbose --print-certs "$APK" > "$GITHUB_WORKSPACE/android-signature-evidence.txt"
           "$AAPT" dump badging "$APK" > "$RUNNER_TEMP/leeway-badging.txt"
+          "$AAPT" dump permissions "$APK" > "$GITHUB_WORKSPACE/android-permission-evidence.txt"
+          # Both platform/signer integrity and sensitive permissions must be
+          # visible to review. Owner authorization remains necessary.
+          grep -E "SYSTEM_ALERT_WINDOW|BIND_ACCESSIBILITY_SERVICE|REQUEST_INSTALL_PACKAGES|RECORD_AUDIO|RECEIVE_BOOT_COMPLETED|FOREGROUND_SERVICE" "$GITHUB_WORKSPACE/android-permission-evidence.txt" || true
           grep -F "package: name='industries.leeway.devicebridge'" "$RUNNER_TEMP/leeway-badging.txt"
           # A signed release must not be debuggable, and no debug-key signature qualifies.
           if "$AAPT" dump xmltree "$APK" AndroidManifest.xml | grep -Eq 'android:debuggable.*0xffffffff'; then
@@ -88,6 +92,7 @@ jobs:
             LeeWay-Device-Bridge-android-release.apk
             LeeWay-Device-Bridge-android-release.apk.sha256
             android-signature-evidence.txt
+            android-permission-evidence.txt
           retention-days: 30
           if-no-files-found: error
 # NO public Release/Pages publishing from this workflow. Promote only after
