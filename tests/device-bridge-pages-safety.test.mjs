@@ -112,3 +112,35 @@ test('public Pages workflows cannot automatically republish a development APK',(
  assert.match(build,/leeway-device-bridge-debug-apk/);
  assert.match(safety,/device-bridge-pages-safety\.test\.mjs/);
 });
+
+test('Apple iPhone/iPad/Mac button now launches local Bridge device onboarding, never a GitHub-only release page',()=>{
+ assert.match(page,/id="bridgePlatform"/);
+ assert.match(page,/<option value="Apple">Apple<\/option>/);
+ assert.match(page,/id="bridgeAppleInstructions"/);
+ assert.match(page,/Apple Device Bridge · iPhone, iPad or Mac/);
+ assert.match(page,/BEGIN APPLE DEVICE BRIDGE SETUP/);
+ assert.match(page,/id="bridgeApplePwaHelp"/);
+ assert.match(page,/id="bridgeApplePwaSteps"/);
+ assert.doesNotMatch(page,/OPEN APPLE CLOUD WORKSTATION|OPEN APPLE PACKAGE|Check Apple Release/);
+ assert.doesNotMatch(page,/<a[^>]+(?:github\.com\/codespaces|github\.com\/4citeB4U\/LEEWAY-DEVICE-BRIDGE\/releases\/tag\/apple-latest)[^>]*>[^<]*APPLE/i);
+ const setup=read('../docs/device-onboarding.js');
+ assert.match(setup,/data-setup-platform/);
+ assert.match(setup,/choosePlatform\(a\.dataset\.setupPlatform/);
+ assert.match(setup,/appleHelp\?\.addEventListener/);
+ assert.match(setup,/applePwaSteps\.hidden/);
+ assert.match(app,/const help=\$\("#bridgeAppleInstructions"\)/);
+ assert.match(app,/Native Apple enrollment and Runtime identity are separate/);
+});
+test('Apple can be chosen explicitly as a second device from another phone, never claiming hardware or signing',()=>{
+ const browserDeclared=Object.freeze({...android,family:'Apple',authority:'USER_SELECTED_PLATFORM_NOT_NATIVE_VERIFIED'});
+ const result=plan(browserDeclared,{deviceForm:'phone',browserChoices:['safari'],
+  deviceRelation:'additional',leeWayAccount:'existing'});
+ assert.equal(result.deviceFamily,'Apple');
+ assert.equal(result.companion,'Apple');
+ assert.equal(result.path,'ADDITIONAL_DEVICE');
+ assert.equal(result.browserDelivery,'APPLE_NATIVE_CONTAINING_APP_REQUIRED');
+ assert.equal(result.signedNativePackage,'NOT_RELEASED');
+ assert.equal(result.physicalDevice,'NOT_ENROLLED');
+ assert.equal(result.ownerRole,'ISSUER_DECIDES');
+ assert.equal(result.requestedDownload,null);
+});
