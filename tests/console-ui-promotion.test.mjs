@@ -136,10 +136,13 @@ test('onboarding completion requires Runtime write and readback', () => {
   assert.match(hook, /ONBOARDING_WRITE_DENIED/);
   assert.match(hook, /ONBOARDING_READBACK_UNVERIFIED/);
   assert.match(hook, /method: 'POST'/);
-  assert.match(hook, /credentials: 'same-origin'/);
+  assert.match(hook, /credentials: 'include'/);
+  assert.match(hook, /ONBOARDING_CSRF_UNAVAILABLE/);
+  assert.match(hook, /approvedRuntimeUrl/);
   assert.match(hook, /setSession\(\{ \.\.\.session, onboarded: true/);
   assert.doesNotMatch(hook, /setSession\(\(current\) => current && current\.authenticated[\s\S]*?onboarded: true/);
   assert.match(page, /saving: boolean/);
   assert.match(page, /error: string \| null/);
   assert.match(env, /VITE_LEEWAY_ONBOARDING_URL=/);
+  assert.match(env, /VITE_LEEWAY_API_ORIGIN=/);
 });
