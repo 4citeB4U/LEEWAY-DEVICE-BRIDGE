@@ -23,11 +23,12 @@ const app = readFileSync(new URL("../docs/app.js", import.meta.url), "utf8");
 const recovery = readFileSync(new URL("../docs/refresh.html", import.meta.url), "utf8");
 assert.match(page, /id="appleLane"/);
 assert.match(page, /APPLE · IPHONE \/ IPAD \/ MAC/);
-assert.match(page, /Apple workspace and native Metal/);
-assert.match(page, /Use the Home Screen app as the daily LeeWay front door/);
-assert.match(page, /OPEN APPLE WORKSTATION/);
-assert.match(page, /OPEN APPLE PACKAGE/);
-assert.match(page, /releases\/tag\/apple-latest/);
+assert.match(page, /Apple Device Bridge setup/);
+assert.match(page, /Begin with LeeWay account sign-in/);
+assert.match(page, /Return to secure Apple setup/);
+assert.match(page, /Use LeeWay on Apple/);
+assert.match(page, /id="dbAppleHomeInstall"/);
+assert.match(page, /id="dbAppleBridgeStatus"/);
 assert.match(page, /Apple controls/);
 assert.match(page, /id="appleRuntime"/);
 assert.match(page, /CHECK APPLE BROWSER/);
@@ -35,6 +36,7 @@ assert.match(page, /RUN BROWSER COMPUTE/);
 assert.match(page, /Safari compute may use WebGPU when exposed/);
 assert.match(page, /Only the separately installed LeeWay Device Bridge IPA may report direct Metal evidence/);
 assert.match(page, /Return to secure device setup/);
+assert.doesNotMatch(page, /OPEN APPLE WORKSTATION|OPEN APPLE PACKAGE/);
 assert.match(page, /id="dbOnboarding"/);
 assert.doesNotMatch(page, /DOWNLOAD ANDROID EXTENSION/);
 assert.match(page, /OPEN WINDOWS WORKSTATION/);
@@ -53,5 +55,12 @@ assert.match(source, /nativeMetalState: "NOT_OBSERVED"/);
 assert.match(source, /formulaState: "NOT_EXECUTED"/);
 assert.match(source, /receiptState: "NOT_CREATED"/);
 
-console.log("PASS Apple PWA keeps browser compute separate from native Metal and Formula authority");
+
+// Apple user's normal page must not link to an unsigned IPA or GitHub
+// workstation; those source tools remain separately disclosed to developers.
+const appleLane=page.split('id="appleLane">')[1]?.split('id="androidLane">')[0] || '';
+assert.doesNotMatch(appleLane,/github\.com|unsigned\.ipa|codespaces\/new/);
+assert.match(page,/id="dbAppleSetupInstructions"/);
+
+console.log("PASS Apple PWA keeps original Home Screen entry, browser compute and native authority separate");
 
