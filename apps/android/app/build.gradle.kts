@@ -14,6 +14,34 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+    // One canonical Android product; separate debug builds from release distribution.
+    // Private release keystore is injected by the authorized CI runner, never stored
+    // in Git, exposed to the browser, or regenerated during an update.
+    val releaseStore = providers.environmentVariable("LEEWAY_ANDROID_RELEASE_KEYSTORE_PATH").orNull
+    val releasePassword = providers.environmentVariable("LEEWAY_ANDROID_RELEASE_STORE_PASSWORD").orNull
+    val releaseAlias = providers.environmentVariable("LEEWAY_ANDROID_RELEASE_KEY_ALIAS").orNull
+    val releaseKeyPassword = providers.environmentVariable("LEEWAY_ANDROID_RELEASE_KEY_PASSWORD").orNull
+    val releaseCredentialsPresent = listOf(releaseStore, releasePassword, releaseAlias, releaseKeyPassword)
+        .all { !it.isNullOrBlank() }
+
+    if (releaseCredentialsPresent) {
+        signingConfigs {
+            create("leewayRelease") {
+                storeFile = file(requireNotNull(releaseStore))
+                storePassword = releasePassword
+                keyAlias = releaseAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+    buildTypes {
+        getByName("release") {
+            isDebuggable = false
+            if (releaseCredentialsPresent) {
+                signingConfig = signingConfigs.getByName("leewayRelease")
+            }
+        }
+    }
     buildFeatures {
         buildConfig = true
     }

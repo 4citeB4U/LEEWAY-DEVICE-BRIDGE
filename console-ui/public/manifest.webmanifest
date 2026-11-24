@@ -1,0 +1,30 @@
+{
+  "id": "/LEEWAY-DEVICE-BRIDGE/",
+  "name": "LeeWay Device Bridge",
+  "short_name": "LeeWay Bridge",
+  "description": "LeeWay Device Bridge secure onboarding and device workspace",
+  "start_url": "/LEEWAY-DEVICE-BRIDGE/",
+  "scope": "/LEEWAY-DEVICE-BRIDGE/",
+  "display": "standalone",
+  "background_color": "#060B11",
+  "theme_color": "#060B11",
+  "prefer_related_applications": false,
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "/LEEWAY-DEVICE-BRIDGE/icons/leeway-official-logo-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/LEEWAY-DEVICE-BRIDGE/icons/leeway-official-logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

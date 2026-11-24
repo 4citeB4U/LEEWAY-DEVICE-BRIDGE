@@ -1,0 +1,48 @@
+{
+  "schema": "leeway.engineering.source-observation.v1",
+  "recordType": "SCOPED_SOURCE_EVIDENCE_NOT_CANONICAL_RECEIPT",
+  "observationDate": "2026-11-24",
+  "repository": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "branch": "integration/device-console-ui-promotion-20261124",
+  "mission": "LeeWay Device Bridge universal packaging, continuation of Engineering #6 and issue #142",
+  "authority": "Creator; original Runtime; native OS trust",
+  "observed": {
+    "androidSource": {
+      "workflow": "Android Build",
+      "runId": 45499427515,
+      "headSha": "b08aafeffd166f0d5c64a0b30e4211cd7828d759",
+      "conclusion": "SUCCESS",
+      "limitations": "Debug APK build and source contracts only; not signed release candidate or physical installation"
+    },
+    "pagesSource": {
+      "workflow": "Device Console UI Pages Promotion",
+      "runId": 45499427600,
+      "headSha": "b08aafeffd166f0d5c64a0b30e4211cd7828d759",
+      "conclusion": "SUCCESS",
+      "limitations": "Build qualification only; not GitHub Pages publication or device installation"
+    },
+    "unverifiedAfterObservedSha": "Newer commits require independent CI readback"
+  },
+  "evidenceFor": [
+    "Existing Android Gradle source accepted new release signing config at observed SHA",
+    "New web PWA manifest/service worker source present on integration branch",
+    "Existing Apple IPA release artifact exists but is unsigned"
+  ],
+  "evidenceAgainst": [
+    "Owner Android release certificate and authorized keystore not yet bound or verified",
+    "No production-signed Android APK produced in this work",
+    "No signed Apple IPA or verified physical Apple install",
+    "No Windows MSI/MSIX or Linux signed native package produced here",
+    "No Play Protect, SmartScreen, Gatekeeper, Linux distro or independent Veritas acceptance run"
+  ],
+  "execution": {
+    "nativePackageInstall": "NOT_EXECUTED",
+    "ownerSignerApproval": "NOT_OBSERVED",
+    "independentVeritas": "NOT_EXECUTED",
+    "receiptAuthorityAppendReadback": "NOT_EXECUTED",
+    "learningLedgerAdmission": "NOT_EXECUTED",
+    "productionDeployment": "NOT_EXECUTED"
+  },
+  "nextGate": "Owner-approved Android signing identity and fingerprint, then real signed build + physical trust tests; Windows/Linux/Apple native platform build lanes remain outstanding",
+  "rollback": "Revert the PR integration branch changes; no live device, issuer or production release mutated"
+}
