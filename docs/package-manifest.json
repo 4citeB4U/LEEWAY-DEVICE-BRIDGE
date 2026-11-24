@@ -27,7 +27,7 @@
       "source": "github-pages"
     },
     "android": {
-      "state": "AVAILABLE",
+      "state": "SOURCE_ONLY",
       "updateMode": "CHECK_PROMPT_AND_ANDROID_INSTALLER",
       "source": "github-pages"
     },
@@ -65,11 +65,11 @@
       "channel": "development",
       "label": "LeeWay Device Bridge Android Native Capability Extension",
       "source": "github-pages",
-      "status": "QUALIFIED_ARTIFACT_OWNER_INSTALL_REQUIRED",
+      "status": "DEBUG_ARTIFACT_NOT_APPROVED_FOR_PUBLIC_INSTALL",
       "nativeVerification": true,
       "runtimeLocation": "phone",
       "dockerRequired": false,
-      "downloadUrl": "./downloads/leeway-device-bridge-android-latest-debug.apk",
+      "downloadUrl": null,
       "sha256": "f07bf09c9e23fbdf95910e790eb7e9feef8d6a76a23b16fef0def5c2211b396e",
       "sizeBytes": 66462262,
       "formulaQualification": {
@@ -93,7 +93,10 @@
         "apkSizeBytes": 66462262,
         "apkSha256": "f07bf09c9e23fbdf95910e790eb7e9feef8d6a76a23b16fef0def5c2211b396e",
         "note": "The Android app checks this manifest on foreground and reconnect, downloads the verified APK, and opens Android's owner-confirmed installer. It does not silently install or erase app data."
-      }
+      },
+      "releaseSigning": "NOT_VERIFIED",
+      "customerInstallApproved": false,
+      "releaseGate": "ORIGINAL_DEVICE_BRIDGE_SIGNED_NATIVE_RELEASE_AND_OWNER_OIDC_REQUIRED"
     },
     {
       "id": "apple-native",
@@ -129,5 +132,5 @@
       }
     }
   ],
-  "updatedAtUtc": "2026-11-22T09:02:05Z"
+  "updatedAtUtc": "2026-11-24T00:00:00Z"
 }
