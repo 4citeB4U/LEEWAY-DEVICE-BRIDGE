@@ -33,7 +33,10 @@ test("no invented remote execution, devices or package bundle",()=>{
   assert.ok((page.match(/class="db-control" type="button"/g)||[]).length>=12);
   assert.match(js,/capabilityMap/);
   assert.match(page,/id="dbControlDetails"/);
-  assert.match(page,/bundle not yet verified/);
+  assert.match(page,/Protected installation is on release hold/);
+  assert.match(page,/id="dbOnboarding"/);
+  assert.match(page,/class="leeway-technical"/);
+  assert.doesNotMatch(page,/leeway-device-bridge-android-latest-debug\\.apk/);
   assert.match(page,/id="dbInventoryRows"/);
   assert.match(js,/navigator\.hardwareConcurrency/);
   assert.match(js,/navigator\.storage\.estimate/);

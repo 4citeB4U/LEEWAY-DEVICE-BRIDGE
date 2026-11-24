@@ -19,17 +19,22 @@ test("Apple package carries an update-compatible bundle version and build", () =
   assert.match(qualification, /CFBundleShortVersionString/);
 });
 
-test("GitHub publishes stable Apple package metadata after a qualified main build", () => {
+test("Apple unsigned developer package remains in historical source but cannot re-publish a public customer install", () => {
   assert.match(publish, /workflow_run:/);
-  assert.match(publish, /head_branch == 'main'/);
+  assert.match(publish, /UNSIGNED_APPLE_PUBLICATION_HOLD/);
+  assert.match(publish, /if: false/);
+  assert.match(publish, /UNSIGNED_ARTIFACT_NOT_APPROVED_FOR_PUBLIC_INSTALL/);
+  assert.match(publish, /"downloadUrl": None/);
   assert.match(publish, /apple-latest/);
   assert.match(publish, /iLoader signing and USB installation/);
   assert.match(publish, /LeeWayDeviceBridge-unsigned\.ipa/);
   assert.match(publish, /LEEWAY-APPLE-PACKAGE-MANIFEST\.json/);
   assert.doesNotMatch(publish, /sidestore-source\.json/);
-  assert.match(pwa, /OPEN APPLE PACKAGE/);
+  assert.match(pwa, /Return to secure Apple setup/);
+  assert.match(pwa, /id="dbAppleHomeInstall"/);
+  assert.doesNotMatch(pwa, /OPEN APPLE PACKAGE/);
   assert.match(pwa, /Direct iLoader update/);
   assert.doesNotMatch(pwa, /sidestore:\/\/source\?url=/);
-  assert.match(pwa, /releases\/tag\/apple-latest/);
+  assert.doesNotMatch(pwa, /releases\/tag\/apple-latest/);
 });
 

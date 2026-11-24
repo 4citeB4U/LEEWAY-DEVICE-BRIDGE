@@ -1,0 +1,60 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.DEVICE.BRIDGE.PUBLIC.RELEASE_HOLD.CI
+# TAG: LEEWAY.BRIDGE.ACCOUNT_FIRST_PUBLIC_SETUP_NEGATIVE_CI.V1
+# WHAT: Enforce mobile account-first Device Bridge page and block debug native installers.
+# WHY: Android user saw "File might be harmful" after clicking public debug APK.
+# WHO: Creator-authorized source CI, not production signing/Veritas.
+# WHERE: .github/workflows/public-device-setup.yml.
+# WHEN: 2026-11-24.
+# HOW: Pure Node syntax, manifest and negative source tests; no download or device install.
+name: LeeWay Device Bridge Public Onboarding Safety
+on:
+  pull_request:
+    paths:
+      - 'docs/index.html'
+      - 'docs/onboarding.js'
+      - 'docs/onboarding.css'
+      - 'docs/app.js'
+      - 'docs/dashboard-ui.js'
+      - 'docs/sw.js'
+      - 'docs/manifest.webmanifest'
+      - 'docs/package-manifest.json'
+      - 'docs/downloads/leeway-device-bridge-android-latest.json'
+      - 'apps/android/app/src/main/java/industries/leeway/devicebridge/GitHubUpdateChecker.kt'
+      - 'apps/apple/Sources/AppleUpdateCoordinator.swift'
+      - 'apps/apple/Sources/AppleDeviceBridgeView.swift'
+      - 'tests/apple-update-source.test.mjs'
+      - 'tests/apple-github-iloader-update-channel.test.mjs'
+      - 'tests/apple-onboarding-browser-behavior.test.mjs'
+      - '.github/workflows/apple-github-iloader-channel.yml'
+      - 'tests/apple-pwa-source.test.mjs'
+      - 'tests/public-device-setup-no-debug.test.mjs'
+      - '.github/workflows/public-device-setup.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Browser syntax
+        run: |
+          node --check docs/onboarding.js
+          node --check docs/app.js
+          node --check docs/dashboard-ui.js
+          node --check docs/sw.js
+      - name: No debug download or customer install from unqualified source
+        run: node --test tests/public-device-setup-no-debug.test.mjs
+      - name: Verify Apple PWA and original native signed release hold
+        run: |
+          node tests/apple-pwa-source.test.mjs
+          node tests/apple-update-source.test.mjs
+          node --test tests/apple-github-iloader-update-channel.test.mjs
+          node --test tests/apple-onboarding-browser-behavior.test.mjs
+      - name: Preserve existing original package manifest contract
+        run: node tests/pages-contract.test.mjs

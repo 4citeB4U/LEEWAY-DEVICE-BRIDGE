@@ -1,0 +1,67 @@
+/* LEEWAY HEADER — DO NOT REMOVE
+REGION: LEEWAY.PUBLIC.DEVICE_BRIDGE.ONBOARDING
+TAG: LEEWAY.DEVICE_BRIDGE.MOBILE_FIRST_NO_DEBUG_INSTALL.V1
+WHAT: Place actual LeeWay Bridge account/device setup before technical workstations.
+WHY: Android phone screen must not start with unapproved APK or desktop console.
+WHO: Original Bridge public UI only, not an installer or account authority.
+WHERE: docs/onboarding.css; WHEN: 2026-11-24; HOW: Responsive accessible form and collapsed diagnostics.
+LICENSE: Preserve existing repo terms.
+*/
+.leeway-setup,.leeway-setup *{box-sizing:border-box}
+.leeway-setup{width:100%;min-width:0;margin:14px auto 18px;padding:clamp(18px,3vw,36px);border:1px solid #17617c;border-radius:22px;background:linear-gradient(145deg,#073047 0%,#061b2a 62%,#04121e 100%);box-shadow:0 12px 36px #0005;color:#edf9ff}
+.leeway-setup h1{max-width:780px;margin:.2em 0;font-size:clamp(1.8rem,5vw,3.3rem);line-height:1.1;letter-spacing:-.035em}
+.leeway-eyebrow{color:#75dbef;font-size:12px;font-weight:800;letter-spacing:.12em}
+.leeway-intro{max-width:760px;color:#b8d4e2;line-height:1.6}
+.leeway-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;list-style:none;padding:0;margin:22px 0}
+.leeway-steps li{display:flex;gap:8px;align-items:center;min-width:0;min-height:56px;border:1px solid #20516a;border-radius:12px;padding:8px;font-size:13px;line-height:1.25;color:#d5e8f1}
+.leeway-steps b{display:grid;place-items:center;flex:none;height:28px;width:28px;border-radius:50%;background:#0e6079;color:white}
+.leeway-setup-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.leeway-setup-form>div,.leeway-setup-form fieldset{min-width:0;margin:0;border:1px solid #244e63;border-radius:12px;padding:14px;background:#051927}
+.leeway-setup-form label,.leeway-setup-form legend{display:block;font-weight:700;font-size:14px;margin-bottom:8px;color:#effcff}
+.leeway-setup-form select{display:block;width:100%;min-height:48px;padding:9px 12px;background:#0b2b3b;border:1px solid #59879a;color:#fff;border-radius:10px;font:inherit}
+.leeway-setup-form select:focus-visible,.leeway-setup-form button:focus-visible,.leeway-setup-form input:focus-visible{outline:3px solid #8edff5;outline-offset:3px}
+.leeway-setup-form small,.leeway-help{display:block;color:#a9c4d1;font-size:12px;line-height:1.5;margin-top:9px}
+.leeway-browser-grid{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
+.leeway-browser-grid label{display:flex;align-items:center;gap:8px;cursor:pointer;margin:3px 0;font-size:13px;font-weight:500;min-height:38px}
+.leeway-browser-grid input{accent-color:#39d1e8;width:18px;height:18px}
+.leeway-primary{min-height:52px;width:100%;padding:12px 18px;border:1px solid #64c8df;border-radius:11px;background:#0e7996;color:white;font:inherit;font-weight:800;cursor:pointer;touch-action:manipulation;grid-column:1/-1}
+.leeway-primary:hover{background:#0d8da9}
+.leeway-setup-result{margin-top:18px;padding:16px;border:1px solid #35758c;background:#072537;border-radius:12px;font-size:14px;line-height:1.5}
+.leeway-setup-result p{margin:8px 0 0;color:#d4e6ec}
+.leeway-release-hold{border-top:1px solid #245168;margin-top:16px;padding-top:14px;color:#e5c9a3;font-size:13px;line-height:1.55}
+.leeway-technical{padding:14px;border:1px solid #244b60;border-radius:15px;background:#031725;min-width:0}
+.leeway-technical>summary{cursor:pointer;color:#c9e8f5;font-size:14px;font-weight:750;line-height:1.5;padding:8px}
+.leeway-technical[open]>summary{margin-bottom:12px}
+.leeway-technical .db-layout,.leeway-technical .db-content{min-width:0}
+@media(max-width:900px){.leeway-steps{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){
+ html,body{max-width:100%;overflow-x:hidden}
+ .shell{width:calc(100% - 20px)!important;padding:10px 0 28px!important}
+ .db-top{display:block;padding:12px!important;min-height:0}
+ .db-brand{flex-wrap:wrap;gap:8px}
+ .db-brand-name{font-size:19px}.db-brand-product{font-size:18px}
+ .db-logo{font-size:27px}
+ .db-pills{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+ .db-pill{white-space:normal;font-size:10px;padding:6px 9px}
+ .leeway-setup{padding:18px 14px;margin-top:10px;border-radius:16px}
+ .leeway-steps{gap:7px;margin:16px 0}.leeway-steps li{font-size:11px;padding:7px;min-height:50px}
+ .leeway-setup-form{grid-template-columns:minmax(0,1fr);gap:12px}
+ .leeway-setup-form>div,.leeway-setup-form fieldset{padding:12px}
+ .leeway-technical{padding:8px}
+}
+@media(max-width:360px){.leeway-steps{grid-template-columns:1fr 1fr}.leeway-steps b{width:24px;height:24px}.leeway-steps li{font-size:10px}}
+
+/* Apple stays inside the original Device Bridge account-first web app.
+   Never display the Apple install helper for an Android/Windows/Linux choice. */
+.leeway-apple-setup[hidden]{display:none!important}
+.leeway-apple-setup{margin-top:18px;padding:16px;border-radius:14px;border:1px solid #467e98;background:linear-gradient(135deg,#103245,#081f30)}
+.leeway-apple-setup h2{margin:0 0 7px;font-size:clamp(1.1rem,3vw,1.5rem);line-height:1.25}
+.leeway-apple-setup p{color:#c6dce7;font-size:13px;line-height:1.55}
+.leeway-apple-actions{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+.leeway-apple-actions button{flex:1 1 230px;max-width:100%;min-height:50px;font:inherit;font-size:13px;font-weight:750;cursor:pointer;touch-action:manipulation}
+.leeway-apple-actions .leeway-primary{grid-column:auto;width:auto}
+.leeway-secondary{padding:12px;border:1px solid #8aa6bb;border-radius:11px;background:#183746;color:#ecf9ff}
+.leeway-secondary:hover{background:#235066}
+.leeway-apple-instructions{margin-top:12px;padding:12px;border:1px solid #3a7083;border-radius:10px;color:#effdff;line-height:1.5}
+.leeway-apple-instructions p{margin:9px 0}
+.leeway-apple-actions button:focus-visible{outline:3px solid #8edff5;outline-offset:3px}

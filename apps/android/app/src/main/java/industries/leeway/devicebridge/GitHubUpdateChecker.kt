@@ -61,6 +61,17 @@ object GitHubUpdateChecker {
                     if (!response.isSuccessful) error("MANIFEST_HTTP_${response.code}")
                     val manifest = JSONObject(response.body?.string().orEmpty())
                     val packageEntry = findAndroidPackage(manifest)
+                    // A measurable debug artifact in GitHub Pages is not a signed
+                    // customer update. Fail closed and invalidate any stale pending
+                    // debug notification before considering versionCode.
+                    if (packageEntry.optString("status") != "SIGNED_CUSTOMER_RELEASE_APPROVED" ||
+                        packageEntry.optString("channel") != "stable" ||
+                        packageEntry.optString("releaseSigning") != "VERIFIED" ||
+                        !packageEntry.optBoolean("customerInstallApproved", false) ||
+                        packageEntry.isNull("downloadUrl")) {
+                        prefs.edit().remove(PENDING_UPDATE).apply()
+                        error("ORIGINAL_SIGNED_CUSTOMER_RELEASE_NOT_AVAILABLE")
+                    }
                     val remoteCode = packageEntry.getLong("versionCode")
                     val currentCode = appContext.packageManager
                         .getPackageInfo(appContext.packageName, 0).longVersionCode

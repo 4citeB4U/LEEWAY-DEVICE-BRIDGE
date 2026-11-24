@@ -14,6 +14,7 @@ final class AppleUpdateCoordinator: ObservableObject {
     @Published private(set) var errorMessage: String?
     @Published var showPrompt = false
 
+    let deviceBridgeSetupURL = URL(string: "https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/#dbOnboarding")!
     let manifestURL = URL(string: "https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/package-manifest.json")!
     let releaseURL = URL(string: "https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/tag/apple-latest")!
     let iLoaderGuideURL = URL(string: "https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/APPLE-DIRECT-ILOADER-DELIVERY.md")!
@@ -21,6 +22,10 @@ final class AppleUpdateCoordinator: ObservableObject {
     func check() {
         state = "CHECKING"
         errorMessage = nil
+        // Discard any historical unsigned-IPA prompt before re-reading authority.
+        updateAvailable = false
+        latestIPAURL = nil
+        showPrompt = false
         var request = URLRequest(url: manifestURL)
         request.cachePolicy = .reloadIgnoringLocalCacheData
         URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
@@ -42,6 +47,21 @@ final class AppleUpdateCoordinator: ObservableObject {
                     let packages = root?["packages"] as? [[String: Any]] ?? []
                     guard let entry = packages.first(where: { ($0["platform"] as? String) == "ios" }) else {
                         throw UpdateError.applePackageMissing
+                    }
+                    // The older original GitHub channel publishes unsigned developer
+                    // evidence. The public Device Bridge must not advertise it as
+                    // a signed installable package or send customer devices to
+                    // a GitHub download. Existing developer iLoader remains separate.
+                    guard (entry["status"] as? String) == "SIGNED_CUSTOMER_RELEASE_APPROVED",
+                          (entry["channel"] as? String) == "stable",
+                          (entry["releaseSigning"] as? String) == "VERIFIED",
+                          (entry["customerInstallApproved"] as? Bool) == true else {
+                        self.state = "SIGNED_RELEASE_REQUIRED"
+                        self.errorMessage = "No approved signed Apple Device Bridge update is available. Use LeeWay Device Bridge setup to continue; unsigned developer packages are not customer installers."
+                        self.latestIPAURL = nil
+                        self.updateAvailable = false
+                        self.showPrompt = false
+                        return
                     }
                     guard let ipaString = entry["downloadUrl"] as? String,
                           let ipaURL = URL(string: ipaString),

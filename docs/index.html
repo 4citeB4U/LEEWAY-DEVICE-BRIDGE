@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="./apple-pwa.css">
   <link rel="stylesheet" href="./dashboard.css">
+  <link rel="stylesheet" href="./onboarding.css">
 </head>
 <body>
 <main class="shell">
@@ -31,6 +32,60 @@ LICENSE: MIT
   <div class="db-brand"><span class="db-logo" aria-hidden="true">∞</span><span class="db-brand-name">LeeWay<small>™</small></span><span class="db-sep"></span><span class="db-brand-product">Device Bridge</span></div>
   <div class="db-pills" aria-label="Connection information"><span class="db-pill db-pill-alert" id="dbConnection">● Discovery unverified</span><span class="db-pill" id="dbDeviceCount">◇ Devices: unknown</span><span class="db-pill" id="dbRuntime">▣ Runtime: not probed here</span></div>
 </header>
+<!-- LEEWAY HEADER — DO NOT REMOVE
+REGION: LEEWAY.DEVICE.BRIDGE.PUBLIC.ONBOARDING
+TAG: LEEWAY.PUBLIC.MOBILE_ACCOUNT_FIRST_SETUP.V1
+WHAT: One verified Device Bridge account and device setup, not an unqualified native package download.
+WHY: Prevent debug APK exposure and present Creator/customer enrollment before approved release.
+WHO: Original Runtime/Zitadel/Device Bridge; public HTML has no signing or identity authority.
+WHERE: docs/index.html; WHEN: 2026-11-24; HOW: Browser hints and explicit owner choices, denied release until approved. -->
+<section class="leeway-setup" id="dbOnboarding" aria-labelledby="dbSetupTitle">
+  <p class="leeway-eyebrow">LEEWAY DEVICE BRIDGE · SECURE SETUP</p>
+  <h1 id="dbSetupTitle">Connect your device to LeeWay</h1>
+  <p class="leeway-intro">One account. Your devices. Your Agent Virtual Tablet. Sign in, select this device and its browsers, then approve its own signed Bridge companion.</p>
+  <ol class="leeway-steps"><li><b>1</b> Invitation / sign-in</li><li><b>2</b> Device identification</li><li><b>3</b> Browser selection</li><li><b>4</b> Bridge + Tablet admission</li></ol>
+  <form id="dbSetupForm" class="leeway-setup-form" autocomplete="off">
+    <div><label for="dbSetupAccount">LeeWay account</label><select id="dbSetupAccount" required>
+      <option value="">Choose your account setup</option><option value="existing">I already have a LeeWay account</option>
+      <option value="new">I have an invitation and need an account</option></select></div>
+    <fieldset><legend>Is this a new or additional device?</legend><div class="leeway-browser-grid">
+      <label><input type="radio" name="leewayDeviceRelation" value="first" checked> Full setup on this device</label>
+      <label><input type="radio" name="leewayDeviceRelation" value="additional"> Add another device to my existing account</label>
+    </div></fieldset>
+    <fieldset><legend>Do you already have a GitHub account?</legend><div class="leeway-browser-grid">
+      <label><input type="radio" name="leewayGithub" value="yes"> Yes, connect later with approval</label>
+      <label><input type="radio" name="leewayGithub" value="no"> No, show the official signup steps</label>
+    </div><p class="leeway-help">GitHub supports optional developer workflows. A GitHub account is not your LeeWay identity or device authorization.</p></fieldset>
+    <div><label for="dbSetupDevice">Device type</label><select id="dbSetupDevice" required>
+      <option value="android-phone">Android phone / foldable</option><option value="android-tablet">Android tablet</option>
+      <option value="apple-phone">Apple iPhone</option><option value="apple-tablet">Apple iPad</option>
+      <option value="windows-desktop">Windows desktop / laptop</option><option value="apple-desktop">Apple desktop / laptop</option>
+      <option value="linux-desktop">Linux desktop / laptop (including China-developed Linux)</option>
+    </select><small id="dbDetectedDevice">This is a browser hint; the original native Bridge must verify actual hardware.</small></div>
+    <fieldset><legend>Select browsers you plan to use</legend><div class="leeway-browser-grid">
+      <label><input name="leewayBrowser" type="checkbox" value="chrome">Chrome</label>
+      <label><input name="leewayBrowser" type="checkbox" value="edge">Edge</label>
+      <label><input name="leewayBrowser" type="checkbox" value="firefox">Firefox</label>
+      <label><input name="leewayBrowser" type="checkbox" value="safari">Safari</label>
+      <label><input name="leewayBrowser" type="checkbox" value="other">Other</label>
+    </div><small>On Android and Apple mobile, device enrollment uses the original OS companion. A desktop Chrome extension cannot be installed into Android Chrome.</small></fieldset>
+    <button class="leeway-primary" type="submit">Review secure setup</button>
+  </form>
+  <section id="dbAppleSetup" class="leeway-apple-setup" aria-labelledby="dbAppleTitle" hidden>
+    <h2 id="dbAppleTitle">Apple device · LeeWay Bridge setup</h2>
+    <p>Stay on this LeeWay Device Bridge page. Use the Apple Home Screen app for browser access; an actual native Bridge device enrollment still needs the original authenticated Runtime and a properly signed Apple companion. GitHub is not your customer setup screen.</p>
+    <div class="leeway-apple-actions">
+      <button type="button" id="dbAppleHomeInstall" class="leeway-primary">Set up LeeWay on Apple Home Screen</button>
+      <button type="button" id="dbAppleBridgeStatus" class="leeway-secondary">Check Apple native Bridge requirements</button>
+    </div>
+    <div id="dbAppleSetupInstructions" class="leeway-apple-instructions" role="status" aria-live="polite">
+      Choose an Apple setup action. The Home Screen app does not certify an enrolled native Device Bridge.
+    </div>
+  </section>
+  <div class="leeway-setup-result" id="dbSetupResult" role="status" aria-live="polite"><strong>Start with your LeeWay account.</strong><p>The Creator and invited customers use the same setup. Account admission, companion release and device enrollment are not verified by this website.</p></div>
+  <p class="leeway-release-hold">Protected installation is on release hold. No Android debug APK or unsigned Apple package is a production Device Bridge installer. An original Runtime sign-in and signed, approved native release are required.</p>
+</section>
+<details class="leeway-technical" id="dbTechnical"><summary>Developer diagnostics and technical device evidence (not onboarding)</summary>
 <div class="db-layout db-no-sidebar"><div class="db-content">
     <div class="db-overview">
       <section class="db-panel db-visual" id="dbMap" aria-label="Interactive Device Bridge map"><button type="button" class="db-expand" data-expand="dbMap" aria-label="Expand device map" title="Expand map">⛶</button><div class="db-map-label">Select a device group to inspect its inventory</div>
@@ -60,14 +115,7 @@ LICENSE: MIT
         </section>
       </div>
     </div>
-    <section class="db-panel db-downloads" id="dbDownloads"><h2><span class="db-symbol">⇩</span> Workstation Downloads <span class="db-caption">Existing release links only; complete Bridge + Runtime + Continuum + GPU + Tablet bundle not yet verified</span></h2>
-      <div class="db-download-row">
-        <article class="db-download-tile"><svg class="db-platform-icon" viewBox="0 0 24 24" aria-label="Windows logo" role="img"><path fill="#00a4ef" d="M1 4.2 10.5 2.9v8.4H1zm10.7-1.5L23 1v10.3H11.7zM1 12.5h9.5v8.6L1 19.8zm10.7 0H23V23l-11.3-1.6z"/></svg><strong>Windows Workstation</strong><a href="https://github.com/codespaces/new?hide_repo_select=true&amp;repo=1380304068" target="_blank" rel="noopener">Open Workstation</a><span class="db-unavailable">Native download not qualified on this page</span></article>
-        <article class="db-download-tile"><img class="db-platform-icon db-white-logo" src="https://cdn.jsdelivr.net/npm/simple-icons@15/icons/apple.svg" alt="Apple logo" loading="lazy"><strong>Apple Workstation</strong><a href="https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/tag/apple-latest" target="_blank" rel="noopener">Check Apple Release</a><span class="db-unavailable">No verified complete workstation bundle</span></article>
-        <article class="db-download-tile"><img class="db-platform-icon db-white-logo" src="https://cdn.jsdelivr.net/npm/simple-icons@15/icons/linux.svg" alt="Linux logo" loading="lazy"><strong>Linux Workstation</strong><a href="https://github.com/codespaces/new?hide_repo_select=true&amp;repo=1380304068" target="_blank" rel="noopener">Open Workstation</a><span class="db-unavailable">Native download not qualified on this page</span></article>
-        <article class="db-download-tile"><svg class="db-platform-icon" viewBox="0 0 24 24" role="img" aria-label="Android logo"><g fill="#3ddc84"><path d="M5 9h14v10a2 2 0 0 1-2 2h-1v2h-2v-2H10v2H8v-2H7a2 2 0 0 1-2-2zM5 8a7 7 0 0 1 14 0z"/><rect x="2" y="9" width="2" height="10" rx="1"/><rect x="20" y="9" width="2" height="10" rx="1"/></g><path stroke="#3ddc84" stroke-width=".8" d="M7 1 9 4M17 1l-2 3"/><g fill="#062332"><circle cx="9" cy="6" r=".7"/><circle cx="15" cy="6" r=".7"/></g></svg><strong>Android Workstation</strong><a href="./downloads/leeway-device-bridge-android-latest-debug.apk" download>Download Extension</a><span class="db-unavailable">Native extension only — not a complete workstation bundle</span></article>
-      </div>
-    </section>
+    <section class="db-panel" id="dbDownloads"><h2>Native release qualification</h2><p>The signed customer package is not yet qualified. No public debug or unsigned package is offered from this page.</p></section>
     <div class="db-bottom">
       <section class="db-panel" id="dbDevices"><button class="db-expand" type="button" data-expand="dbDevices" aria-label="Expand device inventory" title="Expand">⛶</button><h2><span class="db-symbol">▣</span> Devices <span class="db-caption" id="dbInventoryTitle">Owner-scoped inventory</span></h2><div class="db-filter-row"><button type="button" data-device-kind="all" class="db-filter-active">All devices</button><span id="dbInventoryState" role="status">Authenticated inventory unavailable</span></div>
         <table class="db-table"><thead><tr><th>Device</th><th>Platform</th><th>Health</th><th>Status</th></tr></thead><tbody id="dbInventoryRows"><tr><td colspan="4" class="db-pending">No live inventory: the authenticated bridge discovery path is unavailable.</td></tr></tbody></table><p class="db-caption">No device count or online state is inferred from illustration or browser information. <a href="./mcp-connection.html">MCP connection reference</a> (may contain outdated deployment notes).</p><div id="dbSelectedDevice" class="db-selected">Select a category in the map to inspect its verified devices.</div>
@@ -78,12 +126,12 @@ LICENSE: MIT
     <section class="db-footer" id="dbRuntimePanel"><span><strong>Bridge:</strong> Not checked in browser</span><span><strong>Runtime:</strong> Not measured</span><span><strong>Devices:</strong> Unknown</span><span id="dbPolicies">Policies: Unverified</span><span id="dbSettings"><button class="db-small-button" id="dbOpenSettings">Settings / Platform setup</button></span></section>
   </div>
 </div>
-<details class="db-disclosure" id="dbLegacy"><summary>Platform Workstations, Install Help & Existing Diagnostics</summary>
+<details class="db-disclosure" id="dbLegacy"><summary>Historical development workspaces and diagnostics</summary>
 
   <header class="hero">
     <p class="eyebrow">LEEWAY DEVICE BRIDGE</p>
     <h1>One bridge. Four device lanes.</h1>
-    <p class="lede">Choose your platform, open its workstation, and use only the package or diagnostics that belong to that platform.</p>
+    <p class="lede">These source and development tools are not customer Device Bridge installers. Return to the secure onboarding form above for account and device setup.</p>
   </header>
 
   <section class="panel" id="deviceNeutralWorkstation">
@@ -98,15 +146,15 @@ LICENSE: MIT
 
   <section class="platform-grid" aria-label="LeeWay platform lanes">
     <article class="platform-card apple-card" id="appleLane">
-      <p class="kicker">APPLE · IPHONE / IPAD / MAC</p><h2>Apple workspace and native Metal</h2>
-      <p>Use the Home Screen app as the daily LeeWay front door. Use the native IPA only when direct Metal service is required.</p>
-      <div class="card-actions"><a class="action" href="https://github.com/codespaces/new?hide_repo_select=true&amp;repo=1380304068" target="_blank" rel="noopener">OPEN APPLE WORKSTATION</a><a class="action secondary" href="https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/tag/apple-latest" target="_blank" rel="noopener">OPEN APPLE PACKAGE</a></div>
+      <p class="kicker">APPLE · IPHONE / IPAD / MAC</p><h2>Apple Device Bridge setup</h2>
+      <p>Begin with LeeWay account sign-in and this device’s enrollment. The Apple Home Screen web app uses this page directly; native Bridge execution needs the original Apple-signed companion.</p>
+      <div class="card-actions"><a class="action" href="#dbOnboarding">Return to secure Apple setup</a><a class="action secondary" href="#dbAppleSetup">Use LeeWay on Apple</a></div>
       <div class="card-links"><a href="#appleRuntime">Apple controls</a><a href="./APPLE-DIRECT-ILOADER-DELIVERY.md">Direct iLoader update</a><a href="./ILOADER-PERSISTENCE.md">iLoader saved setup</a></div>
     </article>
     <article class="platform-card" id="androidLane">
       <p class="kicker">ANDROID · PHONE / TABLET</p><h2>Android workspace and native bridge</h2>
-      <p>Use the verified Android extension for the Android native lane. The workstation is the same LeeWay development workplane.</p>
-      <div class="card-actions"><a class="action" id="openAndroidWorkstation" href="https://github.com/codespaces/new?hide_repo_select=true&amp;repo=1380304068" target="_blank" rel="noopener">OPEN ANDROID WORKSTATION</a><a class="action secondary" href="./downloads/leeway-device-bridge-android-latest-debug.apk" download>DOWNLOAD ANDROID EXTENSION</a></div>
+      <p>Android requires the original signed native Bridge companion after account and device approval; the debug APK is not a customer release.</p>
+      <div class="card-actions"><a class="action secondary" href="#dbOnboarding">Return to secure device setup</a></div>
       <div class="card-links"><a href="#androidRuntime">Android controls</a><a href="./secondary-workstation-node.json">Workstation contract</a></div>
     </article>
     <article class="platform-card" id="windowsLane">
@@ -125,10 +173,10 @@ LICENSE: MIT
 
   <section class="panel" id="appleRuntime">
     <div class="panel-head"><div><p class="kicker">APPLE CONTROLS</p><h2>Use LeeWay on this Apple device</h2></div><span id="pwaState" class="badge">CHECKING</span></div>
-    <ol class="plain-steps"><li><strong>Daily LeeWay:</strong> launch the LeeWay icon from the iPhone Home Screen.</li><li><strong>Apple workstation:</strong> use <strong>OPEN APPLE WORKSTATION</strong> above when you need the editor, terminal, Git, or GitHub.</li><li><strong>Native Metal app:</strong> use <strong>OPEN APPLE PACKAGE</strong>, download the current IPA from GitHub, then import it through the existing iLoader installation.</li></ol>
+    <ol class="plain-steps"><li><strong>Account first:</strong> start from the Device Bridge setup form above; the Creator and invited users must authenticate through original Runtime/Zitadel.</li><li><strong>Home Screen:</strong> in Safari, use Share → Add to Home Screen for LeeWay Bridge web access. This does not enroll the device.</li><li><strong>Native Bridge:</strong> approve and install only the signed Apple companion through a qualified Apple distribution route; the unsigned developer IPA is not a customer installer.</li><li><strong>Tablet:</strong> after signed-in Runtime/Bridge authorization, open your assigned Agent Virtual Tablet with role-specific permissions.</li></ol>
     <div class="card-actions"><button class="action" id="installPwaBtn">SHOW APPLE APP STATUS</button><button class="action secondary" id="launchPwaBtn">REFRESH LEEWAY</button><button class="action secondary" id="beginAppleQualification">CHECK APPLE BROWSER</button></div>
     <p id="pwaOutput" class="status-copy">Checking Apple Home Screen installation…</p>
-    <div class="native-callout"><strong>Native Metal delivery:</strong> iLoader is the active Apple package installer. Keep <strong>Save Credentials</strong> checked, preserve the existing certificate and pairing record, and use <a href="./ILOADER-PERSISTENCE.md">the saved-setup guide</a>.</div>
+    <div class="native-callout"><strong>Apple companion release:</strong> a previously enrolled device may have an owner-controlled developer signing route. That is separate from the public customer setup and is not an approved universal Apple installer. Preserve working device pairing and app data.</div>
   </section>
 
   <section class="panel" id="appleBrowserAdapter">
@@ -146,10 +194,12 @@ LICENSE: MIT
   </section>
 
   <section class="panel compact"><div class="panel-head"><div><p class="kicker">TECHNICAL INTERFACES</p><h2>Evidence and machine-readable contracts</h2></div><span class="badge">ON DEMAND</span></div><p class="muted">These records support engineering work. They are intentionally kept out of the daily platform controls.</p><p><a href="./llm-entrypoint.json">LLM entrypoint</a> · <a href="./provider-registry.json">Provider registry</a> · <a href="./runtime-contract.json">Runtime contract</a> · <a href="./DEVICE-OPERATOR.md">Platform architecture</a></p></section>
-  <section class="status-grid" aria-label="System state"><article><span>PAGES</span><strong id="pagesState">LIVE</strong></article><article><span>DISCOVERY</span><strong id="discoveryState">READY</strong></article><article><span>APPLE PACKAGE</span><strong>QUALIFIED</strong></article></section>
+  <section class="status-grid" aria-label="System state"><article><span>PAGES</span><strong id="pagesState">LIVE</strong></article><article><span>DISCOVERY</span><strong id="discoveryState">READY</strong></article><article><span>APPLE PACKAGE</span><strong>RELEASE HOLD</strong></article></section>
   <footer>LeeWay Standards · platform-specific execution requires platform-specific evidence · observed ≠ verified</footer>
 </details>
+</details>
 </main>
+<script defer src="./onboarding.js"></script>
 <script type="module" src="./app.js"></script>
 <script type="module" src="./dashboard-ui.js"></script>
 </body>

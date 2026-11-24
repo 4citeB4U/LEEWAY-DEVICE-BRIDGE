@@ -1,4 +1,4 @@
-const CACHE = "leeway-device-bridge-v19-update-channel";
+const CACHE = "leeway-device-bridge-v20-account-first-release-hold";
 const ASSETS = [
   "./",
   "./index.html",
@@ -6,6 +6,8 @@ const ASSETS = [
   "./styles.css",
   "./dashboard.css",
   "./dashboard-ui.js",
+  "./onboarding.js",
+  "./onboarding.css",
   "./apple-pwa.css",
   "./app.js",
   "./apple-pwa-diagnostics.js",
@@ -46,13 +48,27 @@ self.addEventListener("activate", event => {
 
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
+  const url = new URL(event.request.url);
+  // Never cache or serve a stale public native installer. A GitHub Pages
+  // PWA cannot qualify a signed Android package, even if a historical asset
+  // remains on the same static host.
+  if (/\.(apk|ipa|crx|xpi)$/i.test(url.pathname)) return;
+  // The account-first front door and package authority are always fetched
+  // from the network, never replaced by older cached Workstation/Debug UI.
+  const critical = url.origin === self.location.origin &&
+    (/\/(?:index\.html)?$/.test(url.pathname) ||
+      /\/(?:package-manifest\.json|leeway-device-bridge-android-latest\.json)$/.test(url.pathname));
+  if(critical){
+    event.respondWith(fetch(event.request,{cache:"no-store"}));
+    return;
+  }
   event.respondWith(
-    fetch(event.request)
-      .then(response => {
-        const copy = response.clone();
-        caches.open(CACHE).then(cache => cache.put(event.request, copy));
-        return response;
-      })
-      .catch(() => caches.match(event.request))
+    fetch(event.request).then(response=>{
+      if(response.ok && url.origin === self.location.origin){
+        const copy=response.clone();
+        caches.open(CACHE).then(cache=>cache.put(event.request,copy)).catch(()=>{});
+      }
+      return response;
+    }).catch(()=>caches.match(event.request))
   );
 });

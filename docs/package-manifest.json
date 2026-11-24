@@ -27,17 +27,17 @@
       "source": "github-pages"
     },
     "android": {
-      "state": "AVAILABLE",
+      "state": "SOURCE_ONLY",
       "updateMode": "CHECK_PROMPT_AND_ANDROID_INSTALLER",
       "source": "github-pages"
     },
     "ios": {
-      "state": "AVAILABLE",
+      "state": "SOURCE_ONLY",
       "updateMode": "CHECK_PROMPT_AND_ILOADER_GITHUB_IMPORT",
       "source": "github-release"
     },
     "ipados": {
-      "state": "AVAILABLE",
+      "state": "SOURCE_ONLY",
       "updateMode": "CHECK_PROMPT_AND_ILOADER_GITHUB_IMPORT",
       "source": "github-release"
     },
@@ -63,13 +63,13 @@
       "platform": "android",
       "architecture": "any",
       "channel": "development",
-      "label": "LeeWay Device Bridge Android Native Capability Extension",
+      "label": "LeeWay Device Bridge Android Debug Build — Developer Evidence Only",
       "source": "github-pages",
-      "status": "QUALIFIED_ARTIFACT_OWNER_INSTALL_REQUIRED",
+      "status": "DEBUG_ARTIFACT_NOT_APPROVED_FOR_PUBLIC_INSTALL",
       "nativeVerification": true,
       "runtimeLocation": "phone",
       "dockerRequired": false,
-      "downloadUrl": "./downloads/leeway-device-bridge-android-latest-debug.apk",
+      "downloadUrl": null,
       "sha256": "f07bf09c9e23fbdf95910e790eb7e9feef8d6a76a23b16fef0def5c2211b396e",
       "sizeBytes": 66462262,
       "formulaQualification": {
@@ -84,7 +84,7 @@
       "versionCode": 25,
       "upgradeSafety": {
         "inPlaceSignatureCompatibility": "UNVERIFIED",
-        "instruction": "Attempt install as an update. If Android reports a signature/package conflict, do not uninstall automatically; preserve existing app data and use the controlled migration path."
+        "instruction": "This debug artifact is not approved for customer installation or upgrade. Preserve existing installed Bridge data and wait for an original signed release with verified signature continuity."
       },
       "githubActionsQualification": {
         "state": "VERIFIED",
@@ -92,28 +92,31 @@
         "headSha": "ae50280e5bab586d3672a3ef22d611d681312abf",
         "apkSizeBytes": 66462262,
         "apkSha256": "f07bf09c9e23fbdf95910e790eb7e9feef8d6a76a23b16fef0def5c2211b396e",
-        "note": "The Android app checks this manifest on foreground and reconnect, downloads the verified APK, and opens Android's owner-confirmed installer. It does not silently install or erase app data."
-      }
+        "note": "Historical GitHub Actions source/build/hash evidence only. No customer installation, signed release, or physical Device Bridge admission is established by this CI artifact."
+      },
+      "releaseSigning": "NOT_VERIFIED",
+      "customerInstallApproved": false,
+      "releaseGate": "ORIGINAL_DEVICE_BRIDGE_SIGNED_NATIVE_RELEASE_AND_OWNER_OIDC_REQUIRED"
     },
     {
       "id": "apple-native",
       "platform": "ios",
       "architecture": "any",
-      "channel": "stable-owner-channel",
-      "label": "LeeWay Device Bridge for Apple",
+      "channel": "development",
+      "label": "LeeWay Device Bridge Apple Unsigned Developer Build — Not Customer Installer",
       "source": "github-release",
-      "status": "QUALIFIED_ARTIFACT_OWNER_INSTALL_REQUIRED",
+      "status": "UNSIGNED_ARTIFACT_NOT_APPROVED_FOR_PUBLIC_INSTALL",
       "nativeVerification": true,
       "runtimeLocation": "phone",
       "dockerRequired": false,
       "releaseUrl": "https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/tag/apple-latest",
-      "downloadUrl": "https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/download/apple-latest/LeeWayDeviceBridge-unsigned.ipa",
+      "downloadUrl": null,
       "metadataUrl": "https://github.com/4citeB4U/LEEWAY-DEVICE-BRIDGE/releases/download/apple-latest/LEEWAY-APPLE-PACKAGE-MANIFEST.json",
       "sha256": "87a126282487cbe9b03d4ac3fb03bd1eefb11433e166524ac8452ba6d8303ac3",
       "sizeBytes": 448409,
       "versionName": "0.1.197",
       "versionCode": 197,
-      "updateAction": "OPEN_GITHUB_IPA_AND_REQUEST_ILOADER_OWNER_CONFIRMATION",
+      "updateAction": "DEVELOPER_ILOADER_SIGNING_ONLY_NOT_PUBLIC_CUSTOMER_UPDATE",
       "formulaQualification": {
         "required": true,
         "status": "SOURCE_AND_MACOS_BUILD_QUALIFIED_PHYSICAL_INSTALL_PENDING",
@@ -125,9 +128,12 @@
         "sourceRevision": "ce275501be007c31c0c3c54b13e39dfc21ce6f71",
         "ipaSizeBytes": 448409,
         "ipaSha256": "87a126282487cbe9b03d4ac3fb03bd1eefb11433e166524ac8452ba6d8303ac3",
-        "note": "GitHub publishes the unsigned IPA; the owner-controlled iLoader route signs and installs it over USB."
-      }
+        "note": "Historical Apple macOS source/build/SHA-256 evidence of an unsigned IPA. This does NOT prove a customer-signed release, on-device installation, runtime pairing, or full Tablet admission. Owner's existing iLoader development route remains documented separately."
+      },
+      "releaseSigning": "NOT_VERIFIED",
+      "customerInstallApproved": false,
+      "releaseGate": "ORIGINAL_SIGNED_APPLE_DEVICE_BRIDGE_RELEASE_AND_ZITADEL_RUNTIME_ADMISSION_REQUIRED"
     }
   ],
-  "updatedAtUtc": "2026-11-22T09:02:05Z"
+  "updatedAtUtc": "2026-11-24T00:00:00Z"
 }
