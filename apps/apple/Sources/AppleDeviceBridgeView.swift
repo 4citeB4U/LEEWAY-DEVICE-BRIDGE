@@ -41,7 +41,7 @@ struct AppleDeviceBridgeView: View {
                     Button("Open LeeWay Device Bridge setup") {
                         openURL(updater.deviceBridgeSetupURL)
                     }
-                    Text("Use the LeeWay Device Bridge page for your account and device setup. The Creator and invited customers use the same enrollment flow. A web shortcut does not prove native Bridge pairing or Tablet access.")
+                    Text("Use the LeeWay Device Bridge page for your account and device setup. The Creator and invited customers use the same flow, but original Runtime/Zitadel sign-in, owner consent and a verified passport are required. A web shortcut does not prove native Bridge pairing or Agent Virtual Tablet access.")
                         .font(.footnote)
                 }
                 Section("LeeWay Device Bridge adapter") {
