@@ -23,7 +23,9 @@ import { PLATFORM_LANES } from '../data/bridgeData';
 interface OnboardingPageProps {
   displayName?: string;
   role: 'creator' | 'customer';
-  onComplete: (displayName: string) => void;
+  onComplete: (input: { displayName: string; workspaceName: string; deviceLanes: string[] }) => Promise<boolean>;
+  saving: boolean;
+  error: string | null;
   onSignOut: () => void;
 }
 
@@ -31,7 +33,7 @@ type Step = 0 | 1 | 2 | 3;
 
 const STEP_LABELS = ['Your identity', 'Your workspace', 'Your devices', 'Review & finish'];
 
-export function OnboardingPage({ displayName, role, onComplete, onSignOut }: OnboardingPageProps) {
+export function OnboardingPage({ displayName, role, onComplete, onSignOut, saving, error }: OnboardingPageProps) {
   const [step, setStep] = useState<Step>(0);
   const [ownerName, setOwnerName] = useState(displayName || '');
   const [workspaceName, setWorkspaceName] = useState('');
@@ -51,7 +53,7 @@ export function OnboardingPage({ displayName, role, onComplete, onSignOut }: Onb
   const next = () => {
     if (!canAdvance) return;
     if (step < 3) setStep((step + 1) as Step);
-    else onComplete(ownerName.trim());
+    else void onComplete({ displayName: ownerName.trim(), workspaceName: workspaceName.trim(), deviceLanes: selectedLanes });
   };
 
   return (
@@ -78,7 +80,7 @@ export function OnboardingPage({ displayName, role, onComplete, onSignOut }: Onb
         </h1>
         <p className="mt-2 text-sm text-slate-400 max-w-2xl">
           Signed in as <span className="text-slate-200">{role === 'creator' ? 'Creator' : 'Customer'}</span>.
-          This setup is recorded under your name and is required before downloads or device actions are available.
+          Your setup must be confirmed and read back by the original LeeWay Runtime before workspace access.
         </p>
 
         <ol className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2" aria-label="Onboarding progress">
@@ -214,13 +216,14 @@ export function OnboardingPage({ displayName, role, onComplete, onSignOut }: Onb
           <button
             type="button"
             onClick={next}
-            disabled={!canAdvance}
+            disabled={!canAdvance || saving}
             className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-cyan-500 text-slate-950 text-sm font-semibold disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
           >
-            {step === 3 ? 'Finish setup' : 'Continue'} <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            {saving ? 'Confirming with LeeWay Runtime…' : step === 3 ? 'Finish setup' : 'Continue'} <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
 
+        {error && <p role="alert" className="mt-4 text-sm text-amber-200">{error}</p>}
         <p className="mt-6 flex items-center gap-2 text-[11px] text-emerald-300">
           <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
           Setup is scoped to this signed-in account. No shared owner token or device identity is created here.
