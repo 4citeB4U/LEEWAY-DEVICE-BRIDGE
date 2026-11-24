@@ -1,52 +1,42 @@
-name: Verify Device Bridge Pages APK
+name: Verify Device Bridge Pages Setup Safety
 
+# The old workflow treated a public debug APK as an installation release.
+# This is now a fail-closed source gate. Actual signed release qualification
+# belongs to the original owner-authenticated native Bridge lifecycle.
 on:
   push:
     branches: [main]
     paths:
-      - "docs/downloads/leeway-device-bridge-android-latest.json"
-      - "docs/downloads/leeway-device-bridge-android-latest-debug.apk"
+      - "docs/**"
+      - "tests/device-bridge-pages-safety.test.mjs"
+      - ".github/workflows/android-build.yml"
+      - ".github/workflows/verify-device-bridge-pages-apk.yml"
+  pull_request:
+    paths:
+      - "docs/**"
+      - "tests/device-bridge-pages-safety.test.mjs"
+      - ".github/workflows/android-build.yml"
       - ".github/workflows/verify-device-bridge-pages-apk.yml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  verify-pages-apk:
+  safe-onboarding:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Read expected Android version from source
-        id: expected
-        shell: bash
-        run: |
-          VERSION=$(grep -oP 'versionName = "\K[^"]+' apps/android/app/build.gradle.kts)
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-      - name: Wait for GitHub Pages latest package
-        shell: bash
-        env:
-          EXPECTED_VERSION: ${{ steps.expected.outputs.version }}
-        run: |
-          set -euo pipefail
-          META="https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/downloads/leeway-device-bridge-android-latest.json"
-          APK="https://4citeb4u.github.io/LEEWAY-DEVICE-BRIDGE/docs/downloads/leeway-device-bridge-android-latest-debug.apk"
-          ok=0
-          for i in $(seq 1 30); do
-            if curl -fsSL --max-time 20 "$META" -o latest.json; then
-              VERSION=$(node -e 'const v=require("./latest.json");process.stdout.write(String(v.versionName||""))')
-              if [ "$VERSION" = "$EXPECTED_VERSION" ]; then ok=1; break; fi
-            fi
-            sleep 10
-          done
-          test "$ok" -eq 1
-          EXPECTED=$(node -e 'const v=require("./latest.json");process.stdout.write(String(v.sha256||""))')
-          curl -fL --max-time 240 "$APK" -o latest.apk
-          ACTUAL=$(sha256sum latest.apk | awk '{print $1}')
-          test "$ACTUAL" = "$EXPECTED"
-          BYTES=$(stat -c%s latest.apk)
-          echo "version=$EXPECTED_VERSION"
-          echo "sha256=$ACTUAL"
-          echo "bytes=$BYTES"
-          printf '%s\n' "{\"versionName\":\"$EXPECTED_VERSION\",\"sha256\":\"$ACTUAL\",\"sizeBytes\":$BYTES,\"pagesDownload\":\"PASS\"}" > pages-apk-verification.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/setup-node@v4
         with:
-          name: device-bridge-pages-apk-verification
-          path: pages-apk-verification.json
+          node-version: "22"
+      - name: Validate public Bridge JavaScript
+        run: |
+          node --check docs/app.js
+          node --check docs/dashboard-ui.js
+          node --check docs/device-onboarding-policy.mjs
+          node --check docs/device-onboarding.js
+          node --check docs/sw.js
+      - name: Protect against unapproved Android APK links and incorrect mobile setup
+        run: node --test tests/device-bridge-pages-safety.test.mjs
