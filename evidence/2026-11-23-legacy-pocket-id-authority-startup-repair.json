@@ -1,0 +1,40 @@
+{
+  "schema": "leeway.device-bridge.source-repair-evidence.v1",
+  "recordedAt": "2026-11-23T07:54:14-06:00",
+  "repository": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "branch": "codex/authority-startup-fail-closed-20261123",
+  "baseSha": "8a5cf68673e3e363f23db69797460bf5bc18e7d1",
+  "repairCommit": "d2092539dd19735b5235ddc8b0e2d0a0356a1575",
+  "scope": "legacy Pocket ID startup authority fail-closed repair",
+  "files": [
+    "operator/identity/start-pocket-id-mcp.mjs",
+    "tests/mcp/legacy-pocket-id-startup-authority.test.mjs"
+  ],
+  "tests": [
+    {
+      "command": "node --test tests/mcp/legacy-pocket-id-startup-authority.test.mjs tests/mcp/universal-pocket-id-startup.test.mjs tests/mcp/windows-passport-registry.test.mjs tests/mcp/runtime-composition.test.mjs",
+      "firstExitCode": 1,
+      "firstFailure": "ERR_MODULE_NOT_FOUND:@modelcontextprotocol/sdk",
+      "retestExitCode": 0,
+      "passed": 20,
+      "failed": 0
+    },
+    {
+      "command": "npm run test:mcp",
+      "exitCode": 0,
+      "passed": 185,
+      "failed": 0
+    },
+    {
+      "command": "npm audit --json",
+      "exitCode": 1,
+      "finding": "one indirect moderate-severity hono advisory; fix available"
+    }
+  ],
+  "formula": "NOT_EXECUTED",
+  "veritas": "NOT_EXECUTED",
+  "receipt": "NOT_CREATED",
+  "learningLedger": "NOT_UPDATED",
+  "production": "BLOCKED",
+  "nextGate": "QUALIFIED_RUNTIME_COMPOSITION_AND_SIGNED_DEVICE_REGISTRY"
+}
