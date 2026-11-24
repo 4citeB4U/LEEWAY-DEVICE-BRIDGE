@@ -9,8 +9,13 @@ WHY: Enforce genuine platform identity and owner-authorized hardware admission w
 HOW: Validates hardware attributes -> enforces owner binding (4citeB4U) -> validates TTL & anti-replay -> cryptographically verifies Ed25519 signature against trusted carrier registry.
 LICENSE: MIT
 */
-import { verify, sign, createHash } from "node:crypto";
+import { verify, sign } from "node:crypto";
 import { getEnrolledRegistry, DEFAULT_REPLAY_GUARD } from "../trusted-issuer-registry.mjs";
+import {
+  PASSPORT_DIGEST_BASIS,
+  windowsPassportSha256,
+  signingPayloadSha256,
+} from "../windows-pc-primary.mjs";
 
 export const CANONICAL_OWNER_ID = "4citeB4U";
 export const CANONICAL_WINDOWS_PASSPORT_SCHEMA = "1.0.0";
@@ -225,10 +230,13 @@ export function verifyWindowsPassport(passport, {
     return { valid: false, error: "SIGNATURE_INVALID" };
   }
 
-  // 8. Derive trusted registration record
-  const passportSha256 = createHash("sha256")
-    .update(canonicalWindowsPassportPayload(passport))
-    .digest("hex");
+  // 8. Derive trusted registration record.
+  // Versioned digest basis: passportSha256 binds the FULL SIGNED document, while
+  // signingPayloadSha256 binds the unsigned payload the issuer actually signed.
+  // They are different bytes and must not be exchanged. Historical unlabelled
+  // registry/receipt digests are preserved and are not rewritten here.
+  const passportSha256 = windowsPassportSha256(passport);
+  const payloadSha256 = signingPayloadSha256(passport);
 
   const record = {
     id: passport.deviceId,
@@ -248,6 +256,8 @@ export function verifyWindowsPassport(passport, {
     hostname: passport.hostname,
     registrationAuthority: "TRUSTED_RUNTIME_DEVICE_REGISTRY",
     passportSha256,
+    signingPayloadSha256: payloadSha256,
+    passportDigestBasis: PASSPORT_DIGEST_BASIS.identity,
     verifiedAt: new Date().toISOString()
   };
 

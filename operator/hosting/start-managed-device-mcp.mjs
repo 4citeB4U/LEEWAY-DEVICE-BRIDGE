@@ -59,6 +59,11 @@ export function resolveManagedDeviceMcpConfig(env = process.env) {
 
 export function createManagedDeviceMcpServer({ config, bridge, fetchImpl } = {}) {
   if (!config || !bridge) throw Error('MANAGED_BRIDGE_CONFIGURATION_REQUIRED');
+  const registryBound = bridge.deviceRegistry instanceof Map || Array.isArray(bridge.deviceRegistry);
+  const registrationAuthority = registryBound ? 'TRUSTED_RUNTIME_DEVICE_REGISTRY' : null;
+  const registrationState = registryBound
+    ? 'TRUSTED_RUNTIME_DEVICE_REGISTRY_BOUND'
+    : 'REGISTRATION_AUTHORITY_UNBOUND';
   const handler = createZitadelMcpHandler({
     issuer:config.issuer, resource:config.resource,
     ownerSubject:config.ownerSubject, tokenAudiences:config.tokenAudiences,
@@ -73,11 +78,13 @@ export function createManagedDeviceMcpServer({ config, bridge, fetchImpl } = {})
     if (req.url?.includes('?') || req.url?.includes('#')) {
       res.writeHead(404,{'content-type':'application/json'});res.end('{"error":"NOT_FOUND"}');return;
     }
-    if(route==='/healthz' && (req.method==='GET'||req.method==='HEAD')) {
+    if((route==='/healthz'||route==='/readyz') && (req.method==='GET'||req.method==='HEAD')) {
       res.writeHead(200,{'content-type':'application/json'});
       res.end(req.method==='HEAD'?'':JSON.stringify({
-        service:'leeway-managed-device-mcp',status:'RUNNING',
-        identity:'CONFIGURED_NOT_PROBED',deviceRegistry:'REGISTRATION_AUTHORITY_UNBOUND',
+        service:'leeway-managed-device-mcp',
+        status:route==='/readyz'?'READY_FOR_AUTHENTICATED_DISCOVERY':'RUNNING',
+        identity:'CONFIGURED_NOT_PROBED',deviceRegistry:registrationState,
+        registrationAuthority,
         deviceReachability:'NOT_PROBED',execution:'NOT_AUTHORIZED',
         formula:'NOT_PROBED',independentVeritas:'NOT_PROBED',receiptAdmission:'NOT_PROBED'
       }));return;
@@ -147,7 +154,9 @@ export function createUnboundManagedDeviceMcpServer({missing=[]}={}) {
  * every MCP request until all five explicit bindings are present. No
  * untrusted request can elevate the bootstrap mode.
  */
-export async function startManagedDeviceMcp({env=process.env,fetchImpl=globalThis.fetch,log=console.error}={}) {
+export async function startManagedDeviceMcp({
+  env=process.env,fetchImpl=globalThis.fetch,log=console.error,runtimeInput=null
+}={}) {
   const port = configuredManagedPort(env);
   const missing = unboundManagedBindings(env);
   if (missing.length) {
@@ -162,9 +171,11 @@ export async function startManagedDeviceMcp({env=process.env,fetchImpl=globalThi
     return server;
   }
   const config = resolveManagedDeviceMcpConfig(env);
-  // A config lists adapters, not trusted enrollment. Runtime admission is
-  // intentionally absent. This service MUST NOT grant device execution.
-  const bridge = await createConfiguredBridge(config.configPath);
+  // A config lists adapters, not trusted enrollment. When supplied, the
+  // Runtime composition is host-injected and validated by the canonical
+  // factory; request/env/config data cannot manufacture registry authority.
+  // This managed ingress remains discovery-only even with a trusted registry.
+  const bridge = await createConfiguredBridge(config.configPath,runtimeInput);
   const server = createManagedDeviceMcpServer({config,bridge,fetchImpl});
   await new Promise((resolve,reject)=>{
     server.once('error',reject);
@@ -172,7 +183,10 @@ export async function startManagedDeviceMcp({env=process.env,fetchImpl=globalThi
   });
   log(JSON.stringify({service:'leeway-managed-device-mcp',status:'BOUND',
     port:config.port,scope:'ZITADEL_DISCOVERY_ONLY',
-    authority:'REGISTRATION_AUTHORITY_UNBOUND',productionAdmission:'NOT_GRANTED'}));
+    authority:bridge.deviceRegistry instanceof Map || Array.isArray(bridge.deviceRegistry)
+      ? 'TRUSTED_RUNTIME_DEVICE_REGISTRY'
+      : 'REGISTRATION_AUTHORITY_UNBOUND',
+    productionAdmission:'NOT_GRANTED'}));
   return server;
 }
 

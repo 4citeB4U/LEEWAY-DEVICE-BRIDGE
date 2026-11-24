@@ -86,8 +86,12 @@ test('real managed Node HTTP listener serves honest health, denies other paths, 
  const body=await health.json();
  assert.equal(body.service,'leeway-managed-device-mcp');
  assert.equal(body.deviceRegistry,'REGISTRATION_AUTHORITY_UNBOUND');
+ assert.equal(body.registrationAuthority,null);
  assert.equal(body.execution,'NOT_AUTHORIZED');
  assert.equal(body.deviceReachability,'NOT_PROBED');
+ const ready=await fetch(origin+'/readyz');
+ assert.equal(ready.status,200);
+ assert.equal((await ready.json()).status,'READY_FOR_AUTHENTICATED_DISCOVERY');
  assert.equal((await fetch(origin+'/not-a-device')).status,404);
  const payload={jsonrpc:'2.0',id:1,method:'initialize',
   params:{protocolVersion:'2025-03-26',clientInfo:{name:'untrusted',version:'1'},capabilities:{}}};
@@ -107,6 +111,49 @@ test('real managed Node HTTP listener serves honest health, denies other paths, 
  const invalidHost=await postWithHost('other.example.test');
  assert.equal(invalidHost.status,403);
  assert.equal(invalidHost.body.error,'MCP_ORIGIN_OR_HOST_DENIED');
+});
+
+test('managed startup accepts a host-injected Runtime registry without inferring an operating system or enabling execution',async t=>{
+ const root=await mkdtemp(join(tmpdir(),'leeway-managed-runtime-registry-'));
+ t.after(()=>rm(root,{recursive:true,force:true}));
+ const config=join(root,'bridge.json');
+ const relayTokenName='LEEWAY_TEST_ANDROID_RELAY_TOKEN';
+ const previousRelayToken=process.env[relayTokenName];
+ process.env[relayTokenName]='source-test-only-relay-token';
+ t.after(()=>{
+  if(previousRelayToken===undefined)delete process.env[relayTokenName];
+  else process.env[relayTokenName]=previousRelayToken;
+ });
+ await writeFile(config,JSON.stringify({devices:[{
+  id:'android-enrolled-fixture',type:'relay',platform:'android',
+  url:'wss://relay.example.test/device',tokenEnv:relayTokenName,
+  grants:['device.info']
+ }]}));
+ const tcp=createTcp();
+ await new Promise((resolve,reject)=>{tcp.once('error',reject);tcp.listen(0,'127.0.0.1',resolve)});
+ const port=tcp.address().port;
+ await new Promise(resolve=>tcp.close(resolve));
+ const runtimeInput={
+  deviceRegistry:new Map([['android-enrolled-fixture',{platform:'android'}]]),
+  adapterRegistry:{adapters:[{platform:'android',capabilities:{'device.info':{state:'SUPPORTED'}}}]},
+  formulaPreGate:async()=>({passed:false}),veritasPreGate:async()=>false,
+  receiptSink:async()=>{},trustedIssuerRegistry:{fixture:{issuerId:'fixture'}},
+  replayGuard:{has:()=>false,consume:()=>true},consentProvider:async()=>null,
+ };
+ const server=await startManagedDeviceMcp({
+  env:{...base,PORT:String(port),LEEWAY_DEVICE_BRIDGE_CONFIG:config},
+  runtimeInput,log:()=>{},fetchImpl:async()=>{throw Error('AUTH_NOT_USED_BY_HEALTH_TEST')}
+ });
+ t.after(async()=>{server.closeAllConnections();await new Promise(resolve=>server.close(resolve))});
+ const health=await (await fetch('http://127.0.0.1:'+port+'/healthz')).json();
+ assert.equal(health.deviceRegistry,'TRUSTED_RUNTIME_DEVICE_REGISTRY_BOUND');
+ assert.equal(health.registrationAuthority,'TRUSTED_RUNTIME_DEVICE_REGISTRY');
+ assert.equal(health.execution,'NOT_AUTHORIZED');
+ assert.equal(health.formula,'NOT_PROBED');
+ assert.equal(health.independentVeritas,'NOT_PROBED');
+ const ready=await fetch('http://127.0.0.1:'+port+'/readyz');
+ assert.equal(ready.status,200);
+ assert.equal((await ready.json()).status,'READY_FOR_AUTHENTICATED_DISCOVERY');
 });
 
 test('real signed Zitadel owner token authenticates managed MCP and discovers only the genuine empty registry',async t=>{
