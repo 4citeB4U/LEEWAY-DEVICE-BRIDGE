@@ -61,14 +61,39 @@ object GitHubUpdateChecker {
                     if (!response.isSuccessful) error("MANIFEST_HTTP_${response.code}")
                     val manifest = JSONObject(response.body?.string().orEmpty())
                     val packageEntry = findAndroidPackage(manifest)
+                    // A measured CI/debug APK is NOT a customer release. The
+                    // original Runtime, Owner signer and native package-install
+                    // continuity must admit the production channel first.
+                    val signing = packageEntry.optJSONObject("releaseSigning")
+                    val candidateUrl = if (packageEntry.isNull("downloadUrl")) ""
+                        else packageEntry.optString("downloadUrl").trim()
+                    val approvedRelease =
+                        packageEntry.optString("channel") == "production" &&
+                        packageEntry.optString("status") == "SIGNED_RELEASE_PUBLISHED" &&
+                        signing?.optString("state") == "VERIFIED_OWNER_SIGNATURE" &&
+                        candidateUrl.isNotBlank() &&
+                        candidateUrl.endsWith(".apk", ignoreCase = true) &&
+                        !candidateUrl.contains("-debug", ignoreCase = true)
+                    if (!approvedRelease) {
+                        prefs.edit().remove(PENDING_UPDATE).apply()
+                        appContext.getSystemService(NotificationManager::class.java)
+                            ?.cancel(NOTIFICATION_ID)
+                        ReceiptStore.record(appContext, "device.apps.update.check", "BLOCKED",
+                            "CUSTOMER_SIGNED_ANDROID_RELEASE_NOT_PUBLISHED")
+                        return@use
+                    }
                     val remoteCode = packageEntry.getLong("versionCode")
                     val currentCode = appContext.packageManager
                         .getPackageInfo(appContext.packageName, 0).longVersionCode
                     if (remoteCode <= currentCode) {
                         prefs.edit().remove(PENDING_UPDATE).apply()
                     } else {
-                        val downloadUrl = URI(MANIFEST_URL).resolve(packageEntry.getString("downloadUrl")).toString()
-                        require(downloadUrl.startsWith("https://")) { "HTTPS_REQUIRED" }
+                        val approvedUrl = URI(MANIFEST_URL).resolve(candidateUrl)
+                        require(approvedUrl.scheme == "https" &&
+                            approvedUrl.host in setOf("4citeb4u.github.io", "github.com")) {
+                            "ORIGINAL_APPROVED_APK_SOURCE_REQUIRED"
+                        }
+                        val downloadUrl = approvedUrl.toString()
                         val sha256 = packageEntry.getString("sha256").lowercase()
                         require(sha256.matches(Regex("^[a-f0-9]{64}$"))) { "INVALID_SHA256" }
                         update = JSONObject().apply {
