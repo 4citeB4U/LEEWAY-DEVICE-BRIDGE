@@ -82,3 +82,33 @@ test('browser setup text is non-authoritative, signed device and customer identi
  assert.doesNotMatch(js,/\.apk['"]/);
  assert.doesNotMatch(js,/fetch\s*\(/);
 });
+
+test('Apple Home Screen setup remains inside original Device Bridge and unsigned IPA does not masquerade as signed customer package',()=>{
+ const page=get('docs/index.html');
+ const lane=page.split('id="appleLane">')[1]?.split('id="androidLane">')[0]||'';
+ assert.match(page,/id="dbAppleSetup"/);
+ assert.match(page,/id="dbAppleHomeInstall"/);
+ assert.match(page,/id="dbAppleBridgeStatus"/);
+ assert.match(lane,/Return to secure Apple setup/);
+ assert.doesNotMatch(lane,/github\.com|codespaces\/new|unsigned\.ipa/i);
+ const source=get('docs/onboarding.js');
+ assert.match(source,/appleHome\?\.addEventListener\('click'/);
+ assert.match(source,/appleNative\?\.addEventListener\('click'/);
+ assert.match(source,/Add to Home Screen/);
+ assert.match(source,/appleStandalone/);
+ const apple=manifest.packages.find(p=>p.platform==='ios');
+ assert.equal(manifest.platformRoutes.ios.state,'SOURCE_ONLY');
+ assert.equal(manifest.platformRoutes.ipados.state,'SOURCE_ONLY');
+ assert.equal(apple.downloadUrl,null);
+ assert.equal(apple.releaseSigning,'NOT_VERIFIED');
+ assert.equal(apple.customerInstallApproved,false);
+ assert.match(apple.status,/NOT_APPROVED_FOR_PUBLIC_INSTALL/);
+ const native=get('apps/apple/Sources/AppleUpdateCoordinator.swift');
+ const view=get('apps/apple/Sources/AppleDeviceBridgeView.swift');
+ assert.match(native,/SIGNED_CUSTOMER_RELEASE_APPROVED/);
+ assert.match(native,/SIGNED_RELEASE_REQUIRED/);
+ assert.match(native,/customerInstallApproved/);
+ assert.match(view,/Open LeeWay Device Bridge setup/);
+ assert.match(view,/Developer-only unsigned IPA workflow/);
+ assert.doesNotMatch(view,/Open GitHub Release \/ Download IPA/);
+});
