@@ -48,6 +48,14 @@ WHERE: docs/index.html; WHEN: 2026-11-24; HOW: Browser hints and explicit owner 
     <div><label for="dbSetupAccount">LeeWay account</label><select id="dbSetupAccount" required>
       <option value="">Choose your account setup</option><option value="existing">I already have a LeeWay account</option>
       <option value="new">I have an invitation and need an account</option></select></div>
+    <fieldset><legend>Is this a new or additional device?</legend><div class="leeway-browser-grid">
+      <label><input type="radio" name="leewayDeviceRelation" value="first" checked> Full setup on this device</label>
+      <label><input type="radio" name="leewayDeviceRelation" value="additional"> Add another device to my existing account</label>
+    </div></fieldset>
+    <fieldset><legend>Do you already have a GitHub account?</legend><div class="leeway-browser-grid">
+      <label><input type="radio" name="leewayGithub" value="yes"> Yes, connect later with approval</label>
+      <label><input type="radio" name="leewayGithub" value="no"> No, show the official signup steps</label>
+    </div><p class="leeway-help">GitHub supports optional developer workflows. A GitHub account is not your LeeWay identity or device authorization.</p></fieldset>
     <div><label for="dbSetupDevice">Device type</label><select id="dbSetupDevice" required>
       <option value="android-phone">Android phone / foldable</option><option value="android-tablet">Android tablet</option>
       <option value="apple-phone">Apple iPhone</option><option value="apple-tablet">Apple iPad</option>
