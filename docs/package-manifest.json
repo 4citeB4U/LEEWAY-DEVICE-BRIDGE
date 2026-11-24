@@ -63,7 +63,7 @@
       "platform": "android",
       "architecture": "any",
       "channel": "development",
-      "label": "LeeWay Device Bridge Android Native Capability Extension",
+      "label": "LeeWay Device Bridge Android Debug Build — Developer Evidence Only",
       "source": "github-pages",
       "status": "DEBUG_ARTIFACT_NOT_APPROVED_FOR_PUBLIC_INSTALL",
       "nativeVerification": true,
@@ -84,7 +84,7 @@
       "versionCode": 25,
       "upgradeSafety": {
         "inPlaceSignatureCompatibility": "UNVERIFIED",
-        "instruction": "Attempt install as an update. If Android reports a signature/package conflict, do not uninstall automatically; preserve existing app data and use the controlled migration path."
+        "instruction": "This debug artifact is not approved for customer installation or upgrade. Preserve existing installed Bridge data and wait for an original signed release with verified signature continuity."
       },
       "githubActionsQualification": {
         "state": "VERIFIED",
@@ -92,7 +92,7 @@
         "headSha": "ae50280e5bab586d3672a3ef22d611d681312abf",
         "apkSizeBytes": 66462262,
         "apkSha256": "f07bf09c9e23fbdf95910e790eb7e9feef8d6a76a23b16fef0def5c2211b396e",
-        "note": "The Android app checks this manifest on foreground and reconnect, downloads the verified APK, and opens Android's owner-confirmed installer. It does not silently install or erase app data."
+        "note": "Historical GitHub Actions source/build/hash evidence only. No customer installation, signed release, or physical Device Bridge admission is established by this CI artifact."
       },
       "releaseSigning": "NOT_VERIFIED",
       "customerInstallApproved": false,
