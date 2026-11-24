@@ -44,6 +44,60 @@ detected.textContent=currentPlatform?
  'Device OS could not be recognized by this browser. Select the actual device; native verification remains required.';
 const check=currentBrowser&&form.querySelector('input[name="leewayBrowser"][value="'+currentBrowser+'"]');
 if(check)check.checked=true;
+// Apple is a real setup lane on this Device Bridge page. Never redirect an
+// unverified customer to GitHub Codespaces or an unsigned developer IPA.
+const applePanel=doc.getElementById('dbAppleSetup');
+const appleGuide=doc.getElementById('dbAppleSetupInstructions');
+const appleHome=doc.getElementById('dbAppleHomeInstall');
+const appleNative=doc.getElementById('dbAppleBridgeStatus');
+const appleSelected=()=>String(device.value).startsWith('apple-');
+const appleStandalone=()=>root.matchMedia?.('(display-mode: standalone)')?.matches||
+ root.navigator?.standalone===true;
+function updateAppleLane(){
+ if(applePanel)applePanel.hidden=!appleSelected();
+}
+function describeApple(title,steps){
+ if(!appleGuide)return;
+ appleGuide.replaceChildren();
+ const head=doc.createElement('strong');head.textContent=title;appleGuide.append(head);
+ for(const step of steps){
+  const line=doc.createElement('p');line.textContent=step;appleGuide.append(line);
+ }
+}
+device.addEventListener('change',updateAppleLane);
+updateAppleLane();
+appleHome?.addEventListener('click',()=>{
+ if(!appleSelected())return;
+ const mobile=device.value!=='apple-desktop';
+ if(appleStandalone()){
+  describeApple('LeeWay Home Screen web app is already open',[
+   'You are running the installed LeeWay browser shell. Continue Device Bridge account setup above.',
+   'The browser icon does not mean the native Apple companion, Device Bridge passport, Runtime or Agent Virtual Tablet is connected.'
+  ]);
+ }else if(mobile){
+  describeApple('Install LeeWay web access directly from Safari — no GitHub',[
+   '1. On this Apple device, open this SAME LeeWay Device Bridge webpage in Safari.',
+   '2. Tap Safari Share, then Add to Home Screen (you may need to scroll the actions list).',
+   '3. If shown, select Open as Web App, then Add. Open the new LeeWay Bridge icon.',
+   '4. Return to the sign-in setup above. Native device enrollment and the full Tablet remain blocked until the original Runtime and a properly signed Apple companion are connected.'
+  ]);
+ }else{
+  describeApple('Add LeeWay web access on Apple desktop — no GitHub',[
+   'In Safari on macOS, choose File > Add to Dock when available. In a compatible browser use its Install App action.',
+   'The Dock/web app runs this original Bridge webpage. Mac native device capabilities require a separately approved native adapter and a verified original Runtime session.'
+  ]);
+ }
+ appleGuide?.scrollIntoView?.({behavior:'smooth',block:'nearest'});
+});
+appleNative?.addEventListener('click',()=>{
+ if(!appleSelected())return;
+ describeApple('Native Apple Device Bridge — signed release not yet admitted',[
+  'The Apple Home Screen app provides browser access only; it cannot become a fully privileged iOS device bridge or grant Metal/native device control.',
+  'The existing unsigned iLoader IPA is a developer package, not a universally approved customer installer. Do not install or replace a working companion from this public page.',
+  'Next gate: original Zitadel account, owner consent, device passport, signed Apple installer, Runtime/Bridge readback, then authorized Agent Virtual Tablet display. No GitHub sign-in or developer workstation is required for ordinary customers.'
+ ]);
+ appleGuide?.scrollIntoView?.({behavior:'smooth',block:'nearest'});
+});
 function show(title,items){
  status.replaceChildren();
  const head=doc.createElement('strong');head.textContent=title;status.append(head);
@@ -84,6 +138,7 @@ form.addEventListener('submit',event=>{
  ];
  if(mobile&&selected.includes('chrome'))
   step.push('Chrome on mobile is not a desktop Chrome native-messaging extension host. The original mobile Bridge companion must supply device capabilities.');
+ if(os==='Apple')updateAppleLane();
  show('Setup plan for '+d.replace('-', ' ')+': waiting for original identity and native release authority',step);
 });
 })(globalThis);
