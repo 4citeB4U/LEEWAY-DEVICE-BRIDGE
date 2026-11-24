@@ -33,6 +33,12 @@ test('cross-platform PWA installs on scoped public root without offline auth cac
   assert.match(worker,/req\.mode === 'navigate'/);
   assert.match(worker,/assets\|icons/);
   assert.match(worker,/onboarding\|device\|receipts/);
+  const install = read('console-ui/src/components/PwaInstallPrompt.tsx');
+  const gate = read('console-ui/src/components/OnboardingGate.tsx');
+  assert.match(install, /beforeinstallprompt/);
+  assert.match(install, /Add to Home Screen/);
+  assert.match(install, /native camera, Metal, accessibility/);
+  assert.match(gate, /<PwaInstallPrompt \/>/);
   const publishing=read('.github/workflows/device-console-ui-pages.yml');
   assert.match(publishing,/docs\/icons\/leeway-official-logo-192\.png/);
   assert.match(publishing,/docs\/icons\/leeway-official-logo-512\.png/);
