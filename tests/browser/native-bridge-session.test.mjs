@@ -118,7 +118,7 @@ test('owner changed after handshake and stale sessions cannot read devices',asyn
  changed=true;
  const denied=await h.handle(snap(ack));
  assert.equal(denied.reason,'BRIDGE_NATIVE_OWNER_CHANGED');
- const hExpired=host({}, {clock:(()=>{let value=1000;return ()=>{value+=50000;return value;}})()});
+ const hExpired=host({}, {clock:(()=>{let value=1000;return ()=>{value+=100000;return value;}})()});
  const ack2=await connected(hExpired);
  const expired=await hExpired.handle(snap(ack2));
  assert.equal(expired.reason,'BRIDGE_NATIVE_SESSION_NOT_ADMITTED');
