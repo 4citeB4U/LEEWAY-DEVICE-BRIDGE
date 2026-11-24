@@ -25,6 +25,7 @@ on:
       - 'apps/apple/Sources/AppleDeviceBridgeView.swift'
       - 'tests/apple-update-source.test.mjs'
       - 'tests/apple-github-iloader-update-channel.test.mjs'
+      - 'tests/apple-onboarding-browser-behavior.test.mjs'
       - '.github/workflows/apple-github-iloader-channel.yml'
       - 'tests/apple-pwa-source.test.mjs'
       - 'tests/public-device-setup-no-debug.test.mjs'
@@ -54,5 +55,6 @@ jobs:
           node tests/apple-pwa-source.test.mjs
           node tests/apple-update-source.test.mjs
           node --test tests/apple-github-iloader-update-channel.test.mjs
+          node --test tests/apple-onboarding-browser-behavior.test.mjs
       - name: Preserve existing original package manifest contract
         run: node tests/pages-contract.test.mjs
