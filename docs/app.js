@@ -116,7 +116,7 @@ const showAppleInstallHelp=()=>{
   if(help){help.open=true;help.scrollIntoView({behavior:"smooth",block:"center"});}
   if(isStandalone()){
     pwaState("INSTALLED");
-    pwaOut("LeeWay is already installed. Launch and use it from the LeeWay Home Screen icon. There is no additional Apple download.");
+    pwaOut("The LeeWay web app is open from the Home Screen. Original signed Apple Device Bridge enrollment and Tablet sign-in still require Runtime authorization.");
     return;
   }
   pwaState("SAFARI: ADD TO HOME");
@@ -126,7 +126,7 @@ const showAppleInstallHelp=()=>{
 function refreshPwaInstallState(){
   if(isStandalone()){
     pwaState("INSTALLED");
-    pwaOut("LeeWay is running as an installed Home Screen app. There is no additional Apple download.");
+    pwaOut("LeeWay is running as an installed Home Screen app. Web access is available; native Device Bridge and Tablet admission still require the original Runtime.");
     const btn=$("#installPwaBtn");if(btn){btn.disabled=false;btn.textContent="LEEWAY APP INSTALLED — SHOW STATUS";}
     return;
   }
@@ -138,11 +138,11 @@ function refreshPwaInstallState(){
   }
   if(deferredInstallPrompt){
     pwaState("READY TO INSTALL");
-    pwaOut("Install the LeeWay Device-Neutral Workstation directly from this browser.");
+    pwaOut("Install the LeeWay Device Bridge web app shell from this browser. Native device enrollment requires an original signed companion.");
     return;
   }
   pwaState("BROWSER INSTALL");
-  pwaOut("If this browser does not show a direct install prompt yet, use its menu and choose Install app or Add to Home screen. No APK is required for the base workstation.");
+  pwaOut("If this browser does not show a direct install prompt yet, use its menu and choose Install app or Add to Home screen. The web app requires no Android APK; native devices require their approved signed companion.");
 }
 
 addEventListener("beforeinstallprompt",event=>{
@@ -158,14 +158,14 @@ $("#installPwaBtn")?.addEventListener("click",async()=>{
   if(isAppleMobile()||isStandalone()){showAppleInstallHelp();return;}
   if(!deferredInstallPrompt){
     pwaState("USE BROWSER INSTALL");
-    pwaOut("Open the browser menu and choose Install app or Add to Home screen. This installs the LeeWay workstation without sideloading an APK.");
+    pwaOut("Open the browser menu and choose Install app or Add to Home screen. This adds the LeeWay web app, not an authenticated native Device Bridge installation.");
     return;
   }
   deferredInstallPrompt.prompt();
   const choice=await deferredInstallPrompt.userChoice.catch(()=>null);
   deferredInstallPrompt=null;
   pwaState(choice?.outcome==="accepted"?"INSTALL ACCEPTED":"INSTALL NOT COMPLETED");
-  pwaOut(choice?.outcome==="accepted"?"LeeWay Workstation installation was accepted.":"The workstation remains available in the browser; no APK is required.");
+  pwaOut(choice?.outcome==="accepted"?"LeeWay Device Bridge web app installation was accepted; native device enrollment remains separate.":"LeeWay Device Bridge remains available in this browser; native device pairing is not asserted.");
 });
 $("#launchPwaBtn")?.addEventListener("click",()=>location.reload());
 refreshPwaInstallState();
