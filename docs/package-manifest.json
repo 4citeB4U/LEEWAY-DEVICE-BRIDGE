@@ -27,8 +27,8 @@
       "source": "github-pages"
     },
     "android": {
-      "state": "AVAILABLE",
-      "updateMode": "CHECK_PROMPT_AND_ANDROID_INSTALLER",
+      "state": "SOURCE_ONLY",
+      "updateMode": "ORIGINAL_RUNTIME_APPROVED_SIGNED_COMPANION_REQUIRED",
       "source": "github-pages"
     },
     "ios": {
@@ -63,13 +63,13 @@
       "platform": "android",
       "architecture": "any",
       "channel": "development",
-      "label": "LeeWay Device Bridge Android Native Capability Extension",
+      "label": "LeeWay Android Device Bridge — developer artifact (customer release unavailable)",
       "source": "github-pages",
-      "status": "QUALIFIED_ARTIFACT_OWNER_INSTALL_REQUIRED",
+      "status": "DEVELOPMENT_ONLY_NOT_PUBLIC_RELEASE",
       "nativeVerification": true,
       "runtimeLocation": "phone",
       "dockerRequired": false,
-      "downloadUrl": "./downloads/leeway-device-bridge-android-latest-debug.apk",
+      "downloadUrl": null,
       "sha256": "f07bf09c9e23fbdf95910e790eb7e9feef8d6a76a23b16fef0def5c2211b396e",
       "sizeBytes": 66462262,
       "formulaQualification": {
@@ -84,7 +84,7 @@
       "versionCode": 25,
       "upgradeSafety": {
         "inPlaceSignatureCompatibility": "UNVERIFIED",
-        "instruction": "Attempt install as an update. If Android reports a signature/package conflict, do not uninstall automatically; preserve existing app data and use the controlled migration path."
+        "instruction": "Developer-debug artifact is not a production release. Do not offer an install or update. Preserve installed customer data; only original signed release qualification may authorize delivery."
       },
       "githubActionsQualification": {
         "state": "VERIFIED",
@@ -92,7 +92,7 @@
         "headSha": "ae50280e5bab586d3672a3ef22d611d681312abf",
         "apkSizeBytes": 66462262,
         "apkSha256": "f07bf09c9e23fbdf95910e790eb7e9feef8d6a76a23b16fef0def5c2211b396e",
-        "note": "The Android app checks this manifest on foreground and reconnect, downloads the verified APK, and opens Android's owner-confirmed installer. It does not silently install or erase app data."
+        "note": "Historical CI build/hash evidence only. Debug APK lacks approved customer-release signing, owner enrollment and installation continuity. Never distribute from public onboarding."
       }
     },
     {
