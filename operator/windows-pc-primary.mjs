@@ -134,8 +134,27 @@ export function canonicalWindowsPassportPayload(passport) {
   return canonical(passportBody(passport));
 }
 
+/**
+ * Versioned digest basis. A signed passport has two legitimately useful identities:
+ * - the full signed document (what a receipt should bind), and
+ * - the unsigned canonical signing payload (what the issuer actually signed).
+ * They are DIFFERENT bytes and must never be silently exchanged. Historical records that
+ * carry an unlabelled digest remain valid and are never rewritten.
+ */
+export const PASSPORT_DIGEST_BASIS = Object.freeze({
+  identity: 'FULL_SIGNED_PASSPORT_V2',
+  payload: 'UNSIGNED_CANONICAL_PAYLOAD_V1',
+  legacy: 'UNLABELLED_LEGACY_V1',
+});
+
+/** sha256 of the full canonical passport INCLUDING its signature. Use for identity and receipts. */
 export function windowsPassportSha256(passport) {
   return createHash('sha256').update(canonical(passport)).digest('hex');
+}
+
+/** sha256 of the unsigned canonical payload only. Never substitute for passportSha256. */
+export function signingPayloadSha256(passport) {
+  return createHash('sha256').update(canonicalWindowsPassportPayload(passport)).digest('hex');
 }
 
 function trustRecordFor(registry, keyId) {

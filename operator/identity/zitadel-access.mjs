@@ -1,11 +1,11 @@
 /*
 LEEWAY HEADER — DO NOT REMOVE
 REGION: LEEWAY.DEVICE.BRIDGE.IDENTITY
-TAG: LEEWAY.POCKET_ID.RESOURCE.JWT.V1
+TAG: LEEWAY.ZITADEL.RESOURCE.JWT.V1
 WHO: LeeWay Industries / owner-authorized runtimes
-WHAT: Strict Pocket ID user-delegated API JWT verifier for read-only MCP
+WHAT: Strict Zitadel owner-delegated API JWT verifier for LeeWay MCP
 WHY: Bind the caller to signed issuer, resource, owner and permission
-WHERE: operator/identity/pocket-id-access.mjs
+WHERE: operator/identity/zitadel-access.mjs
 WHEN: 2026-10-26
 HOW: Verified OIDC metadata + issuer JWKS + RS256 crypto + strict claim gates
 AUTHORITY: No device command approval; this only qualifies read-only MCP discovery.
@@ -77,7 +77,7 @@ function hasPermission(claims, permission) {
  * No fallback to session cookies, ID tokens, unsigned tokens, or unqualified scopes.
  * Caller must supply resource + approved owner sub from actual enrollment.
  */
-export function createPocketIdAuthenticator({ issuer, resource, ownerSubject, permission = 'device.bridge.read', tokenAudiences = [], fetchImpl = fetch, now = () => Date.now() } = {}) {
+export function createZitadelAuthenticator({ issuer, resource, ownerSubject, permission = 'device.bridge.read', tokenAudiences = [], fetchImpl = fetch, now = () => Date.now() } = {}) {
   const expectedIssuer = requireHttps(issuer, 'ISSUER');
   const expectedResource = requireHttps(resource, 'RESOURCE');
   const acceptedAudiences = new Set([expectedResource, ...normalizeTokenAudiences(tokenAudiences)]);

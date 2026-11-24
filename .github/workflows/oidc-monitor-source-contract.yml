@@ -8,7 +8,6 @@ name: Current OIDC monitor source contract
 on:
   pull_request:
     paths:
-      - '.github/workflows/pocket-id-public-qualification.yml'
       - '.github/workflows/zitadel-public-qualification.yml'
       - '.github/workflows/oidc-monitor-source-contract.yml'
       - 'tests/zitadel-issuer-monitor.test.mjs'

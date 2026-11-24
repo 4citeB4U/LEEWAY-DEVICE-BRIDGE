@@ -1,88 +1,98 @@
-# LEEWAY HEADER — DO NOT REMOVE
+# LeeWay Device Bridge — Zitadel identity and OS-independent MCP
+
 <!--
+LEEWAY HEADER — DO NOT REMOVE
 REGION: LEEWAY.DEVICE.BRIDGE.IDENTITY
-TAG: LEEWAY.POCKET_ID.INTEGRATION
-WHO: LeeWay Industries, owner-authorized maintainers
-WHAT: Single-instance Pocket ID service integrated into the Device Bridge distribution
-WHY: Reuse one identity provider in every LeeWay app without duplicate OAuth authority
-WHERE: operator/identity/README.md
-WHEN: 2026-10-25
-HOW: Shared HTTPS issuer + resource-scoped access tokens + canonical MCP read-only tools
-AUTHORITY: No production OAuth issuer or owner enrollment is claimed by this document
-LICENSE: MIT
+TAG: LEEWAY.ZITADEL.SOLE_IDENTITY_MCP_STARTUP.V1
+WHAT: Keep one Zitadel OIDC authority while running an OS-neutral Device Bridge MCP.
+WHY: Retire retired identity service startup and remove Windows identity fabrication.
+WHO: Creator-approved Device Bridge and Runtime Fabric operators.
+WHERE: operator/identity/README.md.
+WHEN: 2026-11-23.
+HOW: Reuse canonical Bridge adapters and the existing exact issuer/resource/owner JWT verifier.
+AUTHORITY: Source candidate; no production deployment or passport issuance.
+LICENSE: Repository terms unchanged.
 -->
 
-# One Pocket ID authority, multiple LeeWay applications
+Zitadel is the only supported OIDC authority for the active LeeWay Device Bridge
+MCP. The retired retired identity service startup/authorization modules are not runtime
+dependencies and must not be launched. Historical source remains in Git history.
 
-**Do not start a copy of Pocket ID in every application or device.** Install the service once on persistent owner-controlled infrastructure. All authorized LeeWay applications share that one OIDC issuer. The Device Bridge SDK/distribution may include deployment configuration and an OIDC client adapter, but **it must not duplicate the user's signing keys or SQLite database**.
+## OS-neutral service ownership
 
-## Included distribution artifact
+- The managed Runtime Fabric and public MCP ingress run on managed Node-capable
+  infrastructure and do not depend on a Windows machine being powered on.
+- The Device Bridge's local MCP adapter is a Node service runnable on an
+  authorized Windows, Linux, Android or Apple host with supported Node/runtime
+  dependencies. A disconnected adapter makes only its own device unavailable.
+- Device discovery is not device execution. Neither the public MCP ingress nor
+  an HTTP listener fabricates owner enrollment, Formula, Veritas or receipts.
+- Voice, Vision, Model Hub, Agent Skills and the sovereign device adapters
+  remain separately governed providers behind existing Runtime/Bridge interfaces.
 
-`operator/identity/pocket-id.compose.yml` runs a single Pocket ID server listening only on loopback port 1411 and storing data in a persistent named volume. A separately approved HTTPS reverse proxy is required. This file by itself **does not** configure a remote HTTPS endpoint or authenticate the MCP handler.
+## Native discovery-only loopback startup
 
-## Startup requirements
+The supported local entrypoint is:
 
-1. Select one always-on host for the issuer, with durable, backed-up storage and a trusted HTTPS endpoint.
-2. Put `LEEWAY_POCKET_ID_APP_URL` and `LEEWAY_POCKET_ID_ENCRYPTION_KEY` in the deployment environment (never in GitHub). The URL must be the actual HTTPS issuer address; generate a high-entropy encryption key and retain it securely.
-3. Run `docker compose -f operator/identity/pocket-id.compose.yml up -d` on that host, then check health and reach the HTTPS site.
-4. Complete Pocket ID's first-admin enrollment and add an owner passkey through its real setup flow. Back up both persistent data and encryption key.
-5. In Pocket ID's Administration > APIs, register one API resource **equal to the actual canonical HTTPS MCP resource identifier**, and create a read-only permission (candidate name `device.bridge.read`). Grant user-delegated access only to owner-authorized OIDC clients.
-6. Register the ChatGPT client using the actual callback URL shown in ChatGPT, a supported client registration method and PKCE settings. Verify supported scopes and token audience against live Pocket ID metadata. Avoid exposing metadata-document clients to all users unless explicitly authorized.
-7. Bind an independently tested JWT/access-token validator to the canonical `createRemoteMcpHttpServer({ bridge, authenticate })` boundary. Validate signature against the issuer's JWKS, exact issuer, correct MCP resource audience, expiry, read-only permission, and an explicit owner-subject allowlist. Reject ID tokens used as API access tokens. Do not allow an unauthenticated fallback.
-8. Implement MCP protected-resource metadata from the **verified** issuer configuration; do not synthesize issuer, token, authorization or signing-key endpoints. Qualify public HTTPS routing separately from the loopback service.
-9. Test unauthenticated 401, wrong audience/issuer/scope/owner denial, valid owner initialization, and a discovery-only tools/list containing `bridge_devices`, `bridge_capabilities`, `device_health`, and `device_info`, with no mutation tools. When a target device is supplied, execute the bounded health and info probes and verify their PASS receipts bind the target device and exact capability. Use a real remote MCP client.
+```sh
+npm run start:device-mcp
+```
 
-## Deployment boundary
+This runs `operator/identity/start-zitadel-mcp.mjs`.
+The owner-controlled environment must provide:
 
-The desktop distribution's MCP server remains loopback-only and discovery-only unless separately paired and configured. Public transport is provider-neutral managed Node HTTP or an owner-controlled self-hosted Node path; it is not an execution authority.
+- `LEEWAY_DEVICE_BRIDGE_CONFIG`: explicit local adapter configuration
+- `LEEWAY_MCP_AUTH_ISSUER`: exact approved Zitadel HTTPS issuer
+- `LEEWAY_MCP_AUDIENCE`: exact protected MCP resource HTTPS URL ending `/mcp`
+- `LEEWAY_MCP_OWNER_SUB`: exact authenticated owner subject
+- `LEEWAY_MCP_TOKEN_AUDIENCES`: optional explicitly enrolled project/client
+  audiences, comma or newline separated
+- `LEEWAY_MCP_LOCAL_PORT`: optional owner-selected local port, default `4272`
 
-The public ingress at `/mcp` validates request shape, requires a bearer token to reach the upstream, and forwards the OAuth challenge and MCP session headers. It does **not** itself validate Pocket ID JWT signatures, own devices, provide Continuum, or authorize device execution. Its upstream must be an independently authenticated Runtime Fabric MCP service at an explicit HTTPS `/mcp` URL.
+The local listener binds only to `127.0.0.1` and uses the existing
+`createConfiguredBridge` + `createRemoteMcpHandler` contract. No Windows
+CIM probe, device ID, private signing key, new issuer, synthetic registration,
+Formula/Veritas bypass or local receipt authority is constructed by startup.
 
-Configure `LEEWAY_MCP_UPSTREAM`, `LEEWAY_MCP_AUTH_ISSUER`, and `LEEWAY_MCP_AUDIENCE` only in the selected managed-host or self-hosted environment, never in Git. The audience is the exact client-facing Device Bridge URL ending in `/mcp`; the same audience and issuer must be accepted by the upstream Runtime Fabric validator. The public protected-resource metadata is path-scoped at `/.well-known/oauth-protected-resource/mcp`. Verify ordinary TLS for the issuer and upstream; do not disable certificate validation.
+**Important:** loopback alone is not isolation when a configured reverse proxy,
+Tailscale Serve/Funnel or other process forwards that port. Confirm port mapping
+and owner grants before startup. Never expose the local development listener
+through public ingress based solely on a successful health check.
 
-The retired Vercel route is explicitly rejected and must not be configured by clients. The manual workflow `Public MCP OAuth discovery qualification` checks the unauthenticated challenge, protected-resource metadata, live Pocket ID OIDC discovery, and issuer-origin JWKS at explicitly supplied HTTPS endpoints. A pass does not prove an authenticated call, device connection, or device execution. Host Pocket ID on durable owner-controlled infrastructure and expose the issuer through owner-approved HTTPS.
+## Authenticated execution boundary
 
-The trusted Ed25519 consent-issuer registry and voice-owner-auth sessions are **not** substitutes for Pocket ID access tokens. Even with a valid OAuth token, no device execution is authorized until the independent canonical Runtime Fabric admission/receipt controls qualify it.
+The host-injected function `startZitadelMcp({ ..., enableExecution:true,
+runtimeInput })` exists for a separately qualified command runtime.
+A caller-supplied CLI environment cannot enable it. Actual device control
+requires the canonical Runtime composition, registered device, scoped permission,
+real Formula and independent Veritas checks, consent when required, and canonical
+Receipt Authority. This module does **not** establish those authorities.
 
-References: https://pocket-id.org/docs/setup/installation and https://pocket-id.org/docs/guides/apis
+The managed, OS-independent public ingress remains:
+```sh
+npm run start:public-mcp
+```
+It is a transport-only HTTP gateway and must be bound to its genuine canonical
+upstream rather than to a guessed workstation address.
 
-## Governed owner-command mode (source candidate, not production enabled)
+## Non-destructive verification
 
-The canonical Device Bridge has more capabilities than discovery. The reusable
-`apps/desktop/mcp-server.mjs` tool factory exposes schema-backed file,
-process, job, session, search, native UI and other adapter commands. These
-tools route through the original `Bridge.call()` contract; a tool appearing
-in an MCP list is **not** an execution grant.
+```sh
+node --test tests/mcp/zitadel-access.test.mjs tests/mcp/zitadel-universal-handler.test.mjs tests/mcp/zitadel-owner-execution.test.mjs tests/mcp/zitadel-mcp-startup.test.mjs
+npm run test:mcp
+```
 
-The local universal Pocket ID host retains its safe read-only default.
-There are two separate owner-scoped token permissions:
+Negative tests must reject missing Zitadel configuration, invalid tokens,
+wrong owner/audience/scope, forged signatures, public bind, unqualified Runtime
+composition, and command calls from discovery-only clients. GitHub CI is
+SOURCE_TEST_PASS, not a live device or independent Veritas verdict.
 
-- `device.bridge.read`: device IDs and capability discovery, never command tools.
-- `device.bridge.execute`: may publish the canonical tool factory **only if**
-  the trusted host has explicitly enabled command exposure and injected the
-  canonical Runtime Fabric admission plus durable receipt composition.
+**Recovery state at authoring:** Source patch only, no deployment. The remote
+Runtime health previously returned AVAILABLE/OIDC verified while Bridge
+discovery returned LEEWAY_BRIDGE_DISCOVERY_HTTP_502. Native owner-host service
+state, production signer custody, real Formula/Veritas/Receipt chain and
+physical device readback still require independently observed execution.
 
-`startUniversalPocketIdMcp({ ..., enableExecution: true, runtimeInput })`
-requires a trusted, validated Runtime composition. This option must be set
-by owner-controlled host code and **never** by a user request, tool arguments,
-browser state, or device-supplied configuration. The native server remains
-loopback-only. Any command still requires registered device capability,
-owner grant and, as applicable, signed consent, Formula evaluation,
-independent Veritas pre-gate and durable pre-execution evidence. Command
-success is not independently certified until Veritas POST and canonical
-ledgers also admit the same request.
-
-Do not add the execute permission to existing read-only clients or
-automatically promote read tokens. Do not configure the production host
-using a synthetic admission callback. Enroll the exact Pocket ID resource,
-owner subject and permission only through its approved administrative flow,
-and prove a real authenticated deny-path and one scoped physical operation.
-
-**The public managed `/mcp` ingress is a transport proxy to Runtime
-Fabric's separately authenticated `/mcp` service.** Its currently
-configured upstream exposes no qualified authenticated capability; it does not forward
-commands to this loopback host. Publishing owner-command mode publicly
-requires a separately authorized Runtime Fabric execution-provider
-binding, independent Veritas PRE/POST and ledger qualification. Do not
-switch `LEEWAY_MCP_UPSTREAM` to an unqualified device endpoint, restore or
-configure the retired Vercel route, or treat this source change as proof of production execution.
+Mission custody: Engineering issue #6 and Device Bridge issue #109. Follow the
+full twelve-stage LeeWay engineering cycle; preserve the existing current
+approved work and rollback references.

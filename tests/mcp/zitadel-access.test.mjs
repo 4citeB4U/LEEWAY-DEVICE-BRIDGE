@@ -1,22 +1,22 @@
 /*
 LEEWAY HEADER — DO NOT REMOVE
 REGION: LEEWAY.DEVICE.BRIDGE.IDENTITY.TEST
-TAG: LEEWAY.POCKET_ID.RESOURCE.JWT.TEST
+TAG: LEEWAY.ZITADEL.RESOURCE.JWT.TEST
 WHO: LeeWay Industries
 WHAT: In-memory RSA JWT authentication acceptance and denial tests
 WHY: A configured issuer never implies unsigned or wrong-audience authority
-WHERE: tests/mcp/pocket-id-access.test.mjs
+WHERE: tests/mcp/zitadel-access.test.mjs
 WHEN: 2026-10-26
 HOW: Generate ephemeral test RSA key + signed JWT + mocked metadata
-AUTHORITY: Test-only fixture; not live Pocket ID enrollment
+AUTHORITY: Test-only fixture; not live Zitadel enrollment
 LICENSE: MIT
 */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { generateKeyPairSync, sign } from 'node:crypto';
-import { createPocketIdAuthenticator } from '../../operator/identity/pocket-id-access.mjs';
+import { createZitadelAuthenticator } from '../../operator/identity/zitadel-access.mjs';
 
-test('Pocket ID API JWT requires valid issuer, audience, owner and permission', async () => {
+test('Zitadel API JWT requires valid issuer, audience, owner and permission', async () => {
   const { publicKey, privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
   const issuer = 'https://identity.example.test:10000';
   const resource = 'https://bridge.example.test/mcp';
@@ -27,7 +27,7 @@ test('Pocket ID API JWT requires valid issuer, audience, owner and permission', 
       ? { issuer, jwks_uri: issuer + '/.well-known/jwks.json' }
       : { keys: [{ ...publicKey.export({ format: 'jwk' }), kid: 'fixture-key', alg: 'RS256', use: 'sig' }] },
   });
-  const auth = createPocketIdAuthenticator({ issuer, resource, ownerSubject: 'owner-123', fetchImpl, now: () => now });
+  const auth = createZitadelAuthenticator({ issuer, resource, ownerSubject: 'owner-123', fetchImpl, now: () => now });
   const encode = value => Buffer.from(JSON.stringify(value)).toString('base64url');
   const token = extra => {
     const claims = {
@@ -59,7 +59,7 @@ test('Pocket ID API JWT requires valid issuer, audience, owner and permission', 
   tampered[1] = encode({ iss: issuer, sub: 'owner-123', aud: resource, scope: 'device.bridge.read', iat: now/1000, exp: now/1000+300 });
   assert.equal(await auth(req(tampered.join('.'))), false);
 
-  const numericAudienceAuth = createPocketIdAuthenticator({
+  const numericAudienceAuth = createZitadelAuthenticator({
     issuer,
     resource,
     ownerSubject: 'owner-123',
@@ -71,8 +71,8 @@ test('Pocket ID API JWT requires valid issuer, audience, owner and permission', 
   assert.equal(await numericAudienceAuth(req(token({ aud: '397623943239906544' }))), false);
 });
 
-test('Pocket ID verifier rejects missing owner enrollment, insecure issuer and insecure resource', () => {
-  assert.throws(() => createPocketIdAuthenticator({ issuer: 'http://localhost:1411', resource: 'https://bridge.example.test/mcp', ownerSubject: 'owner' }), /ISSUER_HTTPS_REQUIRED/);
-  assert.throws(() => createPocketIdAuthenticator({ issuer: 'https://identity.example.test', resource: 'http://bridge.example.test/mcp', ownerSubject: 'owner' }), /RESOURCE_HTTPS_REQUIRED/);
-  assert.throws(() => createPocketIdAuthenticator({ issuer: 'https://identity.example.test', resource: 'https://bridge.example.test/mcp' }), /OWNER_SUBJECT_REQUIRED/);
+test('Zitadel verifier rejects missing owner enrollment, insecure issuer and insecure resource', () => {
+  assert.throws(() => createZitadelAuthenticator({ issuer: 'http://localhost:1411', resource: 'https://bridge.example.test/mcp', ownerSubject: 'owner' }), /ISSUER_HTTPS_REQUIRED/);
+  assert.throws(() => createZitadelAuthenticator({ issuer: 'https://identity.example.test', resource: 'http://bridge.example.test/mcp', ownerSubject: 'owner' }), /RESOURCE_HTTPS_REQUIRED/);
+  assert.throws(() => createZitadelAuthenticator({ issuer: 'https://identity.example.test', resource: 'https://bridge.example.test/mcp' }), /OWNER_SUBJECT_REQUIRED/);
 });

@@ -382,7 +382,7 @@ Fresh authorized Runtime/Device Bridge read-only probes returned `device.health`
 
 ## K1 handoff — 2026-11-07 09:10 CST — Runtime-issued compliance card and C3 boundary
 
-The compliance-card repair is published directly to Device Bridge `main`: `f32785781c1bbe77811f032dfd5e4b714038fd8a` adds the trusted Runtime card provider and local MCP binding; `36666fda801255c4672efb45a4e0cb7e9adc7b46` links post-dispatch failure receipts to admission; `2ce8216b27e217c951e2712fcaecc30b311c01b6` binds the provider into the authenticated Pocket-ID HTTP host and requires provider/gate for execution mode. Current `main` is `42c4c5d4d422aa859177dd6198a8c95db7cce308`; the intervening APK publication commit was preserved.
+The compliance-card repair is published directly to Device Bridge `main`: `f32785781c1bbe77811f032dfd5e4b714038fd8a` adds the trusted Runtime card provider and local MCP binding; `36666fda801255c4672efb45a4e0cb7e9adc7b46` links post-dispatch failure receipts to admission; `2ce8216b27e217c951e2712fcaecc30b311c01b6` binds the provider into the authenticated historical MCP HTTP host and requires provider/gate for execution mode. Current `main` is `42c4c5d4d422aa859177dd6198a8c95db7cce308`; the intervening APK publication commit was preserved.
 
 Portable protocol/MCP Actions run `42384420173` passed on macOS, Windows and Ubuntu at `2ce8216...`; each ran `npm run test:mcp`, the real MCP CLI probe and trusted-composition startup regression. Android run `42384420188` passed. The local full MCP suite was 135/135. Production Vercel deployment `dpl_HatFmhKGXKxFoMKysUFJxe7uP1wS` is READY for current `main`, but this repository's public `/mcp` route is a transport-only forwarder to Runtime Fabric.
 
