@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "LeeWay Device-Neutral Workstation",
-  "short_name": "LeeWay Workstation",
-  "description": "Device-neutral LeeWay workstation shell for discovery, diagnostics, browser-safe Apple development, and optional native capability adapters.",
+  "name": "LeeWay Device Bridge",
+  "short_name": "LeeWay Bridge",
+  "description": "LeeWay Device Bridge account-first invitation, secure enrollment and native device qualification. The web app itself does not grant device access.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
