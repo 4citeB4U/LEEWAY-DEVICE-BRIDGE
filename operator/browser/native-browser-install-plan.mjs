@@ -11,14 +11,15 @@ WHEN = 2026-11-24.
 HOW = Host-injected OS/browser inventory and current official signed release catalog, no write side effects.
 LICENSE = Original repository terms; no new signer or production admission.
 */
+import {qualifyNativeDeviceTarget} from './native-device-target.mjs';
 const osFamilies=new Set(['Windows','Linux','Android','Apple']);
 const browsers=new Set(['chrome','edge','firefox','safari','other']);
 const desktop=new Set(['Windows','Linux']);
 function denied(reason){throw Error('LEEWAY_NATIVE_SETUP_'+reason)}
 export async function planOriginalNativeBrowserSetup({
- discoverOS,discoverBrowsers,readApprovedReleases,selectedBrowsers
+ discoverOS,discoverHardware,discoverBrowsers,readApprovedReleases,selectedBrowsers
 }={}){
- if(typeof discoverOS!=='function'||typeof discoverBrowsers!=='function'||
+ if(typeof discoverOS!=='function'||typeof discoverHardware!=='function'||typeof discoverBrowsers!=='function'||
     typeof readApprovedReleases!=='function')
     denied('OS_ADAPTER_OR_CATALOG_UNBOUND');
  if(!Array.isArray(selectedBrowsers)||selectedBrowsers.length>4||
@@ -29,6 +30,7 @@ export async function planOriginalNativeBrowserSetup({
  if(!os||!osFamilies.has(os.family)||!['desktop','phone','tablet'].includes(os.form)||
     os.observation!=='ORIGINAL_OS_ADAPTER_OBSERVED')
     denied('OS_NOT_VERIFIED_BY_NATIVE_ADAPTER');
+ const hardware=await discoverHardware({family:os.family,form:os.form});
  const installed=await discoverBrowsers({family:os.family});
  if(!Array.isArray(installed)||installed.length>20||
     installed.some(x=>!x||!browsers.has(x.browser)||
@@ -39,9 +41,8 @@ export async function planOriginalNativeBrowserSetup({
     !Array.isArray(catalog.approvedChannels))
     denied('APPROVED_RELEASE_CATALOG_UNBOUND');
  const installedMap=new Map(installed.map(x=>[x.browser,x.installed]));
- const companion=os.family==='Android'?'android-companion':
-   os.family==='Apple'?'apple-companion':
-   os.family==='Windows'?'windows-companion':'linux-companion';
+ const deviceTarget=qualifyNativeDeviceTarget({os,hardware,release:catalog});
+ const companion=deviceTarget.channel;
  const catalogMap=new Map(catalog.approvedChannels.map(x=>[x.id,x]));
  function state(id){
    const c=catalogMap.get(id);
@@ -50,7 +51,9 @@ export async function planOriginalNativeBrowserSetup({
    return 'QUALIFIED_RELEASE_NOT_AVAILABLE';
  }
  const steps=[Object.freeze({
-   type:'NATIVE_COMPANION',target:companion,state:state(companion),
+   type:'NATIVE_COMPANION',target:companion,
+   state:deviceTarget.qualifiedRelease==='SIGNED_VARIANT_SOURCE_MATCH'?
+     'SIGNED_PACKAGE_BYTES_AND_SIGNATURE_REVALIDATION_REQUIRED':'QUALIFIED_RELEASE_NOT_AVAILABLE',
    humanConsent:'REQUIRED',
    execution:'NOT_PERFORMED',
    note:'Install signed original Device Bridge; perform individual Zitadel sign-in, owner consent and trusted passport enrollment.'
@@ -79,6 +82,7 @@ export async function planOriginalNativeBrowserSetup({
  }
  return Object.freeze({
    osFamily:os.family,form:os.form,companion,
+   deviceTarget,
    selection: Object.freeze([...selectedBrowsers]),
    steps:Object.freeze(steps),
    actualInstallation:'NOT_EXECUTED',
