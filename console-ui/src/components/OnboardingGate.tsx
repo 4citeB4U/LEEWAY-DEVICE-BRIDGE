@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowRight, MonitorSmartphone, ShieldCheck, UserRound, MailPlus, LogIn } from 'lucide-react';
 import { BridgeScene } from './BridgeScene';
+import { PwaInstallPrompt } from './PwaInstallPrompt';
 import { LeeWayFooterBrand, LeeWayIndustriesBrand, LEEWAY_LOCK_EMBLEM } from './LeeWayBrand';
 import { approvedUrl, endpoints, type SessionRole, type SessionStatus } from '../hooks/useLeeWaySession';
 
@@ -139,6 +140,7 @@ export function OnboardingGate({ status, onSignIn }: OnboardingGateProps) {
           <span className="lw-landing__status-sep">·</span>
           <span>No session is remembered. Enrollment routes await the authorized LeeWay Runtime.</span>
         </p>
+        <PwaInstallPrompt />
       </main>
 
       <footer className="lw-landing__footer">
