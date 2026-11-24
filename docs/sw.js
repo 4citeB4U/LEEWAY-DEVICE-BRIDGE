@@ -1,4 +1,4 @@
-const CACHE = "leeway-device-bridge-v19-update-channel";
+const CACHE = "leeway-device-bridge-v20-secure-onboarding-no-debug";
 const ASSETS = [
   "./",
   "./index.html",
@@ -6,6 +6,8 @@ const ASSETS = [
   "./styles.css",
   "./dashboard.css",
   "./dashboard-ui.js",
+  "./device-onboarding-policy.mjs",
+  "./device-onboarding.js",
   "./apple-pwa.css",
   "./app.js",
   "./apple-pwa-diagnostics.js",
@@ -46,11 +48,26 @@ self.addEventListener("activate", event => {
 
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
+  const url = new URL(event.request.url);
+  // Previously cached developer APKs are not legitimate customer installers.
+  // Fail closed for scope-controlled pages, even if an old link remains cached.
+  if (url.origin === self.location.origin &&
+      /\/leeway-device-bridge-android-latest-debug\.apk$/i.test(url.pathname)) {
+    event.respondWith(new Response("Developer debug package is not an approved LeeWay device release.", {
+      status: 410, headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" }
+    }));
+    return;
+  }
+  if (url.origin !== self.location.origin) return;
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request, { cache: "no-store" })
       .then(response => {
-        const copy = response.clone();
-        caches.open(CACHE).then(cache => cache.put(event.request, copy));
+        // Only cache safe UI and documentation. Never APK/IPA binaries or
+        // unverified customer packages; the native signed updater owns those.
+        if (response.ok && !/\.(?:apk|ipa|exe|msix|dmg|pkg|deb|rpm)$/i.test(url.pathname)) {
+          const copy = response.clone();
+          caches.open(CACHE).then(cache => cache.put(event.request, copy)).catch(() => {});
+        }
         return response;
       })
       .catch(() => caches.match(event.request))
