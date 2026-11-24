@@ -13,7 +13,7 @@ LICENSE = Existing repository terms.
 */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync,existsSync} from 'node:fs';
 import {browserHint,allowedFormFactors,allowedBrowsers,planDeviceBridgeOnboarding} from '../docs/device-onboarding-policy.mjs';
 const read=p=>readFileSync(new URL(p,import.meta.url),'utf8');
 const page=read('../docs/index.html'),app=read('../docs/app.js');
@@ -55,6 +55,8 @@ test('no script can recreate a public Android debug APK link using package metad
  assert.equal(latest.downloadUrl,null);
  assert.equal(latest.ownerAuthorizedDownload,false);
  assert.equal(latest.releaseSigning,'NOT_PROVEN');
+ assert.equal(existsSync(new URL('../docs/downloads/leeway-device-bridge-android-latest-debug.apk',import.meta.url)),false,
+  'unapproved debug APK must not be published in GitHub Pages docs/');
 });
 test('Android Fold and Edge Android get native Android companion path, never desktop Chrome extension',()=>{
  assert.equal(android.family,'Android');
