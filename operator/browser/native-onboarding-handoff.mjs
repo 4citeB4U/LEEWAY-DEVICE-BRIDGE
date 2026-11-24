@@ -28,7 +28,7 @@ export function createOriginalRuntimeOnboardingHandoff({
       !validRef(device.deviceKeyId)||
       !['Windows','Linux','Android','Apple'].includes(device.osFamily)||
       !['desktop','phone','tablet'].includes(device.form)||
-      device.proofOfPossessionBound!==true)
+      !validRef(device.proofReference)||device.proofOfPossessionBound!==true)
     denied('HOST_DEVICE_EVIDENCE_UNBOUND');
    // The original Runtime provider must re-authenticate the owner, check
    // device proof and consent, enforce one-time atomic consumption and expiry,
@@ -37,14 +37,15 @@ export function createOriginalRuntimeOnboardingHandoff({
      reference,deviceKeyId:device.deviceKeyId,
      osFamily:device.osFamily,deviceProofReference:device.proofReference
    });
+   const now=clock();
    if(!result||result.source!=='ORIGINAL_RUNTIME_ENROLLMENT_AUTHORITY'||
       result.status!=='OWNER_OIDC_AND_NEW_DEVICE_APPROVED'||
       !['FULL_DEVICE_SETUP','ADDITIONAL_DEVICE_QUICK_SETUP'].includes(result.path)||
       result.deviceKeyId!==device.deviceKeyId||
       !validRef(result.receiptReference)||
       !Number.isFinite(result.validUntil)||
-      !Number.isFinite(clock())||
-      clock()>result.validUntil)
+      !Number.isFinite(now)||
+      now>result.validUntil)
      denied('RUNTIME_CONSENT_OR_EXPIRY_UNBOUND');
    return Object.freeze({
      status:'OWNER_DEVICE_HANDOFF_CONSUMED',
