@@ -24,24 +24,26 @@ const recovery = readFileSync(new URL("../docs/refresh.html", import.meta.url), 
 assert.match(page, /id="appleLane"/);
 assert.match(page, /APPLE · IPHONE \/ IPAD \/ MAC/);
 assert.match(page, /Apple workspace and native Metal/);
-assert.match(page, /Use the Home Screen app as the daily LeeWay front door/);
-assert.match(page, /OPEN APPLE WORKSTATION/);
-assert.match(page, /OPEN APPLE PACKAGE/);
-assert.match(page, /releases\/tag\/apple-latest/);
+// Apple Bridge setup is now the primary user flow; GitHub/Codespaces
+// remain optional developer tools and never count as device enrollment.
+assert.match(page, /id="bridgePlatform"/);
+assert.match(page, /id="bridgeAppleInstructions"/);
+assert.match(page, /BEGIN APPLE DEVICE BRIDGE SETUP/);
+assert.match(page, /Apple desktop \/ phone \/ tablet/);
+assert.match(page, /APPLE NATIVE BRIDGE<\/span><strong>NOT VERIFIED/);
+assert.match(page, /id="bridgeApplePwaHelp"/);
+assert.match(page, /id="bridgeApplePwaSteps"/);
 assert.match(page, /Apple controls/);
 assert.match(page, /id="appleRuntime"/);
 assert.match(page, /CHECK APPLE BROWSER/);
 assert.match(page, /RUN BROWSER COMPUTE/);
 assert.match(page, /Safari compute may use WebGPU when exposed/);
 assert.match(page, /Only the separately installed LeeWay Device Bridge IPA may report direct Metal evidence/);
-assert.match(page, /OPEN ANDROID WORKSTATION/);
-assert.match(page, /OPEN WINDOWS WORKSTATION/);
-assert.match(page, /OPEN LINUX WORKSTATION/);
-assert.match(page, /https:\/\/github\.com\/codespaces\/new\?hide_repo_select=true&amp;repo=1380304068/);
-assert.match(page, /<span>APPLE PACKAGE<\/span><strong>QUALIFIED<\/strong>/);
+assert.doesNotMatch(page, /OPEN APPLE WORKSTATION|OPEN APPLE PACKAGE|releases\/tag\/apple-latest/);
 assert.doesNotMatch(page, /Docker development environment/);
-assert.match(app, /Safari does not let a web page open Apple's Add to Home Screen control/);
-assert.match(app, /LeeWay is running as an installed Home Screen app/);
+assert.match(app, /optionally tap Share, then Add to Home Screen/);
+assert.match(app, /Native Apple enrollment and Runtime identity are separate/);
+assert.doesNotMatch(app, /LeeWay is running as an installed Home Screen app/);
 assert.match(app, /function beginAppleQualification/);
 assert.match(app, /document\.documentElement\.classList\.add\("apple-pwa"\)/);
 assert.match(recovery, /REFRESH LEEWAY NOW/);
