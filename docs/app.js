@@ -16,17 +16,20 @@ async function resolvePackage(profile){
   return {manifest,pkg:manifest.packages.find(p=>p.platform===platform)||null};
 }
 function renderPackage(manifest,pkg){
-  if(!pkg){
-    $("#packageState").textContent="NO ROUTE";
-    $("#packageCard").innerHTML=`<h3>No verified Android package published</h3><p class="package-meta">GitHub Pages will expose a package only after size, SHA-256 and runtime qualification pass.</p>`;
-    return;
+  // Source size/hash and presence on GitHub Pages do not authorize native
+  // installation. In particular the development/debug APK is NOT a signed
+  // LeeWay customer release and can never create a customer enrollment.
+  const state=document.querySelector("#packageState");
+  const card=document.querySelector("#packageCard");
+  if(state)state.textContent="SIGNED RELEASE REQUIRED";
+  if(card){
+    card.replaceChildren();
+    const title=document.createElement("h3");
+    title.textContent="Original Device Bridge customer installer not released";
+    const note=document.createElement("p");note.className="package-meta";
+    note.textContent="The published Android debug build is source qualification only. No APK download is approved until the original native signer, device passport, Zitadel onboarding and live Runtime readback are qualified.";
+    card.append(title,note);
   }
-  $("#packageState").textContent=pkg.status;
-  const measured=pkg.sizeBytes==null?"Not measured":`${pkg.sizeBytes} bytes`;
-  const action=pkg.downloadUrl
-    ? `<a class="action" href="${esc(pkg.downloadUrl)}" download>Download & update LeeWay Device Bridge ${esc(pkg.versionName||"")}</a>`
-    : `<button id="handoffBtn" class="action">Package build required</button>`;
-  $("#packageCard").innerHTML=`<h3>${esc(pkg.label)}</h3><p class="package-meta">Release: ${esc(pkg.versionName||"Unknown")} · Status: ${esc(pkg.status)}<br>Published from GitHub Pages · SHA-256: ${esc(pkg.sha256||"Not published")}</p>${action}<p class="package-meta"><strong>Update:</strong> install the published Android package over the current one. If Android reports a signature conflict, stop and use the platform’s controlled migration path; do not erase app data.</p>`;
 }
 
 async function showPublishedAndroidPackage(){
