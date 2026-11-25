@@ -36,7 +36,7 @@
         "schemaVersion": { "const": "1.0.0" },
         "authority": { "const": "OWNER_SIGNED_WINDOWS_PASSPORT" },
         "platform": { "const": "windows" },
-        "deviceId": { "const": "pc-primary" },
+        "deviceId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$" },
         "ownerSubject": { "type": "string", "minLength": 1 },
         "issuedAt": { "type": "string", "format": "date-time" },
         "expiresAt": { "type": "string", "format": "date-time" },
