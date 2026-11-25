@@ -4,17 +4,17 @@ REGION: LEEWAY.DEVICE.BRIDGE.MANAGED.HTTPS.QUALIFICATION
 TAG: LEEWAY.MANAGED.NATIVE_LIVE_HTTPS_READ_ONLY.V1
 5WH:
 WHAT = Verify current managed native Bridge response contract across public HTTPS.
-WHY = Confirm a live Render Node service and refusal of unsigned MCP, not inferred OS/device registration.
+WHY = Confirm the live Northflank-hosted managed Bridge and refusal of unsigned MCP, not inferred OS/device registration.
 WHO = LeeWay outside source qualification / GitHub Actions test runner.
 WHERE = scripts/qualify-managed-native-https.mjs.
-WHEN = 2026-11-23.
+WHEN = 2026-11-25 (updated — Northflank replaces Render; Render retired after authenticated cutover).
 HOW = Bounded GET health and anonymous POST initialize; record status only, never credentials or owner identity.
 AUTHORITY = EXTERNAL_TRANSPORT_OBSERVATION_ONLY; not Veritas, receipt, physical-device or execution proof.
 LICENSE = MIT
 */
 import assert from 'node:assert/strict';
 
-const hostname='https://leeway-native-device-bridge.onrender.com';
+const hostname='https://site--leeway-device-bridge--x5rlg8jby48d.code.run';
 const acceptedModes=new Set(['BOOTSTRAP_ONLY','RUNNING']);
 const paths=['/healthz','/mcp','/readyz'];
 async function request(path,method='GET',body=undefined){
@@ -25,7 +25,7 @@ async function request(path,method='GET',body=undefined){
   signal:AbortSignal.timeout(85000)
  });
  const type=response.headers.get('content-type')||'';
- assert.match(type,/^application\/json(?:\s*;|$)/i,'RENDER_MCP_JSON_CONTENT_TYPE_REQUIRED');
+ assert.match(type,/^application\/json(?:\s*;|$)/i,'NORTHFLANK_MCP_JSON_CONTENT_TYPE_REQUIRED');
  const value=await response.json();
  return {status:response.status,body:value};
 }

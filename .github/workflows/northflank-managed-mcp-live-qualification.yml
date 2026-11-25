@@ -1,0 +1,35 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.DEVICE.BRIDGE.MCP.LIVE_STAGING.CI
+# TAG: LEEWAY.MCP.NORTHFLANK_LIVE_TRANSPORT_READBACK.CI.V1
+# DISCOVERY_PIPELINE: Voice -> Intent -> Location -> Vertical -> Ranking -> Northflank
+# 5WH:
+# WHAT = Verify actual public Northflank HTTPS transport and its unbound fail-closed behavior.
+# WHY = Separate live reachability evidence from build logs, real OAuth authorization and device operations.
+# WHO = LeeWay Device Bridge release and independent review agents.
+# WHERE = .github/workflows/northflank-managed-mcp-live-qualification.yml
+# WHEN = 2026-11-25 (renamed from render-managed-mcp-live-qualification.yml; Render retired)
+# HOW = Node 22 network fixture probe against exact qualifying Northflank domain with no tokens or private data.
+# AUTHORITY: Live transport test only, no production admission or device access.
+# LICENSE: MIT
+name: Device Bridge Northflank public HTTPS transport acceptance
+on:
+  pull_request:
+    paths:
+      - 'scripts/qualify-managed-native-https.mjs'
+      - '.github/workflows/northflank-managed-mcp-live-qualification.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  live-staging-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify no privileged tokens and exact Northflank URL
+        run: node --check scripts/qualify-managed-native-https.mjs
+      - name: Remote unauthenticated HTTPS readback and denial matrix
+        run: node scripts/qualify-managed-native-https.mjs

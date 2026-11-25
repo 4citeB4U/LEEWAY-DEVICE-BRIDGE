@@ -1,0 +1,5 @@
+{
+  "schemaVersion": "leeway.managed-device-registry.v1",
+  "authority": "TRUSTED_RUNTIME_DEVICE_REGISTRY",
+  "records": []
+}

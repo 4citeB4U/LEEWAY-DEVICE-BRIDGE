@@ -1,21 +1,24 @@
 /*
 LEEWAY HEADER — DO NOT REMOVE
 REGION: LEEWAY.DEVICE.BRIDGE.MCP.REMOTE_TRANSPORT_EVIDENCE
-TAG: LEEWAY.MCP.PUBLIC_GATEWAY_EXTERNAL_READBACK.V1
-DISCOVERY_PIPELINE: Voice -> Intent -> Location -> Vertical -> Ranking -> Render
+TAG: LEEWAY.MCP.PUBLIC_GATEWAY_EXTERNAL_READBACK.V1 — RETIRED 2026-11-25
+DISCOVERY_PIPELINE: Voice -> Intent -> Location -> Vertical -> Ranking -> Northflank (Render retired)
 5WH:
-WHAT = Independently probe an actually deployed public Device Bridge MCP gateway from GitHub Actions.
-WHY = A successful Render build or health process log must not be mistaken for verified HTTPS transport or authorized tools.
+WHAT = Legacy Render staging qualification script — RETIRED. The staging Render endpoint
+       leeway-device-bridge-mcp-qual.onrender.com is no longer an active LeeWay dependency.
+WHY = Preserved as historical audit evidence. Use scripts/qualify-managed-native-https.mjs
+      (Northflank canonical endpoint) for live transport qualification.
 WHO = LeeWay Device Bridge operators and independent reviewers.
-WHERE = scripts/qualify-public-mcp-staging.mjs
-WHEN = 2026-10-28
-HOW = Bounded remote GET/HEAD/POST against exact approved staging host; verify fail-closed unbound state.
-AUTHORITY: NETWORK_TRANSPORT_EVIDENCE_ONLY; owner OAuth, Runtime Fabric and devices remain NOT_PROBED.
+WHERE = scripts/qualify-public-mcp-staging.mjs (RETIRED — do not invoke against production)
+WHEN = 2026-10-28 (retired 2026-11-25; replaced by northflank-managed-mcp-live-qualification workflow)
+HOW = Bounded remote GET/HEAD/POST against retired Render staging host; verify fail-closed unbound state.
+AUTHORITY: RETIRED_TRANSPORT_EVIDENCE_ONLY — this script targets a decommissioned Render staging service.
 LICENSE: MIT
 */
-import assert from 'node:assert/strict';
-
-const STAGING_ORIGIN='https://leeway-device-bridge-mcp-qual.onrender.com';
+// RETIRED: This script targeted the decommissioned Render staging endpoint.
+// It is preserved as audit evidence only. Do not invoke or update for production use.
+// See scripts/qualify-managed-native-https.mjs for the active Northflank qualification.
+throw new Error('QUALIFY_PUBLIC_MCP_STAGING_RETIRED — Render staging endpoint decommissioned 2026-11-25; use qualify-managed-native-https.mjs for Northflank');
 const FAIL_CODES=new Set(['MCP_OAUTH_ENVIRONMENT_INCOMPLETE','OAUTH_RESOURCE_METADATA_UNAVAILABLE']);
 
 async function probe(path,method='GET',body=null){

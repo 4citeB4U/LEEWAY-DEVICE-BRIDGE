@@ -20,6 +20,7 @@ import {
   createDiscoveryConfiguredBridge,
 } from '../../apps/desktop/mcp-server.mjs';
 import { createZitadelMcpHandler } from '../identity/create-zitadel-mcp-handler.mjs';
+import { loadApprovedRegistryResolver } from './approved-registry-resolver.mjs';
 
 function secureUrl(value, expectedPath) {
   let url;
@@ -268,7 +269,12 @@ export async function startManagedDeviceMcp({
 }
 
 if (process.argv[1] && import.meta.url===pathToFileURL(resolvePath(process.argv[1])).href) {
-  startManagedDeviceMcp().catch(error=>{
+  // GitHub stores revision-pinned source; it does not establish device enrollment.
+  // Missing or invalid source preserves the existing fail-closed managed boundary.
+  (async()=>{
+    const resolver=await loadApprovedRegistryResolver(process.env);
+    await startManagedDeviceMcp({resolveDeviceRegistry:resolver});
+  })().catch(error=>{
     console.error('MANAGED_BRIDGE_STARTUP_DENIED '+(
       /^[A-Z0-9_]+$/.test(error?.message||'')?error.message:'CONFIGURATION_OR_ADAPTER_FAILURE'));
     process.exitCode=1;
