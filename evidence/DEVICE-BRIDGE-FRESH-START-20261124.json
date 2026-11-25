@@ -1,6 +1,6 @@
 {
   "schema": "leeway.device-bridge.engineering-evidence.v1",
-  "recordedAt": "2026-11-24T23:20:00.1217810-06:00",
+  "recordedAt": "2026-11-24T23:21:21.0395185-06:00",
   "timezone": "America/Chicago",
   "repository": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
   "baseCommit": "7d27693253d607c92a11094184161bfe5aac7bc6",
@@ -45,6 +45,12 @@
   "receipt": "NOT_CREATED",
   "learningLedger": "NOT_UPDATED",
   "production": "NOT_DEPLOYED",
+  "githubPush": {
+    "attempted": true,
+    "result": "FAILED",
+    "detail": "403 Permission to 4citeB4U/LEEWAY-DEVICE-BRIDGE.git denied to agentlee2116-ctrl",
+    "remoteBranch": "NOT_CREATED"
+  },
   "plugin": "NOT_CREATED",
   "devices": [],
   "browserExtension": "BLOCKED_UNSIGNED_NATIVE_HOST",

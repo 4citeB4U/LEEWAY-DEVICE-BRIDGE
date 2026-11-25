@@ -5,7 +5,7 @@ REGION: LEEWAY.DEVICE.BRIDGE.QUALIFICATION
 TAG: LEEWAY.DEVICE_BRIDGE.FRESH_START.20261124  
 WHO: Creator/Human Authority and Codex repair control plane  
 WHAT: Standalone managed-registry seam and Creator-logo integration checkpoint  
-WHEN: 2026-11-24T23:20:00.1217810-06:00 America/Chicago
+WHEN: 2026-11-24T23:21:21.0395185-06:00 America/Chicago
 WHERE: `4citeB4U/LEEWAY-DEVICE-BRIDGE` clean repair worktree  
 WHY: Restore a standalone online Bridge before creating a fresh plugin or enrolling devices  
 HOW: Source-first recovery, fail-closed registry injection, tests, branding provenance, and scoped cloud handoff  
@@ -101,6 +101,7 @@ Observed before repair:
 - No browser extension or native host was installed.
 - No device was enrolled.
 - No Railway/Render setting, deployment, registry, signer, or secret was changed.
+- GitHub push was attempted once and rejected: `403 — Permission to 4citeB4U/LEEWAY-DEVICE-BRIDGE.git denied to agentlee2116-ctrl`. The repair branch exists only in this clean local worktree; no remote branch, PR, merge, or deployment is claimed.
 - Rollback is a single source commit revert once committed; cloud rollback must restore the captured prior deployment and upstream binding.
 - Do not accept Railway staged patch `d5f0c124-178d-4fc1-8729-ff58c193066c`; it contains an unrelated MySQL deletion.
 - Do not remove the keepalive until non-sleeping sustained health is independently observed.
@@ -118,5 +119,6 @@ Observed before repair:
 2. Render workspace `leeway device bridge` cannot be inspected through the connected provider until the Creator explicitly confirms that workspace selection.
 3. Always-online hosting may change recurring cloud cost; non-sleeping configuration must remain a separate staged mutation.
 4. Windows signer custody and a signed native-host installer are absent, so Chrome/Edge installation remains blocked.
+5. GitHub write authority for `4citeB4U/LEEWAY-DEVICE-BRIDGE` is missing for the authenticated `agentlee2116-ctrl` identity.
 
-Next: finish the Runtime provider read, obtain explicit Render workspace confirmation, bind and deploy the registry seam, verify zero-device readiness and restart recovery, then create one new plugin identity.
+Next: grant or select a GitHub identity with write access for this repository, push this exact local branch, then finish the Runtime provider read, obtain explicit Render workspace confirmation, bind and deploy the registry seam, verify zero-device readiness and restart recovery, and create one new plugin identity.
