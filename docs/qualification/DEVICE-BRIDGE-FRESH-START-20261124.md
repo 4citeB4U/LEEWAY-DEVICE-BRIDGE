@@ -5,7 +5,7 @@ REGION: LEEWAY.DEVICE.BRIDGE.QUALIFICATION
 TAG: LEEWAY.DEVICE_BRIDGE.FRESH_START.20261124  
 WHO: Creator/Human Authority and Codex repair control plane  
 WHAT: Standalone managed-registry seam and Creator-logo integration checkpoint  
-WHEN: 2026-11-24T23:12:54.3093324-06:00 America/Chicago  
+WHEN: 2026-11-24T23:20:00.1217810-06:00 America/Chicago
 WHERE: `4citeB4U/LEEWAY-DEVICE-BRIDGE` clean repair worktree  
 WHY: Restore a standalone online Bridge before creating a fresh plugin or enrolling devices  
 HOW: Source-first recovery, fail-closed registry injection, tests, branding provenance, and scoped cloud handoff  
@@ -15,8 +15,9 @@ LICENSE: MIT
 ## Identity and continuity
 
 - Repository: `4citeB4U/LEEWAY-DEVICE-BRIDGE`
-- Base: PR #136 head `7d27693253d607c92a11094184161bfe5aac7bc6`
+- Base: PR #136 head `7d27693253d607c92a11094184161bfe5aac7bc6`, plus preserved PR #141 head `ce27f1ed2cf7e09415503b9130165fe74c84c0c9`
 - Branch: `repair/fresh-managed-registry-20261124`
+- Repair commits: `4cbfc106a7d737c6ac3e59756fe1167ae25d2748`, merge `deb50f8f87d055126f95b425874011fdb1bf2f07`, and Console branding `c3e637e2ff8ef3c9feb6b62fe465a70c7178b23e`.
 - Worktree: `E:\LeeWay-Work\AGENT-LEE-FLOATING-WIDGET-TEST\work\device-bridge-fresh-20261124`
 - Creator correction: every previously installed plugin was deleted. No prior plugin/account binding is accepted as current evidence.
 - Creator branding authority: bronze hand-and-lock emblem supplied at `C:\Users\Leona\OneDrive\Pictures\Screenshots\Screenshot 2026-10-12 104613.png`.
@@ -52,6 +53,7 @@ Observed before repair:
 - Execution remains `NOT_AUTHORIZED`; no device is synthesized.
 - Preserved the exact Creator logo master and generated deterministic, non-generative platform-size derivatives.
 - Added the logo to Chrome/Edge/Firefox manifests, dashboard, PWA icons, and Android drawable.
+- Merged the already-pushed Console UI promotion instead of rebuilding it. Its visible loading, navigation, and footer branding now use the Creator emblem directly, while its installation metadata consumes the same deterministic PWA icons.
 
 ## Engineering loop
 
@@ -61,7 +63,7 @@ Observed before repair:
 | DIAGNOSE | PASS | Failure isolated to managed startup registry composition; discovery logic already handled bound-empty correctly. |
 | PLAN | PASS | Add host-injected discovery provider, readiness boundary, negative tests, rollback, and brand provenance. |
 | IMPLEMENT | PASS | Source and asset changes present in the clean repair worktree. |
-| TEST | PASS | `npm run test:mcp`: 202 executed, 202 passed, 0 failed/skipped. Manifest JSON parse passed. |
+| TEST | PASS | `npm run test:mcp`: 202 executed, 202 passed, 0 failed/skipped. Console UI lint/build and 12 promotion tests passed. Manifest JSON parse passed. |
 | VALIDATE | PARTIAL | Bound-empty and provider-failure behavior validated with real localhost HTTP/MCP fixtures; no cloud provider bound yet. |
 | REPAIR | PASS | Initial post-install test had one test-fixture `origin` ReferenceError; fixed without changing production behavior. |
 | RETEST | PASS | Focused 13/13 and full 202/202 suites passed after repair and registry hardening. |
@@ -77,6 +79,8 @@ Observed before repair:
 - First post-install focused run — 13 executed, 12 passed, 1 failed due to a missing test-local `origin` variable.
 - Repaired focused run — 13 executed, 13 passed.
 - Final `npm run test:mcp` — 202 executed, 202 passed, 0 failed, 0 skipped.
+- `console-ui`: `npm ci --no-audit --no-fund`, `npm run lint`, and production `npm run build` — PASS. The build emitted only the existing large-chunk warning.
+- `node --test tests/console-ui-promotion.test.mjs` — 12 executed, 12 passed, 0 failed/skipped.
 - Manifest JSON parse — PASS for Chrome, Firefox, and PWA manifests.
 - `git diff --check` — PASS.
 
@@ -86,6 +90,8 @@ Observed before repair:
 - Master SHA-256: `654F63430620205E6BCCFC650D5069AB72C3D7CB135B44E75CA5B7EAE30642DF`.
 - Preserved master: `docs/brand/leeway-device-bridge-logo-master.png`.
 - Derivation: complete source centered on a 721 × 721 dark canvas, then resized. No generative alteration.
+- Console UI display master: `console-ui/public/assets/leeway-device-bridge-logo.png`, SHA-256 equal to the supplied master.
+- Console build icon hashes match `docs/icons/leeway-official-logo-192.png` and `docs/icons/leeway-official-logo-512.png` exactly.
 - See `docs/brand/LOGO-PROVENANCE.md`.
 
 ## Safety, rollback, and exclusions

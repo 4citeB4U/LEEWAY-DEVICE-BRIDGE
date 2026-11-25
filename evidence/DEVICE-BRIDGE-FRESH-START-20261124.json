@@ -1,9 +1,15 @@
 {
   "schema": "leeway.device-bridge.engineering-evidence.v1",
-  "recordedAt": "2026-11-24T23:12:54.3093324-06:00",
+  "recordedAt": "2026-11-24T23:20:00.1217810-06:00",
   "timezone": "America/Chicago",
   "repository": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
   "baseCommit": "7d27693253d607c92a11094184161bfe5aac7bc6",
+  "preservedConsoleUiCommit": "ce27f1ed2cf7e09415503b9130165fe74c84c0c9",
+  "repairCommits": [
+    "4cbfc106a7d737c6ac3e59756fe1167ae25d2748",
+    "deb50f8f87d055126f95b425874011fdb1bf2f07",
+    "c3e637e2ff8ef3c9feb6b62fe465a70c7178b23e"
+  ],
   "branch": "repair/fresh-managed-registry-20261124",
   "acceptanceGate": "standalone managed bridge with bound authoritative empty registry before fresh plugin or device enrollment",
   "changes": {
@@ -19,6 +25,13 @@
     "failed": 0,
     "skipped": 0,
     "environment": "Windows; Node v24.15.0; clean worktree with npm ci"
+  },
+  "consoleUiTests": {
+    "lint": "PASS",
+    "productionBuild": "PASS_WITH_EXISTING_LARGE_CHUNK_WARNING",
+    "promotionTestsExecuted": 12,
+    "promotionTestsPassed": 12,
+    "promotionTestsFailed": 0
   },
   "logo": {
     "sourceSha256": "654F63430620205E6BCCFC650D5069AB72C3D7CB135B44E75CA5B7EAE30642DF",
