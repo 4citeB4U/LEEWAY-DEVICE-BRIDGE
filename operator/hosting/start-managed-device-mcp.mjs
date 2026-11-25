@@ -15,7 +15,10 @@ LICENSE = MIT
 import http from 'node:http';
 import { resolve as resolvePath } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { createConfiguredBridge } from '../../apps/desktop/mcp-server.mjs';
+import {
+  createConfiguredBridge,
+  createDiscoveryConfiguredBridge,
+} from '../../apps/desktop/mcp-server.mjs';
 import { createZitadelMcpHandler } from '../identity/create-zitadel-mcp-handler.mjs';
 
 function secureUrl(value, expectedPath) {
@@ -57,8 +60,20 @@ export function resolveManagedDeviceMcpConfig(env = process.env) {
   });
 }
 
-export function createManagedDeviceMcpServer({ config, bridge, fetchImpl, onDeny = null } = {}) {
+export function createManagedDeviceMcpServer({
+  config,
+  bridge,
+  fetchImpl,
+  onDeny = null,
+  registryState = null,
+} = {}) {
   if (!config || !bridge) throw Error('MANAGED_BRIDGE_CONFIGURATION_REQUIRED');
+  const effectiveRegistryState = registryState ?? Object.freeze({
+    authority:null,
+    registrationState:'REGISTRATION_AUTHORITY_UNBOUND',
+    registeredDeviceCount:0,
+    ready:false,
+  });
   const handler = createZitadelMcpHandler({
     issuer:config.issuer, resource:config.resource,
     ownerSubject:config.ownerSubject, tokenAudiences:config.tokenAudiences,
@@ -77,9 +92,23 @@ export function createManagedDeviceMcpServer({ config, bridge, fetchImpl, onDeny
       res.writeHead(200,{'content-type':'application/json'});
       res.end(req.method==='HEAD'?'':JSON.stringify({
         service:'leeway-managed-device-mcp',status:'RUNNING',
-        identity:'CONFIGURED_NOT_PROBED',deviceRegistry:'REGISTRATION_AUTHORITY_UNBOUND',
+        identity:'CONFIGURED_NOT_PROBED',
+        deviceRegistry:effectiveRegistryState.authority ?? 'REGISTRATION_AUTHORITY_UNBOUND',
+        registrationState:effectiveRegistryState.registrationState,
+        registeredDeviceCount:effectiveRegistryState.registeredDeviceCount,
         deviceReachability:'NOT_PROBED',execution:'NOT_AUTHORIZED',
         formula:'NOT_PROBED',independentVeritas:'NOT_PROBED',receiptAdmission:'NOT_PROBED'
+      }));return;
+    }
+    if(route==='/readyz' && (req.method==='GET'||req.method==='HEAD')) {
+      res.writeHead(effectiveRegistryState.ready ? 200 : 503,{'content-type':'application/json'});
+      res.end(req.method==='HEAD'?'':JSON.stringify({
+        service:'leeway-managed-device-mcp',
+        status:effectiveRegistryState.ready?'READY':'NOT_READY',
+        deviceRegistry:effectiveRegistryState.authority ?? 'REGISTRATION_AUTHORITY_UNBOUND',
+        registrationState:effectiveRegistryState.registrationState,
+        registeredDeviceCount:effectiveRegistryState.registeredDeviceCount,
+        deviceReachability:'NOT_PROBED',execution:'NOT_AUTHORIZED',
       }));return;
     }
     if(route!== '/mcp') {
@@ -87,6 +116,36 @@ export function createManagedDeviceMcpServer({ config, bridge, fetchImpl, onDeny
     }
     // The established Zitadel verifier and canonical MCP tool policy own this path.
     return handler(req,res);
+  });
+}
+
+export function normalizeManagedDeviceRegistry(value) {
+  if (!value || value.authority !== 'TRUSTED_RUNTIME_DEVICE_REGISTRY') {
+    throw Error('MANAGED_BRIDGE_REGISTRY_AUTHORITY_INVALID');
+  }
+  if (!(value.records instanceof Map) && !Array.isArray(value.records)) {
+    throw Error('MANAGED_BRIDGE_REGISTRY_RECORDS_INVALID');
+  }
+  const entries = value.records instanceof Map
+    ? [...value.records.entries()]
+    : value.records.map(record=>[record?.id ?? record?.deviceId,record]);
+  const ids = new Set();
+  for (const [id,record] of entries) {
+    if (typeof id !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(id) ||
+        !record || typeof record !== 'object' || Array.isArray(record) ||
+        typeof record.platform !== 'string' || !record.platform.trim() || ids.has(id)) {
+      throw Error('MANAGED_BRIDGE_REGISTRY_RECORD_INVALID');
+    }
+    ids.add(id);
+  }
+  return Object.freeze({
+    authority:'TRUSTED_RUNTIME_DEVICE_REGISTRY',
+    records:value.records,
+    registrationState:entries.length === 0
+      ? 'NO_REGISTERED_ADAPTERS'
+      : 'TRUSTED_REGISTRY_READ',
+    registeredDeviceCount:entries.length,
+    ready:true,
   });
 }
 
@@ -147,7 +206,12 @@ export function createUnboundManagedDeviceMcpServer({missing=[]}={}) {
  * every MCP request until all five explicit bindings are present. No
  * untrusted request can elevate the bootstrap mode.
  */
-export async function startManagedDeviceMcp({env=process.env,fetchImpl=globalThis.fetch,log=console.error}={}) {
+export async function startManagedDeviceMcp({
+  env=process.env,
+  fetchImpl=globalThis.fetch,
+  log=console.error,
+  resolveDeviceRegistry=null,
+}={}) {
   const port = configuredManagedPort(env);
   const missing = unboundManagedBindings(env);
   if (missing.length) {
@@ -164,20 +228,42 @@ export async function startManagedDeviceMcp({env=process.env,fetchImpl=globalThi
   const config = resolveManagedDeviceMcpConfig(env);
   // A config lists adapters, not trusted enrollment. Runtime admission is
   // intentionally absent. This service MUST NOT grant device execution.
-  const bridge = await createConfiguredBridge(config.configPath);
+  let registryState = Object.freeze({
+    authority:null,
+    registrationState:'REGISTRATION_AUTHORITY_UNBOUND',
+    registeredDeviceCount:0,
+    ready:false,
+  });
+  if (typeof resolveDeviceRegistry === 'function') {
+    try {
+      registryState = normalizeManagedDeviceRegistry(await resolveDeviceRegistry());
+    } catch (error) {
+      log(JSON.stringify({service:'leeway-managed-device-mcp',
+        event:'TRUSTED_REGISTRY_PROVIDER_FAILED',
+        reasonCode:/^[A-Z0-9_]+$/.test(error?.message||'')
+          ? error.message
+          : 'MANAGED_BRIDGE_REGISTRY_PROVIDER_FAILURE'}));
+    }
+  }
+  const bridge = registryState.ready
+    ? await createDiscoveryConfiguredBridge(config.configPath, {deviceRegistry:registryState.records})
+    : await createConfiguredBridge(config.configPath);
   // Opt-in codes only; no bearer token, claim, subject, issuer or key logged.
   const onDeny = env.LEEWAY_BRIDGE_AUTH_DIAGNOSTICS === 'SAFE_CODES'
     ? code=>log(JSON.stringify({service:'leeway-managed-device-mcp',
         event:'ZITADEL_AUTH_DENIED',reasonCode:code}))
     : null;
-  const server = createManagedDeviceMcpServer({config,bridge,fetchImpl,onDeny});
+  const server = createManagedDeviceMcpServer({config,bridge,fetchImpl,onDeny,registryState});
   await new Promise((resolve,reject)=>{
     server.once('error',reject);
     server.listen(config.port,'0.0.0.0',resolve);
   });
   log(JSON.stringify({service:'leeway-managed-device-mcp',status:'BOUND',
     port:config.port,scope:'ZITADEL_DISCOVERY_ONLY',
-    authority:'REGISTRATION_AUTHORITY_UNBOUND',productionAdmission:'NOT_GRANTED'}));
+    authority:registryState.authority ?? 'REGISTRATION_AUTHORITY_UNBOUND',
+    registrationState:registryState.registrationState,
+    registeredDeviceCount:registryState.registeredDeviceCount,
+    productionAdmission:'NOT_GRANTED'}));
   return server;
 }
 

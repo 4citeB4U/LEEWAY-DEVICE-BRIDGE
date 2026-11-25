@@ -1,0 +1,39 @@
+{
+  "schema": "leeway.device-bridge.engineering-evidence.v1",
+  "recordedAt": "2026-11-24T23:12:54.3093324-06:00",
+  "timezone": "America/Chicago",
+  "repository": "4citeB4U/LEEWAY-DEVICE-BRIDGE",
+  "baseCommit": "7d27693253d607c92a11094184161bfe5aac7bc6",
+  "branch": "repair/fresh-managed-registry-20261124",
+  "acceptanceGate": "standalone managed bridge with bound authoritative empty registry before fresh plugin or device enrollment",
+  "changes": {
+    "registryProviderSeam": "IMPLEMENTED_SOURCE_ONLY",
+    "readinessEndpoint": "IMPLEMENTED_SOURCE_ONLY",
+    "executionAdmission": "NOT_AUTHORIZED",
+    "creatorLogo": "INTEGRATED_SOURCE_ONLY"
+  },
+  "tests": {
+    "command": "npm run test:mcp",
+    "executed": 202,
+    "passed": 202,
+    "failed": 0,
+    "skipped": 0,
+    "environment": "Windows; Node v24.15.0; clean worktree with npm ci"
+  },
+  "logo": {
+    "sourceSha256": "654F63430620205E6BCCFC650D5069AB72C3D7CB135B44E75CA5B7EAE30642DF",
+    "sourceWidth": 642,
+    "sourceHeight": 721,
+    "preservedMaster": "docs/brand/leeway-device-bridge-logo-master.png"
+  },
+  "formulaEvaluator": "AVAILABLE_DIAGNOSTIC_ONLY",
+  "formulaExecution": "NOT_EXECUTED",
+  "independentVeritas": "NOT_RUN",
+  "receipt": "NOT_CREATED",
+  "learningLedger": "NOT_UPDATED",
+  "production": "NOT_DEPLOYED",
+  "plugin": "NOT_CREATED",
+  "devices": [],
+  "browserExtension": "BLOCKED_UNSIGNED_NATIVE_HOST",
+  "nextAction": "bind canonical Runtime registry provider, inspect confirmed Render workspace, deploy, and qualify zero-device readiness"
+}

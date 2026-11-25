@@ -20,7 +20,12 @@ import { join } from 'node:path';
 import { createServer as createTcp } from 'node:net';
 import { request as httpRequest } from 'node:http';
 import { generateKeyPairSync, sign } from 'node:crypto';
-import { resolveManagedDeviceMcpConfig,startManagedDeviceMcp,unboundManagedBindings } from '../../operator/hosting/start-managed-device-mcp.mjs';
+import {
+ normalizeManagedDeviceRegistry,
+ resolveManagedDeviceMcpConfig,
+ startManagedDeviceMcp,
+ unboundManagedBindings,
+} from '../../operator/hosting/start-managed-device-mcp.mjs';
 
 const base=Object.freeze({
  PORT:'4278',
@@ -86,8 +91,10 @@ test('real managed Node HTTP listener serves honest health, denies other paths, 
  const body=await health.json();
  assert.equal(body.service,'leeway-managed-device-mcp');
  assert.equal(body.deviceRegistry,'REGISTRATION_AUTHORITY_UNBOUND');
+ assert.equal(body.registrationState,'REGISTRATION_AUTHORITY_UNBOUND');
  assert.equal(body.execution,'NOT_AUTHORIZED');
  assert.equal(body.deviceReachability,'NOT_PROBED');
+ assert.equal((await fetch(origin+'/readyz')).status,503);
  assert.equal((await fetch(origin+'/not-a-device')).status,404);
  const payload={jsonrpc:'2.0',id:1,method:'initialize',
   params:{protocolVersion:'2025-03-26',clientInfo:{name:'untrusted',version:'1'},capabilities:{}}};
@@ -129,8 +136,10 @@ test('real signed Zitadel owner token authenticates managed MCP and discovers on
   throw Error('UNEXPECTED_ZITADEL_DISCOVERY_REQUEST');
  };
  const server=await startManagedDeviceMcp({env:{...base,PORT:String(port),LEEWAY_DEVICE_BRIDGE_CONFIG:config},
-  log:()=>{},fetchImpl});
+  log:()=>{},fetchImpl,
+  resolveDeviceRegistry:async()=>({authority:'TRUSTED_RUNTIME_DEVICE_REGISTRY',records:[]})});
  t.after(async()=>{server.closeAllConnections();await new Promise(resolve=>server.close(resolve))});
+ const origin='http://127.0.0.1:'+port;
  const now=Math.floor(Date.now()/1000);
  const header=Buffer.from(JSON.stringify({alg:'RS256',kid:jwk.kid,typ:'JWT'})).toString('base64url');
  const claims=Buffer.from(JSON.stringify({
@@ -161,9 +170,61 @@ test('real signed Zitadel owner token authenticates managed MCP and discovers on
  assert.equal(result.status,200);
  const content=JSON.parse(result.data.result?.content?.[0]?.text||'null');
  assert.deepEqual(content.devices,[]);
- assert.equal(content.registrationState,'REGISTRATION_AUTHORITY_UNBOUND');
- assert.equal(content.registrationAuthority,null);
+ assert.equal(content.registrationState,'NO_REGISTERED_ADAPTERS');
+ assert.equal(content.registrationAuthority,'TRUSTED_RUNTIME_DEVICE_REGISTRY');
  assert.equal(content.reachability,'NOT_PROBED');
+ const health=await fetch(origin+'/healthz');
+ assert.equal(health.status,200);
+ assert.deepEqual(await health.json(),{
+  service:'leeway-managed-device-mcp',status:'RUNNING',
+  identity:'CONFIGURED_NOT_PROBED',deviceRegistry:'TRUSTED_RUNTIME_DEVICE_REGISTRY',
+  registrationState:'NO_REGISTERED_ADAPTERS',registeredDeviceCount:0,
+  deviceReachability:'NOT_PROBED',execution:'NOT_AUTHORIZED',
+  formula:'NOT_PROBED',independentVeritas:'NOT_PROBED',receiptAdmission:'NOT_PROBED'
+ });
+ assert.equal((await fetch(origin+'/readyz')).status,200);
+});
+
+test('managed registry provider validation fails closed without inventing authority',()=>{
+ assert.throws(()=>normalizeManagedDeviceRegistry(null),/MANAGED_BRIDGE_REGISTRY_AUTHORITY_INVALID/);
+ assert.throws(()=>normalizeManagedDeviceRegistry({authority:'OTHER',records:[]}),/MANAGED_BRIDGE_REGISTRY_AUTHORITY_INVALID/);
+ assert.throws(()=>normalizeManagedDeviceRegistry({authority:'TRUSTED_RUNTIME_DEVICE_REGISTRY',records:{}}),/MANAGED_BRIDGE_REGISTRY_RECORDS_INVALID/);
+ assert.throws(()=>normalizeManagedDeviceRegistry({authority:'TRUSTED_RUNTIME_DEVICE_REGISTRY',records:[{}]}),/MANAGED_BRIDGE_REGISTRY_RECORD_INVALID/);
+ assert.throws(()=>normalizeManagedDeviceRegistry({authority:'TRUSTED_RUNTIME_DEVICE_REGISTRY',records:[
+  {id:'device-one',platform:'windows'},{id:'device-one',platform:'windows'}
+ ]}),/MANAGED_BRIDGE_REGISTRY_RECORD_INVALID/);
+ const empty=normalizeManagedDeviceRegistry({authority:'TRUSTED_RUNTIME_DEVICE_REGISTRY',records:new Map()});
+ assert.equal(empty.ready,true);
+ assert.equal(empty.registrationState,'NO_REGISTERED_ADAPTERS');
+ assert.equal(empty.registeredDeviceCount,0);
+});
+
+test('registry provider failure preserves liveness, denies readiness and keeps discovery unbound',async t=>{
+ const root=await mkdtemp(join(tmpdir(),'leeway-managed-registry-failure-'));
+ t.after(()=>rm(root,{recursive:true,force:true}));
+ const config=join(root,'bridge.json');
+ await writeFile(config,JSON.stringify({devices:[],receipts:'receipts/observations.jsonl'}));
+ const tcp=createTcp();
+ await new Promise((resolve,reject)=>{tcp.once('error',reject);tcp.listen(0,'127.0.0.1',resolve)});
+ const port=tcp.address().port;
+ await new Promise(resolve=>tcp.close(resolve));
+ const logs=[];
+ const server=await startManagedDeviceMcp({
+  env:{...base,PORT:String(port),LEEWAY_DEVICE_BRIDGE_CONFIG:config},
+  log:line=>logs.push(JSON.parse(line)),
+  resolveDeviceRegistry:async()=>{throw Error('REGISTRY_BACKEND_UNAVAILABLE')},
+ });
+ t.after(async()=>{server.closeAllConnections();await new Promise(resolve=>server.close(resolve))});
+ const origin='http://127.0.0.1:'+port;
+ assert.equal((await fetch(origin+'/healthz')).status,200);
+ assert.equal((await fetch(origin+'/readyz')).status,503);
+ const body=await (await fetch(origin+'/healthz')).json();
+ assert.equal(body.deviceRegistry,'REGISTRATION_AUTHORITY_UNBOUND');
+ assert.equal(body.registrationState,'REGISTRATION_AUTHORITY_UNBOUND');
+ assert.deepEqual(logs.filter(x=>x.event==='TRUSTED_REGISTRY_PROVIDER_FAILED'),[{
+  service:'leeway-managed-device-mcp',event:'TRUSTED_REGISTRY_PROVIDER_FAILED',
+  reasonCode:'REGISTRY_BACKEND_UNAVAILABLE'
+ }]);
 });
 
 test('Render Free owner-unbound bootstrap advertises no enrolled device or false readiness',async t=>{

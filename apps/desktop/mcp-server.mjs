@@ -250,9 +250,23 @@ export function createProductionAdmission(devices, providers = {}) {
   });
 }
 
-export async function createConfiguredBridge(configPath, runtimeInput = null) {
+function requireDiscoveryDeviceRegistry(value) {
+  if (value === null) return null;
+  if (value instanceof Map || Array.isArray(value)) return value;
+  throw new Error('DISCOVERY_DEVICE_REGISTRY_INVALID');
+}
+
+export async function createConfiguredBridge(
+  configPath,
+  runtimeInput = null,
+  { discoveryDeviceRegistry = null } = {},
+) {
   if (!configPath) throw new Error('CONFIG_REQUIRED');
+  if (runtimeInput !== null && discoveryDeviceRegistry !== null) {
+    throw new Error('DISCOVERY_AND_RUNTIME_COMPOSITION_CONFLICT');
+  }
   const runtimeComposition = runtimeInput === null ? null : requireTrustedRuntimeComposition(runtimeInput);
+  const discoveryRegistry = requireDiscoveryDeviceRegistry(discoveryDeviceRegistry);
   const config = z.object({ devices: z.array(deviceSchema).min(0).max(32), receipts: z.string().min(1).optional() }).strict().parse(JSON.parse(await fs.readFile(configPath, 'utf8')));
   const base = path.dirname(path.resolve(configPath));
   const receiptPath = config.receipts ? path.resolve(base, config.receipts) : null;
@@ -291,10 +305,21 @@ export async function createConfiguredBridge(configPath, runtimeInput = null) {
     // Without an injected Runtime composition, C3 deliberately denies all execution.
     admission,
     complianceCardGate: runtimeComposition?.complianceCardGate ?? null,
-    deviceRegistry: runtimeComposition?.deviceRegistry ?? null,
+    deviceRegistry: runtimeComposition?.deviceRegistry ?? discoveryRegistry,
     receiptSink: runtimeComposition?.receiptSink ?? (evidence => fs.appendFile(receiptPath, JSON.stringify(evidence) + '\n', { mode: 0o600 })),
   });
   return bridge;
+}
+
+/**
+ * Construct the read-only managed discovery bridge with a host-injected
+ * trusted registry. An empty Map/array is authoritative and valid. A missing
+ * provider remains null and therefore visibly unbound.
+ */
+export async function createDiscoveryConfiguredBridge(configPath, { deviceRegistry } = {}) {
+  return createConfiguredBridge(configPath, null, {
+    discoveryDeviceRegistry: requireDiscoveryDeviceRegistry(deviceRegistry ?? null),
+  });
 }
 
 /**
