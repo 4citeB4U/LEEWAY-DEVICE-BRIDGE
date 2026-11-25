@@ -1,0 +1,110 @@
+# LEEWAY HEADER — DO NOT REMOVE
+# REGION: LEEWAY.DEVICE.BRIDGE.ANDROID.PRODUCTION_RELEASE
+# TAG: LEEWAY.ANDROID.SIGNED_ARTIFACT.CUSTODY.V1
+# WHAT = Build a non-debuggable Android release APK with the Creator-authorized stable key.
+# WHY = Never distribute CI debug or unsigned builds as a trusted customer release.
+# WHO = Creator-controlled repository signing secret authority.
+# WHERE = .github/workflows/android-signed-release-candidate.yml
+# WHEN = 2026-11-24.
+# HOW = Explicit opt-in, secret-bound signing, independent APK signature verification, no auto publication.
+# LICENSE = Existing repository terms.
+name: Android Signed Release Candidate
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Verify signing custody inputs exist
+        env:
+          LEEWAY_ANDROID_RELEASE_KEYSTORE_B64: ${{ secrets.LEEWAY_ANDROID_RELEASE_KEYSTORE_B64 }}
+          LEEWAY_ANDROID_RELEASE_STORE_PASSWORD: ${{ secrets.LEEWAY_ANDROID_RELEASE_STORE_PASSWORD }}
+          LEEWAY_ANDROID_RELEASE_KEY_ALIAS: ${{ secrets.LEEWAY_ANDROID_RELEASE_KEY_ALIAS }}
+          LEEWAY_ANDROID_RELEASE_KEY_PASSWORD: ${{ secrets.LEEWAY_ANDROID_RELEASE_KEY_PASSWORD }}
+          LEEWAY_ANDROID_RELEASE_CERT_SHA256: ${{ vars.LEEWAY_ANDROID_RELEASE_CERT_SHA256 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Fail before Gradle when the owner has not bound their original release identity.
+          for variable in LEEWAY_ANDROID_RELEASE_KEYSTORE_B64 LEEWAY_ANDROID_RELEASE_STORE_PASSWORD LEEWAY_ANDROID_RELEASE_KEY_ALIAS LEEWAY_ANDROID_RELEASE_KEY_PASSWORD LEEWAY_ANDROID_RELEASE_CERT_SHA256; do
+            test -n "${!variable}" || { echo "OWNER_APPROVED_ANDROID_RELEASE_KEY_UNBOUND: $variable"; exit 1; }
+          done
+      - name: Prepare Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          "$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0"
+      - name: Build and verify signed non-debug release APK
+        env:
+          LEEWAY_ANDROID_RELEASE_KEYSTORE_B64: ${{ secrets.LEEWAY_ANDROID_RELEASE_KEYSTORE_B64 }}
+          LEEWAY_ANDROID_RELEASE_STORE_PASSWORD: ${{ secrets.LEEWAY_ANDROID_RELEASE_STORE_PASSWORD }}
+          LEEWAY_ANDROID_RELEASE_KEY_ALIAS: ${{ secrets.LEEWAY_ANDROID_RELEASE_KEY_ALIAS }}
+          LEEWAY_ANDROID_RELEASE_KEY_PASSWORD: ${{ secrets.LEEWAY_ANDROID_RELEASE_KEY_PASSWORD }}
+          LEEWAY_ANDROID_RELEASE_CERT_SHA256: ${{ vars.LEEWAY_ANDROID_RELEASE_CERT_SHA256 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          KEYSTORE="$(mktemp "$RUNNER_TEMP/leeway-release-XXXXXX.keystore")"
+          trap 'rm -f "$KEYSTORE"' EXIT
+          printf '%s' "$LEEWAY_ANDROID_RELEASE_KEYSTORE_B64" | base64 --decode > "$KEYSTORE"
+          test -s "$KEYSTORE"
+          export LEEWAY_ANDROID_RELEASE_KEYSTORE_PATH="$KEYSTORE"
+          cd apps/android
+          gradle --no-daemon testDebugUnitTest assembleRelease
+          APK=app/build/outputs/apk/release/app-release.apk
+          test -s "$APK"
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          APKSIGNER="$SDK_ROOT/build-tools/35.0.0/apksigner"
+          AAPT="$SDK_ROOT/build-tools/35.0.0/aapt"
+          "$APKSIGNER" verify --verbose --print-certs "$APK" > "$GITHUB_WORKSPACE/android-signature-evidence.txt"
+          EXPECTED_SHA="$(printf '%s' "$LEEWAY_ANDROID_RELEASE_CERT_SHA256" | tr '[:upper:]' '[:lower:]' | tr -d ':')"
+          [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{64}$ ]] || { echo 'OWNER_SIGNER_FINGERPRINT_INVALID'; exit 1; }
+          ACTUAL_SHA="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' "$GITHUB_WORKSPACE/android-signature-evidence.txt" | head -n1 | tr '[:upper:]' '[:lower:]' | tr -d ':')"
+          test -n "$ACTUAL_SHA"
+          if [ "$ACTUAL_SHA" != "$EXPECTED_SHA" ]; then
+            echo 'OWNER_SIGNER_FINGERPRINT_MISMATCH'; exit 1
+          fi
+          echo 'OWNER_APPROVED_SIGNER_CERTIFICATE_MATCH' >> "$GITHUB_WORKSPACE/android-signature-evidence.txt"
+          "$AAPT" dump badging "$APK" > "$RUNNER_TEMP/leeway-badging.txt"
+          "$AAPT" dump permissions "$APK" > "$GITHUB_WORKSPACE/android-permission-evidence.txt"
+          # Both platform/signer integrity and sensitive permissions must be
+          # visible to review. Owner authorization remains necessary.
+          grep -E "SYSTEM_ALERT_WINDOW|BIND_ACCESSIBILITY_SERVICE|REQUEST_INSTALL_PACKAGES|RECORD_AUDIO|RECEIVE_BOOT_COMPLETED|FOREGROUND_SERVICE" "$GITHUB_WORKSPACE/android-permission-evidence.txt" || true
+          grep -F "package: name='industries.leeway.devicebridge'" "$RUNNER_TEMP/leeway-badging.txt"
+          # A signed release must not be debuggable, and no debug-key signature qualifies.
+          if "$AAPT" dump xmltree "$APK" AndroidManifest.xml | grep -Eq 'android:debuggable.*0xffffffff'; then
+            echo 'RELEASE_APK_DEBUGGABLE_DENIED'; exit 1
+          fi
+          if grep -qi 'android debug\|androiddebugkey' "$GITHUB_WORKSPACE/android-signature-evidence.txt"; then
+            echo 'DEBUG_CERTIFICATE_DENIED'; exit 1
+          fi
+          cp "$APK" "$GITHUB_WORKSPACE/LeeWay-Device-Bridge-android-release.apk"
+          sha256sum "$GITHUB_WORKSPACE/LeeWay-Device-Bridge-android-release.apk" > "$GITHUB_WORKSPACE/LeeWay-Device-Bridge-android-release.apk.sha256"
+          sha256sum "$GITHUB_WORKSPACE/LeeWay-Device-Bridge-android-release.apk"
+      - name: Upload release candidate for physical safety qualification
+        uses: actions/upload-artifact@v4
+        with:
+          name: leeway-android-release-candidate-${{ github.run_id }}
+          path: |
+            LeeWay-Device-Bridge-android-release.apk
+            LeeWay-Device-Bridge-android-release.apk.sha256
+            android-signature-evidence.txt
+            android-permission-evidence.txt
+          retention-days: 30
+          if-no-files-found: error
+# NO public Release/Pages publishing from this workflow. Promote only after
+# signer-custody approval, physical update/install evidence, Play Protect checks,
+# and original Receipt Authority + independent Veritas qualification.
