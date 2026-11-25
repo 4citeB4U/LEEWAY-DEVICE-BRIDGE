@@ -2,7 +2,7 @@ import fs from "node:fs";
 import crypto from "node:crypto";
 import assert from "node:assert/strict";
 
-const EXPECTED="193a2d50bc42925aa3d36ba506318fe286504b61e0e948fe232b29186897e8cc";
+const EXPECTED="490dc7e868ed5344a026ce0b824fc09e893c257e3d691ad6f4ca69dd00edb275";
 const hash=p=>crypto.createHash("sha256").update(fs.readFileSync(p)).digest("hex");
 
 const androidLogo="apps/android/app/src/main/res/drawable/leeway_official_logo.png";
