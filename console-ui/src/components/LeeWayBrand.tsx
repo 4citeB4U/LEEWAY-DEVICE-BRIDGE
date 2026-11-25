@@ -7,15 +7,17 @@ import React from 'react';
 const asset = (name: string) => `${import.meta.env.BASE_URL}assets/${name}`;
 
 export const LEEWAY_LOCK_EMBLEM = asset('leeway-lock-emblem.png');
-export const LEEWAY_INDUSTRIES_MARK = asset('leeway-industries-mark.png');
+// Creator-approved Device Bridge emblem. The public PWA manifest, extension,
+// Android drawable, dashboard, and this UI all derive from the same master.
+export const LEEWAY_CREATOR_LOGO = asset('leeway-device-bridge-logo.png');
 
-/** Creator-supplied LeeWay Industries mark used at top-left of workspace pages. */
+/** Creator-supplied LeeWay Device Bridge emblem used across workspace pages. */
 export function LeeWayIndustriesBrand({ compact = false }: { compact?: boolean }) {
   return (
     <span className={`leeway-brand ${compact ? 'leeway-brand--compact' : ''}`}>
       <img
-        src={LEEWAY_INDUSTRIES_MARK}
-        alt="LeeWay Industries"
+        src={LEEWAY_CREATOR_LOGO}
+        alt="LeeWay Device Bridge"
         className="leeway-brand__mark"
         draggable={false}
       />
@@ -32,8 +34,8 @@ export function LeeWayFooterBrand({ compact = false }: { compact?: boolean }) {
   return (
     <div className={`leeway-footer-brand ${compact ? 'leeway-footer-brand--compact' : ''}`}>
       <img
-        src={LEEWAY_INDUSTRIES_MARK}
-        alt="LeeWay Industries"
+        src={LEEWAY_CREATOR_LOGO}
+        alt="LeeWay Device Bridge"
         className="leeway-footer-brand__mark"
         draggable={false}
       />
@@ -47,7 +49,7 @@ export function LeeWayFooterBrand({ compact = false }: { compact?: boolean }) {
 }
 
 /**
- * Screen 1. Only the Creator-supplied full LeeWay Industries logo is shown.
+ * Screen 1. Only the Creator-supplied LeeWay Device Bridge emblem is shown.
  * Loading is announced to assistive technology with hidden text; no other
  * logo, promotion, download, or fixed delay is used to conceal failures.
  */
@@ -57,8 +59,8 @@ export function LeeWayLoadingScreen() {
       <div className="lw-loader__grid" aria-hidden="true" />
       <div className="lw-loader__core">
         <img
-          src={LEEWAY_INDUSTRIES_MARK}
-          alt="LeeWay Industries loading"
+          src={LEEWAY_CREATOR_LOGO}
+          alt="LeeWay Device Bridge loading"
           className="lw-loader__logo"
           draggable={false}
         />

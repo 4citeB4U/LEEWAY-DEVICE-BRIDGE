@@ -49,8 +49,22 @@ test('required UI components are present', () => {
     'console-ui/src/hooks/useLeeWaySession.ts',
     'console-ui/public/assets/leeway-industries-mark.png',
     'console-ui/public/assets/leeway-lock-emblem.png',
+    'console-ui/public/assets/leeway-device-bridge-logo.png',
   ];
   for (const rel of required) assert.ok(exists(rel), `missing UI source: ${rel}`);
+});
+
+test('Creator Device Bridge emblem owns visible UI and installed-app branding', () => {
+  const brand = read('console-ui/src/components/LeeWayBrand.tsx');
+  const manifest = JSON.parse(read('console-ui/public/manifest.webmanifest'));
+  const html = read('console-ui/index.html');
+  assert.match(brand, /leeway-device-bridge-logo\.png/, 'visible Console UI uses Creator emblem');
+  assert.match(brand, /LEEWAY_CREATOR_LOGO/, 'all brand views share one creator-logo binding');
+  assert.match(html, /apple-touch-icon/, 'Apple Home Screen icon is explicitly declared');
+  assert.deepEqual(manifest.icons.map(icon => icon.src), [
+    '/LEEWAY-DEVICE-BRIDGE/icons/leeway-official-logo-192.png',
+    '/LEEWAY-DEVICE-BRIDGE/icons/leeway-official-logo-512.png',
+  ]);
 });
 
 test('authentication is fail-closed and always routes loading then sign-in then onboarding', () => {
