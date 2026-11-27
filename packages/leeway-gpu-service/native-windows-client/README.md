@@ -20,3 +20,58 @@ For Node/Electron consumers, the existing `client.mjs` now exports `runLeeWaySof
 **Limitations:** This SDK proves explicit application communication with LeeWay software graphics. The diagnostic is a fixed 16-pixel first-party software rendering workload, not arbitrary application shaders, full model inference, OS driver enumeration, or a general-purpose replacement for Direct3D/Vulkan. The full application workload API is a separate qualified implementation; WDDM KMD/UMD and signed device installation are still required for OS-level selection.
 
 On Agent-Lee, a newly built unsigned native Windows test executable was blocked by local Windows Application Control; no security controls were disabled or bypassed. The hosted CI runner executes the native SDK test independently. Production deployment must use an appropriately trusted/signed binary under the owner's existing policy.
+
+<!-- LEEWAY UNIVERSAL FORMULA GOVERNANCE BEGIN -->
+
+# LeeWay Universal Formula Governance
+
+Authority: Creator and LeeWay Standards.
+Formula identity: LEEWAY-FORMULA-v1.0.
+
+The canonical LeeWay Formula is mandatory throughout
+the entire LeeWay ecosystem.
+
+Every current and future application, capability,
+agent, worker, employee, model, provider, adapter,
+automation and integration inherits this requirement.
+
+All applicable interactions, responses, decisions,
+actions, revisions, executions, computations, model
+inferences, resource allocations, information transfers,
+memory operations, storage operations and deployments
+must consume the canonical Formula through their
+authorized and qualified domain contracts.
+
+Formula availability, documentation, configuration,
+health and historical results do not constitute actual
+Formula consumption for a new operation.
+
+Recover relevant authorized memory before substantive
+work. Preserve identity, provenance, Formula integrity,
+authorization, original receipts and verified learning.
+
+Never invent observations, adapter mappings, mathematical
+results, execution evidence or independent verification.
+
+No application may bypass applicable Formula governance
+by dispatching directly to a provider.
+
+Every new application and capability must demonstrate
+applicable Formula consumption before production admission.
+
+Preserve the existing authority hierarchy:
+
+Creator > Standards > Root of Trust > Runtime Fabric >
+Agent Lee > Harness > Formula > skills/models/tools >
+execution > Veritas > Receipt Authority > Learning Ledger.
+
+Execute the complete engineering loop:
+
+INVESTIGATE > DIAGNOSE > PLAN > IMPLEMENT > TEST >
+VALIDATE > REPAIR > RETEST > VERIFY > EVIDENCE >
+CHECKPOINT > CONTINUE.
+
+Documentation compliance does not establish executable
+enforcement or production admission.
+
+<!-- LEEWAY UNIVERSAL FORMULA GOVERNANCE END -->
