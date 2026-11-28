@@ -98,6 +98,7 @@ jobs:
           )
           unzip -Z1 "$IPA_PATH" | /usr/bin/grep -E '^Payload/LeeWayDeviceBridge\.app/'
           test -s "$IPA_PATH"
+          python3 "$GITHUB_WORKSPACE/scripts/validate-apple-ipa.py" "$IPA_PATH"
           cp apps/apple/AppleNativePackageManifest.json "$MANIFEST_PATH"
           IPA_SHA256="$(shasum -a 256 "$IPA_PATH" | awk '{print $1}')"
           python3 - "$MANIFEST_PATH" "$GITHUB_SHA" "$IPA_SHA256" "$APP_PATH/Info.plist" <<'PY'
