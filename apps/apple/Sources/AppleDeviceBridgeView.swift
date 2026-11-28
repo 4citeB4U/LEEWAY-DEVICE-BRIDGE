@@ -29,6 +29,9 @@ struct AppleDeviceBridgeView: View {
     @State private var emailBody = ""
     @State private var handoffState = "No system handoff requested."
     @State private var safariInbox = SafariExtensionBridge.inbox()
+    @State private var enclaveChallenge = ""
+    @State private var enclaveProof = ""
+    @State private var enclaveStatus = "NOT_EXECUTED"
 
     var body: some View {
         NavigationStack {
@@ -58,6 +61,85 @@ struct AppleDeviceBridgeView: View {
                         Text("A receipt is issued only after this app observes a Metal probe result. External verification remains separate.")
                     }
                 }
+                Section("Secure Enclave qualification") {
+
+                    LabeledContent(
+                        "Classification",
+                        value: "HARDWARE_TEST_ONLY"
+                    )
+
+                    LabeledContent(
+                        "Status",
+                        value: enclaveStatus
+                    )
+
+                    TextField(
+                        "External challenge (Base64)",
+                        text: $enclaveChallenge
+                    )
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled(true)
+                    .font(.footnote.monospaced())
+                    .onChange(of: enclaveChallenge) { _, _ in
+                        enclaveProof = ""
+                        enclaveStatus = "NOT_EXECUTED"
+                    }
+
+                    Button("Run Secure Enclave Test") {
+
+                        enclaveProof = ""
+
+                        do {
+
+                            enclaveProof = try
+                                AppleSecureEnclaveQualification.exportJSON(
+                                    challengeBase64:
+                                        enclaveChallenge.trimmingCharacters(
+                                            in: .whitespacesAndNewlines
+                                        )
+                                )
+
+                            enclaveStatus =
+                                "LOCAL_HARDWARE_TEST_PASSED"
+
+                        } catch {
+
+                            enclaveStatus =
+                                "FAILED: \(String(describing: error))"
+                        }
+                    }
+                    .disabled(
+                        enclaveChallenge.trimmingCharacters(
+                            in: .whitespacesAndNewlines
+                        ).isEmpty
+                    )
+
+                    if !enclaveProof.isEmpty {
+
+                        ShareLink(item: enclaveProof) {
+
+                            Label(
+                                "Export Public Hardware Proof",
+                                systemImage: "square.and.arrow.up"
+                            )
+                        }
+
+                        Button("Copy Public Hardware Proof") {
+                            UIPasteboard.general.string =
+                                enclaveProof
+                        }
+
+                        Text(enclaveProof)
+                            .font(.caption2.monospaced())
+                            .textSelection(.enabled)
+                    }
+
+                    Text(
+                        "This temporary test does not register a device, authorize production execution, or independently attest hardware custody."
+                    )
+                    .font(.footnote)
+                }
+
                 Section("Native camera provider") {
                     if camera.isRunning {
                         AppleCameraPreview(session: camera.session)
